@@ -55,7 +55,13 @@ import { resolveProfileAgent } from "../../../../packages/core/src/infrastructur
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { templateUseCases } from "../../../../packages/core/src/domain/UseCaseDelta";
 import { draftingGuide, draftingPrompt } from "../../../draft/drafting-guide";
-import { modelFlows, modelOf, modelsText, projectLanguage } from "../../../draft/workshop-import";
+import {
+  ensureProjectLanguage,
+  modelFlows,
+  modelOf,
+  modelsText,
+  projectLanguage,
+} from "../../../draft/workshop-import";
 import type { ModuleCards } from "../../../draft/drafting-guide";
 import {
   NO_WRITE_HINT,
@@ -420,6 +426,7 @@ export function draftReport(
   if (brief !== undefined && models) brief = `${brief}\n\n${models}`;
   return {
     report: checkDraft({
+      language: projectLanguage(projectDir),
       deltas,
       brief,
       assumptions: readIf(path.join(changeDir, "assumptions.md")),
@@ -760,6 +767,9 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
   };
   const briefText = fs.readFileSync(path.resolve(projectDir, brief), "utf8");
   const created: string[] = [];
+  // REQ-667: the brief's language becomes the project's, when it set none — listed with what was written.
+  const language = ensureProjectLanguage(projectDir, briefText);
+  if (language.written) created.push(".specgate/config.json");
   const write = (rel: string, contents: string) => {
     const full = path.join(dir, rel);
     fs.mkdirSync(path.dirname(full), { recursive: true });
@@ -782,7 +792,7 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
       // REQ-656: a module from a DDD workshop is drafted from its model too.
       model: modelOf(projectDir, module),
       modelFlows: modelFlows(projectDir, module),
-      language: projectLanguage(projectDir),
+      language: language.language,
     })
   );
   write(

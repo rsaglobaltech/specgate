@@ -947,3 +947,46 @@ test("REQ-277 SCN-277a: a position with its time", () => {
     "2026-10-30",
   ]);
 });
+
+// ── REQ-668: a scenario's steps in another language ─────────────────────────
+
+const titled = (title: string, steps: string[]) =>
+  `### Requirement: REQ-120 — Entrada\n\n<!-- specgate:trace kind=functional actor=Adulto -->\n\nThe system SHALL let the family in.\n\n#### Scenario: SCN-002 — ${title}\n\n${steps.map((s) => `- ${s}`).join("\n")}\n`;
+
+test("REQ-668 SCN-668a: Spanish title, English steps — D16_scenario_language, its fix in Spanish", () => {
+  const r = checkDraft({
+    deltas: delta(
+      titled("El adulto entra con credenciales válidas", [
+        "GIVEN the family is authorised and its child profile exists",
+        'WHEN the adult enters the valid credentials of the family and taps "Entrar"',
+        'THEN the access state is "Acceso autorizado"',
+      ])
+    ),
+  });
+  const d = r.status.find((x) => x.code === "D16_scenario_language");
+  assert.ok(d, codes(r).join(", "));
+  assert.equal(d!.target, "SCN-002");
+  assert.match(d!.fix ?? "", /Spanish/);
+});
+
+test("REQ-668: the project's language wins over a title's; one language throughout is fine", () => {
+  const english = [
+    "GIVEN the family is authorised and its child profile exists",
+    "WHEN the adult enters the credentials of the family",
+    "THEN the access is granted to the family",
+  ];
+  const spanish = [
+    "GIVEN la familia está autorizada y existe el perfil de su hija",
+    "WHEN el adulto introduce las credenciales de la familia",
+    "THEN el acceso queda autorizado para la familia",
+  ];
+  const es = (steps: string[], title: string) =>
+    codes(checkDraft({ deltas: delta(titled(title, steps)), language: "es" }));
+  assert.ok(es(english, "The adult signs in").includes("D16_scenario_language"));
+  assert.ok(!es(spanish, "El adulto entra").includes("D16_scenario_language"));
+  assert.ok(
+    !codes(checkDraft({ deltas: delta(titled("The adult signs in", english)) })).includes(
+      "D16_scenario_language"
+    )
+  );
+});

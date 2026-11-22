@@ -719,3 +719,41 @@ test("REQ-260 SCN-260a: the agent's front matter needs no fix", (t: TestContext)
   assert.ok(!fs.existsSync(path.join(p.dir, "docs", "specs", "BRIEF-SETUP.md")), r.stdout);
   assert.equal(git(p.dir, "status", "--porcelain").trim(), "M docs/brief.md");
 });
+
+// ── REQ-667: a brief's language becomes the project's ───────────────────────
+
+test("REQ-667 SCN-667a: a Spanish brief, no language set — language: es kept, the guide asks for Spanish steps", (t: TestContext) => {
+  const ES = `---
+product: Cursos — clases en línea para una escuela de idiomas
+surfaces: [api, web]
+actors:
+  - { name: Profesor, surfaces: [api, web] }
+modules: [cursos]
+non_goals: [pagos]
+---
+
+# Cursos
+
+La escuela da clases en línea a grupos pequeños de adultos.
+Cada profesor lleva sus cursos y los alumnos se apuntan a ellos desde la web.
+
+## Module: cursos
+
+Rules
+- Un curso tiene como mucho 12 alumnos.
+- Cuando un curso está lleno, apuntarse se rechaza con "El curso está lleno".
+
+Examples
+- El caso en que Ana se apunta a "Español A2", que tiene 11 alumnos.
+`;
+  const { dir, cli } = project(t, ES);
+  const r = cli("propose", "--from-brief", "cursos");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const config = JSON.parse(fs.readFileSync(path.join(dir, ".specgate", "config.json"), "utf8"));
+  assert.equal(config.language, "es");
+  const guide = fs.readFileSync(
+    path.join(dir, "docs", "specs", "changes", "draft-cursos", "DRAFTING.md"),
+    "utf8"
+  );
+  assert.match(guide, /scenarios' steps[^\n]*Spanish/);
+});

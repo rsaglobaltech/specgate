@@ -33,6 +33,8 @@ export { deferredAnswer };
 export const KINDS = new Set(["functional", "non-functional", "business-rule"]);
 
 export interface DraftFiles {
+  /** The project's `language` (`es`, `en`), when set: every scenario's steps in it (REQ-668). */
+  readonly language?: string | null;
   /** The change's delta specs: `specs/<capability>/spec.md`. */
   readonly deltas: ReadonlyArray<{ readonly path: string; readonly source: string }>;
   /** The brief the draft was written from, as text. Without it, D3 and D6 cannot run. */
@@ -830,6 +832,28 @@ export function checkDraft(files: DraftFiles): DraftReport {
     }
   }
 
+  // D16 — a scenario's steps in the project's language, else its title's (REQ-668).
+  for (const r of reqs) {
+    for (const s of r.scenarios) {
+      const steps = textLanguage(s.steps.map((x) => x.replace(/^\s*\S+\s*/, "")).join(" "));
+      const want = files.language || textLanguage(s.name || "") || textLanguage(r.name || "");
+      if (!steps || !want || steps === want) continue;
+      const name = LANGUAGE_NAMES[want] ?? want;
+      status.push(
+        error(
+          "D16_scenario_language",
+          `${s.id}'s steps are in ${LANGUAGE_NAMES[steps] ?? steps}, not ${name}: one language in a feature file.`,
+          {
+            file: r.file,
+            line: s.line,
+            target: s.id,
+            fix: `Write ${s.id}'s steps in ${name}, as its title — GIVEN, WHEN and THEN stay.`,
+          }
+        )
+      );
+    }
+  }
+
   // D10 — an id the project already uses belongs to someone else.
   if (files.idsInUse && files.idsInUse.size > 0) {
     const used = files.idsInUse;
@@ -1186,4 +1210,38 @@ export function specNotes(
     }
   }
   return notes;
+}
+
+/** The languages D16 names. */
+const LANGUAGE_NAMES: Record<string, string> = { es: "Spanish", en: "English" };
+
+const ES_WORDS = new Set(
+  "el la los las de del que se un una por con para y en es su sus al no está están hay como cuando entonces sin ya lo le".split(
+    " "
+  )
+);
+const EN_WORDS = new Set(
+  "the a an of and is are to in with for its it not has have on when then as be by at their this".split(
+    " "
+  )
+);
+
+/**
+ * A text's language — Spanish or English — by its common words, its quoted
+ * strings left out (a Spanish button in an English step); null when it says
+ * too little to tell (REQ-668).
+ */
+export function textLanguage(text: string): "es" | "en" | null {
+  const words =
+    text
+      .replace(/"[^"]*"|«[^»]*»|`[^`]*`/g, " ")
+      .toLowerCase()
+      .match(/\p{L}+/gu) ?? [];
+  // A word with an accent or an ñ says Spanish too: short titles have few common words.
+  const es = words.filter((w) => ES_WORDS.has(w) || /[áéíóúñü]/.test(w)).length;
+  const en = words.filter((w) => EN_WORDS.has(w)).length;
+  if (es + en < 3) return null;
+  if (es >= en * 2) return "es";
+  if (en >= es * 2) return "en";
+  return null;
 }

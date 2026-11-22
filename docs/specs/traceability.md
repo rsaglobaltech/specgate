@@ -549,6 +549,8 @@
 | REQ-664 | SCN-664a, SCN-664b | `features/agent-integration/REQ-664.feature` | - | - | - | - | `scripts/lib/agent-plan.ts`, `scripts/agent/cli.ts` | tests/unit/agent-hunks.test.ts | Approved |
 | REQ-665 | SCN-665a, SCN-665b | `features/agent-integration/REQ-665.feature` | - | - | - | - | `scripts/lib/agent-plan.ts`, `scripts/agent/cli.ts` | tests/unit/agent-hunks.test.ts | Approved |
 | REQ-666 | SCN-666a, SCN-666b | `features/trusted-gate/REQ-666.feature` | - | - | - | - | `scripts/cli/commands/spec/ScenariosCommand.ts`, `scripts/scenarios.ts` | tests/unit/bdd-gate.test.ts | Approved |
+| REQ-667 | SCN-667a | `features/brief-drafting/REQ-667.feature` | - | - | - | - | `scripts/draft/workshop-import.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/brief-cards.test.ts | Approved |
+| REQ-668 | SCN-668a | `features/brief-drafting/REQ-668.feature` | - | - | - | - | `packages/core/src/domain/DraftChecklist.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/draft-checklist.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

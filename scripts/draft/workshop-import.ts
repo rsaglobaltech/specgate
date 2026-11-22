@@ -177,6 +177,31 @@ export function projectLanguage(projectDir: string): string | null {
   }
 }
 
+/**
+ * The project's `language`, kept from a text when none is set — a workshop's
+ * words (REQ-655), a brief's (REQ-667); null when the text says too little.
+ * The second value says whether it was just written.
+ */
+export function ensureProjectLanguage(
+  projectDir: string,
+  text: string
+): { language: string | null; written: boolean } {
+  const had = projectLanguage(projectDir);
+  if (had) return { language: had, written: false };
+  const language = languageOf(text);
+  if (!language) return { language: null, written: false };
+  const file = path.join(projectDir, CONFIG);
+  let config: Record<string, unknown> = {};
+  try {
+    config = JSON.parse(fs.readFileSync(file, "utf8")) as Record<string, unknown>;
+  } catch {
+    // none yet
+  }
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify({ ...config, language }, null, 2) + "\n", "utf8");
+  return { language, written: true };
+}
+
 /** The language a workshop's words are in: Spanish or English, by their common words. */
 export function languageOf(text: string): string | null {
   const words = text.toLowerCase().match(/\p{L}+/gu) ?? [];
