@@ -522,6 +522,9 @@ export function briefSetupGuide(brief: string): string {
     "  the product; `web`, `mobile` and `desktop` are screens.",
     "- `actors`: one line each, in exactly that `{ name: …, surfaces: [...] }` form.",
     "  Every surface of an actor is also in `surfaces`.",
+    "- A system the brief names — a service the product calls or one that calls it,",
+    "  a provider, a device — uses `api`: `{ name: Payment provider, surfaces: [api] }`,",
+    "  and `api` goes in `surfaces` too. An actor's surfaces are never empty.",
     "- `modules`: lowercase words with dashes, three to eight of them. In the order",
     "  they can be built — what others depend on first. Each small enough to review",
     "  in one sitting: 25 requirements at most. A brief of more phases than that is",
@@ -541,6 +544,20 @@ export function briefSetupGuide(brief: string): string {
 
 /** The prompt `--agent` sends, and the line to paste into any agent. */
 export const BRIEF_SETUP_PASTE = `Propose the front matter of docs/brief.md: follow ${BRIEF_SETUP_FILE}`;
+
+/**
+ * The prompt of the agent's second pass (REQ-653): what Specgate found in its
+ * front matter, each with its fix, before the same guide.
+ */
+export function briefFixPrompt(guide: string, problems: BriefProblem[]): string {
+  return [
+    "Your front matter of docs/brief.md still has these problems. Fix only them, in the front matter, and change nothing else:",
+    "",
+    ...problems.map((p) => `- ${p.code}: ${p.message}\n  fix: ${p.fix}`),
+    "",
+    briefSetupPrompt(guide),
+  ].join("\n");
+}
 
 export function briefSetupPrompt(guide: string): string {
   return [

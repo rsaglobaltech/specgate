@@ -76,6 +76,7 @@ import {
   rootBrief,
   withRootBrief,
   briefSetupPrompt,
+  briefFixPrompt,
   checkFrontMatter,
   frontMatter,
   frontMatterExplanation,
@@ -552,9 +553,9 @@ export function openFindings(projectDir: string, changeId: string, brief: string
   if (!fs.existsSync(path.join(projectDir, CHANGES, changeId))) return "";
   const result = draftReport(projectDir, changeId, brief);
   if ("failure" in result || errorCount(result.report.status) === 0) return "";
-  const lines = result.report.status.filter((d) => d.severity === "error").map(
-    (d) => `- ${d.code}: ${d.message}${d.fix ? `\n  fix: ${d.fix}` : ""}`
-  );
+  const lines = result.report.status
+    .filter((d) => d.severity === "error")
+    .map((d) => `- ${d.code}: ${d.message}${d.fix ? `\n  fix: ${d.fix}` : ""}`);
   return (
     "\n\n---\n\n## The draft already exists. Fix these findings, and only these:\n\n" +
     lines.join("\n") +
@@ -1328,7 +1329,7 @@ export class DraftCommand extends BaseCommand {
           agentLine(agent.command, `is proposing the front matter of ${brief.rel}`, agent.added)
       );
     }
-    const run = runConfinedAgent({
+    let run = runConfinedAgent({
       projectDir,
       changeId: "brief",
       allowed: (rel) => rel === own,
@@ -1336,6 +1337,27 @@ export class DraftCommand extends BaseCommand {
       prompt: briefSetupPrompt(briefSetupGuide(brief.rel)),
       showOutput: !opts.json,
     });
+    // A front matter with problems gets the agent once more, told what they are (REQ-653).
+    const first = readIf(path.resolve(projectDir, brief.rel)) ?? "";
+    const toFix =
+      run.ok && frontMatter(first) !== null && briefBody(first) === briefBody(brief.text)
+        ? checkFrontMatter(first)
+        : [];
+    if (toFix.length > 0) {
+      if (!opts.json)
+        process.stdout.write(
+          "\n" + ui.info(`The front matter has ${toFix.length} problem(s): the agent fixes them.`)
+        );
+      const again = runConfinedAgent({
+        projectDir,
+        changeId: "brief",
+        allowed: (rel) => rel === own,
+        command: agent.command,
+        prompt: briefFixPrompt(briefSetupGuide(brief.rel), toFix),
+        showOutput: !opts.json,
+      });
+      run = { ...again, reverted: [...run.reverted, ...again.reverted] };
+    }
     if (run.problem === "no_git") {
       io.fail({ draft: null }, [
         error("draft_agent_needs_git", "--agent needs a git repository.", {

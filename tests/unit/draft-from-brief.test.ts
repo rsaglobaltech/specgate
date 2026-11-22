@@ -1031,3 +1031,46 @@ test("REQ-652 SCN-652a: two modules drafted at once leave each other's draft alo
     fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10 });
   }
 });
+
+/** An agent that leaves a service with no surfaces, and fixes it once told (REQ-653). */
+const FM_SERVICE_STUB = `
+const fs = require("fs");
+const prompt = fs.readFileSync(0, "utf8");
+fs.appendFileSync(process.env.RUNS_FILE, "run\\n");
+const told = /brief_actor_without_surfaces/.test(prompt);
+const body = fs.readFileSync("docs/brief.md", "utf8").replace(/^---[\\s\\S]*?---\\n\\n/, "");
+const fm = told
+  ? "---\\nproduct: Lingo\\nsurfaces: [web, api]\\nactors:\\n  - { name: Student, surfaces: [web] }\\n  - { name: Servicio de transcripción, surfaces: [api] }\\nmodules: [courses, lessons]\\n---\\n\\n"
+  : "---\\nproduct: Lingo\\nsurfaces: [web]\\nactors:\\n  - { name: Student, surfaces: [web] }\\n  - { name: Servicio de transcripción, surfaces: [] }\\nmodules: [courses, lessons]\\n---\\n\\n";
+fs.writeFileSync("docs/brief.md", fm + body);
+`;
+
+test("REQ-653 SCN-653a: a service left with no surfaces — the agent gets the problem once more and gives it api", (t: TestContext) => {
+  const { dir } = withGit(t, NOTES);
+  const stub = path.join(dir, "..", `fm-svc-${path.basename(dir)}.js`);
+  fs.writeFileSync(stub, FM_SERVICE_STUB);
+  const runs = path.join(dir, "..", `runs-${path.basename(dir)}.txt`);
+  t.after(() => {
+    fs.rmSync(stub, { force: true });
+    fs.rmSync(runs, { force: true });
+  });
+  fs.writeFileSync(runs, "");
+  const r = spawnSync(process.execPath, [CLI, "draft", "--agent", `node ${stub}`, "--json"], {
+    cwd: dir,
+    encoding: "utf8",
+    env: { ...process.env, RUNS_FILE: runs },
+  });
+  assert.equal(fs.readFileSync(runs, "utf8"), "run\nrun\n", "a second pass, told the problem");
+  const answer = JSON.parse(r.stdout);
+  assert.deepEqual(answer.status ?? [], [], JSON.stringify(answer.status));
+  const after = fs.readFileSync(path.join(dir, "docs", "brief.md"), "utf8");
+  assert.match(after, /\{ name: Servicio de transcripción, surfaces: \[api\] \}/);
+  assert.equal(briefBody(after), NOTES, "the brief below the front matter is unchanged");
+});
+
+test("REQ-653 SCN-653b: the guide says a system the brief names uses api, and no actor's surfaces are empty", () => {
+  const { briefSetupGuide } = require("../../scripts/draft/brief-setup");
+  const guide = briefSetupGuide("docs/brief.md");
+  assert.match(guide, /A system the brief names[^]*uses `api`/);
+  assert.match(guide, /never empty/);
+});
