@@ -551,6 +551,7 @@
 | REQ-666 | SCN-666a, SCN-666b | `features/trusted-gate/REQ-666.feature` | - | - | - | - | `scripts/cli/commands/spec/ScenariosCommand.ts`, `scripts/scenarios.ts` | tests/unit/bdd-gate.test.ts | Approved |
 | REQ-667 | SCN-667a | `features/brief-drafting/REQ-667.feature` | - | - | - | - | `scripts/draft/workshop-import.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/brief-cards.test.ts | Approved |
 | REQ-668 | SCN-668a | `features/brief-drafting/REQ-668.feature` | - | - | - | - | `packages/core/src/domain/DraftChecklist.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/draft-checklist.test.ts | Approved |
+| REQ-669 | SCN-669a, SCN-669b | `features/brief-form/REQ-669.feature` | - | - | - | - | `packages/core/src/domain/BriefForm.ts`, `packages/core/src/domain/BriefCards.ts` | tests/unit/brief-form.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

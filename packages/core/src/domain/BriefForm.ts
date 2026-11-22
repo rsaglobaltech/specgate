@@ -14,7 +14,15 @@
  */
 
 import { ACTOR_NAME, actorName, briefModules, yamlName } from "./DraftChecklist";
-import { isPlaceholder, moduleKey, readBriefBody } from "./BriefCards";
+import {
+  QUALITY_HEADING,
+  WHY_HEADING,
+  briefWhy,
+  isPlaceholder,
+  moduleKey,
+  readBriefBody,
+  readBriefQuality,
+} from "./BriefCards";
 import type { ModuleSection } from "./BriefCards";
 
 export interface BriefFormCard {
@@ -46,9 +54,22 @@ export interface BriefFormModule {
   questions: BriefFormCard[];
 }
 
+/** A `## Quality` line in the form (REQ-669): its ISO/IEC 25010 characteristic, null when it names none. */
+export interface BriefFormQuality {
+  characteristic: string | null;
+  modules: string[];
+  text: string;
+  /** 1-based, in the whole brief. */
+  line: number;
+}
+
 export interface BriefFormData {
   /** The file's line endings: `crlf` when any line ends in CRLF. */
   eol: "lf" | "crlf";
+  /** `## Why`: its text and its heading's line; null when the brief has none (REQ-669). */
+  why: { text: string; line: number } | null;
+  /** `## Quality`: one entry per line, in order (REQ-669). */
+  quality: BriefFormQuality[];
   frontMatter: {
     /** Its opening `---`, or null when the brief has none. */
     line: number | null;
@@ -81,6 +102,10 @@ export interface BriefFormInput {
     examples?: CardInput[];
     questions?: CardInput[];
   }>;
+  /** Absent: `## Why` as it is. Given: its text, the section made or rewritten; empty removes it (REQ-669). */
+  why?: { text: string } | string | null;
+  /** Absent: `## Quality` as it is. Given: its lines, in order (REQ-669). */
+  quality?: CardInput[];
 }
 
 const unquote = (s: string) => s.trim().replace(/^["']|["']$/g, "");
@@ -251,8 +276,16 @@ export function readBriefForm(text: string): BriefFormData {
     };
   });
 
+  const why = briefWhy(src);
   return {
     eol,
+    why: why ? { text: why.text, line: why.line } : null,
+    quality: readBriefQuality(src).map((q) => ({
+      characteristic: q.characteristic ?? null,
+      modules: [...q.modules],
+      text: q.text,
+      line: q.line,
+    })),
     frontMatter: {
       line: fm ? 1 : null,
       product: { value: product, line: lineOf("product") },
@@ -554,6 +587,53 @@ export function writeBriefForm(text: string, input: BriefFormInput): string {
     let end = sec.line;
     while (end < lines.length && !/^##\s/.test(lines[end])) end += 1;
     edits.push({ at: sec.line - 1, count: end - (sec.line - 1), lines: [] });
+  }
+
+  // ── ## Why and ## Quality (REQ-669): only when given, and changed ──
+  const sectionEdit = (heading: RegExp, body: string[] | null, before: RegExp) => {
+    const at = lines.findIndex((l) => heading.test(l.trim()));
+    if (at >= 0) {
+      let end = at + 1;
+      while (end < lines.length && !/^##\s/.test(lines[end])) end += 1;
+      edits.push(
+        body === null
+          ? { at, count: end - at, lines: [] }
+          : {
+              at: at + 1,
+              count: end - at - 1,
+              lines: ["", ...body, ...(end < lines.length ? [""] : [])],
+            }
+      );
+      return;
+    }
+    if (body === null) return;
+    const fmEnd = (() => {
+      const fm = frontRange(lines);
+      return fm ? fm.close + 1 : 0;
+    })();
+    let next = lines.findIndex((l, i) => i >= fmEnd && before.test(l));
+    if (next < 0) next = lines.length;
+    // Made where it belongs: Why before the first section, Quality before the first module.
+    edits.push({
+      at: next,
+      count: 0,
+      lines: [`## ${heading === WHY_HEADING ? "Why" : "Quality"}`, "", ...body, ""],
+    });
+  };
+  if (input.why !== undefined) {
+    const text = (typeof input.why === "string" ? input.why : (input.why?.text ?? "")).trim();
+    if (text !== (current.why?.text ?? ""))
+      sectionEdit(WHY_HEADING, text ? text.split("\n") : null, /^##\s/);
+  }
+  if (input.quality !== undefined) {
+    const now = filled(input.quality);
+    if (
+      !same(
+        now,
+        current.quality.map((q) => q.text)
+      )
+    )
+      sectionEdit(QUALITY_HEADING, now.length ? now.map((q) => `- ${q}`) : null, /^##\s+Module\b/i);
   }
 
   if (edits.length === 0 && appended.length === 0) return src;

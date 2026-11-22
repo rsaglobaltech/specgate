@@ -374,9 +374,9 @@ export interface QualityEntry {
   readonly line: number;
 }
 
-const QUALITY_HEADING =
+export const QUALITY_HEADING =
   /^##\s+(?:quality(?:\s+requirements)?|calidad|requisitos\s+de\s+calidad|non[- ]functional\s+requirements|requisitos\s+no\s+funcionales)\s*#*\s*$/i;
-const WHY_HEADING = /^##\s+(?:why|por\s+qu[eé]|goals|objectives|objetivos)\s*:?\s*#*\s*$/i;
+export const WHY_HEADING = /^##\s+(?:why|por\s+qu[eé]|goals|objectives|objetivos)\s*:?\s*#*\s*$/i;
 /** `performance (courses, lessons): …` — a name of letters, an optional scope, a colon. */
 const QUALITY_ITEM = /^([\p{L}][\p{L} \-/]{0,40}?)\s*(?:\(([^()]*)\))?\s*:\s+(.+)$/u;
 
