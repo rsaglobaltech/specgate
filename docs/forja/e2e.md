@@ -57,6 +57,22 @@ not in CI:
 `E2E_PORT` changes the web port and `E2E_BASE_URL` points the tests at another URL. The tests run in
 Desktop Chrome (Chromium), one at a time, with traces kept on failure.
 
+## The scenarios (BDD), with Specgate
+
+With the `specgate` extra, e2e-web also wires [playwright-bdd](https://vitalets.github.io/playwright-bdd/)
+`~9.2.1`, so the feature files Specgate writes when a change is approved run before any code:
+
+- `playwright.config.ts` gets two projects: `e2e` (the tests above) and `bdd`, generated from the
+  repository's `features/**/*.feature` into `apps/web/.features-gen` (ignored by git).
+- The steps live in `apps/web/e2e/steps/`; `steps.ts` exports `Given`, `When` and `Then`.
+- A scenario whose steps are not written yet fails when it runs (`Missing step: …`), never at
+  generation: red first, then the steps, then green.
+- `npm run test:bdd` at the root runs them; Specgate's gate runs it with the requirement's tag:
+  `bdd_cmd: npm run test:bdd --silent -- --grep "{tags}"`, and `bdd: required` in
+  `.specgate/gate.yaml`.
+
+`test:e2e` runs only the `e2e` project.
+
 ## Run them
 
 On Node:
