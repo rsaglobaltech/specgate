@@ -151,6 +151,16 @@ const BASE: KeySpec[] = [
     kind: "string",
   },
   {
+    key: "bdd_cmd",
+    description:
+      "The command that runs the feature files (playwright-bdd, Cucumber…), {tags} the scenarios to run: required by a gate with `bdd: required` (REQ-661).",
+    values: null,
+    pattern: "\\{tags\\}",
+    default: null,
+    file: HARNESS_FILE,
+    kind: "string",
+  },
+  {
     key: "agent",
     description:
       "The agent `harness run` and the studio's Build hand each requirement to, with {prompt_file}.",

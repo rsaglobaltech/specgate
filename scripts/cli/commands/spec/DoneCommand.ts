@@ -1,3 +1,4 @@
+import { readGatePolicy } from "../../../lib/gate-policy";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { archRun } from "../../../lib/quality-run";
 import { error } from "../../../lib/diagnostics";
@@ -366,6 +367,16 @@ export class DoneCommand extends BaseCommand {
       ]);
     }
 
+    // REQ-662: with executable scenarios required, the requirement's own must pass.
+    const bdd = gated ? bddRefusal(projectDir, id, !!opts.json) : null;
+    if (bdd)
+      io.fail(NULL_SHAPE, [
+        error(bdd.code, `${id} not marked ${opts.status}: ${bdd.message}`, {
+          target: id,
+          fix: bdd.fix,
+        }),
+      ]);
+
     const result = writeStatus(projectDir, dir, owner, id, opts.status);
     if (result.ok) warnUntested(opts, dir, id);
     if (!result.ok) {
@@ -552,6 +563,13 @@ export class DoneCommand extends BaseCommand {
         }
       }
     }
+
+    // REQ-662: with executable scenarios required, each requirement's own must pass.
+    if (opts.check)
+      for (const id of ids.filter((x) => results.get(x)!.ok)) {
+        const bdd = bddRefusal(projectDir, id, !!opts.json);
+        if (bdd) results.set(id, { ok: false, code: bdd.code, message: bdd.message });
+      }
 
     for (const id of ids.filter((x) => results.get(x)!.ok)) {
       const owner = view ? view.requirements.find((r) => r.id === id) : undefined;
@@ -773,4 +791,37 @@ export function nextAfter(
   return following
     ? ui.next(`specgate apply ${following.requirement}`, "the next requirement")
     : ui.next("specgate status", "what is left, and the next requirement");
+}
+
+/**
+ * Why a requirement's scenarios refuse it (bdd-gate REQ-662): in a project with
+ * `bdd: required`, its `bdd_cmd` run with `{tags}` as `@<REQ>`; null when they pass
+ * or the project does not require them.
+ */
+function bddRefusal(
+  projectDir: string,
+  id: string,
+  json: boolean
+): { code: string; message: string; fix: string } | null {
+  if (readGatePolicy(projectDir).bdd !== "required") return null;
+  const bddCmd = (readHarnessConfig(projectDir)?.bddCmd || "").trim();
+  if (!bddCmd)
+    return {
+      code: "apply_bdd_missing",
+      message: "the gate requires executable scenarios and no bdd_cmd runs them",
+      fix: 'specgate config set bdd_cmd "<runs the feature files, with {tags}>"',
+    };
+  const cmd = bddCmd.includes("{tags}")
+    ? bddCmd.split("{tags}").join(`@${id}`)
+    : `${bddCmd} @${id}`;
+  const run = spawnSync(forShell(cmd), { cwd: projectDir, encoding: "utf8", shell: true });
+  if (run.status === 0) return null;
+  const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
+  if (detail && !json)
+    process.stderr.write(indent(detail.split("\n").slice(-30).join("\n")) + "\n\n");
+  return {
+    code: "apply_bdd_failed",
+    message: `its scenarios failed: ${cmd}`,
+    fix: `make its scenarios pass — the steps and the code — then run specgate apply ${id}`,
+  };
 }

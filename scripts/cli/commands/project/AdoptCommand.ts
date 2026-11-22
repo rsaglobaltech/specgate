@@ -6,7 +6,7 @@ import { migrateToDerived, needsUnionMerge } from "../spec/MatrixCommand";
 import * as path from "node:path";
 import { renderTemplate } from "../../../../packages/core/src/domain/PackSpec";
 import { slugify } from "./WizardCommand";
-import { installGate, refreshGate } from "./gate";
+import { installGate, refreshGate, setUpBdd } from "./gate";
 import { BaseCommand } from "../../../lib/command";
 import type { Capability } from "./OnboardCommand";
 
@@ -848,6 +848,8 @@ export class AdoptProjectCommand extends BaseCommand {
     // The CI file was written before the test command was saved: once it is,
     // the job reads it from the configuration, as `check` does here.
     if (gateWritten && !opts.dryRun && readHarnessConfig(dir)?.testCmd) refreshGate(dir);
+    // REQ-663: the feature files' runner, by the stack.
+    else if (!opts.dryRun) setUpBdd(dir);
     process.stdout.write(readinessText(ready));
     process.exit(0);
   }

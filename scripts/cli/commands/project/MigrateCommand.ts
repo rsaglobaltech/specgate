@@ -1,3 +1,8 @@
+import { bddCommandFor, requireBdd, syncApprovedChanges } from "../../../lib/bdd";
+import {
+  readHarnessConfig,
+  writeHarnessCommand,
+} from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
@@ -56,11 +61,43 @@ export class MigrateCommand extends BaseCommand {
           }),
         ]);
     }
+    // REQ-663: executable scenarios, required from now on.
+    if (positional[0] === "bdd") {
+      const dir = path.resolve(dirArg);
+      const cmd = bddCommandFor(dir);
+      const wrote = dryRun ? false : requireBdd(dir);
+      const had = (readHarnessConfig(dir)?.bddCmd || "").trim();
+      if (!dryRun && cmd && !had) writeHarnessCommand(dir, "bdd_cmd", cmd);
+      const features = dryRun ? [] : syncApprovedChanges(dir);
+      io.emit(
+        { migrate: { target: "bdd", dryRun, required: true, bddCmd: had || cmd, features } },
+        () => {
+          const out = (s: string) => process.stdout.write(s);
+          out(ui.header("migrate", dryRun ? "bdd · dry run" : "bdd"));
+          out(
+            ui.ok(
+              `${wrote || dryRun ? "bdd: required" : "bdd was required already"} — the scenarios run before any code.`
+            ) + "\n"
+          );
+          out(
+            had || cmd
+              ? `  bdd_cmd: ${had || cmd}\n`
+              : '  bdd_cmd: set it — specgate config set bdd_cmd "<runs the feature files, with {tags}>"\n'
+          );
+          for (const f of features) out(`  + ${f}\n`);
+        }
+      );
+      return;
+    }
     if (positional[0] !== "1.0") {
       io.usage(NULL_SHAPE, [
-        error("migrate_target", `migrate knows one target: 1.0 (got ${positional[0] || "none"}).`, {
-          fix: "specgate migrate 1.0 --dry-run",
-        }),
+        error(
+          "migrate_target",
+          `migrate knows two targets: 1.0 and bdd (got ${positional[0] || "none"}).`,
+          {
+            fix: "specgate migrate 1.0 --dry-run",
+          }
+        ),
       ]);
     }
     const dir = path.resolve(dirArg);

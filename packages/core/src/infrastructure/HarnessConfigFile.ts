@@ -52,6 +52,8 @@ export const KNOWN_KEYS = new Set([
   "full_on",
   "gate_parallel",
   "arch_cmd",
+  // REQ-661: the command that runs the feature files, `{tags}` the scenarios to run.
+  "bdd_cmd",
   // ADR-0028 points 3-4 (REQ-231): the SARIF the architecture tool writes.
   "arch_sarif",
   "setup_cmd",
@@ -214,6 +216,7 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
     config.gateParallel = !/^(0|false|no|off)$/i.test(String(parsed.gate_parallel).trim());
   }
   if (parsed.arch_cmd !== undefined) config.archCmd = String(parsed.arch_cmd);
+  if (parsed.bdd_cmd !== undefined) config.bddCmd = String(parsed.bdd_cmd);
   if (parsed.arch_sarif !== undefined) config.archSarif = String(parsed.arch_sarif);
   if (parsed.setup_cmd !== undefined) config.setupCmd = String(parsed.setup_cmd);
   if (parsed.max_attempts !== undefined) {
@@ -477,6 +480,7 @@ export function resolveHarnessSettings(
     agentProfile: cliArgs.agent ? cliArgs.agentProfile || "" : file.agentProfile || "",
     testCmd: cliArgs.testCmd || file.testCmd || "",
     archCmd: cliArgs.archCmd || file.archCmd || "",
+    bddCmd: file.bddCmd || "",
     archSarif: file.archSarif || "",
     setupCmd: cliArgs.setupCmd || file.setupCmd || "",
     maxAttempts: cliArgs.maxAttempts || file.maxAttempts || 3,
@@ -663,7 +667,7 @@ function isAdvisoryProfile(projectDir: string, profileName: string): boolean {
  */
 export function writeHarnessCommand(
   projectDir: string,
-  key: "test_cmd" | "arch_cmd" | "agent",
+  key: "test_cmd" | "arch_cmd" | "bdd_cmd" | "agent",
   value: string
 ): string {
   const filePath = path.join(projectDir, HARNESS_CONFIG_FILE);

@@ -99,6 +99,8 @@ export interface GatePolicy {
   readonly rules: Readonly<Record<Rule, Level>>;
   /** `YYYY-MM-DD`: before it, every `error` is reported as a `warning`. */
   readonly enforceFrom?: string;
+  /** `required`: the scenarios are executable and the gate runs them (REQ-661); absent: not set up yet. */
+  readonly bdd?: "required";
   /** What is wrong with the file, each with its fix; empty when it reads. */
   readonly problems: ReadonlyArray<{ readonly message: string; readonly fix: string }>;
 }
@@ -131,10 +133,10 @@ export function parseGatePolicy(text: string): GatePolicy {
   }
 
   for (const key of Object.keys(doc)) {
-    if (!["preset", "rules", "enforce_from"].includes(key)) {
+    if (!["preset", "rules", "enforce_from", "bdd"].includes(key)) {
       problems.push({
         message: `\`${key}\` is not a key of the gate policy`,
-        fix: "The keys are preset, rules and enforce_from.",
+        fix: "The keys are preset, rules, enforce_from and bdd.",
       });
     }
   }
@@ -192,7 +194,8 @@ export function parseGatePolicy(text: string): GatePolicy {
     }
   }
 
-  return { source: "file", preset, rules, enforceFrom, problems };
+  const bdd = String(doc.bdd ?? "").trim() === "required" ? ("required" as const) : undefined;
+  return { source: "file", preset, rules, enforceFrom, ...(bdd ? { bdd } : {}), problems };
 }
 
 /** Today, as `YYYY-MM-DD`; `SPECGATE_TODAY` stands in for the clock in tests. */
@@ -238,6 +241,8 @@ export function gatePolicyTemplate(): string {
       (r) => `  ${`${r}: ${PRESET_RULES.standard[r]}`.padEnd(width)}  # ${RULE_MEANING[r]}`
     ),
     "# enforce_from: 2026-12-31   # until then, every error is reported as a warning",
+    "# The scenarios are feature files a runner checks (bdd_cmd), before any code (REQ-661).",
+    "bdd: required",
     "",
   ];
   return lines.join("\n");

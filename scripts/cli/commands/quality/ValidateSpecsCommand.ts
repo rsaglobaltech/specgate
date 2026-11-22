@@ -1,3 +1,5 @@
+import { bddFindings } from "../../../lib/bdd";
+import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -1210,6 +1212,8 @@ export class ValidateSpecsCommand extends BaseCommand {
       ...ruleFindings(targetDir, strict),
       ...actorFindings(targetDir),
       ...staleDiagramFindings(targetDir),
+      // REQ-661: the scenarios executable, before any code, in every project that requires it.
+      ...bddFindings(targetDir, readHarnessConfig(targetDir)?.bddCmd),
     ];
     const errors = found.filter((d) => d.severity === "error");
     for (const d of found.filter((x) => x.severity !== "error")) {
@@ -1650,6 +1654,10 @@ export class ValidateSpecsCommand extends BaseCommand {
       const rel = path.relative(targetDir, ff).split(path.sep).join("/");
       // REQ-552: a file of journeys only has no row of its own: a journey is
       // not one requirement's scenario, and `status --json` lists it.
+      // REQ-660: an approved change's feature file belongs to it until it is archived.
+      const pending = /^@change:(\S+)/m.exec(fs.readFileSync(ff, "utf8"))?.[1];
+      if (pending && fs.existsSync(path.join(targetDir, "docs", "specs", "changes", pending)))
+        continue;
       if (!traceContent.includes(rel) && !onlyJourneys(fs.readFileSync(ff, "utf8"))) {
         const exampleRow =
           traceMode === "rich"

@@ -10,6 +10,7 @@
  * what lets an agent drive this without screen-scraping.
  */
 
+import { dropChangeTag, syncChangeFeatures, syncIfApproved } from "../../../lib/bdd";
 import { addGlossaryTerms, refreshDomainDiagrams } from "../../../lib/domain-docs";
 import * as fs from "node:fs";
 import {
@@ -673,16 +674,41 @@ function cmdApprove(opts: ChangeOptions) {
       }),
     ]);
   }
-  emit(opts, { approve: r }, () => {
+  // REQ-660: approved, its scenarios are feature files before any code.
+  const features = r.approved ? syncIfApproved(projectDir, id!) : [];
+  emit(opts, { approve: { ...r, features } }, () => {
     const did = r.layers && r.layers.length ? ` — ${r.layers.join(", ")}` : "";
     process.stdout.write(
       ui.header("change approve", id) +
         (r.approved
           ? ui.ok(`${id} approved on ${r.approved}${did}.`)
           : ui.ok(`Recorded${did}. Still waiting: ${(r.pending || []).join(", ")}.`)) +
-        "\n"
+        "\n" +
+        features
+          .map((f) => `    + ${f}   ${ui.muted("its scenarios, to run before any code")}\n`)
+          .join("")
     );
   });
+}
+
+/** `change features <id>` — an approved change's scenarios written again as feature files (REQ-660). */
+function cmdFeatures(opts: ChangeOptions) {
+  const projectDir = resolveProjectDir(opts.projectDir);
+  const id = opts.positional[0];
+  const nullShape = { features: null };
+  if (!id || !fs.existsSync(path.join(projectDir, "docs", "specs", "changes", id)))
+    return fail(opts, nullShape, [
+      error("change_not_found", `No open change ${id ?? ""}.`, { fix: "specgate change list" }),
+    ]);
+  const written = syncChangeFeatures(projectDir, id);
+  emit(opts, { features: { change: id, written } }, () =>
+    process.stdout.write(
+      ui.header("change features", id) +
+        (written.length
+          ? written.map((f) => `    + ${f}\n`).join("")
+          : ui.ok("Every feature file already matches its scenarios.") + "\n")
+    )
+  );
 }
 
 /** `change note <id> "<text>" [--req REQ]` — a change asked in the reviewer's words (REQ-207). */
@@ -1514,6 +1540,8 @@ function cmdArchive(opts: ChangeOptions) {
   // A generated matrix is rebuilt from the capability specs just written, so
   // the rows archive wrote and the rows derivation produces cannot disagree.
   refreshDerivedMatrix(projectDir);
+  // REQ-660: archived, its feature files are the specification's: the change's tag goes.
+  dropChangeTag(projectDir, changeId);
   // REQ-594: the entity model and the actors drawn again: the requirements
   // they come from changed here, not only at the next `check`.
   const regenerated = refreshDomainDiagrams(projectDir);
@@ -1605,6 +1633,7 @@ export class CliCommand extends BaseCommand {
       author: cmdAuthor,
       impact: cmdImpact,
       approve: cmdApprove,
+      features: cmdFeatures,
       note: cmdNote,
     };
 

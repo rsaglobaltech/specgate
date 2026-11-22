@@ -1,3 +1,8 @@
+import { bddCommandFor } from "../../../lib/bdd";
+import {
+  readHarnessConfig,
+  writeHarnessCommand,
+} from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as ui from "../../../lib/ui";
@@ -49,6 +54,18 @@ export function installGate(
  */
 export function refreshGate(projectDir: string): void {
   writeGate(projectDir, { force: true });
+  setUpBdd(projectDir);
+}
+
+/**
+ * The command that runs the feature files, by the stack, when the harness has
+ * none yet (bdd-gate REQ-663); the gate says to set it when the stack does not.
+ */
+export function setUpBdd(projectDir: string): void {
+  const had = (readHarnessConfig(projectDir)?.bddCmd || "").trim();
+  if (had) return;
+  const cmd = bddCommandFor(projectDir);
+  if (cmd) writeHarnessCommand(projectDir, "bdd_cmd", cmd);
 }
 
 /**

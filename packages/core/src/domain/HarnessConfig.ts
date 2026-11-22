@@ -32,6 +32,11 @@ export interface HarnessSettings {
    */
   archCmd?: string;
   /**
+   * The command that runs the feature files (REQ-661): playwright-bdd, Cucumber…,
+   * `{tags}` standing for the scenarios to run — `@REQ-031` for one requirement.
+   */
+  bddCmd?: string;
+  /**
    * The SARIF `arch_cmd` writes, when it writes one (REQ-231): its findings
    * are judged against the baseline, so only a violation a change adds fails.
    */
@@ -169,6 +174,7 @@ export class HarnessConfig {
       agent: cliArgs.agent || file.agent || HarnessConfig.DEFAULT_SETTINGS.agent,
       testCmd: cliArgs.testCmd || file.testCmd || HarnessConfig.DEFAULT_SETTINGS.testCmd,
       archCmd: cliArgs.archCmd || file.archCmd || "",
+      bddCmd: file.bddCmd || "",
       setupCmd: file.setupCmd || "",
       maxAttempts:
         cliArgs.maxAttempts || file.maxAttempts || HarnessConfig.DEFAULT_SETTINGS.maxAttempts,
