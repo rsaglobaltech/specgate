@@ -536,6 +536,7 @@
 | REQ-651 | SCN-651a | `features/project-setup/REQ-651.feature` | - | - | - | - | `scripts/cli/commands/project/Forja.ts` | tests/unit/forja-front-door.test.ts | Approved |
 | REQ-652 | SCN-652a | `features/brief-cards/REQ-652.feature` | - | - | - | - | `scripts/draft/confined-agent.ts` | tests/unit/draft-from-brief.test.ts | Approved |
 | REQ-653 | SCN-653a, SCN-653b | `features/brief-cards/REQ-653.feature` | - | - | - | - | `scripts/draft/brief-setup.ts` | tests/unit/draft-from-brief.test.ts | Approved |
+| REQ-654 | SCN-654a, SCN-654b, SCN-654c | `features/trusted-gate/REQ-654.feature` | - | - | - | - | `scripts/lib/progress.ts` | tests/unit/progress-file.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

@@ -8,6 +8,7 @@
  */
 
 import type { Diagnostic } from "./diagnostics";
+import { progress } from "./progress";
 
 export type StageName = "ids" | "changes" | "validate" | "architecture" | "tests" | "quality";
 export type StageResult = "passed" | "failed" | "skipped" | "not run";
@@ -63,6 +64,13 @@ export class GateStages {
       (x) => x.stage === stage && (extra.name === undefined || x.name === extra.name)
     );
     if (!s) return;
+    // REQ-654: how a stage ended, for a studio following the gate.
+    if (result !== "not run")
+      progress({
+        stage: s.stage,
+        ...(s.name ? { name: s.name } : {}),
+        state: result === "skipped" ? "skipped" : result,
+      });
     s.result = result;
     s.findings = findings;
     if (extra.command !== undefined) s.command = extra.command;

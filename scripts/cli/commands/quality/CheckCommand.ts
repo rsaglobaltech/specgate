@@ -44,6 +44,7 @@ import { planTests } from "../../../lib/test-selection";
 import { actorsNotDrawn, glossaryMissing, refreshDomainDiagrams } from "../../../lib/domain-docs";
 import { stackFileCommand } from "../../../lib/stack-detect";
 import { startShell, type StageRun } from "../../../lib/stage-run";
+import { progress, runLogged } from "../../../lib/progress";
 import type { Diagnostic } from "../../../lib/diagnostics";
 import {
   GATE_POLICY_FILE,
@@ -591,6 +592,7 @@ export class CheckCommand extends BaseCommand {
     // 1. validate --strict, alone: it is the fastest, and it fails fast.
     {
       const started = Date.now();
+      progress({ stage: "validate", state: "running" });
       const label = `Specification   ${ui.muted("validate --strict")}`;
       const run = json
         ? validateRun(true)
@@ -642,12 +644,13 @@ export class CheckCommand extends BaseCommand {
       }
     }
     const runArch = (command: string): Promise<StageRun> => {
-      if (!harness.archSarif) return startShell(command, projectDir);
+      if (!harness.archSarif) return startShell(command, projectDir, "architecture");
       const started = Date.now();
       const r = archRun(projectDir, command, harness.archSarif, baseFlag || "");
       return Promise.resolve({ ...r, ms: since(started) });
     };
-    const runTests = (command: string): Promise<StageRun> => startShell(command, projectDir);
+    const runTests = (command: string): Promise<StageRun> =>
+      startShell(command, projectDir, "tests");
     const archLabel = (command: string) => `Architecture    ${ui.muted(command)}`;
     const testsLabel = (command: string) => `Tests           ${ui.muted(command)}`;
 
@@ -678,11 +681,7 @@ export class CheckCommand extends BaseCommand {
           const started = Date.now();
           const r = harness.archSarif
             ? archRun(projectDir, archStep.argv[0], harness.archSarif, baseFlag || "")
-            : spawnSync(forShell(archStep.argv[0]), {
-                cwd: projectDir,
-                encoding: "utf8",
-                shell: true,
-              });
+            : runLogged("architecture", forShell(archStep.argv[0]), projectDir);
           return { status: r.status, stdout: r.stdout, stderr: r.stderr, ms: since(started) };
         };
         archResult = json
@@ -692,11 +691,7 @@ export class CheckCommand extends BaseCommand {
       if (testCommand && (!archResult || archResult.status === 0)) {
         const exec = () => {
           const started = Date.now();
-          const r = spawnSync(forShell(testCommand), {
-            cwd: projectDir,
-            encoding: "utf8",
-            shell: true,
-          });
+          const r = runLogged("tests", forShell(testCommand), projectDir);
           return { status: r.status, stdout: r.stdout, stderr: r.stderr, ms: since(started) };
         };
         testsResult = json

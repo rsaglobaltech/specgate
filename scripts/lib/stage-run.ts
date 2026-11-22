@@ -11,6 +11,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { progress } from "./progress";
 import { spawn } from "node:child_process";
 import { forShell } from "./shell-command";
 
@@ -24,9 +25,11 @@ export interface StageRun {
 }
 
 /** Start `command` through the shell in `cwd`; the promise settles when it ends. */
-export function startShell(command: string, cwd: string): Promise<StageRun> {
+export function startShell(command: string, cwd: string, stage?: string): Promise<StageRun> {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-stage-"));
   const outFile = path.join(dir, "stdout");
+  // REQ-654: the stage starts, its output written to outFile as it comes.
+  if (stage) progress({ stage, state: "running", log: outFile });
   const errFile = path.join(dir, "stderr");
   const out = fs.openSync(outFile, "w");
   const err = fs.openSync(errFile, "w");

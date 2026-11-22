@@ -16,6 +16,7 @@ import {
   readHarnessConfig,
 } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { spawnSync } from "node:child_process";
+import { progress, runLogged } from "../../../lib/progress";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { findCliRoot } from "../../../lib/project-root";
@@ -289,9 +290,13 @@ export class DoneCommand extends BaseCommand {
     });
 
     for (const step of plan.steps) {
+      // REQ-654: each stage tells when it starts and how it ends.
+      const stageName =
+        step.stage === "validate" ? "validate" : step.stage === "arch" ? "architecture" : "tests";
       const exec = () =>
         step.stage === "validate"
-          ? spawnSync(
+          ? (progress({ stage: "validate", state: "running" }),
+            spawnSync(
               process.execPath,
               [
                 path.join(findCliRoot(__dirname), "bin", "specgate.js"),
@@ -300,12 +305,8 @@ export class DoneCommand extends BaseCommand {
                 ...(opts.json ? ["--json"] : []),
               ],
               { encoding: "utf8" }
-            )
-          : spawnSync(forShell(step.argv[0]), {
-              cwd: projectDir,
-              encoding: "utf8",
-              shell: true,
-            });
+            ))
+          : runLogged(stageName, forShell(step.argv[0]), projectDir);
       const label =
         step.stage === "validate"
           ? `Specification   ${ui.muted(`the gate, for ${id}`)}`
@@ -313,6 +314,7 @@ export class DoneCommand extends BaseCommand {
             ? `Architecture    ${ui.muted(step.argv[0])}`
             : `Tests           ${ui.muted(step.argv[0])}`;
       const run = opts.json ? exec() : ui.task(label, exec, (r) => ({ ok: r.status === 0 }));
+      progress({ stage: stageName, state: run.status === 0 ? "passed" : "failed" });
 
       if (run.status === 0) continue;
 
