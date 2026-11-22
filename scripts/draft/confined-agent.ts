@@ -42,6 +42,62 @@ export interface ConfinedRun {
  * Where what an undo removed is kept: inside the repository's git folder, so
  * the working tree is left exactly as it was and nothing new shows in status.
  */
+/**
+ * Where each draft's agent marks when it runs (REQ-652): inside git's own
+ * folder, so no status ever shows it. One file per change: its pid, when its
+ * agent started and, once done, when it ended.
+ */
+function draftingDir(projectDir: string): string {
+  return path.join(
+    projectDir,
+    undoneDir(projectDir).replace(/specgate-undone$/, "specgate-drafting")
+  );
+}
+
+interface DraftingMark {
+  pid: number;
+  started: number;
+  ended?: number;
+}
+
+/**
+ * The other changes whose agent ran at some time between `since` and now
+ * (REQ-652): their folders are theirs, so this run neither keeps nor undoes
+ * what changes in them. A mark with no end whose process is gone still counts:
+ * what it left is the person's to look at, not this run's to undo.
+ */
+function othersDrafting(projectDir: string, own: string, since: number): Set<string> {
+  const dir = draftingDir(projectDir);
+  const out = new Set<string>();
+  if (!fs.existsSync(dir)) return out;
+  for (const f of fs.readdirSync(dir)) {
+    if (!f.endsWith(".json")) continue;
+    const id = f.slice(0, -".json".length);
+    if (id === own) continue;
+    try {
+      const m = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")) as DraftingMark;
+      if ((m.ended ?? Date.now()) >= since) out.add(id);
+    } catch {
+      // A mark half written: its draft is running, so it counts.
+      out.add(id);
+    }
+  }
+  return out;
+}
+
+function markDrafting(projectDir: string, changeId: string, mark: DraftingMark): void {
+  const dir = draftingDir(projectDir);
+  fs.mkdirSync(dir, { recursive: true });
+  // Marks a day old are of runs long done: dropped as the folder is written.
+  for (const f of fs.readdirSync(dir)) {
+    const full = path.join(dir, f);
+    if (Date.now() - fs.statSync(full).mtimeMs > 86_400_000) fs.rmSync(full, { force: true });
+  }
+  fs.writeFileSync(path.join(dir, `${changeId}.json`), JSON.stringify(mark));
+}
+
+const CHANGE_OF = /^docs\/specs\/changes\/([^/]+)\//;
+
 function undoneDir(projectDir: string): string {
   const r = spawnSync("git", ["-C", projectDir, "rev-parse", "--git-dir"], { encoding: "utf8" });
   const gitDir = String(r.stdout || ".git").trim() || ".git";
@@ -141,11 +197,17 @@ export function runConfinedAgent(o: {
   const inScope = o.allowed || ((rel: string) => isInScope(rel, o.changeId));
   const before = dirtyPaths(o.projectDir);
   if (before === null) return { ok: false, problem: "no_git", wrote: [], reverted: [] };
+  // A draft marks when its agent runs, so another draft at the same time leaves it alone (REQ-652).
+  const started = Date.now();
+  const drafting = !o.allowed;
+  if (drafting) markDrafting(o.projectDir, o.changeId, { pid: process.pid, started });
+  let others = othersDrafting(o.projectDir, o.changeId, started);
+  const theirs = (rel: string) => others.has(CHANGE_OF.exec(rel)?.[1] ?? "");
 
   // What the person had, outside the change, before the agent touched anything.
   const saved = new Map<string, Buffer | null>();
   for (const rel of before) {
-    if (inScope(rel)) continue;
+    if (inScope(rel) || theirs(rel)) continue;
     const full = path.join(o.projectDir, rel);
     saved.set(
       rel,
@@ -172,6 +234,10 @@ export function runConfinedAgent(o: {
     removeTempFile(promptFile);
   }
 
+  if (drafting)
+    markDrafting(o.projectDir, o.changeId, { pid: process.pid, started, ended: Date.now() });
+  // The drafts that ran while this agent did, ended or not.
+  others = othersDrafting(o.projectDir, o.changeId, started);
   const after = dirtyPaths(o.projectDir) || [];
   const wrote: string[] = [];
   const reverted: string[] = [];
@@ -191,6 +257,7 @@ export function runConfinedAgent(o: {
       if (!before.includes(rel)) wrote.push(rel);
       continue;
     }
+    if (theirs(rel)) continue;
     const full = path.join(o.projectDir, rel);
     if (saved.has(rel)) {
       // Present: `saved.has(rel)` was just checked. Null means "did not exist".
@@ -216,7 +283,7 @@ export function runConfinedAgent(o: {
   }
   // A file the person had changed and the agent deleted is gone from `after`.
   for (const [rel, was] of saved) {
-    if (was === null || after.includes(rel)) continue;
+    if (was === null || after.includes(rel) || theirs(rel)) continue;
     const full = path.join(o.projectDir, rel);
     if (!fs.existsSync(full)) {
       fs.mkdirSync(path.dirname(full), { recursive: true });

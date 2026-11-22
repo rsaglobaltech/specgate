@@ -534,6 +534,7 @@
 | REQ-649 | SCN-649a | `features/harness/REQ-649.feature` | - | - | - | - | `scripts/harness/run/attempt.ts` | tests/unit/harness-control.test.ts | Approved |
 | REQ-650 | SCN-650a | `features/harness/REQ-650.feature` | - | - | - | - | `scripts/lib/agent-permission.ts` | tests/unit/agent-no-mcp.test.ts, tests/unit/draft-from-brief.test.ts | Approved |
 | REQ-651 | SCN-651a | `features/project-setup/REQ-651.feature` | - | - | - | - | `scripts/cli/commands/project/Forja.ts` | tests/unit/forja-front-door.test.ts | Approved |
+| REQ-652 | SCN-652a | `features/brief-cards/REQ-652.feature` | - | - | - | - | `scripts/draft/confined-agent.ts` | tests/unit/draft-from-brief.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

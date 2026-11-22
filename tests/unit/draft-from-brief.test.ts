@@ -977,3 +977,57 @@ test("REQ-176 SCN-176c: a question that blocks nothing leaves the draft Ready to
   assert.equal(check.status, 0, check.stdout);
   assert.match(check.stdout, /Ready to review/);
 });
+
+test("REQ-652 SCN-652a: two modules drafted at once leave each other's draft alone", () => {
+  const { runConfinedAgent } = require("../../scripts/draft/confined-agent");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-parallel-"));
+  try {
+    const git = (...a: string[]) => spawnSync("git", a, { cwd: dir, encoding: "utf8" });
+    git("init", "-q");
+    fs.writeFileSync(path.join(dir, "spec.md"), "# Spec\n");
+    git("add", "-A");
+    git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "start");
+    // draft-b is being drafted by another agent: its draft has a file already.
+    const b = path.join(dir, "docs", "specs", "changes", "draft-b");
+    fs.mkdirSync(b, { recursive: true });
+    fs.writeFileSync(path.join(b, "spec.md"), "b, first pass");
+    const marks = path.join(dir, ".git", "specgate-drafting");
+    fs.mkdirSync(marks, { recursive: true });
+    fs.writeFileSync(
+      path.join(marks, "draft-b.json"),
+      JSON.stringify({ pid: process.pid, started: Date.now() - 1000 })
+    );
+    // While draft-a's agent runs, draft-b's agent writes on; draft-c, which no agent drafts, is touched too.
+    const script = path.join(dir, "agent.js");
+    fs.writeFileSync(
+      script,
+      'const fs=require("fs");fs.mkdirSync("docs/specs/changes/draft-a",{recursive:true});' +
+        'fs.writeFileSync("docs/specs/changes/draft-a/spec.md","a");' +
+        'fs.writeFileSync("docs/specs/changes/draft-b/spec.md","b, second pass");' +
+        'fs.mkdirSync("docs/specs/changes/draft-b/use-cases",{recursive:true});' +
+        'fs.writeFileSync("docs/specs/changes/draft-b/use-cases/UC-002.md","uc");' +
+        'fs.mkdirSync("docs/specs/changes/draft-c",{recursive:true});' +
+        'fs.writeFileSync("docs/specs/changes/draft-c/spec.md","c");'
+    );
+    git("add", "agent.js");
+    git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "agent");
+    const run = runConfinedAgent({
+      projectDir: dir,
+      changeId: "draft-a",
+      command: `"${process.execPath}" agent.js`,
+      prompt: "draft",
+      showOutput: false,
+    });
+    assert.deepEqual(run.wrote, ["docs/specs/changes/draft-a/spec.md"]);
+    assert.deepEqual(run.reverted, ["docs/specs/changes/draft-c/spec.md"]);
+    assert.equal(fs.readFileSync(path.join(b, "spec.md"), "utf8"), "b, second pass");
+    assert.equal(fs.readFileSync(path.join(b, "use-cases", "UC-002.md"), "utf8"), "uc");
+    assert.ok(!fs.existsSync(path.join(dir, "docs", "specs", "changes", "draft-c", "spec.md")));
+    // draft-a's own mark says when its agent ran, and it is never in git's status.
+    const mine = JSON.parse(fs.readFileSync(path.join(marks, "draft-a.json"), "utf8"));
+    assert.ok(mine.ended >= mine.started, JSON.stringify(mine));
+    assert.doesNotMatch(git("status", "--porcelain").stdout, /specgate-drafting/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10 });
+  }
+});
