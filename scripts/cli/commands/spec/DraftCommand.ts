@@ -55,7 +55,7 @@ import { resolveProfileAgent } from "../../../../packages/core/src/infrastructur
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { templateUseCases } from "../../../../packages/core/src/domain/UseCaseDelta";
 import { draftingGuide, draftingPrompt } from "../../../draft/drafting-guide";
-import { modelOf, modelsText } from "../../../draft/workshop-import";
+import { modelFlows, modelOf, modelsText, projectLanguage } from "../../../draft/workshop-import";
 import type { ModuleCards } from "../../../draft/drafting-guide";
 import {
   NO_WRITE_HINT,
@@ -781,6 +781,8 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
       cards: moduleCards(briefText, module),
       // REQ-656: a module from a DDD workshop is drafted from its model too.
       model: modelOf(projectDir, module),
+      modelFlows: modelFlows(projectDir, module),
+      language: projectLanguage(projectDir),
     })
   );
   write(

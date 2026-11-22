@@ -27,6 +27,8 @@ export interface WorkshopImport {
   /** Flows placed in the core context by assumption: confirm them while drafting. */
   assumed: number;
   actors: Array<{ name: string; surface: "web" | "api" }>;
+  /** The workshop's language, as the project's `language` now says; null when unknown. */
+  language: string | null;
 }
 
 const FRONT = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
@@ -161,6 +163,60 @@ export function mergeBrief(
   return { text, added };
 }
 
+const CONFIG = path.join(".specgate", "config.json");
+
+/** The project's `language` (config.json), or null when none is set. */
+export function projectLanguage(projectDir: string): string | null {
+  try {
+    const c = JSON.parse(fs.readFileSync(path.join(projectDir, CONFIG), "utf8")) as {
+      language?: unknown;
+    };
+    return typeof c.language === "string" && c.language ? c.language : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The language a workshop's words are in: Spanish or English, by their common words. */
+export function languageOf(text: string): string | null {
+  const words = text.toLowerCase().match(/\p{L}+/gu) ?? [];
+  const count = (set: string[]) => words.filter((w) => set.includes(w)).length;
+  const es =
+    count([
+      "el",
+      "la",
+      "los",
+      "las",
+      "de",
+      "del",
+      "que",
+      "se",
+      "un",
+      "una",
+      "por",
+      "con",
+      "para",
+      "siempre",
+      "cada",
+    ]) + (/[ñ¿¡]/.test(text) ? 5 : 0);
+  const en = count([
+    "the",
+    "of",
+    "and",
+    "to",
+    "a",
+    "an",
+    "is",
+    "are",
+    "for",
+    "with",
+    "whenever",
+    "each",
+  ]);
+  if (es + en < 5) return null;
+  return es > en ? "es" : "en";
+}
+
 /** The workshop's boards read, its models written, the brief merged. */
 export function importWorkshop(
   projectDir: string,
@@ -189,6 +245,23 @@ export function importWorkshop(
     written.push(rel.split(path.sep).join("/"));
   }
   const actors = actorsOf(model);
+  // The workshop's language becomes the project's, when it had none (REQ-655).
+  let language = projectLanguage(projectDir);
+  if (!language) {
+    language = languageOf(model.modules.map((m) => modelYamlOf(m)).join("\n"));
+    if (language) {
+      const file = path.join(projectDir, CONFIG);
+      let config: Record<string, unknown> = {};
+      try {
+        config = JSON.parse(fs.readFileSync(file, "utf8")) as Record<string, unknown>;
+      } catch {
+        // none yet
+      }
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify({ ...config, language }, null, 2) + "\n", "utf8");
+      written.push(CONFIG.split(path.sep).join("/"));
+    }
+  }
   const briefPath = path.join(projectDir, briefRel);
   const before = fs.existsSync(briefPath) ? fs.readFileSync(briefPath, "utf8") : null;
   const { text, added } = mergeBrief(before, model, actors);
@@ -204,7 +277,16 @@ export function importWorkshop(
       0
     ),
     actors,
+    language,
   };
+}
+
+/** How many flows a module's model holds (REQ-656). */
+export function modelFlows(projectDir: string, module: string): number {
+  const rel = modelOf(projectDir, module);
+  if (!rel) return 0;
+  const text = fs.readFileSync(path.join(projectDir, rel), "utf8");
+  return (text.match(/^  - (command|policy):/gm) ?? []).length;
 }
 
 /** The text of every model of the workshop: values stated there count as stated (REQ-656). */

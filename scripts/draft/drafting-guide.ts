@@ -33,6 +33,10 @@ export interface DraftingGuideInput {
   ucRange?: [string, string];
   /** The module's model from a DDD workshop, when the brief came from one (REQ-656). */
   model?: string | null;
+  /** How many flows that model holds. */
+  modelFlows?: number;
+  /** The project's language for its prose (`language`), when set. */
+  language?: string | null;
 }
 
 /** A module's section of the brief, as `DRAFTING.md` hands it over. */
@@ -99,6 +103,16 @@ function cardsPart(i: DraftingGuideInput): string[] {
 
 const SCREEN = new Set(["web", "mobile", "desktop", "app", "screen", "ui"]);
 
+/** The names of the languages a project's `language` gives. */
+const LANGUAGES: Record<string, string> = {
+  es: "Spanish",
+  en: "English",
+  pt: "Portuguese",
+  fr: "French",
+  de: "German",
+  it: "Italian",
+};
+
 function capitalise(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
@@ -159,6 +173,21 @@ export function draftingGuide(i: DraftingGuideInput): string {
       : `- **The brief:** \`${i.brief}\` — the only source of business facts.`,
     `- **Write only inside:** \`${scope}\`.`,
     // The range is the limit: "at most 25" next to ten ids read as room for 25 (REQ-194).
+    ...(i.language
+      ? [
+          `- **Language:** write the titles, the statements, the scenarios' steps, the use cases, ` +
+            `the questions and discover.md in ${LANGUAGES[i.language] ?? i.language}; keep SHALL, ` +
+            "GIVEN/WHEN/THEN, the ids and code in English.",
+        ]
+      : []),
+    ...(i.model && i.modelFlows && i.modelFlows > idCount(i)
+      ? [
+          `- **More flows than ids:** the model holds ${i.modelFlows} flows and this draft has ${idCount(i)} ` +
+            "requirement ids. Draft the first flows in the timeline's order, one requirement each — merge " +
+            "only flows that are one behaviour — and list every flow left out in discover.md under " +
+            '"## Left for a next draft", so none is dropped.',
+        ]
+      : []),
     `- **Requirement ids:** \`${i.reqRange[0]}\` … \`${i.reqRange[1]}\`: ${idCount(i)} ids, no others. ` +
       "More are needed? `specgate draft --reserve <n>` grows the range while this is the last draft opened.",
     i.lastScenario

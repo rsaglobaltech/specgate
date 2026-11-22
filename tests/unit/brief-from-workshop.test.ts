@@ -61,6 +61,9 @@ test("REQ-655 SCN-655a: the claims workshop imported into a project with no brie
   assert.match(siniestros, /^context: Siniestros$/m);
   assert.match(siniestros, /relationship: ACL/);
   assert.match(siniestros, /command: Declarar siniestro/);
+  // The workshop's language is the project's now.
+  assert.equal(doc.brief.import.language, "es");
+  assert.equal(JSON.parse(p.read(".specgate/config.json")).language, "es");
   const brief = p.read("docs/brief.md");
   assert.match(brief, /^modules: \[siniestros, polizas, pagos\]$/m);
   assert.match(brief, /- \{ name: Tramitador, surfaces: \[web\] \}/);
@@ -117,6 +120,9 @@ test("REQ-656 SCN-656a: the siniestros module drafted — its model named in DRA
   assert.equal(r.status, 0, r.stderr + r.stdout);
   const drafting = p.read("docs/specs/changes/draft-siniestros/DRAFTING.md");
   assert.match(drafting, /the workshop's model:\*\* `docs\/brief\/models\/siniestros\.yaml`/);
+  assert.match(drafting, /\*\*Language:\*\* write the titles.* in Spanish/);
+  assert.match(drafting, /the model holds 24 flows and this draft has 10 requirement ids/);
+  assert.match(drafting, /## Left for a next draft/);
   // A scenario stating 75 %, a value only the model gives.
   const spec = path.join(p.dir, "docs/specs/changes/draft-siniestros/specs/siniestros/spec.md");
   const cfg = p.read("docs/specs/changes/draft-siniestros/change.yaml");
