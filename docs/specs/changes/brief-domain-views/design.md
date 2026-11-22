@@ -1,0 +1,4 @@
+# Design: brief-domain-views
+
+- AC-1 — `packages/core/src/domain/DomainView.ts`, pure: `moduleFromYaml(yamlText)` (js-yaml) and `modelFromSpec({ requirements, useCases })`; `scripts/lib/brief-model.ts` reads `docs/brief/models/*.yaml`, else the capability specs and open changes' deltas (`### Requirement:` blocks, their trace actor, `#### Scenario:` titles) and `projectUseCases`. `specgate brief model` in `scripts/brief_model.ts`. The models write a story's steps as maps (n, actor, activity, object, to) so they read back whole.
+- AC-2 — `packages/core/src/domain/DddToolboxExport.ts`, pure: boards built from record templates taken from boards DDD Toolbox itself saved (`templates/ddd-toolbox/records.json`: the schema, document, page, and one record per shape kind) — data, not its code. `specgate brief export` in `scripts/brief_export.ts`. A round-trip test imports what it exports; a manual check loads each board on dddtoolbox.com.

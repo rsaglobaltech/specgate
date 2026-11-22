@@ -540,6 +540,8 @@
 | REQ-655 | SCN-655a, SCN-655b | `features/brief-cards/REQ-655.feature` | - | - | - | - | `scripts/draft/workshop-import.ts`, `packages/core/src/domain/DddBoards.ts`, `scripts/cli/commands/spec/BriefImportCommand.ts` | tests/unit/brief-from-workshop.test.ts | Approved |
 | REQ-656 | SCN-656a | `features/brief-cards/REQ-656.feature` | - | - | - | - | `scripts/draft/drafting-guide.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/brief-from-workshop.test.ts | Approved |
 | REQ-657 | SCN-657a | `features/brief-cards/REQ-657.feature` | - | - | - | - | `scripts/propose.ts` | tests/unit/brief-from-workshop.test.ts | Approved |
+| REQ-658 | SCN-658a, SCN-658b | `features/brief-cards/REQ-658.feature` | - | - | - | - | `packages/core/src/domain/DomainView.ts`, `scripts/lib/brief-model.ts`, `scripts/brief_model.ts` | tests/unit/brief-domain-views.test.ts | Approved |
+| REQ-659 | SCN-659a | `features/brief-cards/REQ-659.feature` | - | - | - | - | `packages/core/src/domain/DddToolboxExport.ts`, `scripts/brief_export.ts`, `templates/ddd-toolbox/records.json` | tests/unit/brief-domain-views.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

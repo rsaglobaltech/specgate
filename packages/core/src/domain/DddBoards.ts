@@ -577,12 +577,20 @@ export function modelYamlOf(m: ModelModule): string {
     line(0, "stories:");
     for (const s of m.stories) {
       line(1, `- primary_actor: ${scalar(s.sentences[0]?.actor ?? null)}`);
+      // Who each actor is — a person, a group or a system — as the board drew it.
+      if (s.actorKinds.length) {
+        line(2, "actors:");
+        for (const k of s.actorKinds) line(3, `- ${scalar(k.name)}: ${k.kind}`);
+      }
       line(2, "steps:");
-      for (const x of s.sentences)
-        line(
-          3,
-          `- ${scalar(`${x.n}. ${x.actor} ${x.activity} ${x.object}${x.to.length ? ` → ${x.to.join(", ")}` : ""}`)}`
-        );
+      // Each activity whole, so the model reads back as it was (REQ-658).
+      for (const x of s.sentences) {
+        line(3, `- n: ${x.n}`);
+        line(4, `actor: ${scalar(x.actor)}`);
+        line(4, `activity: ${scalar(x.activity)}`);
+        line(4, `object: ${scalar(x.object)}`);
+        list(4, "to", x.to);
+      }
       list(2, "comments", s.comments);
     }
   }

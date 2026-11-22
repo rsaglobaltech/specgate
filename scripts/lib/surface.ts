@@ -596,6 +596,32 @@ export const SURFACE: Command[] = [
         },
         json: { key: "brief", gate: false, args: "<board.json>…" },
       },
+      {
+        // brief-domain-views REQ-658: the domain model, to draw.
+        name: "model",
+        script: ["brief_model.js"],
+        mcp: false,
+        help: {
+          group: "core",
+          icon: "🗺",
+          summary:
+            "The domain model — contexts, flows, stories — from the workshop or the spec (REQ-658).",
+        },
+        json: { key: "model", gate: false },
+      },
+      {
+        // brief-domain-views REQ-659: the domain model as DDD Toolbox boards.
+        name: "export",
+        script: ["brief_export.js"],
+        editsContract: false,
+        mcp: false,
+        help: {
+          group: "core",
+          icon: "📤",
+          summary: "The domain model as boards DDD Toolbox opens (REQ-659).",
+        },
+        json: { key: "export", gate: false },
+      },
     ],
   },
   {
