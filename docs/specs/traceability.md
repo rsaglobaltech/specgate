@@ -537,6 +537,9 @@
 | REQ-652 | SCN-652a | `features/brief-cards/REQ-652.feature` | - | - | - | - | `scripts/draft/confined-agent.ts` | tests/unit/draft-from-brief.test.ts | Approved |
 | REQ-653 | SCN-653a, SCN-653b | `features/brief-cards/REQ-653.feature` | - | - | - | - | `scripts/draft/brief-setup.ts` | tests/unit/draft-from-brief.test.ts | Approved |
 | REQ-654 | SCN-654a, SCN-654b, SCN-654c | `features/trusted-gate/REQ-654.feature` | - | - | - | - | `scripts/lib/progress.ts` | tests/unit/progress-file.test.ts | Approved |
+| REQ-655 | SCN-655a, SCN-655b | `features/brief-cards/REQ-655.feature` | - | - | - | - | `scripts/draft/workshop-import.ts`, `packages/core/src/domain/DddBoards.ts`, `scripts/cli/commands/spec/BriefImportCommand.ts` | tests/unit/brief-from-workshop.test.ts | Approved |
+| REQ-656 | SCN-656a | `features/brief-cards/REQ-656.feature` | - | - | - | - | `scripts/draft/drafting-guide.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/brief-from-workshop.test.ts | Approved |
+| REQ-657 | SCN-657a | `features/brief-cards/REQ-657.feature` | - | - | - | - | `scripts/propose.ts` | tests/unit/brief-from-workshop.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

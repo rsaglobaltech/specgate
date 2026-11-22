@@ -31,6 +31,8 @@ export interface DraftingGuideInput {
   cards?: ModuleCards;
   /** The use case ids reserved for this draft (REQ-626); none for an older draft. */
   ucRange?: [string, string];
+  /** The module's model from a DDD workshop, when the brief came from one (REQ-656). */
+  model?: string | null;
 }
 
 /** A module's section of the brief, as `DRAFTING.md` hands it over. */
@@ -148,7 +150,13 @@ export function draftingGuide(i: DraftingGuideInput): string {
     ...(i.cards
       ? [`The brief's \`## Module: ${i.module}\` section is your scope: section 0 below.`, ""]
       : []),
-    `- **The brief:** \`${i.brief}\` — the only source of business facts.`,
+    i.model
+      ? `- **The brief:** \`${i.brief}\`, and **the workshop's model:** \`${i.model}\` — the ` +
+        "sources of business facts. The model is the DDD workshop's structure: word its flows, " +
+        "rules, terms and questions in the brief's language — each command and policy a requirement " +
+        "with its outcomes as scenarios, each rule a THEN or a constraint, each question in " +
+        "questions.md. A flow `placed: assumed` may belong to another module: confirm it, or ask."
+      : `- **The brief:** \`${i.brief}\` — the only source of business facts.`,
     `- **Write only inside:** \`${scope}\`.`,
     // The range is the limit: "at most 25" next to ten ids read as room for 25 (REQ-194).
     `- **Requirement ids:** \`${i.reqRange[0]}\` … \`${i.reqRange[1]}\`: ${idCount(i)} ids, no others. ` +

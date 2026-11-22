@@ -55,6 +55,7 @@ import { resolveProfileAgent } from "../../../../packages/core/src/infrastructur
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { templateUseCases } from "../../../../packages/core/src/domain/UseCaseDelta";
 import { draftingGuide, draftingPrompt } from "../../../draft/drafting-guide";
+import { modelOf, modelsText } from "../../../draft/workshop-import";
 import type { ModuleCards } from "../../../draft/drafting-guide";
 import {
   NO_WRITE_HINT,
@@ -414,6 +415,9 @@ export function draftReport(
       return { failure: error("draft_no_brief", `The brief ${briefPath} does not exist.`) };
     }
   }
+  // REQ-656: a value the DDD workshop's models state counts as stated (D6).
+  const models = modelsText(projectDir);
+  if (brief !== undefined && models) brief = `${brief}\n\n${models}`;
   return {
     report: checkDraft({
       deltas,
@@ -775,6 +779,8 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
       maxRequirements: o.maxRequirements,
       actors: actorSurfaces(briefText),
       cards: moduleCards(briefText, module),
+      // REQ-656: a module from a DDD workshop is drafted from its model too.
+      model: modelOf(projectDir, module),
     })
   );
   write(

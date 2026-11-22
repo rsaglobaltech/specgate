@@ -583,6 +583,19 @@ export const SURFACE: Command[] = [
         },
         json: { key: "brief", gate: false, args: "<module> <text>" },
       },
+      {
+        // brief-from-workshop REQ-655: a DDD workshop's boards become the brief.
+        name: "import",
+        script: ["brief_import.js"],
+        editsContract: true,
+        mcp: false,
+        help: {
+          group: "core",
+          icon: "🧩",
+          summary: "A DDD workshop's boards (DDD Toolbox) become the brief's modules (REQ-655).",
+        },
+        json: { key: "brief", gate: false, args: "<board.json>…" },
+      },
     ],
   },
   {

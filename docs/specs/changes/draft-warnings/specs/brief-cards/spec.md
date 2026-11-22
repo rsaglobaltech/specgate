@@ -24,4 +24,4 @@ The system SHALL treat an open question of a draft's `questions.md` whose Blocks
 - WHEN the Developer runs `specgate draft bookings`, then `specgate draft --check draft-bookings`
 - THEN both show the warning, say Ready to review and end with 0, and `--json` says the draft is ready
 
-<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-176.feature kind=functional status=Implemented test=tests/unit/draft-from-brief.test.ts -->
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-176.feature kind=functional status=Implemented test=tests/unit/draft-checklist.test.ts,tests/unit/draft-from-brief.test.ts -->
