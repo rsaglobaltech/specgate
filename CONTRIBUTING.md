@@ -2,6 +2,8 @@
 
 # Contributing to `specgate`
 
+Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md).
+
 Thank you for investing your time in this project.
 
 ---
