@@ -548,6 +548,7 @@
 | REQ-663 | SCN-663a, SCN-663b | `features/trusted-gate/REQ-663.feature` | - | - | - | - | `scripts/lib/bdd.ts`, `scripts/cli/commands/project/MigrateCommand.ts`, `scripts/cli/commands/project/gate.ts`, `scripts/cli/commands/project/Forja.ts` | tests/unit/bdd-gate.test.ts | Approved |
 | REQ-664 | SCN-664a, SCN-664b | `features/agent-integration/REQ-664.feature` | - | - | - | - | `scripts/lib/agent-plan.ts`, `scripts/agent/cli.ts` | tests/unit/agent-hunks.test.ts | Approved |
 | REQ-665 | SCN-665a, SCN-665b | `features/agent-integration/REQ-665.feature` | - | - | - | - | `scripts/lib/agent-plan.ts`, `scripts/agent/cli.ts` | tests/unit/agent-hunks.test.ts | Approved |
+| REQ-666 | SCN-666a, SCN-666b | `features/trusted-gate/REQ-666.feature` | - | - | - | - | `scripts/cli/commands/spec/ScenariosCommand.ts`, `scripts/scenarios.ts` | tests/unit/bdd-gate.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

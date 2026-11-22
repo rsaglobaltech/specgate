@@ -306,6 +306,18 @@ export const SURFACE: Command[] = [
     json: { key: "check", gate: true, args: "[dir]" },
   },
   {
+    name: "scenarios",
+    // scenarios-run REQ-666: a requirement's scenarios run one by one, for the studio's margin.
+    mcp: false,
+    script: ["scenarios.js"],
+    help: {
+      group: "core",
+      icon: "🧪",
+      summary: "Run a requirement's scenarios one by one through bdd_cmd: which pass, which fail.",
+    },
+    json: { key: "scenarios", gate: true, args: "<REQ>" },
+  },
+  {
     name: "migrate",
     // REQ-325: a one-time move to 1.0 a person runs and reviews; not an MCP tool.
     mcp: false,

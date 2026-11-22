@@ -315,3 +315,39 @@ test("REQ-660: an approved change's feature file is no orphan — doctor, status
     []
   );
 });
+
+test("REQ-666 SCN-666a: one scenario passes, one fails — each with its line, scenario_failed naming the other", () => {
+  const p = project({ harness: ["bdd_cmd: node only031.js {tags}"] });
+  w(
+    p.dir,
+    "only031.js",
+    "const t = process.argv[2]; console.log('ran ' + t); process.exit(t === '@SCN-031' ? 0 : 1);\n"
+  );
+  p.approve();
+  const r = p.cli("scenarios", "REQ-031", "--json");
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  const doc = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
+  const results = doc.scenarios.results;
+  assert.deepEqual(
+    results.map((s: any) => [s.id, s.passed, s.file]),
+    [
+      ["SCN-031", true, FEATURE],
+      ["SCN-032", false, FEATURE],
+    ]
+  );
+  const lines = read(p.dir, FEATURE).split("\n");
+  for (const s of results)
+    assert.match(lines[s.line - 1], /Scenario:/, `${s.id} at its Scenario line`);
+  assert.match(results[1].output, /ran @SCN-032/);
+  assert.equal(doc.status.find((d: any) => d.code === "scenario_failed")?.target, "SCN-032");
+});
+
+test("REQ-666 SCN-666b: no runner — bdd_cmd_missing, its fix config set bdd_cmd", () => {
+  const p = project();
+  p.approve();
+  const r = p.cli("scenarios", "REQ-031", "--json");
+  assert.notEqual(r.status, 0);
+  const doc = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
+  assert.equal(doc.status[0].code, "bdd_cmd_missing");
+  assert.match(doc.status[0].fix, /specgate config set bdd_cmd/);
+});
