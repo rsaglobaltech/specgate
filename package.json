@@ -98,7 +98,7 @@
     "e2e:coverage": "node e2e/run.mjs --coverage --list",
     "e2e:studio": "playwright test -c e2e/studio/playwright.config.mjs",
     "docs:studio-shots": "node e2e/studio/screenshots.mjs",
-    "verify": "npm run typecheck && npm run lint && npm test && npm run pack:dry-run && npm run selfcheck",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run test:unit && npm run pack:dry-run && npm run selfcheck",
     "selfcheck": "node bin/specgate.js validate .",
     "contract:check": "node dist/scripts/semver/contract-check.js",
     "contract:write": "node dist/scripts/semver/contract-check.js --write",
