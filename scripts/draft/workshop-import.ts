@@ -286,7 +286,7 @@ export function modelFlows(projectDir: string, module: string): number {
   const rel = modelOf(projectDir, module);
   if (!rel) return 0;
   const text = fs.readFileSync(path.join(projectDir, rel), "utf8");
-  return (text.match(/^  - (command|policy):/gm) ?? []).length;
+  return (text.match(/^ {2}- (command|policy):/gm) ?? []).length;
 }
 
 /** The text of every model of the workshop: values stated there count as stated (REQ-656). */
