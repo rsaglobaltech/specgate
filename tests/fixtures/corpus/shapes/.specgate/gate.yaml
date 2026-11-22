@@ -1,0 +1,3 @@
+preset: standard
+# Its scenarios are feature files a runner checks (REQ-661).
+bdd: required

@@ -16,6 +16,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 import { cli } from "../helpers/cli";
+import { withoutBdd } from "../helpers/pre-bdd";
 
 const FEATURE = "features/totals-are-rounded-half-up.feature";
 
@@ -27,6 +28,7 @@ function project(needsClarification: boolean) {
   fs.writeFileSync(path.join(dir, "package.json"), '{"name":"d","version":"1.0.0"}');
   fs.writeFileSync(path.join(dir, "lib/index.js"), "module.exports = {};\n");
   assert.equal(cli("adopt", "--project-dir", dir, "--no-capabilities").status, 0);
+  withoutBdd(dir);
   assert.equal(cli("new", "Totals are rounded half-up", "--project-dir", dir).status, 0);
 
   const spec = path.join(dir, "spec.md");

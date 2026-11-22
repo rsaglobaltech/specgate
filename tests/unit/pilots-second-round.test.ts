@@ -13,6 +13,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 import { cli } from "../helpers/cli";
+import { withoutBdd } from "../helpers/pre-bdd";
 
 /** An adopted project with two real requirements (REQ-002, REQ-003) and a counting test command. */
 function project() {
@@ -22,6 +23,7 @@ function project() {
   fs.writeFileSync(path.join(dir, "package.json"), '{"name":"d","version":"1.0.0"}');
   fs.writeFileSync(path.join(dir, "lib/index.js"), "module.exports = {};\n");
   assert.equal(cli("adopt", "--project-dir", dir, "--no-capabilities").status, 0);
+  withoutBdd(dir);
   for (const title of ["Totals are rounded half-up", "Discounts never go below zero"]) {
     assert.equal(cli("new", title, "--project-dir", dir).status, 0);
   }

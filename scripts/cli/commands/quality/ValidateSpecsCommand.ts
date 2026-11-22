@@ -1213,7 +1213,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       ...actorFindings(targetDir),
       ...staleDiagramFindings(targetDir),
       // REQ-661: the scenarios executable, before any code, in every project that requires it.
-      ...bddFindings(targetDir, readHarnessConfig(targetDir)?.bddCmd),
+      ...bddFindings(targetDir, bddCmdOf(targetDir)),
     ];
     const errors = found.filter((d) => d.severity === "error");
     for (const d of found.filter((x) => x.severity !== "error")) {
@@ -1929,5 +1929,17 @@ export class ValidateSpecsCommand extends BaseCommand {
       ]);
     }
     process.exit(0);
+  }
+}
+
+/**
+ * The project's bdd_cmd, or undefined when its harness config cannot be read —
+ * a 0.35 project's `roles:` list is migrate 1.0's to fix, never a crash of validate (REQ-570).
+ */
+function bddCmdOf(projectDir: string): string | undefined {
+  try {
+    return readHarnessConfig(projectDir)?.bddCmd;
+  } catch {
+    return undefined;
   }
 }

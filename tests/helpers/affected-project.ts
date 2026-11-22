@@ -11,6 +11,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { runCli } from "./cli";
 import { git, newProject, specRequirement, write } from "./project";
+import { withoutBdd } from "./pre-bdd";
 
 const RUNNER = `const fs = require("fs");
 const path = require("path");
@@ -28,6 +29,7 @@ export function project(
   opts: { testCmd?: string; extraHarness?: string; prefix?: string } = {}
 ): string {
   const dir = newProject(opts.prefix || "sg-affected-");
+  withoutBdd(dir);
   specRequirement(dir, "REQ-001", "Place an order", "status=Approved");
   specRequirement(dir, "REQ-002", "Cancel an order", "status=Approved");
   const scenario = (req: string, scn: string, title: string, then: string) =>

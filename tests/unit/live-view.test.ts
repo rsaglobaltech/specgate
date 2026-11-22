@@ -15,6 +15,7 @@ const { spawn, spawnSync } = require("node:child_process");
 import type { SpawnSyncReturns } from "node:child_process";
 import type { IncomingMessage } from "node:http";
 import type { CliResult } from "../helpers/cli";
+import { withoutBdd } from "../helpers/pre-bdd";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
@@ -72,6 +73,7 @@ function adopted() {
   fs.writeFileSync(path.join(dir, "pass.js"), "process.exit(0);\n");
   const r = cli(dir, ["init"]);
   assert.equal(r.status, 0, out(r));
+  withoutBdd(dir);
   fs.writeFileSync(path.join(dir, "harness.config.yaml"), 'test_cmd: "node pass.js"\n');
   return {
     parent,

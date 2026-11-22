@@ -13,6 +13,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 import type { CliResult } from "../helpers/cli";
+import { withoutBdd } from "../helpers/pre-bdd";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
@@ -34,6 +35,7 @@ function adopted() {
   fs.writeFileSync(path.join(dir, "lib/index.js"), "module.exports = {};\n");
   const r = cli("adopt", "--project-dir", dir, "--no-capabilities");
   assert.equal(r.status, 0, r.stdout + r.stderr);
+  withoutBdd(dir);
   return { parent, dir };
 }
 
