@@ -66,6 +66,7 @@ not run reports an `error` about itself.
 | `specgate alm phase <change> --json` | `phase` | no |
 | `specgate alm move <change> [<phase>] --json` | `move` | no |
 | `specgate check [dir] --json` | `check` | yes |
+| `specgate scenarios <REQ> --json` | `scenarios` | yes |
 | `specgate migrate 1.0 [--dry-run] --json` | `migrate` | no |
 | `specgate workspace <init|status|check|draft|propose|live|harness> --json` | `workspace` | yes |
 | `specgate drift [dir] --json` | `drift` | yes |
@@ -89,6 +90,9 @@ not run reports an `error` about itself.
 | `specgate change author <id> --json` | `change` | yes |
 | `specgate propose <id> --json` | `change` | no |
 | `specgate brief add <module> <text> --json` | `brief` | no |
+| `specgate brief import <board.json>… --json` | `brief` | no |
+| `specgate brief model --json` | `model` | no |
+| `specgate brief export --json` | `export` | no |
 | `specgate questions --json` | `questions` | no |
 | `specgate answer <Q> <answer> --json` | `answer` | no |
 | `specgate ask <REQ> <question> --json` | `ask` | no |

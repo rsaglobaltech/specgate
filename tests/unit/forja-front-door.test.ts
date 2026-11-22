@@ -279,7 +279,7 @@ test("REQ-651 SCN-651a: after forja, the project adopts Specgate, its gate gets 
     const log = spawnSync("git", ["log", "--format=%s"], { cwd: out, encoding: "utf8" }).stdout;
     assert.match(
       log,
-      /^chore: adopt Specgate, with the gate's test and architecture commands\nchore: scaffold with forja/
+      /^chore: adopt Specgate, with the gate's test, architecture and scenario commands\nchore: scaffold with forja/
     );
     assert.equal(
       spawnSync("git", ["status", "--porcelain"], { cwd: out, encoding: "utf8" }).stdout.trim(),

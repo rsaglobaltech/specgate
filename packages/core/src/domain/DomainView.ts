@@ -5,7 +5,8 @@
  * the specification: each module a context, each requirement a flow, each use
  * case's main flow a story. Pure: texts in, the model out.
  */
-import * as yaml from "js-yaml";
+// The project's own YAML reader: js-yaml is a dev dependency, not shipped (found by the E2E journey).
+import { parseYamlLite } from "./YamlLite";
 
 export interface ViewFlow {
   actor: string | null;
@@ -77,7 +78,7 @@ const obj = (v: unknown): Record<string, unknown> =>
 
 /** A context of the workshop, from its `docs/brief/models/<context>.yaml`. */
 export function moduleFromYaml(text: string): ViewModule {
-  const d = obj(yaml.load(text));
+  const d = obj(parseYamlLite(text));
   const cls = obj(d.classification);
   const integrations = (Array.isArray(d.integrations) ? d.integrations : []).map((x) => {
     const i = obj(x);

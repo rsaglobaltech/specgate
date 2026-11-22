@@ -288,7 +288,8 @@ const prompt = fs.readFileSync(0, "utf8");
 if (!prompt.includes(file)) process.exit(3);
 const text = fs.readFileSync(file, "utf8");
 const fm = "---\\nproduct: Bookshop\\nsurfaces: [api]\\nactors:\\n  - { name: Reader, surfaces: [api, mobile] }\\nmodules: [orders, payments]\\n---\\n\\n";
-fs.writeFileSync(file, fm + text);
+// As an agent asked again to fix it does (REQ-653): its front matter replaced, never a second one.
+fs.writeFileSync(file, fm + text.replace(/^---\\n[\\s\\S]*?\\n---\\n\\n?/, ""));
 `;
 
 /** Every file of the project but .git, with its bytes. */
@@ -362,4 +363,83 @@ test("REQ-488 SCN-488a: a client's text outside the project: the proposed form, 
     cleanup(dir);
     fs.rmSync(outside, { recursive: true, force: true });
   }
+});
+
+// ── REQ-669 (#524): Why and Quality in the form ──────────────────────────────
+
+const WHY_QUALITY = `---
+product: Lingo
+surfaces: [web]
+actors:
+  - { name: Teacher, surfaces: [web] }
+modules: [courses]
+---
+
+# Lingo
+
+## Why
+
+Teachers fill 90 % of their groups within a week.
+
+## Quality
+
+- Performance (courses): a page answers in under 2 s
+
+## Module: courses
+
+Rules
+- A course holds at most 12 students.
+`;
+
+test("REQ-669 SCN-669a: why and quality read into the form, each with its line", () => {
+  const { readBriefForm } = require("../../packages/core/src/domain/BriefForm");
+  const form = readBriefForm(WHY_QUALITY);
+  const lines = WHY_QUALITY.split("\n");
+  assert.equal(form.why.text, "Teachers fill 90 % of their groups within a week.");
+  assert.equal(lines[form.why.line - 1], "## Why");
+  assert.equal(form.quality.length, 1);
+  const q = form.quality[0];
+  assert.equal(q.characteristic, "performance efficiency");
+  assert.deepEqual(q.modules, ["courses"]);
+  assert.equal(q.text, "Performance (courses): a page answers in under 2 s");
+  assert.equal(lines[q.line - 1], "- Performance (courses): a page answers in under 2 s");
+  assert.equal(readBriefForm("# Notes\n").why, null);
+  assert.deepEqual(readBriefForm("# Notes\n").quality, []);
+});
+
+test("REQ-669 SCN-669b: a quality line added — only ## Quality rewritten, every other byte kept; no why or quality given, nothing touched", () => {
+  const { readBriefForm, writeBriefForm } = require("../../packages/core/src/domain/BriefForm");
+  const form = readBriefForm(WHY_QUALITY);
+  const added = writeBriefForm(WHY_QUALITY, {
+    ...form,
+    quality: [
+      ...form.quality,
+      { text: "Availability: the courses list is up 99.5 % of each month" },
+    ],
+  });
+  assert.equal(
+    added,
+    WHY_QUALITY.replace(
+      "- Performance (courses): a page answers in under 2 s\n",
+      "- Performance (courses): a page answers in under 2 s\n- Availability: the courses list is up 99.5 % of each month\n"
+    )
+  );
+  const { why: _w, quality: _q, ...without } = form;
+  assert.equal(writeBriefForm(WHY_QUALITY, without), WHY_QUALITY);
+  assert.equal(
+    writeBriefForm(WHY_QUALITY, form),
+    WHY_QUALITY,
+    "given unchanged: nothing rewritten"
+  );
+});
+
+test("REQ-669: a brief with no Why — given one, it is made before the modules", () => {
+  const { readBriefForm, writeBriefForm } = require("../../packages/core/src/domain/BriefForm");
+  const src = WHY_QUALITY.replace(
+    "## Why\n\nTeachers fill 90 % of their groups within a week.\n\n",
+    ""
+  );
+  const out = writeBriefForm(src, { ...readBriefForm(src), why: { text: "Fill the groups." } });
+  assert.match(out, /## Why\n\nFill the groups\.\n\n## Quality/);
+  assert.ok(out.indexOf("## Why") < out.indexOf("## Module: courses"));
 });

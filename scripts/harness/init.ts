@@ -291,6 +291,9 @@ const MERGEABLE_KEYS = new Set([
   "agent",
   "agent_profile",
   "test_cmd",
+  // Written by adopt and migrate bdd (REQ-663), and by config set: merged, never "already present".
+  "bdd_cmd",
+  "arch_cmd",
   "setup_cmd",
   "max_attempts",
   "concurrency",
