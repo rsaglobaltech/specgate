@@ -1,4 +1,3 @@
-@change:learn-rules
 Feature: A lesson becomes a principle through an approved change
 
   @REQ-685 @SCN-685a

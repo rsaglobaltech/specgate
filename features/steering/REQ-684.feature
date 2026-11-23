@@ -1,4 +1,3 @@
-@change:learn-rules
 Feature: The lessons that keep coming back
 
   @REQ-684 @SCN-684a
