@@ -1,0 +1,11 @@
+▶ dist/tests/unit/reproduce-first.test.js
+✔ REQ-683 SCN-683a: never seen red, never delivered (1205.896375ms)
+✔ REQ-683 SCN-683b: red, then green — delivered with both (1438.223125ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2725.150791

@@ -318,6 +318,18 @@ export const SURFACE: Command[] = [
     json: { key: "scenarios", gate: true, args: "<REQ>" },
   },
   {
+    name: "reproduce",
+    // REQ-681..683: a bug is fixed only once it has been seen failing.
+    mcp: false,
+    script: ["reproduce.js"],
+    help: {
+      group: "core",
+      icon: "🐞",
+      summary: "Open a bug that must be seen red first; run it red, kept as evidence, before the fix.",
+    },
+    json: { key: "reproduce", gate: false, args: "<change-id> --capability <c> --title <t> | run <REQ>" },
+  },
+  {
     name: "map",
     // REQ-678: where each requirement lives, for a person and for an agent.
     mcp: false,

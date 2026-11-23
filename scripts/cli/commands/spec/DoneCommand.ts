@@ -1,5 +1,5 @@
 import { readGatePolicy } from "../../../lib/gate-policy";
-import { keepEvidence } from "../../../lib/evidence";
+import { keepEvidence, mustReproduce, readRed } from "../../../lib/evidence";
 import type { ScenarioRun } from "../../../lib/evidence";
 import { appendApplied } from "../../../lib/trust";
 import { resolveProjectDir } from "../../../lib/project-root";
@@ -818,6 +818,13 @@ function bddRefusal(
   id: string,
   json: boolean
 ): { code: string; message: string; fix: string } | null {
+  // REQ-683: a bug is delivered only after it was seen red.
+  if (mustReproduce(projectDir, id) && !readRed(projectDir, id))
+    return {
+      code: "apply_not_reproduced",
+      message: "it is a bug to reproduce first, and its scenarios were never seen failing",
+      fix: `specgate reproduce run ${id}`,
+    };
   if (readGatePolicy(projectDir).bdd !== "required") return null;
   const bddCmd = (readHarnessConfig(projectDir)?.bddCmd || "").trim();
   if (!bddCmd)

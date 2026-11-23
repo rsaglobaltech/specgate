@@ -67,6 +67,7 @@ not run reports an `error` about itself.
 | `specgate alm move <change> [<phase>] --json` | `move` | no |
 | `specgate check [dir] --json` | `check` | yes |
 | `specgate scenarios <REQ> --json` | `scenarios` | yes |
+| `specgate reproduce <change-id> --capability <c> --title <t> | run <REQ> --json` | `reproduce` | no |
 | `specgate map [<REQ>] [--capability <c>] --json` | `map` | no |
 | `specgate trust [promote <capability>] --json` | `trust` | no |
 | `specgate migrate 1.0 [--dry-run] --json` | `migrate` | no |

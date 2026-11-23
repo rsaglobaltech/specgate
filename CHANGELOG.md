@@ -18,6 +18,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - `specgate map [<REQ>] [--json]`: where each requirement lives — use case, actor, the route and the address (`app_url`) where it is reached, feature, code and tests (REQ-678).
 - The harness tells the agent where the requirement lives in the app and to open it before and after the change (REQ-679).
 - `apply` keeps the evidence of each delivery in `.specgate/evidence/<REQ>/`: the scenarios' command, result and output, and the screenshots and traces the browser tests left (REQ-680).
+- `specgate reproduce <change-id> --capability <c> --title <t>` opens a bug change whose requirement must be reproduced, and lowers the module's trust; `specgate reproduce run <REQ>` keeps its red run as evidence and refuses a green one (`repro_not_red`) (REQ-681, REQ-682).
+- `apply` refuses a bug never seen red (`apply_not_reproduced`), and keeps the red run beside the green one (REQ-683).
 - `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
 
 ### Fixed

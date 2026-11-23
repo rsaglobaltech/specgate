@@ -1,0 +1,10 @@
+▶ dist/tests/unit/reproduce-first.test.js
+✔ REQ-681 SCN-681a: a bug in catalogo opens a change that must reproduce it (973.707084ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1049.102208

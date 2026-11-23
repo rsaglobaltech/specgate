@@ -1,0 +1,11 @@
+▶ dist/tests/unit/reproduce-first.test.js
+✔ REQ-682 SCN-682a: red, kept (935.708208ms)
+✔ REQ-682 SCN-682b: green, refused (1459.223292ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2485.346125
