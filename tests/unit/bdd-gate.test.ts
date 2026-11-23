@@ -70,7 +70,12 @@ function project(o: { gate?: string | null; harness?: string[] } = {}) {
     env: { ...process.env, NO_COLOR: "1" },
   });
   assert.equal(adopted.status, 0, adopted.stdout + adopted.stderr);
-  const harness = read(dir, "harness.config.yaml").replace(/^bdd_cmd:.*\n?/m, "");
+  // adopt writes harness.config.yaml only when it finds something to put in it (an agent here, none in CI).
+  const config = path.join(dir, "harness.config.yaml");
+  const harness = (fs.existsSync(config) ? read(dir, "harness.config.yaml") : "").replace(
+    /^bdd_cmd:.*\n?/m,
+    ""
+  );
   w(
     dir,
     "harness.config.yaml",

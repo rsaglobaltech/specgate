@@ -1,11 +1,11 @@
 {
-  "//": "dist/scripts/*.js are the CLI entry-point shims: each re-exports a command and calls `new XCommand(argv).execute()`. They hold no logic of their own, and `npm test` drives every one of them end-to-end through the real binary. Counting them here only inflated the function denominator — the thresholds below are the ones that were calibrated against real code.",
+  "//": "dist/scripts/*.js are the CLI entry-point shims: each re-exports a command and calls `new XCommand(argv).execute()`. They hold no logic of their own, and `npm test` drives every one of them end-to-end through the real binary. Counting them here only inflated the function denominator \u2014 the thresholds below are the ones that were calibrated against real code.",
   "reporter": ["text", "html", "lcov"],
   "check-coverage": true,
   "lines": 76,
   "branches": 72,
   "functions": 82,
-  "exclude": [
-    "dist/scripts/*.js"
-  ]
+  "exclude": ["dist/scripts/*.js"],
+  "merge-async": true,
+  "//merge-async": "Each CLI process a test spawns leaves its own coverage file (8,000+ by 1.5.0, 5 GB): merged one at a time, the report needs ~400 MB instead of more than the 6 GB CI gives it."
 }
