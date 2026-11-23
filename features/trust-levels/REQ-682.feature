@@ -1,4 +1,3 @@
-@change:reproduce-first
 Feature: The bug's scenario is seen red before it is fixed
 
   @REQ-682 @SCN-682a

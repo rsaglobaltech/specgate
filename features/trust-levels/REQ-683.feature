@@ -1,4 +1,3 @@
-@change:reproduce-first
 Feature: A bug is delivered only after its red
 
   @REQ-683 @SCN-683a

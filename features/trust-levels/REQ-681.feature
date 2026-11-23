@@ -1,4 +1,3 @@
-@change:reproduce-first
 Feature: A reported bug opens a change that must reproduce it
 
   @REQ-681 @SCN-681a
