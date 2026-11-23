@@ -261,3 +261,13 @@ test("REQ-691 SCN-691a: ausleihe's agent is out of quota — the run refuses nam
     p.done();
   }
 });
+
+test("REQ-690: an agent named as a person reads it — its program and model", () => {
+  const { agentLabel } = require("../../scripts/harness/doctor");
+  assert.equal(
+    agentLabel("env -u OPENCODE_API_KEY opencode run --auto -m opencode/big-pickle -f {prompt_file}"),
+    "opencode · big-pickle"
+  );
+  assert.equal(agentLabel("claude -p --model=sonnet"), "claude · sonnet");
+  assert.equal(agentLabel('"/usr/bin/node" agent.js'), "node");
+});

@@ -245,6 +245,19 @@ export function checkAgents(
 
 export const failed = (c: AgentCheck) => !c.installed || c.answered === false;
 
+/** An agent as a person names it: its program and model — `opencode · big-pickle`. */
+export function agentLabel(command: string): string {
+  const program = programOf(command).split("/").pop() || command;
+  const w = words(command);
+  let model = "";
+  for (let i = 0; i < w.length; i += 1) {
+    if ((w[i] === "-m" || w[i] === "--model") && w[i + 1]) model = w[i + 1];
+    else if (w[i].startsWith("--model=")) model = w[i].slice(8);
+  }
+  if (model.includes("/")) model = model.split("/").pop() || model;
+  return model ? `${program} · ${model}` : program;
+}
+
 /**
  * agent-routing REQ-691: before `harness run` creates a worktree, every agent
  * it will hand a requirement to is installed and answers; else it refuses,
@@ -325,13 +338,13 @@ export function main(argv: string[]): void {
   }
   let text = ui.header("harness doctor", `${routes.length} requirement(s) · ${checks.length} agent(s)`);
   for (const r of routes) {
-    text += `  ${r.requirement.padEnd(9)} ${String(r.module || "—").padEnd(16)} ${String(r.profile || "default").padEnd(12)} ${r.agent || "(no agent)"}\n`;
+    text += `  ${r.requirement.padEnd(9)} ${String(r.module || "—").padEnd(16)} ${String(r.profile || "default").padEnd(12)} ${r.agent ? agentLabel(r.agent) : "(no agent)"}\n`;
   }
   text += "\n";
   for (const c of checks) {
     const ok = !failed(c);
     const state = !c.installed ? "not installed" : c.answered === null ? "installed" : c.answered ? "answers" : "does not answer";
-    text += `  ${ok ? "✔" : "✖"}  ${c.agent}\n     ${state} · ${c.usedBy.join(", ")}\n`;
+    text += `  ${ok ? "✔" : "✖"}  ${agentLabel(c.agent)}  ${state} · ${c.usedBy.join(", ")}\n     ${c.agent}\n`;
     if (!ok) text += `     ${c.reason}\n     fix: ${c.fix}\n`;
   }
   process.stdout.write(text);
