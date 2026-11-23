@@ -20,7 +20,7 @@ The system SHALL read `trust:` in `.specgate/gate.yaml` as a map from a capabili
 - WHEN the Developer runs `specgate check`
 - THEN no finding names trust, and the gate passes as it did
 
-<!-- specgate:trace actor=Developer feature=features/trust-levels/REQ-670.feature kind=functional status=Implemented -->
+<!-- specgate:trace status=Implemented feature=features/trust-levels/REQ-670.feature artifact='scripts/lib/trust.ts, scripts/lib/gate-policy.ts, scripts/cli/commands/quality/ValidateSpecsCommand.ts' actor=Developer kind=functional -->
 
 ### Requirement: REQ-671 — The harness does in a module only what its level allows
 

@@ -57,23 +57,96 @@ without prior knowledge of SDD / DDD conventions.
 | **Templating** | Provide a deterministic, cross-platform template engine used by all other contexts. |
 
 ## 8. Key requirements
-| ID | Requirement | Priority | Status |
-|---|---|---|---|
-| REQ-001 | `init` generates a valid project skeleton from a `project.config` file. | Must | Verified |
-| REQ-002 | `validate` enforces required files, no unresolved placeholders, traceability coverage and allowed status values. | Must | Verified |
-| REQ-003 | `expand` merges a domain pack into an existing project and enriches traceability. | Must | Verified |
-| REQ-004 | All commands run identically on Linux, macOS and Windows (Node ≥ 20). | Must | Verified |
-| REQ-005 | `init` generates a Docker Compose stack and multi-environment `.env` files when `DOCKER_SUPPORT=true`. | Must | Verified |
-| REQ-006 | `pack init` produces a valid `pack.yaml` skeleton. | Should | Verified |
-| REQ-007 | `pack lint` detects orphan references, duplicate IDs and missing scenarios in a `pack.yaml`. | Should | Verified |
-| REQ-008 | A GitHub Action runs `validate` on every PR in generated projects. | Should | In Dev |
-| REQ-009 | Template rendering is deterministic: two identical invocations produce byte-identical output. | Must | Verified |
-| REQ-010 | `change` proposes, reviews and archives a delta against the spec tree. | Must | Verified |
-| REQ-011 | `specops` installs, syncs and diffs versioned domain packs, and contributes local changes back upstream. | Must | Verified |
-| REQ-012 | `harness run` drives the plan → agent → verify → done loop on a worktree per requirement. | Should | Verified |
-| REQ-013 | `adopt` installs SDD on an existing repository without moving its files. | Must | Verified |
-| REQ-014 | `doctor` diagnoses the project and environment, reporting a fix per finding. | Should | Verified |
-| REQ-015 | `req` adds, links and closes requirements without hand-editing the matrix. | Should | Verified |
+
+### REQ-001 — `init` generates a valid project skeleton from a `project.config` file
+
+<!-- specgate:trace status=Verified scn=SCN-001 feature=features/cli/init.feature artifact=scripts/init_project.ts uc=- -->
+
+`init` generates a valid project skeleton from a `project.config` file. Priority: Must.
+
+### REQ-002 — `validate` enforces required files, no unresolved placeholders, traceability coverage and allowed status values
+
+<!-- specgate:trace status=Verified scn=SCN-002 feature=features/cli/validate.feature artifact=scripts/validate_specs.ts uc=- -->
+
+`validate` enforces required files, no unresolved placeholders, traceability coverage and allowed status values. Priority: Must.
+
+### REQ-003 — `expand` merges a domain pack into an existing project and enriches traceability
+
+<!-- specgate:trace status=Verified scn=SCN-003 feature=features/cli/expand.feature test=tests/unit/common.test.ts artifact=scripts/expand_domain_pack.ts uc=- -->
+
+`expand` merges a domain pack into an existing project and enriches traceability. Priority: Must.
+
+### REQ-004 — All commands run identically on Linux, macOS and Windows (Node ≥ 20)
+
+<!-- specgate:trace status=Verified scn=SCN-004 feature=features/pack/expand-parking.feature test=tests/unit/init-engine-parity.test.ts uc=- -->
+
+All commands run identically on Linux, macOS and Windows (Node ≥ 20). Priority: Must.
+
+### REQ-005 — `init` generates a Docker Compose stack and multi-environment `.env` files when `DOCKER_SUPPORT=true`
+
+<!-- specgate:trace status=Verified scn=SCN-005 test=tests/cli.test.ts artifact=templates/base/docs/specs/runtime-environments.md.tpl uc=- -->
+
+`init` generates a Docker Compose stack and multi-environment `.env` files when `DOCKER_SUPPORT=true`. Priority: Must.
+
+### REQ-006 — `pack init` produces a valid `pack.yaml` skeleton
+
+<!-- specgate:trace status=Verified scn=SCN-006 test=tests/unit/pack-commands.test.ts artifact=scripts/init_pack.ts uc=- -->
+
+`pack init` produces a valid `pack.yaml` skeleton. Priority: Should.
+
+### REQ-007 — `pack lint` detects orphan references, duplicate IDs and missing scenarios in a `pack.yaml`
+
+<!-- specgate:trace status=Verified scn=SCN-007 test=tests/unit/pack-lint-quality.test.ts artifact=scripts/lint_pack.ts uc=- -->
+
+`pack lint` detects orphan references, duplicate IDs and missing scenarios in a `pack.yaml`. Priority: Should.
+
+### REQ-008 — A GitHub Action runs `validate` on every PR in generated projects
+
+<!-- specgate:trace status=Draft scn=SCN-008 test=- artifact=actions/spec-driven-action/action.yml uc=- -->
+
+A GitHub Action runs `validate` on every PR in generated projects. Priority: Should.
+
+### REQ-009 — Template rendering is deterministic: two identical invocations produce byte-identical output
+
+<!-- specgate:trace status=Verified scn=SCN-009 test=tests/snapshot/init-determinism.test.ts artifact=scripts/init_project.ts uc=- -->
+
+Template rendering is deterministic: two identical invocations produce byte-identical output. Priority: Must.
+
+### REQ-010 — `change` proposes, reviews and archives a delta against the spec tree
+
+<!-- specgate:trace status=Verified scn=SCN-010 test=tests/unit/change-cli.test.ts artifact=scripts/change/cli.ts uc=- -->
+
+`change` proposes, reviews and archives a delta against the spec tree. Priority: Must.
+
+### REQ-011 — `specops` installs, syncs and diffs versioned domain packs, and contributes local changes back upstream
+
+<!-- specgate:trace status=Verified scn=SCN-011 test=tests/unit/specops-f1b.test.ts artifact=scripts/specops/sync.ts uc=- -->
+
+`specops` installs, syncs and diffs versioned domain packs, and contributes local changes back upstream. Priority: Must.
+
+### REQ-012 — `harness run` drives the plan → agent → verify → done loop on a worktree per requirement
+
+<!-- specgate:trace status=Verified scn=SCN-012 test=tests/unit/harness-run.test.ts artifact=scripts/harness/run.ts uc=- -->
+
+`harness run` drives the plan → agent → verify → done loop on a worktree per requirement. Priority: Should.
+
+### REQ-013 — `adopt` installs SDD on an existing repository without moving its files
+
+<!-- specgate:trace status=Verified scn=SCN-013 test=tests/unit/adopt.test.ts artifact=scripts/adopt_project.ts uc=- -->
+
+`adopt` installs SDD on an existing repository without moving its files. Priority: Must.
+
+### REQ-014 — `doctor` diagnoses the project and environment, reporting a fix per finding
+
+<!-- specgate:trace status=Verified scn=SCN-014 test=tests/unit/doctor.test.ts artifact=scripts/doctor.ts uc=- -->
+
+`doctor` diagnoses the project and environment, reporting a fix per finding. Priority: Should.
+
+### REQ-015 — `req` adds, links and closes requirements without hand-editing the matrix
+
+<!-- specgate:trace status=Verified scn=SCN-015 test=tests/unit/req-commands.test.ts artifact=scripts/req.ts uc=- -->
+
+`req` adds, links and closes requirements without hand-editing the matrix. Priority: Should.
 
 ## 9. Non-functional requirements
 | ID | Requirement | Quality attribute | Status |

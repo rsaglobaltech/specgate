@@ -268,7 +268,7 @@ The system SHALL keep, when a plan is applied, what each file it wrote held befo
 - WHEN the Developer runs `specgate agent revert <id>`
 - THEN it is refused with `revert_stale` naming spec.md, and spec.md keeps the edit
 
-<!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-665.feature kind=functional status=Implemented -->
+<!-- specgate:trace status=Implemented feature=features/agent-integration/REQ-665.feature artifact='scripts/lib/agent-plan.ts, scripts/agent/cli.ts' actor=Developer kind=functional -->
 
 ### Requirement: REQ-596 — The project's agent, not Claude for every project
 

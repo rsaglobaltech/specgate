@@ -1071,4 +1071,4 @@ The system SHALL tell the agent, in `DRAFTING.md`, to start a step with `[Who]` 
 - WHEN the Developer runs `specgate status --json`
 - THEN its main flow's lanes are Tutor and System, its steps keep no tag, and its activity has System's lane
 
-<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-642.feature kind=functional status=Implemented -->
+<!-- specgate:trace status=Implemented feature=features/change-lifecycle/REQ-642.feature artifact=scripts/draft/drafting-guide.ts actor=Developer kind=functional -->

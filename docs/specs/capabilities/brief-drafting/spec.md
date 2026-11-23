@@ -26,4 +26,4 @@ The system SHALL report, on `specgate draft --check`, `D16_scenario_language` fo
 - WHEN the Developer runs `specgate draft --check`
 - THEN `D16_scenario_language` names SCN-002, its fix to write its steps in Spanish
 
-<!-- specgate:trace actor=Developer feature=features/brief-drafting/REQ-668.feature kind=functional status=Implemented -->
+<!-- specgate:trace status=Implemented feature=features/brief-drafting/REQ-668.feature artifact='packages/core/src/domain/DraftChecklist.ts, scripts/cli/commands/spec/DraftCommand.ts' actor=Developer kind=functional -->

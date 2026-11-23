@@ -149,8 +149,38 @@ function planMigration(projectDir: string, original: RawMatrixRow[]) {
   }
   for (const id of inChanges.keys()) byReq.delete(id);
 
+  // REQ-677: a capability spec's requirement keeps, pinned in its own trace,
+  // the code and tests of its hand-kept row the derivation would not find.
+  const capabilities = (sources.capabilities || []).map((f) => ({ ...f }));
+  const found = deriveRows(sources);
+  const list = (v: unknown) =>
+    String(v ?? "-")
+      .replace(/`/g, "")
+      .split(",")
+      .map((x) => x.trim())
+      .filter((x) => x && x !== "-" && x.toUpperCase() !== "TBD");
+  const pin = (id: string, rows: RawMatrixRow[]) => {
+    const heading = new RegExp(`^#{2,4}\\s+(?:Requirement:\\s*)?${id}\\b`, "m");
+    const file = capabilities.find((f) => heading.test(f.source));
+    if (!file) return;
+    const derivedRows = found.filter((r) => r.requirement === id);
+    const fields: Record<string, string> = {};
+    for (const [key, column] of [
+      ["artifact", "technicalArtifact"],
+      ["test", "testArtifact"],
+    ] as const) {
+      const want = [...new Set(rows.flatMap((r) => list(r[column])))];
+      const have = new Set(derivedRows.flatMap((r) => list(r[column])));
+      if (want.some((f) => !have.has(f))) fields[key] = want.join(", ");
+    }
+    if (Object.keys(fields).length) file.source = setTraceFields(file.source, id, fields) ?? file.source;
+  };
+
   for (const [id, rows] of byReq) {
-    if (inCapabilities.has(id) && !inSpec.has(id)) continue;
+    if (inCapabilities.has(id) && !inSpec.has(id)) {
+      pin(id, rows);
+      continue;
+    }
     const titleCell = String(rows[0].useCase || "")
       .replace(/^UC-\d+\s*/, "")
       .trim();
@@ -174,7 +204,10 @@ function planMigration(projectDir: string, original: RawMatrixRow[]) {
     spec = setTraceFields(spec, id, plan.fields) ?? spec;
   }
 
-  const derived = deriveRows({ ...sources, spec });
+  const derived = deriveRows({ ...sources, spec, capabilities });
+  const capabilityWrites = capabilities.filter(
+    (f, i) => f.source !== (sources.capabilities || [])[i].source
+  );
   // REQ-677: a row the generated matrix only fills in further is kept, not lost.
   const waiting = (r: RawMatrixRow) => inChanges.has(String(r.requirement || "").trim());
   const d = diffRowsKept(
@@ -182,7 +215,7 @@ function planMigration(projectDir: string, original: RawMatrixRow[]) {
     derived.filter((r) => !waiting(r as RawMatrixRow))
   );
 
-  return { spec, specFile, derived, blocked, d, byReq, inChanges };
+  return { spec, specFile, derived, blocked, d, byReq, inChanges, capabilityWrites };
 }
 
 /**
@@ -201,9 +234,13 @@ export function migrateToDerived(projectDir: string): boolean {
   }
   const original = rowsOf(existing);
   if (original.length === 0) return false;
-  const { spec, specFile, derived, blocked, d } = planMigration(projectDir, original);
+  const { spec, specFile, derived, blocked, d, capabilityWrites } = planMigration(
+    projectDir,
+    original
+  );
   if (blocked.length > 0 || d.missing.length > 0 || d.extra.length > 0) return false;
   fs.writeFileSync(specFile, spec, "utf8");
+  for (const f of capabilityWrites) fs.writeFileSync(path.join(projectDir, f.path), f.source, "utf8");
   fs.writeFileSync(file, renderDerivedMatrix(derived, projectNameOf(existing)), "utf8");
   ensureUnionMerge(projectDir);
   return true;
@@ -395,7 +432,7 @@ export class MatrixCommand extends BaseCommand {
       ]);
     }
 
-    const { spec, specFile, derived, blocked, d, byReq, inChanges } = planMigration(
+    const { spec, specFile, derived, blocked, d, byReq, inChanges, capabilityWrites } = planMigration(
       projectDir,
       original
     );
@@ -423,6 +460,8 @@ export class MatrixCommand extends BaseCommand {
     const next = renderDerivedMatrix(derived, projectNameOf(existing));
     if (!dryRun) {
       fs.writeFileSync(specFile, spec, "utf8");
+      for (const f of capabilityWrites)
+        fs.writeFileSync(path.join(projectDir, f.path), f.source, "utf8");
       fs.writeFileSync(path.join(projectDir, MATRIX), next, "utf8");
       ensureUnionMerge(projectDir);
     }

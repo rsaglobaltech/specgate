@@ -381,7 +381,7 @@ The system SHALL, on `specgate brief export [--out <dir>]`, write the project's 
 - WHEN the Developer runs `specgate brief export` and imports the boards it wrote into an empty project
 - THEN the three canvases, the Event Storming board and the story are written, and read back they give the same three contexts, 26 flows and the 26 activities in order
 
-<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-659.feature kind=functional status=Implemented -->
+<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-659.feature artifact='packages/core/src/domain/DddToolboxExport.ts, scripts/brief_export.ts, templates/ddd-toolbox/records.json' actor=Developer kind=functional -->
 
 ### Requirement: REQ-655 — A DDD workshop's boards become the brief's modules
 
@@ -445,7 +445,7 @@ The system SHALL read an actor's name written in double or single quotes in the 
 - WHEN the form is written back to the brief
 - THEN the line reads `- { name: "Padre, madre o tutor", surfaces: [web] }`, and reading it back gives the same actor
 
-<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-622.feature kind=functional status=Implemented -->
+<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-622.feature artifact=packages/core/src/domain/DraftChecklist.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-486 — The brief read as a form, each field with its line
 

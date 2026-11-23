@@ -705,7 +705,7 @@ The system SHALL, on `specgate scenarios <REQ> [--json]`, run each scenario of t
 - WHEN the Developer runs `specgate scenarios REQ-031 --json`
 - THEN it is refused with `bdd_cmd_missing`, its fix `specgate config set bdd_cmd`
 
-<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-666.feature kind=functional status=Implemented -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-666.feature artifact='scripts/cli/commands/spec/ScenariosCommand.ts, scripts/scenarios.ts' actor=Developer kind=functional -->
 
 ### Requirement: REQ-503 — Every check answer lists its stages
 
@@ -819,7 +819,7 @@ The system SHALL read what the gate requires from `.specgate/gate.yaml`: a `pres
 - WHEN the developer runs `specgate validate . --strict`
 - THEN it exits 1 with `gate_policy_invalid`, naming `lax` and `speed` and the presets and rules to use
 
-<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-604.feature kind=functional status=Implemented -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-604.feature test='tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts' actor=Developer kind=functional -->
 
 ### Requirement: REQ-605 — The gate fails, reports or skips each rule as the policy says
 
@@ -843,7 +843,7 @@ The system SHALL, under `validate --strict` and `check`, report the findings of 
 - WHEN the developer runs `specgate check`
 - THEN it exits 1 with `check_validate_failed`, and prints no `Policy` line
 
-<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-605.feature kind=functional status=Implemented -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-605.feature test='tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts' actor=Developer kind=functional -->
 
 ### Requirement: REQ-606 — The policy is configured, and a new project starts standard
 
@@ -861,7 +861,7 @@ The system SHALL accept `specgate config set gate.preset <preset>`, `gate.rules.
 - WHEN the developer runs `specgate init --no-ci`
 - THEN `.specgate/gate.yaml` says `preset: standard` and lists the seven rules
 
-<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-606.feature kind=functional status=Implemented -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-606.feature test='tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts' actor=Developer kind=functional -->
 
 ### Requirement: REQ-654 — A command that takes time tells how far it is
 

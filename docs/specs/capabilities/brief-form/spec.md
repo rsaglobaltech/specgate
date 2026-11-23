@@ -20,4 +20,4 @@ The system SHALL carry, in `specgate propose --from-brief --form --json`, the br
 - WHEN a form is written back with a second quality line and nothing else changed
 - THEN only `## Quality` is rewritten, with both lines, and every other byte of the brief is as it was
 
-<!-- specgate:trace actor=Developer feature=features/brief-form/REQ-669.feature kind=functional status=Implemented -->
+<!-- specgate:trace status=Implemented feature=features/brief-form/REQ-669.feature artifact='packages/core/src/domain/BriefForm.ts, packages/core/src/domain/BriefCards.ts' actor=Developer kind=functional -->

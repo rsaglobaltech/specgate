@@ -201,3 +201,34 @@ test("REQ-676 SCN-676b: a requirement an open change modifies waits for its arch
   const note = JSON.parse(r.stdout).status.find((s: { code: string }) => s.code === "matrix_rows_in_changes");
   assert.ok(note && /draft-avisos/.test(note.message), r.stdout);
 });
+
+test("REQ-677: a capability spec's requirement keeps, in its own trace, the code the derivation would miss", () => {
+  const dir = project([]);
+  w(
+    dir,
+    "docs/specs/capabilities/avisos/spec.md",
+    [
+      "# avisos",
+      "",
+      "## Requirements",
+      "",
+      "### Requirement: REQ-031 — Warn the customer",
+      "",
+      "<!-- specgate:trace status=Implemented -->",
+      "",
+      "The system SHALL warn the customer of a late order.",
+      "",
+    ].join("\n")
+  );
+  w(dir, "tests/avisos.test.ts", "// REQ-031\n");
+  assert.equal(sg(dir, "matrix").status, 0);
+  const generated = read(dir, "docs/specs/traceability.md").split("\n").slice(1).join("\n");
+  // The hand-kept row names code that never mentions REQ-031.
+  w(dir, "src/avisos.ts", "export const avisos = 1;\n");
+  w(dir, "docs/specs/traceability.md", generated.replace(/^(\| REQ-031 \|(?:[^|]*\|){6})[^|]*\|/m, "$1 src/avisos.ts |"));
+  const r = sg(dir, "matrix", "--migrate", "--json");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(read(dir, "docs/specs/capabilities/avisos/spec.md"), /specgate:trace[^>]*artifact=src\/avisos\.ts/);
+  assert.doesNotMatch(read(dir, "spec.md"), /REQ-031/);
+  assert.match(read(dir, "docs/specs/traceability.md"), /\| REQ-031 \|.*src\/avisos\.ts/);
+});
