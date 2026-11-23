@@ -98,10 +98,8 @@ previous merge. A green one is merged into the branch you are on (a merge
 commit; its prompts stay on its `harness/` branch), and **the gate runs again
 on the merge**. A red result is undone and the chain stops.
 
-With trust levels declared (`trust:` in `.specgate/gate.yaml`), `--chain`
-runs only on a branch of your own — `git switch -c feature/<module>` — never
-on the main branch: a module's requirements build on one another there, and
-you merge that branch when you have read it.
+With trust levels declared, `--chain` runs only on a branch of your own
+(`git switch -c feature/<module>`); you merge that branch yourself.
 
 ### On a ticket's branch
 
@@ -289,25 +287,9 @@ has it. Check the gate command the report prints.
 To see what the harness has cost over time (first-attempt rate, time per
 delivered requirement), see [What the harness has cost](harness-report.md).
 
-## The right agent per module, checked before it starts
+## Agents per module, checked first; a swarm in sandboxes
 
-Each module can have its own agent: a rule `match: { module: ausleihe }` in
-`.harness/profiles.yaml` hands that module's requirements to its profile, and
-`draft_profile` names the agent that drafts the brief's modules, apart from
-the one that builds. Before any worktree, `harness run` checks that every
-agent it needs is installed and answers — an expired key or a spent free
-quota stops it there, saying which and how to fix it. `specgate harness
-doctor` shows the same at any time. [In detail](specs/harness.md#every-agent-checked-before-it-is-used).
-
-## A swarm in sandboxes
-
-With Docker Sandboxes, `sandbox: { engine: sbx, kit: opencode, allow: [...],
-setup: "..." }` gives each module of a change its own sandbox: made once,
-its hosts opened for it alone, the agents working inside it while the gate
-stays on your machine. `specgate archive` removes a change's sandboxes;
-`specgate harness sandboxes --prune` removes any left behind. The studio's
-Live › Enjambre shows each module, its agent, its sandbox and what each
-requirement is doing. [In detail](specs/harness.md#the-swarm-in-sandboxes).
+A module can have its own agent (`match: { module: … }`); `harness run` checks every agent answers before it starts (`specgate harness doctor`); with `sandbox: { engine: sbx }` each module works in its own sandbox, removed at archive. [In detail](specs/harness.md#every-agent-checked-before-it-is-used).
 
 ## Next
 

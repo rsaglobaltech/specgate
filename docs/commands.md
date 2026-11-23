@@ -137,8 +137,8 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate harness run`                  | Delivers pending requirements with an agent; `--profile` picks which one.   | [The harness](harness.md)                      |
 | `specgate harness prompt <REQ>`         | Prints the prompt an agent would get. Runs nothing.                         | [Choosing your agent](agent-setup.md)          |
 | `specgate harness report`               | First-attempt rate, time and cost per delivered requirement; `--capability`. | [What the harness has cost](harness-report.md) |
-| `specgate harness doctor`              | Which agent each requirement gets, and whether each one is installed and answers. | [The harness](harness.md#the-right-agent-per-module-checked-before-it-starts) |
-| `specgate harness sandboxes [--prune]`  | Each sandbox the harness made and the hosts it may reach; `--prune` the leftovers. | [The harness](harness.md#a-swarm-in-sandboxes) |
+| `specgate harness doctor`              | Which agent each requirement gets, and whether each one is installed and answers. | [The harness](harness.md#agents-per-module-checked-first-a-swarm-in-sandboxes) |
+| `specgate harness sandboxes [--prune]`  | Each sandbox the harness made and the hosts it may reach; `--prune` the leftovers. | [The harness](harness.md#agents-per-module-checked-first-a-swarm-in-sandboxes) |
 | `specgate trust`                        | Each module's trust level, its streak and its bugs; `promote` raises one.   | `specgate trust --help`                        |
 | `specgate map [<REQ>]`                  | Where each requirement lives: use case, route, feature, code, tests.        | `specgate map --help`                          |
 | `specgate reproduce <change>`           | Opens a bug that must be seen red before it is fixed.                       | `specgate reproduce --help`                    |
