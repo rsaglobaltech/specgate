@@ -841,7 +841,8 @@ export function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext)
       usageUsed: [],
       event: (e) => appendEvent(eventsFile, e, req.requirement, attempt),
     };
-    tally.event({ type: "attempt", state: "start" });
+    // How many attempts it has: a run the studio did not start says so only here.
+    tally.event({ type: "attempt", state: "start", max: settings.maxAttempts });
     const record = (stage: AttemptRecord["endedAt"], gateStage?: string) => {
       tally.event({
         type: "attempt",

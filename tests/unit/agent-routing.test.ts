@@ -110,6 +110,10 @@ test("REQ-688 SCN-688a: ausleihe with its own agent — careful builds REQ-006, 
     assert.match(out(r), /2 passed/, out(r));
     const who = fs.readFileSync(p.log, "utf8").trim().split("\n").sort();
     assert.deepEqual(who, ["REQ-004 cheap", "REQ-006 careful"]);
+    // The attempt's start says how many attempts the run allows: a studio that
+    // did not start the run reads it there (studio live-outside-runs REQ-352).
+    const events = fs.readFileSync(path.join(p.dir, ".harness", "events", "REQ-004.jsonl"), "utf8");
+    assert.match(events, /"type":"attempt","state":"start","max":1/);
   } finally {
     p.done();
   }
