@@ -57,6 +57,7 @@ import { requirementReadiness } from "../../../packages/core/src/domain/Requirem
 import { runWithDeadline, wasInterrupted } from "../../lib/run-with-deadline";
 import { selectProfile } from "../../../packages/core/src/domain/ProfileMatch";
 import { requirementCapabilities } from "../../lib/capabilities";
+import { ensureSandbox } from "../../lib/sandbox-registry";
 import { withWorktreeLock } from "../worktree-lock";
 /**
  * Where a resumed run picks up, and what the gate last said.
@@ -383,8 +384,9 @@ function openWorktree(
   const { projectDir, baseRef } = ctx;
   const survivor = resuming ? existingWorktreeFor(projectDir, branch) : null;
   if (survivor) return { dir: survivor, survivor: true };
+  // sandbox-swarm REQ-698: inside the folder of its module's sandbox, made the first time.
   const dir = path.join(
-    os.tmpdir(),
+    sandboxBase(req, ctx) || os.tmpdir(),
     `specgate-harness-${req.requirement}-${crypto.randomBytes(4).toString("hex")}`
   );
   const args = resuming
@@ -598,4 +600,19 @@ export function publishBranch(
     }
   }
   return published;
+}
+
+/**
+ * sandbox-swarm REQ-698: with `sandbox: { engine: sbx }`, the folder of the
+ * sandbox of the requirement's change and module — made, opened and set up
+ * the first time; else null.
+ */
+function sandboxBase(req: HarnessRequirement, ctx: RunContext): string | null {
+  const sandbox = settingsOf(ctx).sandbox;
+  if (!sandbox || sandbox.engine !== "sbx") return null;
+  const id = String(req.requirement || "");
+  const owning = inFlightRequirements(ctx.projectDir).find((r) => r.id === id);
+  const change = owning?.change || path.basename(ctx.projectDir);
+  const module = requirementCapabilities(ctx.projectDir).get(id) || "project";
+  return ensureSandbox(ctx.projectDir, sandbox, change, module, (line) => info(line)).workspace;
 }

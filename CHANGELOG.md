@@ -31,6 +31,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - `draft_profile` names the agent that drafts a module of the brief, apart from the agent that builds; `--no-agent` keeps the drafting guide for your own agent (REQ-689).
 - `specgate harness doctor [--json] [--no-probe]`: which agent each pending requirement gets, and whether each agent — the drafting one too — is installed and answers a one-line prompt (REQ-690).
 - `harness run` checks the agents it needs before any worktree and refuses with `harness_agent_unavailable` when one does not answer; `--skip-doctor` starts anyway (REQ-691).
+- `sandbox: { engine: sbx, kit, allow, setup }`: each module of a change gets its own Docker sandbox, `sg-<change>-<module>`, made and set up once; the agents work inside it, the gate stays on the host (REQ-698).
+- Each host of `sandbox.allow` is opened for that sandbox alone; the hosts the kit brings are recorded too, and the run says how many each sandbox may reach (REQ-699).
+- `specgate archive <change>` removes the change's sandboxes with their rules (REQ-700).
+- `specgate harness sandboxes [--prune] [--json]`: every sandbox the harness made, the hosts it may reach, and the `sg-…` ones nobody recorded; `--prune` removes the leftovers (REQ-701).
 - Each exam is kept in `evals/<skill>/history.jsonl` per version of the skill, and compared with the previous version: better, worse or the same (REQ-687).
 - `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
 

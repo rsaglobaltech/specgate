@@ -937,6 +937,18 @@ export const SURFACE: Command[] = [
         json: { key: "report", gate: false },
       },
       {
+        // sandbox-swarm REQ-701: no sandbox left behind unseen.
+        name: "sandboxes",
+        mcp: false,
+        script: ["harness", "sandboxes.js"],
+        help: {
+          group: "harness",
+          icon: "📦",
+          summary: "Each sandbox the harness made, the hosts it may reach; --prune removes the leftovers.",
+        },
+        json: { key: "sandboxes", gate: false },
+      },
+      {
         // agent-routing REQ-690: every agent checked before it is used.
         name: "doctor",
         mcp: false,

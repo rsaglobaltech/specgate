@@ -10,6 +10,7 @@
  * what lets an agent drive this without screen-scraping.
  */
 
+import { removeChangeSandboxes } from "../../../lib/sandbox-registry";
 import { dropChangeTag, syncChangeFeatures, syncIfApproved } from "../../../lib/bdd";
 import { addGlossaryTerms, refreshDomainDiagrams } from "../../../lib/domain-docs";
 import * as fs from "node:fs";
@@ -1561,8 +1562,10 @@ function cmdArchive(opts: ChangeOptions) {
   const regenerated = refreshDomainDiagrams(projectDir);
   // REQ-595: the names this change brought in, as glossary rows to define.
   const newTerms = addGlossaryTerms(projectDir);
+  // sandbox-swarm REQ-700: the change is done — its sandboxes go, with their rules.
+  const sandboxesRemoved = removeChangeSandboxes(projectDir, changeId);
 
-  emit(opts, { archive: { ...summary, glossaryAdded: newTerms } }, () => {
+  emit(opts, { archive: { ...summary, glossaryAdded: newTerms, sandboxesRemoved } }, () => {
     const t = plan.totals;
     // Set on every plan that gets this far: only a failed plan returns early.
     const trace = t.traceability!;
@@ -1574,6 +1577,9 @@ function cmdArchive(opts: ChangeOptions) {
         (newTerms.length > 0
           ? `  ${ui.muted(`+  docs/specs/glossary.md: ${newTerms.join(", ")} — write their definitions`)}\n`
           : "") +
+        sandboxesRemoved
+          .map((n) => `  ${ui.muted(`−  sandbox ${n} removed, with its rules`)}\n`)
+          .join("") +
         ui
           .kv("Specs", `${t.added} added · ${t.modified} modified · ${t.removed} removed`, 14)
           .replace(/^ {2}/, "    ") +

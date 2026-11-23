@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 /** Unattended delivery: the harness drives an agent through the gate. */
 import * as path from "node:path";
 
@@ -113,6 +114,28 @@ export default [
       const missing = t.sg(dir, "harness", "doctor", "--no-probe", "--json");
       t.expect(missing.status === 1, "exits 1 when an agent is missing", missing);
       t.expect(/nosuchagent is not installed/.test(missing.stdout), "names the program", missing);
+    },
+  },
+  {
+    name: "harness sandboxes: a sandbox nobody recorded is listed, and --prune removes it (REQ-701)",
+    covers: ["harness sandboxes"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      // sbx stands in: one sandbox sg-stray until it is removed.
+      const fake = path.join(path.dirname(dir), `sbx-${path.basename(dir)}`);
+      const gone = `${fake}.gone`;
+      t.write(
+        path.dirname(fake),
+        path.basename(fake),
+        `#!/bin/sh\nif [ "$1" = ls ]; then if [ -f "${gone}" ]; then echo '[]'; else echo '[{"name":"sg-stray"}]'; fi; fi\nif [ "$1" = rm ]; then touch "${gone}"; fi\n`
+      );
+      spawnSync("chmod", ["+x", fake]);
+      const list = t.sgEnv(dir, { SPECGATE_SBX: fake }, "harness", "sandboxes", "--json");
+      t.ok(list, "harness sandboxes --json");
+      t.expect(t.json(list).sandboxes.strays[0]?.name === "sg-stray", "the stray is listed", list);
+      const pruned = t.sgEnv(dir, { SPECGATE_SBX: fake }, "harness", "sandboxes", "--prune", "--json");
+      t.expect(t.json(pruned).sandboxes.removed.includes("sg-stray"), "--prune removes it", pruned);
     },
   },
 ];

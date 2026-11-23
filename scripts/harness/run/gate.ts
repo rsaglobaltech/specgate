@@ -45,6 +45,8 @@ import {
 } from "../../../packages/core/src/domain/HarnessRun";
 import { removeTempFile } from "../../lib/temp-file";
 import { runPrinciples } from "../../lib/steering";
+import { sandboxAround } from "../../lib/sandbox-registry";
+import { sbxExecLine } from "../../lib/sbx";
 import {
   judged,
   promptInFlight,
@@ -522,8 +524,22 @@ export function agentLine(
   settings: Partial<HarnessSettings> | undefined,
   extra: { env?: string[]; mounts?: string[] } = {}
 ): string {
+  // sandbox-swarm REQ-698: in the module's sbx sandbox, its prompt copied where it sees.
+  if (settings?.sandbox?.engine === "sbx") {
+    const box = sandboxAround(worktreeDir);
+    if (box) {
+      const prompts = path.join(box.workspace, ".prompts");
+      fs.mkdirSync(prompts, { recursive: true });
+      const inside = path.join(prompts, path.basename(promptFile));
+      fs.copyFileSync(promptFile, inside);
+      return sbxExecLine(box.name, worktreeDir, substituteAgentCommand(template, inside), [
+        ...(settings.agentEnv || []),
+        ...(extra.env || []),
+      ]);
+    }
+  }
   const line = substituteAgentCommand(template, promptFile);
-  if (!settings?.sandbox) return line;
+  if (!settings?.sandbox || settings.sandbox.engine === "sbx") return line;
   return sandboxCommand(line, settings.sandbox, {
     worktree: worktreeDir,
     mounts: [promptFile, ...(extra.mounts || [])],

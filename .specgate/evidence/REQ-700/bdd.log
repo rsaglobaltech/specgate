@@ -1,0 +1,10 @@
+▶ dist/tests/unit/sandbox-swarm.test.js
+✔ REQ-700 SCN-700a: archiving draft-ausleihe removes its sandbox and its 2 rules; katalog's stays (8696.793542ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8770.518167
