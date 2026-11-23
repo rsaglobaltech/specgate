@@ -1,4 +1,3 @@
-@change:bdd-gate
 Feature: An approved change's scenarios are feature files before any code
 
   @REQ-660 @SCN-660a

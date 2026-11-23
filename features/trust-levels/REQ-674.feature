@@ -1,4 +1,3 @@
-@change:trust-levels
 Feature: How much each module has earned
 
   @REQ-674 @SCN-674a

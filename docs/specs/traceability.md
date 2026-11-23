@@ -110,7 +110,7 @@
 | REQ-172 | SCN-172a | `features/trusted-gate/REQ-172.feature` | - | - | - | - | - | tests/cli.test.ts | Implemented |
 | REQ-173 | SCN-173a | `features/daily-surface/REQ-173.feature` | - | - | - | - | - | tests/unit/approved-needs-test.test.ts | Implemented |
 | REQ-175 | SCN-175a | `features/live-harness/REQ-175.feature` | - | - | - | - | - | tests/cli.test.ts | Implemented |
-| REQ-176 | SCN-176a, SCN-176b, SCN-176c | `features/brief-cards/REQ-176.feature` | - | - | - | - | `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/draft-checklist.test.ts, tests/unit/draft-from-brief.test.ts | Implemented |
+| REQ-176 | SCN-176a | `features/brief-cards/REQ-176.feature` | - | - | - | - | `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/draft-checklist.test.ts,tests/unit/draft-from-brief.test.ts | Implemented |
 | REQ-177 | SCN-177a | `features/change-lifecycle/REQ-177.feature` | - | - | - | - | - | tests/unit/draft-reserve-more.test.ts | Implemented |
 | REQ-178 | SCN-178a | `features/daily-surface/REQ-178.feature` | - | - | - | - | - | tests/unit/adopter-papercuts.test.ts | Implemented |
 | REQ-179 | SCN-179a | `features/live-harness/REQ-179.feature` | - | - | - | - | - | tests/unit/live-view-polish.test.ts | Implemented |
@@ -361,69 +361,69 @@
 | REQ-462 | SCN-462a | `features/project-setup/REQ-462.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
 | REQ-463 | SCN-463a | `features/project-setup/REQ-463.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
 | REQ-464 | SCN-464a | `features/project-setup/REQ-464.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
-| REQ-465 | SCN-465a, SCN-465b | `features/daily-surface/REQ-465.feature` | - | - | - | - | - | tests/unit/apply-next-in-change.test.ts | Approved |
-| REQ-466 | SCN-466a | `features/api/REQ-466.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Approved |
-| REQ-467 | SCN-467a | `features/api/REQ-467.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Approved |
-| REQ-468 | SCN-468a | `features/api/REQ-468.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Approved |
-| REQ-469 | SCN-469a | `features/api/REQ-469.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Approved |
-| REQ-470 | SCN-470a | `features/project-setup/REQ-470.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
-| REQ-471 | SCN-471a | `features/project-setup/REQ-471.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
-| REQ-472 | SCN-472a | `features/project-setup/REQ-472.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
-| REQ-473 | SCN-473a | `features/project-setup/REQ-473.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
-| REQ-474 | SCN-474a | `features/studio/REQ-474.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
-| REQ-475 | SCN-475a | `features/project-setup/REQ-475.feature` | - | - | - | - | - | tests/unit/onboarding-docs.test.ts | Approved |
-| REQ-476 | SCN-476a, SCN-476b | `features/project-setup/REQ-476.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Approved |
-| REQ-477 | SCN-477a | `features/project-setup/REQ-477.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Approved |
-| REQ-478 | SCN-478a | `features/project-setup/REQ-478.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Approved |
-| REQ-479 | SCN-479a | `features/clarification/REQ-479.feature` | - | - | - | - | - | tests/unit/questions-options.test.ts | Approved |
-| REQ-480 | SCN-480a | `features/clarification/REQ-480.feature` | - | - | - | - | - | tests/unit/questions-options.test.ts | Approved |
-| REQ-481 | SCN-481a | `features/clarification/REQ-481.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Approved |
-| REQ-482 | SCN-482a | `features/clarification/REQ-482.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Approved |
-| REQ-483 | SCN-483a | `features/trusted-gate/REQ-483.feature` | - | - | - | - | - | tests/unit/scenario-heading-ids.test.ts | Approved |
-| REQ-484 | SCN-484a | `features/change-lifecycle/REQ-484.feature` | - | - | - | - | - | tests/unit/studio-review-notes.test.ts | Approved |
-| REQ-485 | SCN-485a | `features/change-lifecycle/REQ-485.feature` | - | - | - | - | - | tests/unit/studio-review-notes.test.ts | Approved |
-| REQ-486 | SCN-486a | `features/brief-cards/REQ-486.feature` | - | - | - | - | - | tests/unit/brief-form.test.ts | Approved |
-| REQ-487 | SCN-487a | `features/brief-cards/REQ-487.feature` | - | - | - | - | - | tests/unit/brief-form.test.ts | Approved |
-| REQ-488 | SCN-488a | `features/brief-cards/REQ-488.feature` | - | - | - | - | - | tests/unit/brief-form.test.ts | Approved |
-| REQ-489 | SCN-489a | `features/project-setup/REQ-489.feature` | - | - | - | - | - | tests/unit/adopt-dry-run.test.ts | Approved |
-| REQ-490 | SCN-490a, SCN-490b | `features/harness/REQ-490.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
-| REQ-491 | SCN-491a, SCN-491b | `features/harness/REQ-491.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
-| REQ-492 | SCN-492a | `features/harness/REQ-492.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
-| REQ-493 | SCN-493a | `features/harness/REQ-493.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
-| REQ-494 | SCN-494a | `features/harness/REQ-494.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
-| REQ-495 | SCN-495a | `features/harness/REQ-495.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
-| REQ-496 | SCN-496a | `features/harness/REQ-496.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
-| REQ-497 | SCN-497a | `features/harness/REQ-497.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
-| REQ-498 | SCN-498a, SCN-498b | `features/daily-surface/REQ-498.feature` | - | - | - | - | - | tests/unit/matrix-scenarios.test.ts | Approved |
-| REQ-499 | SCN-499a | `features/quality/REQ-499.feature` | - | - | - | - | - | tests/unit/line-coverage.test.ts | Approved |
-| REQ-500 | SCN-500a | `features/daily-surface/REQ-500.feature` | - | - | - | - | - | tests/unit/capability-filter.test.ts | Approved |
-| REQ-501 | SCN-501a | `features/quality/REQ-501.feature` | - | - | - | - | - | tests/unit/capability-filter.test.ts | Approved |
-| REQ-502 | SCN-502a | `features/harness/REQ-502.feature` | - | - | - | - | - | tests/unit/capability-filter.test.ts | Approved |
-| REQ-503 | SCN-503a | `features/trusted-gate/REQ-503.feature` | - | - | - | - | - | tests/unit/gate-stages.test.ts | Approved |
-| REQ-504 | SCN-504a | `features/trusted-gate/REQ-504.feature` | - | - | - | - | - | tests/unit/gate-stages.test.ts | Approved |
-| REQ-505 | SCN-505a | `features/project-setup/REQ-505.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Approved |
-| REQ-506 | SCN-506a | `features/project-setup/REQ-506.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Approved |
-| REQ-507 | SCN-507a | `features/project-setup/REQ-507.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Approved |
-| REQ-508 | SCN-508a | `features/project-setup/REQ-508.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Approved |
-| REQ-509 | SCN-509a | `features/harness/REQ-509.feature` | - | - | - | - | - | tests/unit/measured-cost.test.ts | Approved |
-| REQ-510 | SCN-510a | `features/trusted-gate/REQ-510.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Approved |
-| REQ-511 | SCN-511a | `features/trusted-gate/REQ-511.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Approved |
-| REQ-512 | SCN-512a | `features/trusted-gate/REQ-512.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Approved |
-| REQ-513 | SCN-513a | `features/trusted-gate/REQ-513.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Approved |
-| REQ-514 | SCN-514a | `features/trusted-gate/REQ-514.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Approved |
-| REQ-515 | SCN-515a | `features/trusted-gate/REQ-515.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Approved |
-| REQ-516 | SCN-516a | `features/trusted-gate/REQ-516.feature` | - | - | - | - | - | tests/unit/test-cache.test.ts | Approved |
-| REQ-517 | SCN-517a | `features/trusted-gate/REQ-517.feature` | - | - | - | - | - | tests/unit/gate-scaling.test.ts | Approved |
-| REQ-518 | SCN-518a | `features/trusted-gate/REQ-518.feature` | - | - | - | - | - | tests/unit/gate-parallel.test.ts | Approved |
-| REQ-519 | SCN-519a | `features/trusted-gate/REQ-519.feature` | - | - | - | - | - | tests/unit/gate-parallel.test.ts | Approved |
-| REQ-520 | SCN-520a | `features/agent-integration/REQ-520.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
-| REQ-521 | SCN-521a | `features/agent-integration/REQ-521.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
-| REQ-522 | SCN-522a | `features/agent-integration/REQ-522.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
-| REQ-523 | SCN-523a | `features/agent-integration/REQ-523.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
-| REQ-524 | SCN-524a | `features/agent-integration/REQ-524.feature` | - | - | - | - | - | tests/unit/agent-apply.test.ts | Approved |
-| REQ-525 | SCN-525a | `features/agent-integration/REQ-525.feature` | - | - | - | - | - | tests/unit/agent-apply.test.ts | Approved |
-| REQ-526 | SCN-526a | `features/agent-integration/REQ-526.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
-| REQ-527 | SCN-527a | `features/agent-integration/REQ-527.feature` | - | - | - | - | - | tests/unit/agent-api.test.ts | Approved |
+| REQ-465 | SCN-465a | `features/daily-surface/REQ-465.feature` | - | - | - | - | - | tests/unit/apply-next-in-change.test.ts | Implemented |
+| REQ-466 | SCN-466a | `features/api/REQ-466.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Implemented |
+| REQ-467 | SCN-467a | `features/api/REQ-467.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Implemented |
+| REQ-468 | SCN-468a | `features/api/REQ-468.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Implemented |
+| REQ-469 | SCN-469a | `features/api/REQ-469.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Implemented |
+| REQ-470 | SCN-470a | `features/project-setup/REQ-470.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Implemented |
+| REQ-471 | SCN-471a | `features/project-setup/REQ-471.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Implemented |
+| REQ-472 | SCN-472a | `features/project-setup/REQ-472.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Implemented |
+| REQ-473 | SCN-473a | `features/project-setup/REQ-473.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Implemented |
+| REQ-474 | SCN-474a | `features/studio/REQ-474.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Implemented |
+| REQ-475 | SCN-475a | `features/project-setup/REQ-475.feature` | - | - | - | - | - | tests/unit/onboarding-docs.test.ts | Implemented |
+| REQ-476 | SCN-476a | `features/project-setup/REQ-476.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Implemented |
+| REQ-477 | SCN-477a | `features/project-setup/REQ-477.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Implemented |
+| REQ-478 | SCN-478a | `features/project-setup/REQ-478.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Implemented |
+| REQ-479 | SCN-479a | `features/clarification/REQ-479.feature` | - | - | - | - | - | tests/unit/questions-options.test.ts | Implemented |
+| REQ-480 | SCN-480a | `features/clarification/REQ-480.feature` | - | - | - | - | - | tests/unit/questions-options.test.ts | Implemented |
+| REQ-481 | SCN-481a | `features/clarification/REQ-481.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Implemented |
+| REQ-482 | SCN-482a | `features/clarification/REQ-482.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Implemented |
+| REQ-483 | SCN-483a | `features/trusted-gate/REQ-483.feature` | - | - | - | - | - | tests/unit/scenario-heading-ids.test.ts | Implemented |
+| REQ-484 | SCN-484a | `features/change-lifecycle/REQ-484.feature` | - | - | - | - | - | tests/unit/studio-review-notes.test.ts | Implemented |
+| REQ-485 | SCN-485a | `features/change-lifecycle/REQ-485.feature` | - | - | - | - | - | tests/unit/studio-review-notes.test.ts | Implemented |
+| REQ-486 | SCN-486a | `features/brief-cards/REQ-486.feature` | - | - | - | - | - | tests/unit/brief-form.test.ts | Implemented |
+| REQ-487 | SCN-487a | `features/brief-cards/REQ-487.feature` | - | - | - | - | - | tests/unit/brief-form.test.ts | Implemented |
+| REQ-488 | SCN-488a | `features/brief-cards/REQ-488.feature` | - | - | - | - | - | tests/unit/brief-form.test.ts | Implemented |
+| REQ-489 | SCN-489a | `features/project-setup/REQ-489.feature` | - | - | - | - | - | tests/unit/adopt-dry-run.test.ts | Implemented |
+| REQ-490 | SCN-490a | `features/harness/REQ-490.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Implemented |
+| REQ-491 | SCN-491a | `features/harness/REQ-491.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Implemented |
+| REQ-492 | SCN-492a | `features/harness/REQ-492.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Implemented |
+| REQ-493 | SCN-493a | `features/harness/REQ-493.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Implemented |
+| REQ-494 | SCN-494a | `features/harness/REQ-494.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Implemented |
+| REQ-495 | SCN-495a | `features/harness/REQ-495.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Implemented |
+| REQ-496 | SCN-496a | `features/harness/REQ-496.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Implemented |
+| REQ-497 | SCN-497a | `features/harness/REQ-497.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Implemented |
+| REQ-498 | SCN-498a | `features/daily-surface/REQ-498.feature` | - | - | - | - | - | tests/unit/matrix-scenarios.test.ts | Implemented |
+| REQ-499 | SCN-499a | `features/quality/REQ-499.feature` | - | - | - | - | - | tests/unit/line-coverage.test.ts | Implemented |
+| REQ-500 | SCN-500a | `features/daily-surface/REQ-500.feature` | - | - | - | - | - | tests/unit/capability-filter.test.ts | Implemented |
+| REQ-501 | SCN-501a | `features/quality/REQ-501.feature` | - | - | - | - | - | tests/unit/capability-filter.test.ts | Implemented |
+| REQ-502 | SCN-502a | `features/harness/REQ-502.feature` | - | - | - | - | - | tests/unit/capability-filter.test.ts | Implemented |
+| REQ-503 | SCN-503a | `features/trusted-gate/REQ-503.feature` | - | - | - | - | - | tests/unit/gate-stages.test.ts | Implemented |
+| REQ-504 | SCN-504a | `features/trusted-gate/REQ-504.feature` | - | - | - | - | - | tests/unit/gate-stages.test.ts | Implemented |
+| REQ-505 | SCN-505a | `features/project-setup/REQ-505.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Implemented |
+| REQ-506 | SCN-506a | `features/project-setup/REQ-506.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Implemented |
+| REQ-507 | SCN-507a | `features/project-setup/REQ-507.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Implemented |
+| REQ-508 | SCN-508a | `features/project-setup/REQ-508.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Implemented |
+| REQ-509 | SCN-509a | `features/harness/REQ-509.feature` | - | - | - | - | - | tests/unit/measured-cost.test.ts | Implemented |
+| REQ-510 | SCN-510a | `features/trusted-gate/REQ-510.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Implemented |
+| REQ-511 | SCN-511a | `features/trusted-gate/REQ-511.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Implemented |
+| REQ-512 | SCN-512a | `features/trusted-gate/REQ-512.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Implemented |
+| REQ-513 | SCN-513a | `features/trusted-gate/REQ-513.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Implemented |
+| REQ-514 | SCN-514a | `features/trusted-gate/REQ-514.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Implemented |
+| REQ-515 | SCN-515a | `features/trusted-gate/REQ-515.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Implemented |
+| REQ-516 | SCN-516a | `features/trusted-gate/REQ-516.feature` | - | - | - | - | - | tests/unit/test-cache.test.ts | Implemented |
+| REQ-517 | SCN-517a | `features/trusted-gate/REQ-517.feature` | - | - | - | - | - | tests/unit/gate-scaling.test.ts | Implemented |
+| REQ-518 | SCN-518a | `features/trusted-gate/REQ-518.feature` | - | - | - | - | - | tests/unit/gate-parallel.test.ts | Implemented |
+| REQ-519 | SCN-519a | `features/trusted-gate/REQ-519.feature` | - | - | - | - | - | tests/unit/gate-parallel.test.ts | Implemented |
+| REQ-520 | SCN-520a | `features/agent-integration/REQ-520.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Implemented |
+| REQ-521 | SCN-521a | `features/agent-integration/REQ-521.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Implemented |
+| REQ-522 | SCN-522a | `features/agent-integration/REQ-522.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Implemented |
+| REQ-523 | SCN-523a | `features/agent-integration/REQ-523.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Implemented |
+| REQ-524 | SCN-524a | `features/agent-integration/REQ-524.feature` | - | - | - | - | - | tests/unit/agent-apply.test.ts | Implemented |
+| REQ-525 | SCN-525a | `features/agent-integration/REQ-525.feature` | - | - | - | - | - | tests/unit/agent-apply.test.ts | Implemented |
+| REQ-526 | SCN-526a | `features/agent-integration/REQ-526.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Implemented |
+| REQ-527 | SCN-527a | `features/agent-integration/REQ-527.feature` | - | - | - | - | - | tests/unit/agent-api.test.ts | Implemented |
 | REQ-528 | SCN-528a | `features/project-setup/REQ-528.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Implemented |
 | REQ-529 | SCN-529a | `features/project-setup/REQ-529.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Implemented |
 | REQ-530 | SCN-530a | `features/project-setup/REQ-530.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Implemented |
@@ -467,99 +467,99 @@
 | REQ-570 | SCN-570a | `features/trusted-gate/REQ-570.feature` | - | - | - | - | - | tests/unit/compat.test.ts | Implemented |
 | REQ-571 | SCN-571a | `features/trusted-gate/REQ-571.feature` | - | - | - | - | - | tests/unit/release-workflows.test.ts | Implemented |
 | REQ-572 | SCN-572a | `features/trusted-gate/REQ-572.feature` | - | - | - | - | - | tests/unit/release-workflows.test.ts | Implemented |
-| REQ-573 | SCN-573a | `features/harness/REQ-573.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
-| REQ-574 | SCN-574a | `features/harness/REQ-574.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Approved |
-| REQ-575 | SCN-575a | `features/harness/REQ-575.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
-| REQ-576 | SCN-576a | `features/harness/REQ-576.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
-| REQ-577 | SCN-577a | `features/harness/REQ-577.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
-| REQ-578 | SCN-578a | `features/harness/REQ-578.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
-| REQ-579 | SCN-579a | `features/harness/REQ-579.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
-| REQ-580 | SCN-580a | `features/harness/REQ-580.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
-| REQ-581 | SCN-581a | `features/harness/REQ-581.feature` | - | - | - | - | - | tests/unit/quality-agents.test.ts | Approved |
-| REQ-582 | SCN-582a | `features/harness/REQ-582.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
-| REQ-583 | SCN-583a | `features/harness/REQ-583.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
-| REQ-584 | SCN-584a | `features/harness/REQ-584.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
-| REQ-585 | SCN-585a | `features/harness/REQ-585.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
-| REQ-586 | SCN-586a | `features/harness/REQ-586.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
-| REQ-587 | SCN-587a | `features/harness/REQ-587.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
-| REQ-588 | SCN-588a | `features/harness/REQ-588.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
-| REQ-589 | SCN-589a | `features/harness/REQ-589.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
-| REQ-590 | SCN-590a | `features/harness/REQ-590.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
-| REQ-591 | SCN-591a | `features/harness/REQ-591.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
-| REQ-592 | SCN-592a | `features/harness/REQ-592.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
-| REQ-593 | SCN-593a | `features/harness/REQ-593.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
-| REQ-594 | SCN-594a | `features/domain-language/REQ-594.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
-| REQ-595 | SCN-595a | `features/domain-language/REQ-595.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
-| REQ-596 | SCN-596a | `features/agent-integration/REQ-596.feature` | - | - | - | - | - | tests/unit/agent-choice.test.ts | Approved |
-| REQ-597 | SCN-597a | `features/agent-integration/REQ-597.feature` | - | - | - | - | - | tests/unit/agent-choice.test.ts | Approved |
-| REQ-598 | SCN-598a | `features/agent-integration/REQ-598.feature` | - | - | - | - | - | tests/unit/agent-choice.test.ts | Approved |
-| REQ-599 | SCN-599a | `features/change-lifecycle/REQ-599.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Approved |
-| REQ-600 | SCN-600a | `features/harness/REQ-600.feature` | - | - | - | - | - | tests/unit/build-order.test.ts | Approved |
-| REQ-601 | SCN-601a | `features/brief-cards/REQ-601.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Approved |
-| REQ-602 | SCN-602a | `features/brief-cards/REQ-602.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Approved |
-| REQ-603 | SCN-603a | `features/brief-cards/REQ-603.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Approved |
-| REQ-604 | SCN-604a | `features/trusted-gate/REQ-604.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Approved |
-| REQ-605 | SCN-605a | `features/trusted-gate/REQ-605.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Approved |
-| REQ-606 | SCN-606a | `features/trusted-gate/REQ-606.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Approved |
-| REQ-607 | SCN-607a | `features/project-setup/REQ-607.feature` | - | - | - | - | - | tests/unit/undecided-stack.test.ts | Approved |
-| REQ-608 | SCN-608a | `features/project-setup/REQ-608.feature` | - | - | - | - | - | tests/unit/adopt-no-code.test.ts | Approved |
-| REQ-609 | SCN-609a | `features/project-setup/REQ-609.feature` | - | - | - | - | - | tests/unit/init-wizard.test.ts | Approved |
-| REQ-610 | SCN-610a | `features/trusted-gate/REQ-610.feature` | - | - | - | - | - | tests/unit/first-green-gate.test.ts | Approved |
-| REQ-611 | SCN-611a | `features/trusted-gate/REQ-611.feature` | - | - | - | - | - | tests/unit/first-green-gate.test.ts | Approved |
-| REQ-612 | SCN-612a | `features/daily-surface/REQ-612.feature` | - | - | - | - | - | tests/unit/first-green-gate.test.ts | Approved |
-| REQ-613 | SCN-613a | `features/trusted-gate/REQ-613.feature` | - | - | - | - | - | tests/unit/ci-matches-local.test.ts | Approved |
-| REQ-614 | SCN-614a | `features/harness/REQ-614.feature` | - | - | - | - | - | tests/unit/agent-runs-tests.test.ts | Approved |
-| REQ-615 | SCN-615a | `features/daily-surface/REQ-615.feature` | - | - | - | - | - | tests/unit/status-counts-requirements.test.ts | Approved |
-| REQ-616 | SCN-616a | `features/harness/REQ-616.feature` | - | - | - | - | `scripts/draft/confined-agent.ts` | tests/unit/draft-from-brief.test.ts | Approved |
-| REQ-619 | SCN-619a | `features/change-lifecycle/REQ-619.feature` | - | - | - | - | `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/show-approval-blockers.test.ts | Approved |
-| REQ-622 | SCN-622a | `features/brief-cards/REQ-622.feature` | - | - | - | - | `packages/core/src/domain/DraftChecklist.ts` | tests/unit/quoted-actor-names.test.ts | Approved |
-| REQ-625 | SCN-625a | `features/change-lifecycle/REQ-625.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDelta.ts` | tests/unit/use-cases-archive.test.ts, packages/core/test/unit/use-case-delta.test.ts | Approved |
-| REQ-626 | SCN-626a | `features/change-lifecycle/REQ-626.feature` | - | - | - | - | `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/draft-from-brief.test.ts | Approved |
-| REQ-627 | SCN-627a | `features/change-lifecycle/REQ-627.feature` | - | - | - | - | `scripts/lib/gate-policy.ts` | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Approved |
-| REQ-628 | SCN-628a | `features/change-lifecycle/REQ-628.feature` | - | - | - | - | `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/show-approval-blockers.test.ts | Approved |
-| REQ-631 | SCN-631a | `features/change-lifecycle/REQ-631.feature` | - | - | - | - | `packages/core/src/domain/UseCaseSpec.ts` | packages/core/test/unit/use-case-spec.test.ts, tests/unit/use-cases-archive.test.ts | Approved |
-| REQ-632 | SCN-632a | `features/change-lifecycle/REQ-632.feature` | - | - | - | - | `packages/core/src/domain/DraftChecklist.ts` | tests/unit/draft-from-brief.test.ts | Approved |
-| REQ-633 | SCN-633a | `features/change-lifecycle/REQ-633.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDelta.ts` | packages/core/test/unit/use-case-coverage.test.ts | Approved |
-| REQ-634 | SCN-634a | `features/change-lifecycle/REQ-634.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDiagrams.ts` | packages/core/test/unit/use-case-diagrams.test.ts, tests/unit/use-case-diagrams-files.test.ts | Approved |
-| REQ-635 | SCN-635a | `features/change-lifecycle/REQ-635.feature` | - | - | - | - | `scripts/lib/domain-docs.ts` | tests/unit/use-case-diagrams-files.test.ts | Approved |
-| REQ-636 | SCN-636a | `features/change-lifecycle/REQ-636.feature` | - | - | - | - | `scripts/cli/commands/spec/UseCasesCommand.ts` | tests/unit/propose-use-cases.test.ts | Approved |
-| REQ-637 | SCN-637a | `features/change-lifecycle/REQ-637.feature` | - | - | - | - | `packages/core/src/domain/StateMachine.ts` | packages/core/test/unit/state-machine.test.ts, tests/unit/state-machines-check.test.ts | Approved |
-| REQ-638 | SCN-638a | `features/change-lifecycle/REQ-638.feature` | - | - | - | - | `packages/core/src/application/ArchiveChangeUseCase.ts` | packages/core/test/unit/state-machine.test.ts, tests/unit/state-machines-archive.test.ts | Approved |
-| REQ-639 | SCN-639a | `features/change-lifecycle/REQ-639.feature` | - | - | - | - | `scripts/lib/domain-docs.ts` | packages/core/test/unit/state-machine.test.ts, tests/unit/state-machines-check.test.ts, tests/unit/draft-from-brief.test.ts | Approved |
-| REQ-640 | SCN-640a | `features/change-lifecycle/REQ-640.feature` | - | - | - | - | `packages/core/src/domain/UseCaseSpec.ts` | packages/core/test/unit/use-case-lanes.test.ts | Approved |
-| REQ-641 | SCN-641a | `features/change-lifecycle/REQ-641.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDiagrams.ts` | packages/core/test/unit/use-case-lanes.test.ts | Approved |
-| REQ-642 | SCN-642a | `features/change-lifecycle/REQ-642.feature` | - | - | - | - | `scripts/draft/drafting-guide.ts` | tests/unit/draft-from-brief.test.ts, tests/unit/use-case-diagrams-files.test.ts | Approved |
-| REQ-643 | SCN-643a | `features/harness/REQ-643.feature` | - | - | - | - | `scripts/harness/run/prepare.ts` | tests/unit/harness-control.test.ts | Approved |
-| REQ-646 | SCN-646a | `features/change-lifecycle/REQ-646.feature` | - | - | - | - | `scripts/lib/domain-docs.ts` | tests/unit/proposed-in-status.test.ts | Approved |
-| REQ-649 | SCN-649a | `features/harness/REQ-649.feature` | - | - | - | - | `scripts/harness/run/attempt.ts` | tests/unit/harness-control.test.ts | Approved |
-| REQ-650 | SCN-650a | `features/harness/REQ-650.feature` | - | - | - | - | `scripts/lib/agent-permission.ts` | tests/unit/agent-no-mcp.test.ts, tests/unit/draft-from-brief.test.ts | Approved |
-| REQ-651 | SCN-651a | `features/project-setup/REQ-651.feature` | - | - | - | - | `scripts/cli/commands/project/Forja.ts` | tests/unit/forja-front-door.test.ts | Approved |
-| REQ-652 | SCN-652a | `features/brief-cards/REQ-652.feature` | - | - | - | - | `scripts/draft/confined-agent.ts` | tests/unit/draft-from-brief.test.ts | Approved |
-| REQ-653 | SCN-653a, SCN-653b | `features/brief-cards/REQ-653.feature` | - | - | - | - | `scripts/draft/brief-setup.ts` | tests/unit/draft-from-brief.test.ts | Approved |
-| REQ-654 | SCN-654a, SCN-654b, SCN-654c | `features/trusted-gate/REQ-654.feature` | - | - | - | - | `scripts/lib/progress.ts` | tests/unit/progress-file.test.ts | Approved |
-| REQ-655 | SCN-655a, SCN-655b | `features/brief-cards/REQ-655.feature` | - | - | - | - | `scripts/draft/workshop-import.ts`, `packages/core/src/domain/DddBoards.ts`, `scripts/cli/commands/spec/BriefImportCommand.ts` | tests/unit/brief-from-workshop.test.ts | Approved |
-| REQ-656 | SCN-656a | `features/brief-cards/REQ-656.feature` | - | - | - | - | `scripts/draft/drafting-guide.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/brief-from-workshop.test.ts | Approved |
-| REQ-657 | SCN-657a | `features/brief-cards/REQ-657.feature` | - | - | - | - | `scripts/propose.ts` | tests/unit/brief-from-workshop.test.ts | Approved |
-| REQ-658 | SCN-658a, SCN-658b | `features/brief-cards/REQ-658.feature` | - | - | - | - | `packages/core/src/domain/DomainView.ts`, `scripts/lib/brief-model.ts`, `scripts/brief_model.ts` | tests/unit/brief-domain-views.test.ts | Approved |
-| REQ-659 | SCN-659a | `features/brief-cards/REQ-659.feature` | - | - | - | - | `packages/core/src/domain/DddToolboxExport.ts`, `scripts/brief_export.ts`, `templates/ddd-toolbox/records.json` | tests/unit/brief-domain-views.test.ts | Approved |
-| REQ-660 | SCN-660a, SCN-660b | `features/trusted-gate/REQ-660.feature` | - | - | - | - | `scripts/lib/bdd.ts`, `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/bdd-gate.test.ts | Approved |
-| REQ-661 | SCN-661a, SCN-661b, SCN-661c | `features/trusted-gate/REQ-661.feature` | - | - | - | - | `scripts/lib/bdd.ts`, `scripts/cli/commands/quality/ValidateSpecsCommand.ts`, `scripts/lib/gate-policy.ts` | tests/unit/bdd-gate.test.ts | Approved |
-| REQ-662 | SCN-662a, SCN-662b | `features/trusted-gate/REQ-662.feature` | - | - | - | - | `scripts/cli/commands/spec/DoneCommand.ts` | tests/unit/bdd-gate.test.ts | Approved |
-| REQ-663 | SCN-663a, SCN-663b | `features/trusted-gate/REQ-663.feature` | - | - | - | - | `scripts/lib/bdd.ts`, `scripts/cli/commands/project/MigrateCommand.ts`, `scripts/cli/commands/project/gate.ts`, `scripts/cli/commands/project/Forja.ts` | tests/unit/bdd-gate.test.ts | Approved |
-| REQ-664 | SCN-664a, SCN-664b | `features/agent-integration/REQ-664.feature` | - | - | - | - | `scripts/lib/agent-plan.ts`, `scripts/agent/cli.ts` | tests/unit/agent-hunks.test.ts | Approved |
-| REQ-665 | SCN-665a, SCN-665b | `features/agent-integration/REQ-665.feature` | - | - | - | - | `scripts/lib/agent-plan.ts`, `scripts/agent/cli.ts` | tests/unit/agent-hunks.test.ts | Approved |
-| REQ-666 | SCN-666a, SCN-666b | `features/trusted-gate/REQ-666.feature` | - | - | - | - | `scripts/cli/commands/spec/ScenariosCommand.ts`, `scripts/scenarios.ts` | tests/unit/bdd-gate.test.ts | Approved |
-| REQ-667 | SCN-667a | `features/brief-drafting/REQ-667.feature` | - | - | - | - | `scripts/draft/workshop-import.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/brief-cards.test.ts | Approved |
-| REQ-668 | SCN-668a | `features/brief-drafting/REQ-668.feature` | - | - | - | - | `packages/core/src/domain/DraftChecklist.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/draft-checklist.test.ts | Approved |
-| REQ-669 | SCN-669a, SCN-669b | `features/brief-form/REQ-669.feature` | - | - | - | - | `packages/core/src/domain/BriefForm.ts`, `packages/core/src/domain/BriefCards.ts` | tests/unit/brief-form.test.ts | Approved |
-| REQ-670 | SCN-670a, SCN-670b | `features/trust-levels/REQ-670.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/lib/gate-policy.ts`, `scripts/cli/commands/quality/ValidateSpecsCommand.ts` | tests/unit/trust-levels.test.ts | Approved |
-| REQ-671 | SCN-671a, SCN-671b, SCN-671c | `features/trust-levels/REQ-671.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/harness/run/requirement.ts`, `scripts/harness/run/prepare.ts` | tests/unit/trust-levels.test.ts | Approved |
-| REQ-672 | SCN-672a, SCN-672b | `features/trust-levels/REQ-672.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/lib/change-review.ts`, `scripts/cli/commands/project/TrustCommand.ts` | tests/unit/trust-levels.test.ts | Approved |
-| REQ-673 | SCN-673a | `features/trust-levels/REQ-673.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/trust-levels.test.ts | Approved |
-| REQ-674 | SCN-674a, SCN-674b | `features/trust-levels/REQ-674.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/cli/commands/project/TrustCommand.ts`, `scripts/cli/commands/spec/DoneCommand.ts` | tests/unit/trust-levels.test.ts | Approved |
-| REQ-675 | SCN-675a, SCN-675b | `features/trusted-gate/REQ-675.feature` | - | - | - | - | `packages/core/src/infrastructure/DerivedMatrixSources.ts` | tests/unit/matrix-migrate-fixes.test.ts | Approved |
-| REQ-676 | SCN-676a, SCN-676b | `features/trusted-gate/REQ-676.feature` | - | - | - | - | `scripts/cli/commands/spec/MatrixCommand.ts` | tests/unit/matrix-migrate-fixes.test.ts | Approved |
-| REQ-677 | SCN-677a, SCN-677b | `features/trusted-gate/REQ-677.feature` | - | - | - | - | `packages/core/src/domain/DerivedMatrix.ts`, `scripts/cli/commands/spec/MatrixCommand.ts` | tests/unit/matrix-migrate-fixes.test.ts | Approved |
+| REQ-573 | SCN-573a | `features/harness/REQ-573.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Implemented |
+| REQ-574 | SCN-574a | `features/harness/REQ-574.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
+| REQ-575 | SCN-575a | `features/harness/REQ-575.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Implemented |
+| REQ-576 | SCN-576a | `features/harness/REQ-576.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Implemented |
+| REQ-577 | SCN-577a | `features/harness/REQ-577.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Implemented |
+| REQ-578 | SCN-578a | `features/harness/REQ-578.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Implemented |
+| REQ-579 | SCN-579a | `features/harness/REQ-579.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Implemented |
+| REQ-580 | SCN-580a | `features/harness/REQ-580.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Implemented |
+| REQ-581 | SCN-581a | `features/harness/REQ-581.feature` | - | - | - | - | - | tests/unit/quality-agents.test.ts | Implemented |
+| REQ-582 | SCN-582a | `features/harness/REQ-582.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Implemented |
+| REQ-583 | SCN-583a | `features/harness/REQ-583.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Implemented |
+| REQ-584 | SCN-584a | `features/harness/REQ-584.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Implemented |
+| REQ-585 | SCN-585a | `features/harness/REQ-585.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Implemented |
+| REQ-586 | SCN-586a | `features/harness/REQ-586.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Implemented |
+| REQ-587 | SCN-587a | `features/harness/REQ-587.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Implemented |
+| REQ-588 | SCN-588a | `features/harness/REQ-588.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Implemented |
+| REQ-589 | SCN-589a | `features/harness/REQ-589.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Implemented |
+| REQ-590 | SCN-590a | `features/harness/REQ-590.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Implemented |
+| REQ-591 | SCN-591a | `features/harness/REQ-591.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Implemented |
+| REQ-592 | SCN-592a | `features/harness/REQ-592.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Implemented |
+| REQ-593 | SCN-593a | `features/harness/REQ-593.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Implemented |
+| REQ-594 | SCN-594a | `features/domain-language/REQ-594.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Implemented |
+| REQ-595 | SCN-595a | `features/domain-language/REQ-595.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Implemented |
+| REQ-596 | SCN-596a | `features/agent-integration/REQ-596.feature` | - | - | - | - | - | tests/unit/agent-choice.test.ts | Implemented |
+| REQ-597 | SCN-597a | `features/agent-integration/REQ-597.feature` | - | - | - | - | - | tests/unit/agent-choice.test.ts | Implemented |
+| REQ-598 | SCN-598a | `features/agent-integration/REQ-598.feature` | - | - | - | - | - | tests/unit/agent-choice.test.ts | Implemented |
+| REQ-599 | SCN-599a | `features/change-lifecycle/REQ-599.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
+| REQ-600 | SCN-600a | `features/harness/REQ-600.feature` | - | - | - | - | - | tests/unit/build-order.test.ts | Implemented |
+| REQ-601 | SCN-601a | `features/brief-cards/REQ-601.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Implemented |
+| REQ-602 | SCN-602a | `features/brief-cards/REQ-602.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Implemented |
+| REQ-603 | SCN-603a | `features/brief-cards/REQ-603.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Implemented |
+| REQ-604 | SCN-604a | `features/trusted-gate/REQ-604.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Implemented |
+| REQ-605 | SCN-605a | `features/trusted-gate/REQ-605.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Implemented |
+| REQ-606 | SCN-606a | `features/trusted-gate/REQ-606.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Implemented |
+| REQ-607 | SCN-607a | `features/project-setup/REQ-607.feature` | - | - | - | - | - | tests/unit/undecided-stack.test.ts | Implemented |
+| REQ-608 | SCN-608a | `features/project-setup/REQ-608.feature` | - | - | - | - | - | tests/unit/adopt-no-code.test.ts | Implemented |
+| REQ-609 | SCN-609a | `features/project-setup/REQ-609.feature` | - | - | - | - | - | tests/unit/init-wizard.test.ts | Implemented |
+| REQ-610 | SCN-610a | `features/trusted-gate/REQ-610.feature` | - | - | - | - | - | tests/unit/first-green-gate.test.ts | Implemented |
+| REQ-611 | SCN-611a | `features/trusted-gate/REQ-611.feature` | - | - | - | - | - | tests/unit/first-green-gate.test.ts | Implemented |
+| REQ-612 | SCN-612a | `features/daily-surface/REQ-612.feature` | - | - | - | - | - | tests/unit/first-green-gate.test.ts | Implemented |
+| REQ-613 | SCN-613a | `features/trusted-gate/REQ-613.feature` | - | - | - | - | - | tests/unit/ci-matches-local.test.ts | Implemented |
+| REQ-614 | SCN-614a | `features/harness/REQ-614.feature` | - | - | - | - | - | tests/unit/agent-runs-tests.test.ts | Implemented |
+| REQ-615 | SCN-615a | `features/daily-surface/REQ-615.feature` | - | - | - | - | - | tests/unit/status-counts-requirements.test.ts | Implemented |
+| REQ-616 | SCN-616a | `features/harness/REQ-616.feature` | - | - | - | - | `scripts/draft/confined-agent.ts` | tests/unit/draft-from-brief.test.ts | Implemented |
+| REQ-619 | SCN-619a | `features/change-lifecycle/REQ-619.feature` | - | - | - | - | `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/show-approval-blockers.test.ts | Implemented |
+| REQ-622 | SCN-622a | `features/brief-cards/REQ-622.feature` | - | - | - | - | `packages/core/src/domain/DraftChecklist.ts` | tests/unit/quoted-actor-names.test.ts | Implemented |
+| REQ-625 | SCN-625a | `features/change-lifecycle/REQ-625.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDelta.ts` | tests/unit/use-cases-archive.test.ts, packages/core/test/unit/use-case-delta.test.ts | Implemented |
+| REQ-626 | SCN-626a | `features/change-lifecycle/REQ-626.feature` | - | - | - | - | `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/draft-from-brief.test.ts | Implemented |
+| REQ-627 | SCN-627a | `features/change-lifecycle/REQ-627.feature` | - | - | - | - | `scripts/lib/gate-policy.ts` | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Implemented |
+| REQ-628 | SCN-628a | `features/change-lifecycle/REQ-628.feature` | - | - | - | - | `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/show-approval-blockers.test.ts | Implemented |
+| REQ-631 | SCN-631a | `features/change-lifecycle/REQ-631.feature` | - | - | - | - | `packages/core/src/domain/UseCaseSpec.ts` | packages/core/test/unit/use-case-spec.test.ts, tests/unit/use-cases-archive.test.ts | Implemented |
+| REQ-632 | SCN-632a | `features/change-lifecycle/REQ-632.feature` | - | - | - | - | `packages/core/src/domain/DraftChecklist.ts` | tests/unit/draft-from-brief.test.ts | Implemented |
+| REQ-633 | SCN-633a | `features/change-lifecycle/REQ-633.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDelta.ts` | packages/core/test/unit/use-case-coverage.test.ts | Implemented |
+| REQ-634 | SCN-634a | `features/change-lifecycle/REQ-634.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDiagrams.ts` | packages/core/test/unit/use-case-diagrams.test.ts, tests/unit/use-case-diagrams-files.test.ts | Implemented |
+| REQ-635 | SCN-635a | `features/change-lifecycle/REQ-635.feature` | - | - | - | - | `scripts/lib/domain-docs.ts` | tests/unit/use-case-diagrams-files.test.ts | Implemented |
+| REQ-636 | SCN-636a | `features/change-lifecycle/REQ-636.feature` | - | - | - | - | `scripts/cli/commands/spec/UseCasesCommand.ts` | tests/unit/propose-use-cases.test.ts | Implemented |
+| REQ-637 | SCN-637a | `features/change-lifecycle/REQ-637.feature` | - | - | - | - | `packages/core/src/domain/StateMachine.ts` | packages/core/test/unit/state-machine.test.ts, tests/unit/state-machines-check.test.ts | Implemented |
+| REQ-638 | SCN-638a | `features/change-lifecycle/REQ-638.feature` | - | - | - | - | `packages/core/src/application/ArchiveChangeUseCase.ts` | packages/core/test/unit/state-machine.test.ts, tests/unit/state-machines-archive.test.ts | Implemented |
+| REQ-639 | SCN-639a | `features/change-lifecycle/REQ-639.feature` | - | - | - | - | `scripts/lib/domain-docs.ts` | packages/core/test/unit/state-machine.test.ts, tests/unit/state-machines-check.test.ts, tests/unit/draft-from-brief.test.ts | Implemented |
+| REQ-640 | SCN-640a | `features/change-lifecycle/REQ-640.feature` | - | - | - | - | `packages/core/src/domain/UseCaseSpec.ts` | packages/core/test/unit/use-case-lanes.test.ts | Implemented |
+| REQ-641 | SCN-641a | `features/change-lifecycle/REQ-641.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDiagrams.ts` | packages/core/test/unit/use-case-lanes.test.ts | Implemented |
+| REQ-642 | SCN-642a | `features/change-lifecycle/REQ-642.feature` | - | - | - | - | `scripts/draft/drafting-guide.ts` | tests/unit/draft-from-brief.test.ts, tests/unit/use-case-diagrams-files.test.ts | Implemented |
+| REQ-643 | SCN-643a | `features/harness/REQ-643.feature` | - | - | - | - | `scripts/harness/run/prepare.ts` | tests/unit/harness-control.test.ts | Implemented |
+| REQ-646 | SCN-646a | `features/change-lifecycle/REQ-646.feature` | - | - | - | - | `scripts/lib/domain-docs.ts` | tests/unit/proposed-in-status.test.ts | Implemented |
+| REQ-649 | SCN-649a | `features/harness/REQ-649.feature` | - | - | - | - | `scripts/harness/run/attempt.ts` | tests/unit/harness-control.test.ts | Implemented |
+| REQ-650 | SCN-650a | `features/harness/REQ-650.feature` | - | - | - | - | `scripts/lib/agent-permission.ts` | tests/unit/agent-no-mcp.test.ts, tests/unit/draft-from-brief.test.ts | Implemented |
+| REQ-651 | SCN-651a | `features/project-setup/REQ-651.feature` | - | - | - | - | `scripts/cli/commands/project/Forja.ts` | tests/unit/forja-front-door.test.ts | Implemented |
+| REQ-652 | SCN-652a | `features/brief-cards/REQ-652.feature` | - | - | - | - | `scripts/draft/confined-agent.ts` | tests/unit/draft-from-brief.test.ts | Implemented |
+| REQ-653 | SCN-653a | `features/brief-cards/REQ-653.feature` | - | - | - | - | `scripts/draft/brief-setup.ts` | tests/unit/draft-from-brief.test.ts | Implemented |
+| REQ-654 | SCN-654a | `features/trusted-gate/REQ-654.feature` | - | - | - | - | `scripts/lib/progress.ts` | tests/unit/progress-file.test.ts | Implemented |
+| REQ-655 | SCN-655a | `features/brief-cards/REQ-655.feature` | - | - | - | - | `scripts/draft/workshop-import.ts`, `packages/core/src/domain/DddBoards.ts`, `scripts/cli/commands/spec/BriefImportCommand.ts` | tests/unit/brief-from-workshop.test.ts | Implemented |
+| REQ-656 | SCN-656a | `features/brief-cards/REQ-656.feature` | - | - | - | - | `scripts/draft/drafting-guide.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/brief-from-workshop.test.ts | Implemented |
+| REQ-657 | SCN-657a | `features/brief-cards/REQ-657.feature` | - | - | - | - | `scripts/propose.ts` | tests/unit/brief-from-workshop.test.ts | Implemented |
+| REQ-658 | SCN-658a | `features/brief-cards/REQ-658.feature` | - | - | - | - | `packages/core/src/domain/DomainView.ts`, `scripts/lib/brief-model.ts`, `scripts/brief_model.ts` | tests/unit/brief-domain-views.test.ts | Implemented |
+| REQ-659 | SCN-659a | `features/brief-cards/REQ-659.feature` | - | - | - | - | `packages/core/src/domain/DddToolboxExport.ts`, `scripts/brief_export.ts`, `templates/ddd-toolbox/records.json` | tests/unit/brief-domain-views.test.ts | Implemented |
+| REQ-660 | SCN-660a | `features/trusted-gate/REQ-660.feature` | - | - | - | - | `scripts/lib/bdd.ts`, `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/bdd-gate.test.ts | Implemented |
+| REQ-661 | SCN-661a | `features/trusted-gate/REQ-661.feature` | - | - | - | - | `scripts/lib/bdd.ts`, `scripts/cli/commands/quality/ValidateSpecsCommand.ts`, `scripts/lib/gate-policy.ts` | tests/unit/bdd-gate.test.ts | Implemented |
+| REQ-662 | SCN-662a | `features/trusted-gate/REQ-662.feature` | - | - | - | - | `scripts/cli/commands/spec/DoneCommand.ts` | tests/unit/bdd-gate.test.ts | Implemented |
+| REQ-663 | SCN-663c | `features/trusted-gate/REQ-663.feature` | - | - | - | - | `scripts/lib/bdd.ts`, `scripts/cli/commands/project/MigrateCommand.ts`, `scripts/cli/commands/project/gate.ts`, `scripts/cli/commands/project/Forja.ts` | tests/unit/bdd-gate.test.ts | Implemented |
+| REQ-664 | SCN-664a | `features/agent-integration/REQ-664.feature` | - | - | - | - | `scripts/lib/agent-plan.ts`, `scripts/agent/cli.ts` | tests/unit/agent-hunks.test.ts | Implemented |
+| REQ-665 | SCN-665a | `features/agent-integration/REQ-665.feature` | - | - | - | - | `scripts/lib/agent-plan.ts`, `scripts/agent/cli.ts` | tests/unit/agent-hunks.test.ts | Implemented |
+| REQ-666 | SCN-666a | `features/trusted-gate/REQ-666.feature` | - | - | - | - | `scripts/cli/commands/spec/ScenariosCommand.ts`, `scripts/scenarios.ts` | tests/unit/bdd-gate.test.ts | Implemented |
+| REQ-667 | SCN-667a | `features/brief-drafting/REQ-667.feature` | - | - | - | - | `scripts/draft/workshop-import.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-668 | SCN-668a | `features/brief-drafting/REQ-668.feature` | - | - | - | - | `packages/core/src/domain/DraftChecklist.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/draft-checklist.test.ts | Implemented |
+| REQ-669 | SCN-669a | `features/brief-form/REQ-669.feature` | - | - | - | - | `packages/core/src/domain/BriefForm.ts`, `packages/core/src/domain/BriefCards.ts` | tests/unit/brief-form.test.ts | Implemented |
+| REQ-670 | SCN-670a | `features/trust-levels/REQ-670.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/lib/gate-policy.ts`, `scripts/cli/commands/quality/ValidateSpecsCommand.ts` | tests/unit/trust-levels.test.ts | Implemented |
+| REQ-671 | SCN-671a | `features/trust-levels/REQ-671.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/harness/run/requirement.ts`, `scripts/harness/run/prepare.ts` | tests/unit/trust-levels.test.ts | Implemented |
+| REQ-672 | SCN-672a | `features/trust-levels/REQ-672.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/lib/change-review.ts`, `scripts/cli/commands/project/TrustCommand.ts` | tests/unit/trust-levels.test.ts | Implemented |
+| REQ-673 | SCN-673a | `features/trust-levels/REQ-673.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/trust-levels.test.ts | Implemented |
+| REQ-674 | SCN-674a | `features/trust-levels/REQ-674.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/cli/commands/project/TrustCommand.ts`, `scripts/cli/commands/spec/DoneCommand.ts` | tests/unit/trust-levels.test.ts | Implemented |
+| REQ-675 | SCN-675a | `features/trusted-gate/REQ-675.feature` | - | - | - | - | `packages/core/src/infrastructure/DerivedMatrixSources.ts` | tests/unit/matrix-migrate-fixes.test.ts | Implemented |
+| REQ-676 | SCN-676a | `features/trusted-gate/REQ-676.feature` | - | - | - | - | `scripts/cli/commands/spec/MatrixCommand.ts` | tests/unit/matrix-migrate-fixes.test.ts | Implemented |
+| REQ-677 | SCN-677a | `features/trusted-gate/REQ-677.feature` | - | - | - | - | `packages/core/src/domain/DerivedMatrix.ts`, `scripts/cli/commands/spec/MatrixCommand.ts` | tests/unit/matrix-migrate-fixes.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

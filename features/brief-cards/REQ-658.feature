@@ -1,4 +1,3 @@
-@change:brief-domain-views
 Feature: The project's domain model, to draw
 
   @REQ-658 @SCN-658a

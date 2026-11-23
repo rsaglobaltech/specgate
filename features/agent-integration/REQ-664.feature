@@ -1,4 +1,3 @@
-@change:agent-hunks
 Feature: A plan applied hunk by hunk
 
   @REQ-664 @SCN-664a

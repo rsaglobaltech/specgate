@@ -1,4 +1,3 @@
-@change:trust-levels
 Feature: The harness does in a module only what its level allows
 
   @REQ-671 @SCN-671a

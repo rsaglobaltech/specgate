@@ -1,4 +1,3 @@
-@change:use-case-lanes
 Feature: The lanes reach the agent that drafts and the studio
 
   @REQ-642 @SCN-642a

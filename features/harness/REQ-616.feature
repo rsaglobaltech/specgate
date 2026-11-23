@@ -1,4 +1,3 @@
-@change:agent-flags-in-claude-segment
 Feature: The drafting commands give Claude Code its flags in Claude's own command, not after a pipe
 
   @REQ-616 @SCN-616a

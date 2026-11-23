@@ -1,4 +1,3 @@
-@change:verified-build
 Feature: A requirement no test proved ends unverified, never passed
 
   @REQ-649 @SCN-649a

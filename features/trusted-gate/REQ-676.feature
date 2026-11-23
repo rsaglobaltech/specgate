@@ -1,4 +1,3 @@
-@change:matrix-migrate-fixes
 Feature: The migration leaves an open change's requirements to it
 
   @REQ-676 @SCN-676a

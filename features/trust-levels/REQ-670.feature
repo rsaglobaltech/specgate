@@ -1,4 +1,3 @@
-@change:trust-levels
 Feature: Each module declares how far an agent may go in it
 
   @REQ-670 @SCN-670a

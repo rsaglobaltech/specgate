@@ -1,4 +1,3 @@
-@change:brief-from-workshop
 Feature: From a workshop to a draft in one command
 
   @REQ-657 @SCN-657a

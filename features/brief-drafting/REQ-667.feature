@@ -1,4 +1,3 @@
-@change:draft-language
 Feature: A brief's language becomes the project's
 
   @REQ-667 @SCN-667a

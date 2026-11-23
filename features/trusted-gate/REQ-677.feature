@@ -1,4 +1,3 @@
-@change:matrix-migrate-fixes
 Feature: A row the generated matrix fills in further is kept
 
   @REQ-677 @SCN-677a

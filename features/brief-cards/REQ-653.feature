@@ -1,4 +1,3 @@
-@change:brief-surfaces
 Feature: The agent's front matter is fixed before it is shown
 
   @REQ-653 @SCN-653a

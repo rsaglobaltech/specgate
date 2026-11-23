@@ -1,4 +1,3 @@
-@change:scenarios-run
 Feature: A requirement's scenarios run one by one
 
   @REQ-666 @SCN-666a

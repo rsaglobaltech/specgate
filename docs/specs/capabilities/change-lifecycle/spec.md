@@ -638,3 +638,437 @@ The system SHALL, on a project 0.35 left — open changes without layers, the la
 - THEN status names the migration; afterwards the change is layered and still of kind bug, the harness config says `lanes:` and loads, the report names scripts/agent.sh, and status no longer names the migration
 
 <!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-567.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-619 — `change show --json` says what blocks approval before Approve is pressed
+
+The system SHALL answer, in `change show <id> --json`, `change.blockers`: the blockers `change approve <id>` would refuse with as `approve_blocked` — each with its `code`, `message` and, when the rule gives them, its `fix` and `target` — and `[]` when nothing blocks the change; so that a client says what is left before the person presses Approve, and never parses the refusal's prose.
+
+> Studio report (#538): a draft with six `D6_unlisted_value` findings was listed to review with an Approve button; the person pressed it and only then learned, from `approve_blocked`, that it could not be approved.
+
+#### Scenario: SCN-619a — A change approve would refuse
+
+- GIVEN a change whose question Q1 blocks REQ-001, which is not Needs Clarification
+- WHEN a client runs `specgate change show <id> --json`
+- THEN `change.blockers` lists `D7_floating_question` naming Q1 and REQ-001 with its fix, and every blocker's message is in the message `change approve` refuses with
+
+#### Scenario: SCN-619b — A change nothing blocks
+
+- GIVEN a change `change approve` would accept
+- WHEN a client runs `specgate change show <id> --json`
+- THEN `change.blockers` is `[]`
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-619.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-628 — `change show --json` carries the change's use cases
+
+The system SHALL answer, in `change show <id> --json`, `change.useCases`: the use cases the change's `use-cases.md` adds and modifies — each with its id, name, actor and requirements — and removes, each with its reason; and `null` when the change has no `use-cases.md`; so that a client shows them without reading the file.
+
+#### Scenario: SCN-628a — A change's use cases shown
+
+- GIVEN a change whose use-cases.md adds UC-004 "Create a child profile" for Tutor with REQ-001 and REQ-002, and removes UC-002 "Merged into UC-004"
+- WHEN a client runs `specgate change show <id> --json`
+- THEN `change.useCases` has UC-004 with its name, actor and requirements under added, nothing under modified, and UC-002 with its reason under removed; a change with no use-cases.md has `null`
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-628.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-484 — A draft's review notes, as JSON
+
+The system SHALL give, in `specgate change show <id> --json` and in the API's `change(dir, id)`, the change's review notes under `change.review`: for each request of its `review.md`, its id (`N1`, `N2`… in the file's order), its date, its text, the requirement it is about or null, its state — `open` or `addressed` — and the file and line it is written at; and, once addressed, the date it was addressed and what changed: for each requirement the redraft changed, its delta file, its line, and its text before and after.
+
+#### Scenario: SCN-484a — One note addressed, one open
+
+- GIVEN `draft-orders` whose review.md has N1 on REQ-001, addressed by a redraft that changed REQ-001's text, and N2 on no requirement, open
+- WHEN a tool runs `specgate change show draft-orders --json` and calls `change(dir, "draft-orders")`
+- THEN both answers are equal; N1 is `addressed`, with REQ-001's delta file, its line, and its text before and after the redraft; N2 is `open` with a null requirement
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-484.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-485 — Drafting again hands the open notes to the agent
+
+The system SHALL, when `specgate propose --from-brief <module> --agent <cmd>` drafts again a draft with open review notes, put in the agent's prompt each open note — its id, its requirement and its text — and no addressed one; SHALL say under `draft.notes` of its JSON which notes it gave, which it marked addressed and which are still open; and SHALL mark addressed, with the date and the text before and after, each note it gave whose requirement the agent changed — or, for a note on no requirement, whose draft the agent changed.
+
+#### Scenario: SCN-485a — Two open notes, the agent changes one requirement
+
+- GIVEN `draft-orders` with N1 on REQ-001 addressed, and N2 on REQ-001 and N3 on REQ-002 open
+- WHEN `specgate propose --from-brief orders --agent <cmd> --json` runs and the agent changes REQ-001 only
+- THEN the agent's prompt carries N2 and N3 and not N1; `draft.notes` gives N2 and N3 as given, N2 as addressed and N3 as open; and review.md marks N2 addressed with REQ-001 before and after
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-485.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-634 — The use-case diagram and each use case's activity diagram are generated
+
+The system SHALL generate, from `docs/specs/use-cases.md` and each `docs/specs/use-cases/UC-NNN.md`, `docs/specs/use-case-diagrams.md` — in Mermaid: each actor linked to the use cases it achieves inside the system, by id, and for each use case with a specification its activity, the main flow's steps in order from start to end, labelled with its scenarios, and each alternative branching at its step and ending — and `docs/specs/use-cases.puml`, the same diagrams in PlantUML; SHALL write them when `check` or `archive` regenerates the diagrams, the same bytes for the same sources; SHALL report `use_case_diagrams_stale` for a committed copy that differs; and SHALL draw nothing for a catalog holding only the template's row.
+
+> #544: a use-case diagram with a live preview, and an activity diagram from the flows — generated so it never drifts from the catalog; Mermaid to render without a server, PlantUML for a team that draws with it.
+
+#### Scenario: SCN-634a — The Mermaid diagrams
+
+- GIVEN UC-002 and UC-004 for Tutor, and UC-004's specification with three steps and A1 at step 3 naming SCN-013
+- WHEN specgate generates the diagrams
+- THEN use-case-diagrams.md links Tutor to UC-002 and UC-004 in order, and UC-004's activity runs start → steps → end labelled SCN-012, with A1 branching from step 3 to the end
+
+#### Scenario: SCN-634b — The PlantUML export
+
+- GIVEN the same use cases and specification
+- WHEN specgate generates the diagrams
+- THEN use-cases.puml has the actor, the use cases inside System and their links, and UC-004's activity with A1 as a branch at step 3
+
+#### Scenario: SCN-634c — Regenerated, and a hand edit reported
+
+- GIVEN a project with UC-004 and its specification
+- WHEN the diagrams are regenerated, and then use-cases.puml is edited by hand
+- THEN both files are written once, nothing the second time, and `use_case_diagrams_stale` names use-cases.puml
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-634.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-635 — `status --json` carries the use cases, their specifications and diagrams
+
+The system SHALL answer, in `status --json`, `useCases`: the use-case diagram in Mermaid, and each use case of the catalog with its id, name, actor, requirements, its specification's file, the specification as read (REQ-631) and its activity in Mermaid — the last three null for a use case with no specification — and `null` for a project with no `docs/specs/use-cases.md`; so that a client shows them without reading the files.
+
+#### Scenario: SCN-635a — The use cases in status
+
+- GIVEN a project with UC-004 in the catalog and its specification naming SCN-012
+- WHEN a client runs `specgate status --json`
+- THEN `useCases.diagram` is a Mermaid flowchart, and UC-004 carries docs/specs/use-cases/UC-004.md, its main flow naming SCN-012 and its activity; with no catalog, `useCases` is null
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-635.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-636 — `propose --use-cases` proposes the use cases of requirements delivered before the catalog
+
+The system SHALL, on `specgate propose --use-cases` in a project with `docs/specs/use-cases.md`, open the change `use-cases-catalog` — `skip_specs`, a reserved `uc_range`, an empty `use-cases.md` and `USE-CASES.md` listing every requirement no use case of the catalog names or lists, with its scenarios, and how to write the use cases and their specifications — and, run again, say what is still missing: the faults REQ-625 and REQ-631 name and each requirement left out, or that it is ready to review; with `--agent <cmd>`, the project's agent SHALL write it first, confined to the change's folder. Approved and archived, it SHALL bring its use cases and specifications into the catalog; a use case of the catalog listing a requirement SHALL count as that requirement's use case for the gate (REQ-627). A project with every requirement in a use case SHALL be told so, and one with no catalog that it does not model use cases.
+
+#### Scenario: SCN-636a — The change opened, and written by the agent
+
+- GIVEN a project whose catalog holds only the template, and REQ-002 delivered with no use case
+- WHEN the Developer runs `specgate propose --use-cases`, then with `--agent` an agent that writes UC-002 with REQ-002 and its specification, and a file outside the change
+- THEN the change lists REQ-002 as uncovered and is not ready; after the agent it is ready, and the file outside it is undone
+
+#### Scenario: SCN-636b — Approved and archived
+
+- GIVEN the change with UC-002 and its specification written
+- WHEN the Developer approves and archives it, and runs `specgate propose --use-cases` again
+- THEN the catalog has UC-002 with REQ-002 and no template row, docs/specs/use-cases/UC-002.md exists, and every requirement is said to be in a use case
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-636.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-631 — Each use case has a specification whose flows name the scenarios that prove them
+
+The system SHALL read a use case's specification — `# UC-NNN — <name>`, `## Overview`, `## Actors`, `## Preconditions`, `## Main flow (SCN-…)` with numbered steps, `## Alternative flows` of `### A<n> — <what> (at step <n>) (SCN-…)` with numbered steps, `## Postconditions` and `## Business rules` naming requirements — and SHALL refuse, at archive, a change's `use-cases/UC-NNN.md` whose title is another id, that has no overview or no main flow with steps, a flow naming no scenario or one no requirement of the use case has, an alternative starting at a step the main flow lacks or with no steps, or a scenario of the use case's requirements no flow names; otherwise archive SHALL write it to `docs/specs/use-cases/UC-NNN.md`, and delete that file for a use case the change removes.
+
+> #544, from AI Unified Process Studio: a use-case specification per use case — overview, preconditions, main success scenario, alternative flows, postconditions, business rules — here with every flow proved by a scenario.
+
+#### Scenario: SCN-631a — A specification read
+
+- GIVEN UC-004's specification with an overview, Tutor, a precondition, a main flow of three steps naming SCN-012, A1 at step 3 naming SCN-013, a postcondition and a rule naming REQ-014
+- WHEN specgate reads it
+- THEN it has each section, the two flows with their steps and scenarios, and nothing to fix when its requirements' scenarios are SCN-012 and SCN-013
+
+#### Scenario: SCN-631b — A scenario no flow names
+
+- GIVEN UC-004's A1 naming SCN-099, and its requirements' scenarios SCN-012 and SCN-013
+- WHEN specgate checks it
+- THEN it names SCN-099 as no scenario of UC-004 and SCN-013 as named by no flow
+
+#### Scenario: SCN-631c — The specification archived
+
+- GIVEN a change adding UC-007 with REQ-001, and its use-cases/UC-007.md whose main flow names SCN-001a
+- WHEN the Developer archives it
+- THEN docs/specs/use-cases/UC-007.md holds the specification
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-631.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-632 — A draft writes each use case's specification
+
+The system SHALL tell the agent, in `DRAFTING.md`, to write `use-cases/UC-NNN.md` for each use case it adds or modifies, with its sections and every flow naming its scenario; and SHALL keep a draft with `use-cases.md` from ready while such a use case has no specification (`D15_no_spec`) or its specification has the faults REQ-631 names (`D15_ucs_…`) — for a modified use case some requirement outside the draft delivers, only what the draft holds is checked.
+
+#### Scenario: SCN-632a — The guide asks for it
+
+- GIVEN a brief with the module bookings
+- WHEN the Developer runs `specgate draft bookings`
+- THEN DRAFTING.md has a section on use-cases/UC-NNN.md with a main flow naming a scenario and an alternative at a step
+
+#### Scenario: SCN-632b — A draft held back by its specification
+
+- GIVEN the bookings draft with UC-900 delivered by REQ-002 and its scenarios SCN-002 and SCN-003
+- WHEN UC-900 has no specification, then one whose flows name only SCN-002
+- THEN the draft is not ready with `D15_no_spec`, then with `D15_ucs_scenario_unflowed` naming SCN-003; with both named it is ready to review
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-632.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-633 — The gate names a use case with no specification
+
+The system SHALL report, under the gate rule `use_cases` (REQ-627), every use case of `docs/specs/use-cases.md` with no `docs/specs/use-cases/UC-NNN.md` (`use_case_no_spec`).
+
+#### Scenario: SCN-633a — A use case with no specification
+
+- GIVEN the catalog's UC-002 and UC-003, and a specification for UC-002 only
+- WHEN the rule runs
+- THEN it names UC-003 `use_case_no_spec`, and nothing once UC-003 has one
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-633.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-625 — A change carries its use cases, and archive merges them into the catalog
+
+The system SHALL read a change's `use-cases.md` — `## ADDED Use Cases` and `## MODIFIED Use Cases` tables of `| ID | Use Case | Actor | Requirements |`, and `## REMOVED Use Cases` of `| ID | Reason |` — and SHALL refuse to archive it when an id is no `UC-NNN` or repeats, an added id is in `docs/specs/use-cases.md` already, a modified or removed id is not, a use case has no name or no requirement, or a removed use case is still named by a requirement once the change is applied; otherwise archive SHALL merge it into `docs/specs/use-cases.md` — an added or modified row replacing the row with its id and keeping its command, aggregate and events, a removed id dropped, the template's placeholder row gone once a real use case is there — and list the catalog among its writes, `--dry-run` included. A change with no `use-cases.md` SHALL archive as before.
+
+> #543: `init` wrote use-cases.md and AGENTS.md named it, and nothing ever filled it or checked it; 134 requirements of a project went through the gate with no use case.
+
+#### Scenario: SCN-625a — A use case added
+
+- GIVEN a change adding UC-007 "Price a session at peak time" for Driver with REQ-001, and a catalog holding the template's row and UC-002
+- WHEN the Developer archives it
+- THEN docs/specs/use-cases.md has UC-007 with REQ-001 and Approved, still UC-002, and no template row; the plan lists the catalog among its writes
+
+#### Scenario: SCN-625b — A use case modified
+
+- GIVEN UC-003 in the catalog with its command, aggregate and events, and a change modifying UC-003's name and requirements
+- WHEN the change is archived
+- THEN UC-003's row has its new name and requirements, and the same command, aggregate and events
+
+#### Scenario: SCN-625c — A use case removed while a requirement names it
+
+- GIVEN UC-002 named by REQ-000, and a change removing UC-002
+- WHEN the Developer archives it
+- THEN the archive is refused with `uc_removed_in_use` naming REQ-000, and the catalog is untouched
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-625.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-626 — A draft carries its use cases, and every requirement names one
+
+The system SHALL open a draft from a brief with `use-cases.md` and a reserved `uc_range` in `change.yaml` — as many use case ids as requirement ids, past every id the catalog, a change or another branch uses — and SHALL tell the agent, in `DRAFTING.md`, to write `uc=` in each requirement's trace and the use cases under `## ADDED Use Cases`; and SHALL keep a draft that has `use-cases.md` from ready while a requirement names no use case (`D14_no_use_case`), names one neither the change nor the catalog has (`D14_unknown_use_case`), or is listed by a use case it does not name (`D14_use_case_mismatch`), or while its use cases have the faults REQ-625 refuses. A draft opened with no `use-cases.md` SHALL be checked as before.
+
+#### Scenario: SCN-626a — A draft opens with its use cases
+
+- GIVEN a brief with the module bookings
+- WHEN the Developer runs `specgate draft bookings`
+- THEN the change has use-cases.md with an empty `## ADDED Use Cases` table, change.yaml has `uc_range`, and DRAFTING.md shows `uc=` with the first id and a section on use-cases.md
+
+#### Scenario: SCN-626b — A requirement with no use case
+
+- GIVEN the draft's REQ-002 with no `uc=`, and use-cases.md listing UC-900 with REQ-002
+- WHEN the Developer checks the draft
+- THEN it is not ready, with `D14_no_use_case` and `D14_use_case_mismatch`; with `uc=UC-901` it has `D14_unknown_use_case`; with `uc=UC-900` it is ready to review
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-626.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-627 — The gate checks every requirement maps to a use case
+
+The system SHALL have a gate rule `use_cases` — `warning` in the strict and standard presets and with no policy, `off` in minimal — which, in a project with `docs/specs/use-cases.md`, reports every requirement of the matrix whose Use Case is no `UC-NNN` (`use_case_missing`) or names one the catalog does not have (`use_case_unknown`), every use case no requirement delivers (`use_case_undelivered`), and the template's row left once there is a requirement (`use_case_template`); `REQ-000` and the adopted code's baseline are not asked for one. A project with no catalog SHALL get nothing from it.
+
+#### Scenario: SCN-627a — Reported by default
+
+- GIVEN a project with the template catalog and REQ-002 with no use case
+- WHEN the Developer runs `specgate validate . --strict`
+- THEN it passes, and reports `use_case_missing` for REQ-002
+
+#### Scenario: SCN-627b — Failed when set to error
+
+- GIVEN the same project with `use_cases: error` in .specgate/gate.yaml
+- WHEN the Developer runs `specgate validate . --strict`
+- THEN it fails with `use_case_missing` and `use_case_template`; with `use_cases: off` it says nothing of them
+
+#### Scenario: SCN-627c — What the rule names
+
+- GIVEN a matrix with REQ-002 naming no use case, REQ-003 naming UC-077 the catalog does not have, and UC-003 no requirement delivers
+- WHEN the rule runs
+- THEN it names REQ-002 `use_case_missing`, REQ-003 `use_case_unknown` and UC-003 `use_case_undelivered`
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-627.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-599 — The design layer, by the change's rigor
+
+The system SHALL judge whether design.md answers each acceptance criterion only once the design is written, and without the lines it shares with its template; SHALL, for a change at `rigor: full`, warn `layer_design_not_written` while design.md is as scaffolded and not count the change approved — so the harness does not build it — until its design is written and approved; and SHALL, at `rigor: lite`, treat an unwritten design as skipped, neither asking for it in status nor waiting for it.
+
+#### Scenario: SCN-599a — The template answers nothing
+
+- GIVEN a change whose Discover lists AC-1 and AC-2, and whose design.md is the template plus a line answering AC-2
+- WHEN the change is validated
+- THEN design.md is said not to answer AC-1, and AC-2 is answered
+
+#### Scenario: SCN-599b — Lite: no design owed
+
+- GIVEN a change at rigor lite whose design.md is as scaffolded
+- WHEN the change is validated and its status read
+- THEN no design finding is given, and the design is skipped
+
+#### Scenario: SCN-599c — Full: the design is owed
+
+- GIVEN a change at rigor full whose design.md is as scaffolded
+- WHEN the change is validated and its approvals read
+- THEN layer_design_not_written is given, and the change is not approved: its design is not written
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-599.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-646 — status --json carries what an open change proposes, before archive
+
+The system SHALL carry in `status --json`, besides the catalog's use cases, `useCases.proposed`: each use case an open change's `use-cases.md` adds or modifies — with its change, whether it is added or modified, its specification from the change's `use-cases/UC-NNN.md` and its activity, or none — and SHALL carry in `stateMachines` each machine an open change writes, as the change's delta leaves it, naming the change in `proposed` (null for a machine of `docs/specs/state-machines/`); an archived change proposes nothing.
+
+> The Reviewer approved draft-cuenta-perfiles and saw "no use cases yet": archive brings them into the catalog only once every requirement is delivered.
+
+#### Scenario: SCN-646a — Proposed before archive
+
+- GIVEN a catalog with only the template, and the open change draft-cuenta-perfiles adding UC-002 with its specification and UC-003 without one, and writing Cuenta's machine
+- WHEN the Developer runs `specgate status --json`
+- THEN useCases.proposed lists UC-002 and UC-003 of draft-cuenta-perfiles as added, UC-002 with its specification's lanes and activity; stateMachines lists Cuenta proposed by draft-cuenta-perfiles
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-646.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-637 — Each entity's state machine is read and checked against the requirements
+
+The system SHALL read an entity's state machine from `docs/specs/state-machines/<Entity>.md` — `# <Entity> — states`; `## States` as `- <name> (initial|final) — <behaviour>`; `## Transitions` as a `From | To | Trigger | Requirement` table whose trigger is `event [guard] / action`; `## Forbidden` as `- <from> → <to> (REQ-NNN)` — and `validate --strict`, under the gate rule `state_machines` (error in the strict and standard presets, warning in minimal), SHALL fail a machine that lists no states, none or two initial states, a state twice, a transition or forbidden transition naming a state it lacks, a transition naming a requirement the matrix lacks, or a transition the machine forbids; and SHALL report, without failing, a state no transition from the initial one reaches, a state with no way out that is not final, and a transition that names no requirement.
+
+> The Reviewer asked to see, as in Visual Paradigm, how a request moves from received to available, and that only what a requirement asks for be drawn.
+
+#### Scenario: SCN-637a — A machine read
+
+- GIVEN GenerationRequest with Received initial, Validating, Authorized, Available and Rejected final, four transitions naming REQ-011, REQ-046 and REQ-018, and Rejected → Available forbidden by REQ-034
+- WHEN specgate reads it
+- THEN it has the five states with their behaviour, the transitions with their requirements, the forbidden one, and nothing to fix
+
+#### Scenario: SCN-637b — What a machine cannot hold
+
+- GIVEN a transition into Availible naming REQ-099, and Rejected → Available as a transition
+- WHEN specgate checks the machine
+- THEN it names sm_unknown_state, sm_unknown_requirement and sm_forbidden_used as errors
+
+#### Scenario: SCN-637c — What a machine is warned about
+
+- GIVEN Expired final that no transition reaches, Rejected not final with no way out, and Authorized → Available naming no requirement
+- WHEN specgate checks the machine
+- THEN it warns sm_unreachable for Expired, sm_dead_end for Rejected and sm_transition_untraced
+
+#### Scenario: SCN-637d — A machine that holds, at the gate
+
+- GIVEN Order with Paid → Cancelled naming REQ-002 and Paid → Shipped naming none
+- WHEN the Developer runs `specgate validate . --strict --json`
+- THEN the gate passes and reports sm_transition_untraced
+
+#### Scenario: SCN-637e — A machine that does not hold, at the gate
+
+- GIVEN Order with Paid → Shipped naming REQ-404 and Shipped → Cancelled, which it forbids
+- WHEN the Developer runs `specgate validate . --strict`
+- THEN the gate fails naming sm_forbidden_used, sm_unknown_requirement and docs/specs/state-machines/Order.md; under the minimal preset it reports them and passes
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-637.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-638 — A change's delta to a state machine is applied at archive
+
+The system SHALL take a change's `state-machines/<Entity>.md` — `# Delta — <Entity>` with `## ADDED States`, `## MODIFIED States`, `## REMOVED States`, `## ADDED Transitions`, `## MODIFIED Transitions`, `## REMOVED Transitions`, `## ADDED Forbidden` and `## REMOVED Forbidden`, a transition known by its states and the words of its trigger before any guard or action — and, at archive, SHALL write the machine it leaves to `docs/specs/state-machines/<Entity>.md`, create it for an entity that had none, and delete it when no state is left; and SHALL refuse the change, writing nothing, when the delta adds a state or transition that exists, modifies or removes one that does not, removes a state a transition still uses, names a requirement neither the matrix nor the change has, or leaves a machine REQ-637 fails; a requirement no transition names any more SHALL be warned.
+
+#### Scenario: SCN-638a — Added, modified, lifted
+
+- GIVEN GenerationRequest and a delta adding Paused with Authorized → Paused and back, modifying Available and Authorized → Available, and removing the forbidden Rejected → Available
+- WHEN the delta is applied
+- THEN the machine has Paused and its two transitions, Available's new behaviour, Authorized → Available naming REQ-011 and REQ-018, no forbidden transition, and nothing to fix
+
+#### Scenario: SCN-638b — What a delta cannot remove
+
+- GIVEN a delta removing Rejected, which Validating → Rejected uses, and Expired and Received → Authorized, which do not exist
+- WHEN specgate checks the delta
+- THEN it names sm_state_in_use with Validating → Rejected, sm_state_unknown and sm_transition_unknown
+
+#### Scenario: SCN-638c — A requirement left out
+
+- GIVEN a delta removing Validating → Rejected, the only transition naming REQ-046
+- WHEN specgate checks the delta
+- THEN it warns sm_requirement_uncovered for REQ-046
+
+#### Scenario: SCN-638d — Paused added to the machine at archive
+
+- GIVEN a change adding REQ-050 and Paused with Validating → Paused and back naming REQ-050
+- WHEN the Developer archives it
+- THEN docs/specs/state-machines/GenerationRequest.md has Paused and its transitions, and keeps the others
+
+#### Scenario: SCN-638e — Refused at archive
+
+- GIVEN a change removing Rejected, which a transition uses, and adding a transition naming REQ-099
+- WHEN the Developer archives it
+- THEN archive refuses it with sm_state_in_use and sm_unknown_requirement, and the machine is unchanged
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-638.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-639 — State machines reach PlantUML, the studio and the agent that drafts
+
+The system SHALL write, at `check`, each machine's PlantUML beside it — `docs/specs/state-machines/<Entity>.puml`, its initial and final states, each transition labelled with its trigger and requirements, the forbidden ones in a «constraint» note — and report a copy edited by hand as `state_machine_diagram_stale`; SHALL carry the machines in `status --json` as `stateMachines` (null when there are none); SHALL tell the agent, in `DRAFTING.md`, to write an entity's machine as a delta when the brief describes its states; and SHALL keep a draft from ready while a machine it writes does not apply or does not hold (`D16_…`), its requirements being the draft's and the project's.
+
+#### Scenario: SCN-639a — PlantUML of a machine
+
+- GIVEN GenerationRequest
+- WHEN specgate renders it
+- THEN the PlantUML starts in Received, labels Validating → Authorized with `validate [safe]` and REQ-011, ends from Available, and notes Rejected → Available as forbidden
+
+#### Scenario: SCN-639b — Written and carried
+
+- GIVEN Order's machine
+- WHEN the Developer runs `specgate check`, then `specgate status --json`
+- THEN docs/specs/state-machines/Order.puml holds its transitions and status lists Order with its file, its PlantUML and its transitions
+
+#### Scenario: SCN-639c — The guide asks for it
+
+- GIVEN a brief with the module bookings
+- WHEN the Developer runs `specgate draft bookings`
+- THEN DRAFTING.md has "1d. An entity's states" with ADDED States, ADDED Transitions with their Requirement column, and ADDED Forbidden
+
+#### Scenario: SCN-639d — A draft's machine checked
+
+- GIVEN the draft of bookings writing Booking's machine with a transition into Confirmd naming REQ-404
+- WHEN the Developer runs `specgate draft bookings`
+- THEN it is not ready, naming D16_sm_unknown_requirement, then D16_sm_unknown_state; once corrected it is ready to review
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-639.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-640 — Each step of a use case says who does it
+
+The system SHALL read a step of a use case's specification written `<n>. [<Who>] <text>` as done by `<Who>`, and a step with no tag as done by the use case's first actor — its text without the tag — and SHALL refuse, wherever REQ-631 checks a specification (archive, and a draft's D15), a step done by someone not listed under `## Actors` (`ucs_unknown_lane`).
+
+> The Reviewer chose, instead of BPMN, the use case's activity with a lane per actor, as UML tools draw it.
+
+#### Scenario: SCN-640a — Lanes read
+
+- GIVEN UC-007 with Child, PintaMundo and Safety service as actors, steps tagged [Child], untagged, [PintaMundo], [Safety service], [PintaMundo], and A1 tagged [PintaMundo]
+- WHEN specgate reads it
+- THEN the main flow's lanes are Child, Child, PintaMundo, Safety service and PintaMundo, A1's is PintaMundo, the steps keep no tag, and there is nothing to fix
+
+#### Scenario: SCN-640b — A lane no actor names
+
+- GIVEN the same specification with step 4 tagged [Moderator]
+- WHEN specgate checks it
+- THEN it names ucs_unknown_lane for Moderator
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-640.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-641 — A use case's activity is drawn with a lane per actor
+
+The system SHALL draw a use case's activity — in `docs/specs/use-case-diagrams.md` (Mermaid) and `docs/specs/use-cases.puml` (PlantUML) — with a lane per actor when its steps are done by more than one, each step inside its own lane, the flows and alternatives as before; and as before, with no lanes, when one actor does them all.
+
+#### Scenario: SCN-641a — Lanes in Mermaid
+
+- GIVEN UC-007's specification
+- WHEN specgate draws its activity in Mermaid
+- THEN it has a subgraph for Child holding steps 1 and 2, one for Safety service holding step 4, and one for PintaMundo holding A1's step
+
+#### Scenario: SCN-641b — Lanes in PlantUML
+
+- GIVEN UC-007's specification
+- WHEN specgate writes its activity in PlantUML
+- THEN it starts in |Child| and switches to |PintaMundo| and |Safety service| where the steps do, A1's step under |PintaMundo|
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-641.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-642 — The lanes reach the agent that drafts and the studio
+
+The system SHALL tell the agent, in `DRAFTING.md`, to start a step with `[Who]` when someone other than the first actor does it and to list everyone under Actors; and SHALL carry each flow's `lanes`, beside its steps, in `status --json`.
+
+#### Scenario: SCN-642a — The guide asks for it
+
+- GIVEN a brief with the module bookings
+- WHEN the Developer runs `specgate draft bookings`
+- THEN DRAFTING.md says to start a step with `[Who]`, its example has a step tagged [System] and System among the actors
+
+#### Scenario: SCN-642b — Carried to the studio
+
+- GIVEN UC-004 with Tutor and System, step 2 tagged [System]
+- WHEN the Developer runs `specgate status --json`
+- THEN its main flow's lanes are Tutor and System, its steps keep no tag, and its activity has System's lane
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-642.feature kind=functional status=Implemented -->

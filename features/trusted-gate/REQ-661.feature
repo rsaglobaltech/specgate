@@ -1,4 +1,3 @@
-@change:bdd-gate
 Feature: The gate requires executable scenarios in every project
 
   @REQ-661 @SCN-661a

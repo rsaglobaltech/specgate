@@ -1,4 +1,3 @@
-@change:use-case-specs
 Feature: The gate names a use case with no specification
 
   @REQ-633 @SCN-633a

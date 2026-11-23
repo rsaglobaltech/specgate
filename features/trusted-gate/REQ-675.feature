@@ -1,4 +1,3 @@
-@change:matrix-migrate-fixes
 Feature: Code under a folder named spec is not a test
 
   @REQ-675 @SCN-675a

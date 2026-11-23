@@ -1,4 +1,3 @@
-@change:state-machines
 Feature: A change's delta to a state machine is applied at archive
 
   @REQ-638 @SCN-638a

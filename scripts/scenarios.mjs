@@ -34,6 +34,9 @@ const walk = (d) => {
   }
 };
 walk("tests");
+// The packages keep their own tests (packages/core/test/unit), compiled beside them.
+if (existsSync("packages"))
+  for (const p of readdirSync("packages")) if (existsSync(`packages/${p}/test`)) walk(`packages/${p}/test`);
 if (files.length === 0) {
   console.error(`No test names ${ids.join(", ")}: its scenarios have no test yet.`);
   process.exit(1);

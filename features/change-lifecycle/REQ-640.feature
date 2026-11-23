@@ -1,4 +1,3 @@
-@change:use-case-lanes
 Feature: Each step of a use case says who does it
 
   @REQ-640 @SCN-640a

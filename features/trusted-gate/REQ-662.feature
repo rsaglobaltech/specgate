@@ -1,4 +1,3 @@
-@change:bdd-gate
 Feature: Apply runs the requirement's scenarios
 
   @REQ-662 @SCN-662a

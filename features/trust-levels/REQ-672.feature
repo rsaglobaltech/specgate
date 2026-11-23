@@ -1,4 +1,3 @@
-@change:trust-levels
 Feature: A level rises only through a change a person approved
 
   @REQ-672 @SCN-672a

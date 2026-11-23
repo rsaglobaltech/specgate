@@ -1,4 +1,3 @@
-@change:trust-levels
 Feature: A bug in a module lowers its level at once
 
   @REQ-673 @SCN-673a

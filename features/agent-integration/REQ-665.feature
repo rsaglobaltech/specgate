@@ -1,4 +1,3 @@
-@change:agent-hunks
 Feature: An applied plan taken back
 
   @REQ-665 @SCN-665a

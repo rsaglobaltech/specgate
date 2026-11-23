@@ -1,4 +1,3 @@
-@change:draft-language
 Feature: A scenario's steps in another language
 
   @REQ-668 @SCN-668a
