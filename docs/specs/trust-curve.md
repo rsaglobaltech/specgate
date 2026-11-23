@@ -22,7 +22,8 @@ Worked locally until polished; one change per phase, each through the gate.
 A level per capability in `.specgate/gate.yaml` (1 observed, 2 confined, 3 verified,
 4 unattended, 5 triage); the harness obeys it; a rise only through an approved change, recorded
 in `.specgate/trust-ledger.jsonl`; a bug change lowers it at once; `specgate trust` shows the
-evidence. Level 6, merging alone, waits: `--chain` is refused in a project with `trust:`.
+evidence. Level 6, merging alone into the main branch, waits: with `trust:`, `--chain` works only
+on a branch of your own, and a person merges that branch (REQ-694).
 
 ## Phase 1 — verify with evidence (S) → 1.6
 

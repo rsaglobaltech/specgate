@@ -137,6 +137,13 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate harness run`                  | Delivers pending requirements with an agent; `--profile` picks which one.   | [The harness](harness.md)                      |
 | `specgate harness prompt <REQ>`         | Prints the prompt an agent would get. Runs nothing.                         | [Choosing your agent](agent-setup.md)          |
 | `specgate harness report`               | First-attempt rate, time and cost per delivered requirement; `--capability`. | [What the harness has cost](harness-report.md) |
+| `specgate harness doctor`              | Which agent each requirement gets, and whether each one is installed and answers. | [The harness](harness.md#the-right-agent-per-module-checked-before-it-starts) |
+| `specgate harness sandboxes [--prune]`  | Each sandbox the harness made and the hosts it may reach; `--prune` the leftovers. | [The harness](harness.md#a-swarm-in-sandboxes) |
+| `specgate trust`                        | Each module's trust level, its streak and its bugs; `promote` raises one.   | `specgate trust --help`                        |
+| `specgate map [<REQ>]`                  | Where each requirement lives: use case, route, feature, code, tests.        | `specgate map --help`                          |
+| `specgate reproduce <change>`           | Opens a bug that must be seen red before it is fixed.                       | `specgate reproduce --help`                    |
+| `specgate learn [promote <L>]`          | Review notes and failures that keep coming back, turned into a rule.       | `specgate learn --help`                        |
+| `specgate eval <skill>` / `--list`      | Examines a skill on fixed tasks; `--list`: every exam, its texts, history and runs. | `specgate eval --help`                  |
 | `specgate harness events --from claude` | Turns Claude Code's stream into events for the live view.                   | [The harness](harness.md#watch-it-work)        |
 | `specgate harness stop --after-current` | Asks the running harness to stop after the requirement in progress.         | [Drive the harness](harness-control.md) |
 | `specgate studio`                       | The visual app, from an empty folder to the report; `/live`: the harness.   | `specgate studio --help`                       |
