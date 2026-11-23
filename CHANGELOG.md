@@ -15,6 +15,9 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - `harness run` skips what a module's level does not allow and says why (`trust_level`); `--chain` is refused while trust levels are declared (REQ-671).
 - `specgate trust promote <capability>` opens the change that raises a level; approving it writes the level and `.specgate/trust-ledger.jsonl` records it. A level raised by hand fails the gate (REQ-672).
 - `propose --kind bug --capability <c>` lowers that module's level by one at once (REQ-673).
+- `specgate map [<REQ>] [--json]`: where each requirement lives — use case, actor, the route and the address (`app_url`) where it is reached, feature, code and tests (REQ-678).
+- The harness tells the agent where the requirement lives in the app and to open it before and after the change (REQ-679).
+- `apply` keeps the evidence of each delivery in `.specgate/evidence/<REQ>/`: the scenarios' command, result and output, and the screenshots and traces the browser tests left (REQ-680).
 - `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
 
 ### Fixed

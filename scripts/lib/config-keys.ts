@@ -161,6 +161,16 @@ const BASE: KeySpec[] = [
     kind: "string",
   },
   {
+    key: "app_url",
+    description:
+      "Where the running app is reached (http://localhost:5173): `specgate map` and the agent's prompt give each requirement's address from it (REQ-678).",
+    values: null,
+    pattern: "^https?://",
+    default: null,
+    file: HARNESS_FILE,
+    kind: "string",
+  },
+  {
     key: "agent",
     description:
       "The agent `harness run` and the studio's Build hand each requirement to, with {prompt_file}.",

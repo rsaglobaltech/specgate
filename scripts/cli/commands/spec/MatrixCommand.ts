@@ -23,6 +23,7 @@ import {
   type MatrixScenarioRow,
 } from "../../../../packages/core/src/domain/MatrixScenarios";
 import { inFlightRequirements, inFlightView } from "../../../lib/in-flight";
+import type { InFlightView } from "../../../lib/in-flight";
 import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { allQuestions } from "../../../lib/clarification";
 
@@ -258,8 +259,13 @@ const handKept = () =>
  * (ADR-0035). Nothing of the project is written; links are checked against
  * the project itself.
  */
-export function matrixScenarios(projectDir: string): MatrixScenarioRow[] {
-  const view = inFlightView(projectDir);
+export function matrixScenarios(
+  projectDir: string,
+  /** A view the caller already holds, and cleans up itself; else one is made here. */
+  given?: InFlightView | null
+): MatrixScenarioRow[] {
+  const own = given === undefined;
+  const view = own ? inFlightView(projectDir) : given;
   try {
     const dir = view ? view.dir : projectDir;
     const file = path.join(dir, MATRIX);
@@ -281,7 +287,7 @@ export function matrixScenarios(projectDir: string): MatrixScenarioRow[] {
     };
     return scenarioRows(rows, exists, waiting);
   } finally {
-    if (view) view.cleanup();
+    if (view && own) view.cleanup();
   }
 }
 

@@ -1,4 +1,6 @@
 import { readGatePolicy } from "../../../lib/gate-policy";
+import { keepEvidence } from "../../../lib/evidence";
+import type { ScenarioRun } from "../../../lib/evidence";
 import { appendApplied } from "../../../lib/trust";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { archRun } from "../../../lib/quality-run";
@@ -722,7 +724,13 @@ function tickTasksOf(deltaFile: string, id: string): void {
 function applied(opts: DoneOptions, projectDir: string, dir: string, id: string): void {
   warnUntested(opts, dir, id);
   if (opts.check && opts.status === "Implemented") appendApplied(projectDir, id);
+  // REQ-680: the scenarios that proved it, and what the browser left.
+  const run = scenarioRuns.get(id);
+  if (run && run.exitCode === 0) keepEvidence(projectDir, id, run);
 }
+
+/** Each requirement's scenario run in this apply, for its evidence (REQ-680). */
+const scenarioRuns = new Map<string, ScenarioRun>();
 
 function writeStatus(
   projectDir: string,
@@ -821,7 +829,16 @@ function bddRefusal(
   const cmd = bddCmd.includes("{tags}")
     ? bddCmd.split("{tags}").join(`@${id}`)
     : `${bddCmd} @${id}`;
+  const startedAt = Date.now();
   const run = spawnSync(forShell(cmd), { cwd: projectDir, encoding: "utf8", shell: true });
+  // REQ-680: what ran, kept for the evidence once the requirement is delivered.
+  scenarioRuns.set(id, {
+    command: cmd,
+    exitCode: run.status ?? 1,
+    ms: Date.now() - startedAt,
+    output: `${run.stdout || ""}${run.stderr || ""}`,
+    startedAt,
+  });
   if (run.status === 0) return null;
   const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
   if (detail && !json)

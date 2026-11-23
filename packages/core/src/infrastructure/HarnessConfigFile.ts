@@ -82,6 +82,8 @@ export const KNOWN_KEYS = new Set([
   "allow_paths",
   "message_report",
   "e2e_dir",
+  // REQ-678: where the running app is reached.
+  "app_url",
   "prompt_precedents",
   "adversary_profile",
   // ADR-0040: the quality and security checks, and the thresholds Specgate measures.
@@ -277,6 +279,7 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
   // whose test command the harness cannot safely rewrite (`npm test` may well
   // run Cucumber, and there is no way to know from here).
   if (parsed.e2e_dir !== undefined) config.e2eDir = String(parsed.e2e_dir).trim();
+  if (parsed.app_url !== undefined) config.appUrl = String(parsed.app_url).trim();
   if (parsed.drift !== undefined) {
     const drift = String(parsed.drift).trim();
     if (drift !== "report" && drift !== "gate" && drift !== "off") {
@@ -521,6 +524,7 @@ export function resolveHarnessSettings(
     messageReport: file.messageReport || "",
     // From the file only: it raises the bar, and a flag would be how to lower it.
     e2eDir: file.e2eDir || "",
+    appUrl: file.appUrl || "",
     costPerRunHint: file.costPerRunHint || {},
     profileRules: file.profileRules || [],
   };

@@ -121,6 +121,8 @@ export interface HarnessSettings {
    * passed twenty screen requirements that had no screen.
    */
   e2eDir?: string;
+  /** Where the running app is reached, e.g. http://localhost:5173: the map's addresses start here (REQ-678). */
+  appUrl?: string;
   /**
    * Behaviour changed without a specification (REQ-333, REQ-334): `report`
    * (the default) warns, `gate` fails `check`, `off` does not look.

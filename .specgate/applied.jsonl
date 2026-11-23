@@ -63,3 +63,6 @@
 {"req":"REQ-651","capability":"project-setup","at":"2026-11-23T15:56:27.661Z"}
 {"req":"REQ-640","capability":"change-lifecycle","at":"2026-11-23T15:56:46.050Z"}
 {"req":"REQ-641","capability":"change-lifecycle","at":"2026-11-23T15:56:49.905Z"}
+{"req":"REQ-678","capability":"trust-levels","at":"2026-11-23T16:36:38.072Z"}
+{"req":"REQ-679","capability":"trust-levels","at":"2026-11-23T16:36:43.022Z"}
+{"req":"REQ-680","capability":"trust-levels","at":"2026-11-23T16:36:48.186Z"}

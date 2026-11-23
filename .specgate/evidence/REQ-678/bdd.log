@@ -1,0 +1,11 @@
+▶ dist/tests/unit/feature-map.test.js
+✔ REQ-678 SCN-678a: the route from an end-to-end test (397.498417ms)
+✔ REQ-678 SCN-678b: the route the trace gives, and a requirement still in its change (603.889125ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1116.86025

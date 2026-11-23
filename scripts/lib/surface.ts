@@ -318,6 +318,18 @@ export const SURFACE: Command[] = [
     json: { key: "scenarios", gate: true, args: "<REQ>" },
   },
   {
+    name: "map",
+    // REQ-678: where each requirement lives, for a person and for an agent.
+    mcp: false,
+    script: ["map.js"],
+    help: {
+      group: "core",
+      icon: "🗺️",
+      summary: "Where each requirement lives: use case, route and address, feature, code and tests.",
+    },
+    json: { key: "map", gate: false, args: "[<REQ>] [--capability <c>]" },
+  },
+  {
     name: "trust",
     // ADR-0046: each module's trust level and its evidence; a person's decision, not an MCP tool yet.
     mcp: false,
