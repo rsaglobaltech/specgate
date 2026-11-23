@@ -16,6 +16,7 @@ import { packagesFor, rolePromptSection } from "../lib/role-packages";
 import { operationsSection } from "../lib/contracts";
 import { workspaceMemberDirs } from "../lib/story-part";
 import { testCommandParts } from "../lib/agent-permission";
+import { principlesPromptSection } from "../lib/steering";
 
 export type PromptOptions = CorePromptOptions;
 
@@ -66,9 +67,14 @@ export function buildPrompt(
   // REQ-679: where the requirement lives in the app, and how to open it.
   const where = whereSection(projectDir, String(req.requirement || ""));
   const withWhere = where ? `${withOps.replace(/\n*$/, "\n")}\n${where}` : withOps;
+  // lab-fixes REQ-692: the principles, before the agent writes code.
+  const principles = principlesPromptSection(projectDir);
+  const withPrinciples = principles
+    ? `${withWhere.replace(/\n*$/, "\n")}\n${principles}`
+    : withWhere;
   // REQ-344: a story's other parts, handed over by `workspace harness run`.
   const story = storyContext();
-  return story ? `${withWhere.replace(/\n*$/, "\n")}\n${story}` : withWhere;
+  return story ? `${withPrinciples.replace(/\n*$/, "\n")}\n${story}` : withPrinciples;
 }
 
 /** REQ-614: the command the agent runs its tests with — the gate's own. */

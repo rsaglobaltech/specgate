@@ -1,0 +1,21 @@
+▶ dist/tests/unit/lab-fixes.test.js
+✔ dist/tests/unit/lab-fixes.test.js (101.711167ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 108.40775
+▶ dist/tests/unit/trust-gate.test.js
+✔ REQ-694 SCN-694a: under trust, a chain on a branch of your own builds each on the last (4822.854125ms)
+✔ REQ-694 SCN-694b: under trust, a chain on main is still refused (1268.798959ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6156.601667

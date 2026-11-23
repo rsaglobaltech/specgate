@@ -12,7 +12,7 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 ### Added
 
 - Trust levels per module (ADR-0046): `trust:` in `.specgate/gate.yaml` gives each capability a level from 1 (observed) to 5 (triage), checked by the gate (REQ-670).
-- `harness run` skips what a module's level does not allow and says why (`trust_level`); `--chain` is refused while trust levels are declared (REQ-671).
+- `harness run` skips what a module's level does not allow and says why (`trust_level`); `--chain` into the main branch is refused while trust levels are declared (REQ-671, REQ-694).
 - `specgate trust promote <capability>` opens the change that raises a level; approving it writes the level and `.specgate/trust-ledger.jsonl` records it. A level raised by hand fails the gate (REQ-672).
 - `propose --kind bug --capability <c>` lowers that module's level by one at once (REQ-673).
 - `specgate map [<REQ>] [--json]`: where each requirement lives — use case, actor, the route and the address (`app_url`) where it is reached, feature, code and tests (REQ-678).
@@ -23,11 +23,16 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - `specgate learn [--json]` lists the lessons that keep coming back: review notes alike in two changes or more, and gate stages the agent keeps failing (REQ-684).
 - `specgate learn promote <L> --title <rule> [--forbid … --in … | --run …]` opens a change; once approved, the rule is a principle in `docs/specs/principles.md`, an instruction or a barrier the gate checks (REQ-685).
 - `specgate eval <skill>` examines a skill: each task of `evals/<skill>/eval.yaml` run several times in parallel on clean copies, the skill handed to the agent; correct when `specgate check` passes, good by the architecture and quality stages and an optional reviewer (REQ-686).
+- The harness prompt lists the project's principles, and the harness gate runs those with `run=` as the stage `principles` (REQ-692, REQ-693).
+- With trust levels declared, `harness run --chain` works on a branch of your own; it stays refused on the main branch (REQ-694).
+- `harness run --dry-run` shows a requirement the trust level would skip as `skipped (trust_level)`, not its prompt (REQ-695).
+- An exam task can hold a `check:` and its `check_files:`, run after the agent and never shown to it (REQ-697).
 - Each exam is kept in `evals/<skill>/history.jsonl` per version of the skill, and compared with the previous version: better, worse or the same (REQ-687).
 - `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
 
 ### Fixed
 
+- The map and the derived matrix no longer take the gate's own commands (`bdd_cmd`, `arch_cmd`, `test_cmd`) for code, nor the exam fixtures under `evals/` for tests (REQ-696).
 - The generated matrix reads code under a folder named `spec` deeper than the root as code, not tests (REQ-675).
 - `matrix --migrate` no longer writes into `spec.md` requirements an open change adds or modifies, or a capability spec states; their rows wait for the archive (`matrix_rows_in_changes`) (REQ-676).
 - `matrix --migrate` keeps a row the generated matrix only fills in with more code or tests (`matrix_rows_richer`), and pins in the trace only what it would miss (REQ-677).

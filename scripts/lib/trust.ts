@@ -16,6 +16,7 @@
  */
 
 import * as fs from "node:fs";
+import { spawnSync } from "node:child_process";
 import * as path from "node:path";
 import { GATE_POLICY_FILE } from "./gate-policy";
 import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
@@ -453,11 +454,34 @@ export function harnessTrustRefusal(
 
 /** `--chain` in a project with trust levels: merging alone is level 6, not declarable yet (REQ-671). */
 export function chainRefusal(projectDir: string): string | null {
-  return readTrust(projectDir)
-    ? "harness_trust_chain: --chain merges each green requirement alone, and this project " +
-        "declares trust levels: merging alone is level 6, which no module can have yet. " +
-        "Run without --chain and merge the branches yourself."
-    : null;
+  if (!readTrust(projectDir)) return null;
+  // lab-fixes REQ-694: chaining onto a branch of one's own leaves the merge
+  // into the main branch to a person; only that merge is level 6.
+  const branch = currentBranch(projectDir);
+  if (branch && !mainBranches(projectDir).includes(branch)) return null;
+  return (
+    "harness_trust_chain: --chain merges each green requirement alone, and this project " +
+    "declares trust levels: merging alone into the main branch is level 6, which no module " +
+    "can have yet. Chain on a branch of your own (`git switch -c feature/<module>`) and merge " +
+    "it yourself, or run without --chain."
+  );
+}
+
+function gitOut(projectDir: string, ...args: string[]): string {
+  const r = spawnSync("git", ["-C", projectDir, ...args], { encoding: "utf8" });
+  return r.status === 0 ? String(r.stdout || "").trim() : "";
+}
+
+/** The branch checked out, or "" outside git or on a detached head. */
+function currentBranch(projectDir: string): string {
+  const b = gitOut(projectDir, "rev-parse", "--abbrev-ref", "HEAD");
+  return b === "HEAD" ? "" : b;
+}
+
+/** `main`, `master`, and the branch `origin/HEAD` names. */
+function mainBranches(projectDir: string): string[] {
+  const head = gitOut(projectDir, "symbolic-ref", "--short", "refs/remotes/origin/HEAD");
+  return ["main", "master", ...(head ? [head.replace(/^origin\//, "")] : [])];
 }
 
 /**

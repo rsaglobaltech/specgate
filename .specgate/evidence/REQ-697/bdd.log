@@ -1,0 +1,20 @@
+▶ dist/tests/unit/lab-fixes.test.js
+✔ dist/tests/unit/lab-fixes.test.js (102.713125ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 109.539417
+▶ dist/tests/unit/skill-evals.test.js
+✔ REQ-697 SCN-697a: a hidden check fails — not correct, and unseen while the agent worked (4951.199583ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5029.07075

@@ -26,6 +26,8 @@ export interface Principle {
   in?: string;
   /** `warn`: a failure is advice, not a gate failure. */
   level: "error" | "warn";
+  /** The prose under its heading, comments left out (lab-fixes REQ-692). */
+  statement?: string;
 }
 
 export interface PrinciplesDoc {
@@ -76,6 +78,9 @@ export function parsePrinciples(text: string): PrinciplesDoc {
       continue;
     }
     const c = PRINCIPLE_COMMENT.exec(line);
+    if (current && !c && !/^\s*<!--/.test(line) && line.trim()) {
+      current.statement = current.statement ? `${current.statement} ${line.trim()}` : line.trim();
+    }
     if (c && current) {
       const a = attributes(c[1]);
       if (a.run) current.run = a.run;

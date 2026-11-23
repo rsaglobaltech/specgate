@@ -1,0 +1,11 @@
+▶ dist/tests/unit/lab-fixes.test.js
+✔ REQ-696 SCN-696a: the scenario runner mentions the requirement, and is not its code (663.464584ms)
+✔ REQ-696 SCN-696b: an exam fixture is not a test (336.098458ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1124.007209

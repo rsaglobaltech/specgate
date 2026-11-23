@@ -624,3 +624,75 @@ test("REQ-127 SCN-127a: green alone, red together — the merge is undone", () =
     p.done();
   }
 });
+
+// ── lab-fixes REQ-694 ───────────────────────────────────────────────────────
+function withTrust(p: ChainProject) {
+  const gate = path.join(p.dir, ".specgate", "gate.yaml");
+  fs.mkdirSync(path.dirname(gate), { recursive: true });
+  const before = fs.existsSync(gate) ? fs.readFileSync(gate, "utf8") : "";
+  fs.writeFileSync(gate, `${before.replace(/\n*$/, "\n")}trust: { commands: 4 }\n`);
+  git(p.dir, "add", "-A");
+  git(p.dir, "commit", "-qm", "trust");
+}
+
+test("REQ-694 SCN-694a: under trust, a chain on a branch of your own builds each on the last", () => {
+  const p = chainProject();
+  try {
+    withTrust(p);
+    git(p.dir, "branch", "main");
+    git(p.dir, "switch", "-q", "-c", "feature/pricing");
+    const r = chain(p);
+    assert.equal(r.status, 0, out(r));
+    assert.doesNotMatch(out(r), /harness_trust_chain/);
+    const merges = git(p.dir, "log", "--merges", "--format=%H %s", "feature/pricing")
+      .stdout.trim()
+      .split("\n")
+      .reverse();
+    assert.equal(merges.length, 2, merges.join("\n"));
+    assert.equal(
+      git(p.dir, "merge-base", "--is-ancestor", merges[0].split(" ")[0], "harness/REQ-003").status,
+      0,
+      "REQ-003 is cut from REQ-002's merge"
+    );
+    assert.equal(
+      git(p.dir, "rev-parse", "main").stdout,
+      git(p.dir, "rev-parse", "develop").stdout,
+      "main is unchanged"
+    );
+  } finally {
+    p.done();
+  }
+});
+
+test("REQ-694 SCN-694b: under trust, a chain on main is still refused", () => {
+  const p = chainProject();
+  try {
+    withTrust(p);
+    git(p.dir, "switch", "-q", "-c", "main");
+    const r = chain(p);
+    assert.notEqual(r.status, 0);
+    assert.match(out(r), /harness_trust_chain/);
+    assert.match(out(r), /branch of your own/);
+  } finally {
+    p.done();
+  }
+});
+
+test("REQ-695 SCN-695a: a dry run shows the trust skip instead of the prompt", () => {
+  const p = chainProject();
+  try {
+    const gate = path.join(p.dir, ".specgate", "gate.yaml");
+    fs.mkdirSync(path.dirname(gate), { recursive: true });
+    const before = fs.existsSync(gate) ? fs.readFileSync(gate, "utf8") : "";
+    fs.writeFileSync(gate, `${before.replace(/\n*$/, "\n")}trust: { commands: 2 }\n`);
+    git(p.dir, "add", "-A");
+    git(p.dir, "commit", "-qm", "trust");
+    const r = harness(p, "--dry-run");
+    assert.equal(r.status, 0, out(r));
+    assert.match(r.stdout, /REQ-002 · skipped \(trust_level\)/, r.stdout);
+    assert.match(r.stdout, /needs 3/);
+    assert.doesNotMatch(r.stdout, /Charge a peak surcharge[\s\S]*GIVEN a session started at 18:00/);
+  } finally {
+    p.done();
+  }
+});

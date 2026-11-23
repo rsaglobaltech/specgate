@@ -37,7 +37,7 @@ import { inFlightRequirements } from "../../lib/in-flight";
 import { RunState, writeRunRecord } from "./state";
 import { maskCommand, secretNames } from "../../../packages/core/src/domain/HarnessEvents";
 import { parseArgs } from "./cli";
-import { TRUST_RUN_VAR, chainRefusal } from "../../lib/trust";
+import { TRUST_RUN_VAR, chainRefusal, harnessTrustRefusal } from "../../lib/trust";
 import { quoteArg } from "../../lib/escape";
 import {
   readHarnessConfig,
@@ -285,7 +285,21 @@ export function printDryRun(
       ui.kv("Setup", settings.setupCmd || "none", 14) +
       (args.chain ? ui.kv("Chain", "each green requirement merged into this branch", 14) : "")
   );
+  const inFlight = inFlightRequirements(projectDir);
+  const intent = { named: args.reqs, concurrency: settings.concurrency };
   for (const req of pending) {
+    // lab-fixes REQ-695: what the trust level would skip shows as skipped, not as a prompt.
+    const owning = inFlight.find((r) => r.id === req.requirement);
+    const untrusted = harnessTrustRefusal(projectDir, req.requirement, owning?.change, intent);
+    if (untrusted) {
+      process.stdout.write(
+        "\n" +
+          ui.section(`${req.requirement} · skipped (trust_level)`) +
+          "\n" +
+          `${untrusted.replace(/^trust_level:\s*/, "")}\n`
+      );
+      continue;
+    }
     const prompt = judged(projectDir, (dir) =>
       buildPrompt(req, dir, {
         promptPrefix: settings.promptPrefix,

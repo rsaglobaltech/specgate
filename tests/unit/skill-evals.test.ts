@@ -135,3 +135,34 @@ test("REQ-687 SCN-687a: a new version of the skill that does worse", () => {
   const history = read(dir, "evals/orders/history.jsonl").trim().split("\n").map((l: string) => JSON.parse(l));
   assert.deepEqual(history.map((h: { version: string }) => h.version), [first.version, second.version]);
 });
+
+test("REQ-697 SCN-697a: a hidden check fails — not correct, and unseen while the agent worked", () => {
+  const dir = project("Orders skill. GOOD.");
+  const exam = path.join(dir, "evals/orders");
+  w(exam, "hidden/fee.test.js", "process.exit(1);\n");
+  // The agent notes whether the hidden test is in its copy while it works.
+  const agent = read(dir, "agent.js");
+  w(
+    dir,
+    "agent.js",
+    `require("fs").appendFileSync(${JSON.stringify(path.join(dir, "saw.log"))}, String(require("fs").existsSync("hidden")) + "\\n");\n` +
+      agent
+  );
+  const yaml = read(exam, "eval.yaml").replace(
+    '    prompt: "TASK cancel: let the customer cancel an order"\n',
+    '    prompt: "TASK cancel: let the customer cancel an order"\n' +
+      '    check: "node hidden/fee.test.js"\n' +
+      "    check_files: [hidden/fee.test.js]\n"
+  );
+  w(exam, "eval.yaml", yaml.replace("runs: 3", "runs: 1"));
+  const e = evalOf(dir);
+  const cancel = e.tasks.find((t: { id: string }) => t.id === "cancel");
+  assert.equal(cancel.correct, 0, "specgate check passes, the hidden test does not");
+  assert.ok(!read(dir, "saw.log").includes("true"), "hidden/ was not in the copy while the agent worked");
+  const prompt = read(dir, ".claude/skills/orders/SKILL.md") + yaml;
+  assert.ok(prompt.includes("check:"), "the control: the exam declares it");
+
+  // The same hidden check passing: correct again.
+  w(exam, "hidden/fee.test.js", "process.exit(0);\n");
+  assert.equal(evalOf(dir).tasks.find((t: { id: string }) => t.id === "cancel").correct, 1);
+});

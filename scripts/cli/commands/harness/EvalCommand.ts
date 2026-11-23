@@ -43,6 +43,8 @@ function usage(): void {
       - id: cancel
         fixture: tasks/cancel               # a project folder under the exam
         prompt: "Implement REQ-031 …"
+        check: "node --test hidden/"        # optional: run after the agent, unseen
+        check_files: [hidden/cancel.test.js] # copied in only for the check
 `
   );
 }
@@ -51,6 +53,10 @@ interface Task {
   id: string;
   fixture: string;
   prompt: string;
+  /** lab-fixes REQ-697: run after the agent, which never sees it. */
+  check?: string;
+  /** Files of the exam copied into the copy only for `check`. */
+  check_files?: string[] | string;
 }
 
 function sh(command: string, cwd: string): Promise<{ code: number; out: string }> {
@@ -95,6 +101,20 @@ async function oneRun(
     await sh(agent.split("{prompt_file}").join(promptFile), dir);
     fs.rmSync(promptFile, { force: true });
     const check = await node([CLI, "check", dir, "--json"], dir);
+    // lab-fixes REQ-697: the hidden check, its files brought in only now.
+    let hidden = true;
+    if (task.check) {
+      const files = Array.isArray(task.check_files)
+        ? task.check_files
+        : task.check_files
+          ? [task.check_files]
+          : [];
+      for (const f of files) {
+        fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
+        fs.cpSync(path.join(examDir, f), path.join(dir, f), { recursive: true });
+      }
+      hidden = (await sh(task.check, dir)).code === 0;
+    }
     let stages: number[] = [];
     try {
       const doc = JSON.parse(check.out) as { stages?: Array<{ stage: string; result: string }> };
@@ -110,7 +130,7 @@ async function oneRun(
       const m = r.out.match(/-?\d+(?:\.\d+)?/);
       if (m) review = Math.max(0, Math.min(10, Number(m[0]))) / 10;
     }
-    return { correct: check.code === 0, stages, reviewer: review, dir };
+    return { correct: check.code === 0 && hidden, stages, reviewer: review, dir };
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -177,6 +197,11 @@ export class EvalCommand extends BaseCommand {
     for (const t of tasks)
       if (!t?.id || !t.prompt || !t.fixture || !fs.existsSync(path.join(examDir, t.fixture)))
         problems.push(`task ${t?.id ?? "?"} needs an id, a prompt and a fixture folder that exists`);
+    for (const t of tasks) {
+      const files = Array.isArray(t?.check_files) ? t.check_files : t?.check_files ? [t.check_files] : [];
+      for (const f of files)
+        if (!fs.existsSync(path.join(examDir, f))) problems.push(`task ${t.id}: its check file ${f} does not exist`);
+    }
     if (problems.length) {
       io.fail(NULL_SHAPE, [
         error("eval_invalid", `${rel} cannot run: ${problems.join("; ")}.`, { file: rel, fix: "specgate eval --help" }),

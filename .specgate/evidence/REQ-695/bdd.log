@@ -1,0 +1,20 @@
+▶ dist/tests/unit/lab-fixes.test.js
+✔ dist/tests/unit/lab-fixes.test.js (104.763833ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 111.555625
+▶ dist/tests/unit/trust-gate.test.js
+✔ REQ-695 SCN-695a: a dry run shows the trust skip instead of the prompt (1152.596208ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1218.106417

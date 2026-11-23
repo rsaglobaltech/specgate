@@ -44,6 +44,7 @@ import {
   substituteGateCommand,
 } from "../../../packages/core/src/domain/HarnessRun";
 import { removeTempFile } from "../../lib/temp-file";
+import { runPrinciples } from "../../lib/steering";
 import {
   judged,
   promptInFlight,
@@ -366,6 +367,9 @@ export function runGate(
       if (warnings.length > 0) passHint = warnings[0].message;
     }
   }
+  // lab-fixes REQ-693: the principles that declare a check, after the tests.
+  const principles = principlesStage(worktreeDir, report);
+  if (principles) return principles;
   // REQ-220, REQ-221: the quality checks, after the tests — the attempt ones,
   // then the end ones. A failure goes back to the agent like a failing test.
   const quality = settings.quality;
@@ -780,4 +784,30 @@ export function runAdversarialProbe(
     // The branch carries the implementer's work and nothing else.
     discardWorktreeChanges(worktreeDir);
   }
+}
+
+/**
+ * lab-fixes REQ-693: the stage `principles` — each principle with `run=`, in
+ * the worktree. An error-level failure fails the attempt, named so the next
+ * attempt is told; a warn-level one is reported and passes. Null: green.
+ */
+export function principlesStage(worktreeDir: string, report: GateReport = () => {}): GateResult | null {
+  const started = Date.now();
+  const { failed, ran } = runPrinciples(worktreeDir);
+  if (ran === 0) return null;
+  const errors = failed.filter((f) => f.level === "error");
+  report("principles", errors.length > 0 ? "fail" : "pass", { ms: Date.now() - started });
+  if (errors.length === 0) return null;
+  return {
+    ok: false,
+    stage: "principles",
+    output: errors
+      .map(
+        (f) =>
+          `Principle ${f.id} (${f.title}): \`${f.run}\` failed.` +
+          (f.output ? `\n${f.output}` : "") +
+          `\n  fix: make the code follow ${f.id}, as docs/specs/principles.md states it.`
+      )
+      .join("\n\n"),
+  };
 }
