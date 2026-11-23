@@ -1,4 +1,3 @@
-@change:skill-evals
 Feature: Each exam kept per version of the skill, and compared
 
   @REQ-687 @SCN-687a

@@ -1,4 +1,3 @@
-@change:skill-evals
 Feature: A skill examined: correct by the gate, good by the review
 
   @REQ-686 @SCN-686a
