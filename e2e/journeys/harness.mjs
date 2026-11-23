@@ -97,4 +97,22 @@ export default [
       );
     },
   },
+  {
+    name: "harness doctor: the agent that answers, and the one that is not installed (REQ-690)",
+    covers: ["harness doctor"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      const agent = path.join(path.dirname(dir), `ok-${path.basename(dir)}.js`);
+      t.write(path.dirname(agent), path.basename(agent), "console.log('OK');\n");
+      t.write(dir, "harness.config.yaml", `agent: 'node "${agent}" {prompt_file}'\n`);
+      const ok = t.sg(dir, "harness", "doctor", "--json");
+      t.ok(ok, "doctor with an agent that answers");
+      t.expect(t.json(ok).doctor.agents.every((a) => a.answered === true), "it answers", ok);
+      t.write(dir, "harness.config.yaml", "agent: 'nosuchagent -p'\n");
+      const missing = t.sg(dir, "harness", "doctor", "--no-probe", "--json");
+      t.expect(missing.status === 1, "exits 1 when an agent is missing", missing);
+      t.expect(/nosuchagent is not installed/.test(missing.stdout), "names the program", missing);
+    },
+  },
 ];

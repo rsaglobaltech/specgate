@@ -939,6 +939,7 @@ export const SURFACE: Command[] = [
       {
         // agent-routing REQ-690: every agent checked before it is used.
         name: "doctor",
+        mcp: false,
         script: ["harness", "doctor.js"],
         help: {
           group: "harness",

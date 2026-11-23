@@ -200,7 +200,9 @@ export default [
       const agent = path.join(path.dirname(dir), `agent-${path.basename(dir)}.js`);
       fs.writeFileSync(
         agent,
-        `require('fs').mkdirSync('test',{recursive:true});require('fs').writeFileSync('test/totals.test.js','// ${req.id}\\n');\n`
+        // It answers the question `harness run` asks each agent first (REQ-691).
+        `if (/Reply with exactly: OK/.test(require('fs').readFileSync(process.argv[2],'utf8'))) { console.log('OK'); process.exit(0); }\n` +
+          `require('fs').mkdirSync('test',{recursive:true});require('fs').writeFileSync('test/totals.test.js','// ${req.id}\\n');\n`
       );
       const r = t.sg(
         dir,
