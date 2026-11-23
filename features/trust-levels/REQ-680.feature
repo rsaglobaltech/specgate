@@ -1,4 +1,3 @@
-@change:feature-map
 Feature: Apply keeps the evidence of each delivery
 
   @REQ-680 @SCN-680a

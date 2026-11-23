@@ -1,4 +1,3 @@
-@change:feature-map
 Feature: The agent is told where the requirement lives in the app
 
   @REQ-679 @SCN-679a

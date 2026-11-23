@@ -446,6 +446,9 @@ Map requirements to scenarios, domain model elements, implementation artifacts, 
 | REQ-672 | SCN-672a | `features/trust-levels/REQ-672.feature` | - | - | - | - | `scripts/cli/commands/project/TrustCommand.ts, scripts/cli/commands/quality/ValidateSpecsCommand.ts, scripts/lib/change-review.ts, scripts/lib/trust.ts` | tests/unit/trust-levels.test.ts | Implemented |
 | REQ-673 | SCN-673a | `features/trust-levels/REQ-673.feature` | - | - | - | - | `scripts/cli/commands/change/ChangeCommand.ts, scripts/lib/trust.ts` | tests/unit/trust-levels.test.ts | Implemented |
 | REQ-674 | SCN-674a | `features/trust-levels/REQ-674.feature` | - | - | - | - | `scripts/cli/commands/project/TrustCommand.ts, scripts/cli/commands/spec/DoneCommand.ts, scripts/lib/trust.ts` | tests/unit/trust-levels.test.ts | Implemented |
+| REQ-678 | SCN-678a | `features/trust-levels/REQ-678.feature` | - | - | - | - | `packages/core/src/domain/HarnessConfig.ts, packages/core/src/infrastructure/HarnessConfigFile.ts, scripts/cli/commands/spec/MapCommand.ts, scripts/lib/config-keys.ts, scripts/lib/feature-map.ts, scripts/lib/surface.ts` | e2e/journeys/map.mjs, tests/unit/feature-map.test.ts | Implemented |
+| REQ-679 | SCN-679a | `features/trust-levels/REQ-679.feature` | - | - | - | - | `scripts/harness/prompt.ts` | tests/unit/feature-map.test.ts | Implemented |
+| REQ-680 | SCN-680a | `features/trust-levels/REQ-680.feature` | - | - | - | - | `scripts/cli/commands/spec/DoneCommand.ts, scripts/lib/evidence.ts` | tests/unit/feature-map.test.ts | Implemented |
 | REQ-117 | SCN-117a | `features/trusted-gate/REQ-117.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
 | REQ-118 | SCN-118a | `features/trusted-gate/REQ-118.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
 | REQ-119 | SCN-119a | `features/trusted-gate/REQ-119.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |

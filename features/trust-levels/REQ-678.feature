@@ -1,4 +1,3 @@
-@change:feature-map
 Feature: A map of where each requirement lives
 
   @REQ-678 @SCN-678a
