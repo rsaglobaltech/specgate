@@ -1,0 +1,12 @@
+▶ dist/tests/unit/agent-routing.test.js
+✔ REQ-690 SCN-690a: one agent answers, careful's key has expired — the doctor says which, and exits 1 (1461.162167ms)
+✔ REQ-690 SCN-690b: not installed — nosuchagent named, and no agent run (1364.656083ms)
+✔ REQ-690: the program behind env and its options (30.818666ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2921.31925

@@ -151,6 +151,16 @@ const BASE: KeySpec[] = [
     kind: "string",
   },
   {
+    key: "draft_profile",
+    description:
+      "The profile in .harness/profiles.yaml whose agent drafts a module of the brief, apart from the agent that builds (REQ-689).",
+    values: null,
+    pattern: null,
+    default: null,
+    file: HARNESS_FILE,
+    kind: "string",
+  },
+  {
     key: "bdd_cmd",
     description:
       "The command that runs the feature files (playwright-bdd, Cucumber…), {tags} the scenarios to run: required by a gate with `bdd: required` (REQ-661).",

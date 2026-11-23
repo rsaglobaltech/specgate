@@ -98,6 +98,7 @@ export function parseArgs(argv: string[]) {
     skipNotReady: false,
     pauseBetweenAttempts: false,
     skipBaseline: false,
+    skipDoctor: false,
     budgetSeconds: 0,
     maxRequirements: 0,
     push: false,
@@ -166,6 +167,8 @@ export function parseArgs(argv: string[]) {
       args.verbose = true;
     } else if (token === "--dry-run") {
       args.dryRun = true;
+    } else if (token === "--skip-doctor") {
+      args.skipDoctor = true;
     } else if (token === "--strict-artifacts") {
       args.strictArtifacts = true;
     } else if (token === "--pause-between-attempts") {

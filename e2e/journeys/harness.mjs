@@ -23,6 +23,8 @@ export default [
         path.basename(agent),
         [
           "const fs = require('node:fs');",
+          // `harness run` asks each agent first (REQ-691): it answers.
+          "if (/Reply with exactly: OK/.test(fs.readFileSync(process.argv[2], 'utf8'))) { console.log('OK'); process.exit(0); }",
           "fs.mkdirSync('test', { recursive: true });",
           `fs.writeFileSync('test/totals.test.js', '// ${req.id} ${req.scenarioId}\\n');`,
           "fs.appendFileSync('src/orders/index.js', '// rounding\\n');",

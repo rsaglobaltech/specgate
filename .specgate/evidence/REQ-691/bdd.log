@@ -1,0 +1,10 @@
+▶ dist/tests/unit/agent-routing.test.js
+✔ REQ-691 SCN-691a: ausleihe's agent is out of quota — the run refuses naming REQ-006, and no worktree is made (2748.794459ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2813.329292

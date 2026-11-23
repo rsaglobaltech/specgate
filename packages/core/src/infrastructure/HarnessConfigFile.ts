@@ -54,6 +54,7 @@ export const KNOWN_KEYS = new Set([
   "arch_cmd",
   // REQ-661: the command that runs the feature files, `{tags}` the scenarios to run.
   "bdd_cmd",
+  "draft_profile",
   // ADR-0028 points 3-4 (REQ-231): the SARIF the architecture tool writes.
   "arch_sarif",
   "setup_cmd",
@@ -219,6 +220,7 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
   }
   if (parsed.arch_cmd !== undefined) config.archCmd = String(parsed.arch_cmd);
   if (parsed.bdd_cmd !== undefined) config.bddCmd = String(parsed.bdd_cmd);
+  if (parsed.draft_profile !== undefined) config.draftProfile = String(parsed.draft_profile);
   if (parsed.arch_sarif !== undefined) config.archSarif = String(parsed.arch_sarif);
   if (parsed.setup_cmd !== undefined) config.setupCmd = String(parsed.setup_cmd);
   if (parsed.max_attempts !== undefined) {

@@ -27,6 +27,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - With trust levels declared, `harness run --chain` works on a branch of your own; it stays refused on the main branch (REQ-694).
 - `harness run --dry-run` shows a requirement the trust level would skip as `skipped (trust_level)`, not its prompt (REQ-695).
 - An exam task can hold a `check:` and its `check_files:`, run after the agent and never shown to it (REQ-697).
+- A profile rule can match `module:`: a module's requirements go to that profile's agent (REQ-688).
+- `draft_profile` names the agent that drafts a module of the brief, apart from the agent that builds; `--no-agent` keeps the drafting guide for your own agent (REQ-689).
+- `specgate harness doctor [--json] [--no-probe]`: which agent each pending requirement gets, and whether each agent — the drafting one too — is installed and answers a one-line prompt (REQ-690).
+- `harness run` checks the agents it needs before any worktree and refuses with `harness_agent_unavailable` when one does not answer; `--skip-doctor` starts anyway (REQ-691).
 - Each exam is kept in `evals/<skill>/history.jsonl` per version of the skill, and compared with the previous version: better, worse or the same (REQ-687).
 - `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
 

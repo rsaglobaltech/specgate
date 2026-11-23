@@ -937,6 +937,17 @@ export const SURFACE: Command[] = [
         json: { key: "report", gate: false },
       },
       {
+        // agent-routing REQ-690: every agent checked before it is used.
+        name: "doctor",
+        script: ["harness", "doctor.js"],
+        help: {
+          group: "harness",
+          icon: "🩺",
+          summary: "Which agent each requirement gets, and whether each one is installed and answers.",
+        },
+        json: { key: "doctor", gate: false },
+      },
+      {
         // REQ-491: what the studio's Stop button and a person at a terminal both use.
         name: "stop",
         mcp: false,

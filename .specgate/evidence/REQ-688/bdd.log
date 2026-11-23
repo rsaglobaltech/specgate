@@ -1,0 +1,10 @@
+▶ dist/tests/unit/agent-routing.test.js
+✔ REQ-688 SCN-688a: ausleihe with its own agent — careful builds REQ-006, cheap builds REQ-004 (4033.164625ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4098.09

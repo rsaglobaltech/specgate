@@ -56,6 +56,7 @@ import { quoteArg } from "../../lib/escape";
 import { requirementReadiness } from "../../../packages/core/src/domain/RequirementReadiness";
 import { runWithDeadline, wasInterrupted } from "../../lib/run-with-deadline";
 import { selectProfile } from "../../../packages/core/src/domain/ProfileMatch";
+import { requirementCapabilities } from "../../lib/capabilities";
 import { withWorktreeLock } from "../worktree-lock";
 /**
  * Where a resumed run picks up, and what the gate last said.
@@ -470,6 +471,8 @@ export function processOneRequirement(req: HarnessRequirement, ctx: RunContext):
     boundedContext: contextOfRequirement(projectDir, req.requirement),
     featureFile: featureFilePath(req),
     category: req.category,
+    // agent-routing REQ-688: a module's own agent.
+    module: requirementCapabilities(projectDir).get(req.requirement),
   });
   if (matchedProfile) info(`${req.requirement}: profile '${matchedProfile}' matched`);
 
