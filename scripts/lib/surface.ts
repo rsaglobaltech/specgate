@@ -342,6 +342,18 @@ export const SURFACE: Command[] = [
     json: { key: "map", gate: false, args: "[<REQ>] [--capability <c>]" },
   },
   {
+    name: "learn",
+    // REQ-684, REQ-685: what keeps coming back, proposed as a rule a person approves.
+    mcp: false,
+    script: ["learn.js"],
+    help: {
+      group: "core",
+      icon: "🧭",
+      summary: "The lessons that keep coming back — review notes, failed gate stages — proposed as rules.",
+    },
+    json: { key: "learn", gate: false, args: "[promote <L> --title <rule>]" },
+  },
+  {
     name: "trust",
     // ADR-0046: each module's trust level and its evidence; a person's decision, not an MCP tool yet.
     mcp: false,

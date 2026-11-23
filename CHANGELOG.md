@@ -20,6 +20,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - `apply` keeps the evidence of each delivery in `.specgate/evidence/<REQ>/`: the scenarios' command, result and output, and the screenshots and traces the browser tests left (REQ-680).
 - `specgate reproduce <change-id> --capability <c> --title <t>` opens a bug change whose requirement must be reproduced, and lowers the module's trust; `specgate reproduce run <REQ>` keeps its red run as evidence and refuses a green one (`repro_not_red`) (REQ-681, REQ-682).
 - `apply` refuses a bug never seen red (`apply_not_reproduced`), and keeps the red run beside the green one (REQ-683).
+- `specgate learn [--json]` lists the lessons that keep coming back: review notes alike in two changes or more, and gate stages the agent keeps failing (REQ-684).
+- `specgate learn promote <L> --title <rule> [--forbid … --in … | --run …]` opens a change; once approved, the rule is a principle in `docs/specs/principles.md`, an instruction or a barrier the gate checks (REQ-685).
 - `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
 
 ### Fixed

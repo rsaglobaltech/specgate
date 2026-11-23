@@ -22,6 +22,8 @@ import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
 import { error } from "./diagnostics";
 import type { Diagnostic } from "./diagnostics";
 import { capabilityNames, requirementCapabilities } from "./capabilities";
+import { withPrinciple, type LearnedRule } from "../../packages/core/src/domain/Lessons";
+import { PRINCIPLES_FILE } from "../../packages/core/src/domain/Principles";
 
 export const TRUST_LEDGER = ".specgate/trust-ledger.jsonl";
 /** Each requirement `apply` delivered, with when: the evidence a streak counts. */
@@ -456,4 +458,28 @@ export function chainRefusal(projectDir: string): string | null {
         "declares trust levels: merging alone is level 6, which no module can have yet. " +
         "Run without --chain and merge the branches yourself."
     : null;
+}
+
+/**
+ * Once every layer of a `learn-…` change is approved, its rule is appended to
+ * docs/specs/principles.md (REQ-685). Once only.
+ */
+export function applyLearnedRule(projectDir: string, change: string): boolean {
+  const config = path.join(projectDir, "docs", "specs", "changes", change, "change.yaml");
+  if (!fs.existsSync(config)) return false;
+  const m = fs.readFileSync(config, "utf8").match(/^learn_principle:\s*(\{.*\})\s*$/m);
+  if (!m) return false;
+  let rule: LearnedRule;
+  try {
+    rule = JSON.parse(m[1]);
+  } catch {
+    return false;
+  }
+  const file = path.join(projectDir, PRINCIPLES_FILE);
+  const current = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
+  if (current && new RegExp(`^#{2,4}\\s+P\\d+\\s+—\\s+${rule.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "m").test(current))
+    return false;
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, withPrinciple(current, rule), "utf8");
+  return true;
 }

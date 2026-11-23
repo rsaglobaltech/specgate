@@ -1,5 +1,5 @@
 import * as fs from "node:fs";
-import { applyPromotion } from "./trust";
+import { applyLearnedRule, applyPromotion } from "./trust";
 import * as path from "node:path";
 import { namedBy, questionTable } from "../../packages/core/src/domain/Clarification";
 import { draftReport } from "../cli/commands/spec/DraftCommand";
@@ -167,7 +167,11 @@ export function approveChange(
   }
   const out = approveLayers(projectDir, id, layer ? [layer] : null, today, who);
   // REQ-672: a promotion change raises its module's trust level once it is approved.
-  if (out.ok && out.approved) applyPromotion(projectDir, id);
+  if (out.ok && out.approved) {
+    applyPromotion(projectDir, id);
+    // REQ-685: a learned rule becomes a principle once it is approved.
+    applyLearnedRule(projectDir, id);
+  }
   return out;
 }
 
