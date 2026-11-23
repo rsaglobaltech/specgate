@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "1.4.3",
+    "version": "1.5.0",
     "node": "v24.x",
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-11-21",
+  "recordedAt": "2026-11-23",
   "title": "courts — from a brief",
   "cols": 88,
   "streamsMerged": false,
@@ -202,12 +202,12 @@
       "omitted": 0,
       "lines": [
         {
-          "t": "-<!-- specgate:trace actor=Member kind=functional -->",
+          "t": "-<!-- specgate:trace actor=Member kind=functional uc=UC-003 -->",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "+<!-- specgate:trace actor=Member kind=functional status=\"Needs Clarification\" -->",
+          "t": "+<!-- specgate:trace actor=Member kind=functional uc=UC-003 status=\"Needs Clarification\" -->",
           "c": "out",
           "s": "out"
         },

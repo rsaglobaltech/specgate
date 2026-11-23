@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "1.4.3",
+    "version": "1.5.0",
     "node": "v24.x",
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-11-21",
+  "recordedAt": "2026-11-23",
   "title": "smart-parking — the harness",
   "cols": 88,
   "streamsMerged": false,
@@ -300,7 +300,7 @@
           "s": "out"
         },
         {
-          "t": "  ✔  REQ-000   pass     1 attempt   → harness/REQ-000",
+          "t": "  ✔  REQ-000   pass      1 attempt   → harness/REQ-000",
           "c": "ok",
           "s": "out"
         },
@@ -427,9 +427,9 @@
       "surface": "validate",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1240,
-      "truncated": false,
-      "omitted": 0,
+      "holdMs": 1420,
+      "truncated": true,
+      "omitted": 1,
       "lines": [
         {
           "t": "  ◆ specgate · validate   smart-parking",
@@ -439,6 +439,11 @@
         {
           "t": "",
           "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ▲  The scenarios are not executable yet: no feature runner is required by this project's gate.",
+          "c": "warn",
           "s": "out"
         },
         {
@@ -458,6 +463,11 @@
         },
         {
           "t": "     · Traceability mode: rich",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
           "c": "out",
           "s": "out"
         }

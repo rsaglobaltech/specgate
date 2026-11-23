@@ -515,13 +515,88 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
 `;
 
 /** The draft an agent would write. REQ-004 invents a fee the brief never states. */
+/** The use cases the agent drafted beside the requirements (REQ-626). */
+const DRAFT_USE_CASES = `# Use cases — draft-bookings
+
+## ADDED Use Cases
+
+| ID | Use Case | Actor | Requirements |
+| --- | --- | --- | --- |
+| UC-002 | Book a court | Member | REQ-002, REQ-003 |
+| UC-003 | Cancel a booking | Member | REQ-004 |
+`;
+
+/** Each use case's specification, its flows naming the scenarios that prove them (REQ-631). */
+const DRAFT_UC_SPECS: Record<string, string> = {
+  "UC-002.md": `# UC-002 — Book a court
+
+## Overview
+
+A member books a free court for one hour.
+
+## Actors
+
+- Member
+
+## Preconditions
+
+- The member is signed in.
+
+## Main flow (SCN-002)
+
+1. The member picks the centre court on Monday evening.
+2. The system books it for one hour.
+
+## Alternative flows
+
+### A1 — The member lists their bookings (at step 2) (SCN-003)
+
+1. The system shows the member's bookings.
+
+### A2 — The court is already booked (at step 2) (SCN-004)
+
+1. The system refuses the booking: court already booked.
+
+## Postconditions
+
+- The court is booked for that hour, once.
+
+## Business rules
+
+- REQ-003: a court is never booked twice for the same hour.
+`,
+  "UC-003.md": `# UC-003 — Cancel a booking
+
+## Overview
+
+A member cancels their own booking.
+
+## Actors
+
+- Member
+
+## Preconditions
+
+- The member holds the booking.
+
+## Main flow (SCN-005)
+
+1. The member cancels the booking on the day.
+2. The system cancels it and charges the late-cancellation fee.
+
+## Postconditions
+
+- The court is free again.
+`,
+};
+
 export function draftSpec(answered: boolean): string {
   const cancel = answered
-    ? `<!-- specgate:trace actor=Member kind=functional status="Needs Clarification" -->
+    ? `<!-- specgate:trace actor=Member kind=functional uc=UC-003 status="Needs Clarification" -->
 
 The system SHALL let a member cancel their own booking, and SHALL charge a
 late cancellation the fee the club decides (Q1).`
-    : `<!-- specgate:trace actor=Member kind=functional -->
+    : `<!-- specgate:trace actor=Member kind=functional uc=UC-003 -->
 
 The system SHALL let a member cancel their own booking, and SHALL charge a
 fee of 5 euros when they cancel less than 24 hours before.`;
@@ -532,7 +607,7 @@ fee of 5 euros when they cancel less than 24 hours before.`;
 
 ### Requirement: REQ-002 — A member books a court for one hour
 
-<!-- specgate:trace actor=Member kind=functional -->
+<!-- specgate:trace actor=Member kind=functional uc=UC-002 -->
 
 The system SHALL let a member book a free court for one hour.
 
@@ -552,7 +627,7 @@ The system SHALL let a member book a free court for one hour.
 
 ### Requirement: REQ-003 — A court is never booked twice for the same hour
 
-<!-- specgate:trace actor=Member kind=business-rule -->
+<!-- specgate:trace actor=Member kind=business-rule uc=UC-002 -->
 
 The system SHALL refuse a booking for a court and hour that is already booked.
 
@@ -640,6 +715,9 @@ function courtsWithDraft(scratch: string, env: NodeJS.ProcessEnv): string {
   // the agent; what the agent then wrote is the next line.
   run(project, env, ["specgate", "draft", "bookings"]);
   write(path.join(project, CHANGE_DIR, "specs", "bookings", "spec.md"), draftSpec(false));
+  write(path.join(project, CHANGE_DIR, "use-cases.md"), DRAFT_USE_CASES);
+  for (const [file, text] of Object.entries(DRAFT_UC_SPECS))
+    write(path.join(project, CHANGE_DIR, "use-cases", file), text);
   run(project, env, ["git", "add", "-A"]);
   run(project, env, ["git", "commit", "-qm", "the brief and the agent's first draft"]);
   return project;
@@ -648,6 +726,9 @@ function courtsWithDraft(scratch: string, env: NodeJS.ProcessEnv): string {
 /** What the author does after reading the first check: write it down, ask. */
 function answerTheChecklist(project: string): void {
   write(path.join(project, CHANGE_DIR, "specs", "bookings", "spec.md"), draftSpec(true));
+  write(path.join(project, CHANGE_DIR, "use-cases.md"), DRAFT_USE_CASES);
+  for (const [file, text] of Object.entries(DRAFT_UC_SPECS))
+    write(path.join(project, CHANGE_DIR, "use-cases", file), text);
   write(path.join(project, CHANGE_DIR, "assumptions.md"), ASSUMPTIONS_MD);
   write(path.join(project, CHANGE_DIR, "questions.md"), QUESTIONS_MD);
 }
