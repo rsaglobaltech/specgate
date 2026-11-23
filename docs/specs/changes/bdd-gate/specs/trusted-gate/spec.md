@@ -68,7 +68,19 @@ The system SHALL, on `specgate apply <REQ>` in a project with `bdd: required`, r
 
 <!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-663.feature actor=Developer kind=functional -->
 
-The system SHALL, on `specgate init` — `init --forja` once forja has made the project —, `specgate adopt` and `specgate migrate bdd`, write `bdd: required` in `.specgate/gate.yaml` and, when the stack says how, the `bdd_cmd` that runs the feature files — the project's own `test:bdd` script when it has one (`npm run test:bdd --silent -- --grep "{tags}"`, as forja writes it), `npx bddgen && npx playwright test --grep "{tags}"` for a project with Playwright (playwright-bdd), `mvn -q test -Dcucumber.filter.tags="{tags}"` for a Maven one (Cucumber) — and SHALL write the feature files of every approved change; and, when the stack does not say, leave `bdd_cmd` to set, the gate saying so.
+The system SHALL, on `specgate migrate bdd` and on `init --forja` once forja has made the project — and on `specgate init` and `specgate adopt` only when the project has a runner for its feature files, a `bdd_cmd` already set or one its stack says —, write `bdd: required` in `.specgate/gate.yaml` and, when the stack says how, the `bdd_cmd` that runs the feature files — the project's own `test:bdd` script when it has one (`npm run test:bdd --silent -- --grep "{tags}"`, as forja writes it), `npx bddgen && npx playwright test --grep "{tags}"` for a project with Playwright (playwright-bdd), `mvn -q test -Dcucumber.filter.tags="{tags}"` for a Maven one (Cucumber) — and SHALL write the feature files of every approved change; and, when the stack does not say, leave `bdd_cmd` to set, the gate saying so; `init` and `adopt` without a runner leave `bdd` unset, the gate warning `bdd_not_set_up` with `specgate migrate bdd` and `apply` delivering as before.
+
+#### Scenario: SCN-663c — A new project with no runner
+
+- GIVEN a Node project with no `test:bdd` script and no Playwright or Cucumber
+- WHEN the Developer runs `specgate init`
+- THEN gate.yaml does not say `bdd: required`, `specgate check` warns `bdd_not_set_up` with `specgate migrate bdd`, and `specgate apply` delivers a requirement whose test passes
+
+#### Scenario: SCN-663d — A new project with its own test:bdd script
+
+- GIVEN a Node project whose package.json has the script `test:bdd`
+- WHEN the Developer runs `specgate init`
+- THEN gate.yaml says `bdd: required` and harness.config.yaml's `bdd_cmd` is `npm run test:bdd --silent -- --grep "{tags}"`
 
 #### Scenario: SCN-663b — A project with its own test:bdd script
 

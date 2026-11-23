@@ -15,7 +15,6 @@ import fs = require("node:fs");
 import os = require("node:os");
 import path = require("node:path");
 import { cli } from "../helpers/cli";
-import { withoutBdd } from "../helpers/pre-bdd";
 
 /** An adopted repo with one linked, delivered requirement and one Draft. */
 function project() {
@@ -213,7 +212,6 @@ test("a new adoption starts with a generated matrix, and the loop needs no req l
     fs.mkdirSync(path.join(dir, "test"), { recursive: true });
     fs.writeFileSync(path.join(dir, "package.json"), '{"name":"shop","version":"1.0.0"}');
     assert.equal(cli("adopt", "--project-dir", dir, "--no-capabilities").status, 0);
-    withoutBdd(dir);
     assert.match(fs.readFileSync(MATRIX(dir), "utf8"), /specgate:derived/);
 
     // new → the obligation and scenario written → a test that names it →

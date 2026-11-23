@@ -82,6 +82,14 @@ function installPolicy(projectDir: string, opts: { dryRun: boolean }) {
     return;
   }
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, gatePolicyTemplate(), "utf8");
+  // Required only with a runner to run them, set or found from the stack (REQ-663).
+  let set = "";
+  try {
+    set = (readHarnessConfig(projectDir)?.bddCmd || "").trim();
+  } catch {
+    // a config migrate has yet to fix: the stack decides
+  }
+  const runner = !!set || !!bddCommandFor(projectDir);
+  fs.writeFileSync(file, gatePolicyTemplate({ bdd: runner }), "utf8");
   logInfo(`🚦 Policy: ${GATE_POLICY_FILE} — the standard preset; edit a rule to change what fails`);
 }
