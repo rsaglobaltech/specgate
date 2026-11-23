@@ -87,3 +87,6 @@
 {"req":"REQ-699","capability":"harness","at":"2026-11-23T20:32:08.099Z"}
 {"req":"REQ-700","capability":"harness","at":"2026-11-23T20:32:22.529Z"}
 {"req":"REQ-701","capability":"harness","at":"2026-11-23T20:32:32.162Z"}
+{"req":"REQ-702","capability":"agent-integration","at":"2026-11-23T21:37:04.997Z"}
+{"req":"REQ-703","capability":"agent-integration","at":"2026-11-23T21:37:23.034Z"}
+{"req":"REQ-704","capability":"agent-integration","at":"2026-11-23T21:37:34.469Z"}

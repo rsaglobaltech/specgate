@@ -35,6 +35,9 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - Each host of `sandbox.allow` is opened for that sandbox alone; the hosts the kit brings are recorded too, and the run says how many each sandbox may reach (REQ-699).
 - `specgate archive <change>` removes the change's sandboxes with their rules (REQ-700).
 - `specgate harness sandboxes [--prune] [--json]`: every sandbox the harness made, the hosts it may reach, and the `sg-…` ones nobody recorded; `--prune` removes the leftovers (REQ-701).
+- `specgate eval --list [--json]`: every exam with its skill's and its own whole text, its tasks (the hidden checks marked), its history, each version against the one before, the exam in progress and the last exam's runs (REQ-702, REQ-703, REQ-704).
+- While an exam runs, `evals/<skill>/running.json` says how far it got (REQ-703).
+- Each exam run keeps its prompt and a log written as it happens in `evals/<skill>/runs/<stamp>/<task>-<n>/`; the last 5 exams are kept (REQ-704).
 - Each exam is kept in `evals/<skill>/history.jsonl` per version of the skill, and compared with the previous version: better, worse or the same (REQ-687).
 - `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
 

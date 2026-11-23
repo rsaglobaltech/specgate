@@ -1,0 +1,10 @@
+▶ dist/tests/unit/skill-evals.test.js
+✔ REQ-702 SCN-702a: two versions of a skill — the task marked hidden, two history rows, b2 against a1 (1075.282333ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1164.227708

@@ -15,6 +15,8 @@ import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/
 import {
   compareWith,
   examScore,
+  goodOf,
+  trend,
   taskScore,
   type HistoryEntry,
   type RunResult,
@@ -28,6 +30,7 @@ function usage(): void {
   process.stdout.write(
     `
   🧪 ${c.bold}specgate eval${c.reset} <skill> [--runs <n>] [--agent <cmd>] [--json] [--project-dir <dir>]
+     ${c.bold}specgate eval${c.reset} --list [--json]   every exam, its texts, history, progress and last runs
 
   Examine a skill (trust curve, phase 5): each task of evals/<skill>/eval.yaml
   run several times in parallel, each on a clean copy of its fixture with the
@@ -59,12 +62,20 @@ interface Task {
   check_files?: string[] | string;
 }
 
-function sh(command: string, cwd: string): Promise<{ code: number; out: string }> {
+function sh(
+  command: string,
+  cwd: string,
+  onChunk?: (text: string) => void
+): Promise<{ code: number; out: string }> {
   return new Promise((resolve) => {
     const p = spawn(forShell(command), { cwd, shell: true, env: { ...process.env, SPECGATE_EVAL: "1" } });
     let out = "";
-    p.stdout.on("data", (d) => (out += d));
-    p.stderr.on("data", (d) => (out += d));
+    const take = (d: Buffer) => {
+      out += d;
+      onChunk?.(String(d));
+    };
+    p.stdout.on("data", take);
+    p.stderr.on("data", take);
     p.on("close", (code) => resolve({ code: code ?? 1, out }));
     p.on("error", () => resolve({ code: 1, out }));
   });
@@ -86,9 +97,15 @@ async function oneRun(
   task: Task,
   skill: string,
   agent: string,
-  reviewer: string | null
+  reviewer: string | null,
+  /** REQ-704: where this run keeps its prompt and its log, as it happens. */
+  runDir: string
 ): Promise<RunResult & { dir: string }> {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), `specgate-eval-${task.id}-`));
+  fs.mkdirSync(runDir, { recursive: true });
+  const logFile = path.join(runDir, "log.jsonl");
+  const log = (event: Record<string, unknown>) =>
+    fs.appendFileSync(logFile, `${JSON.stringify({ t: Date.now() / 1000, ...event })}\n`, "utf8");
   try {
     fs.cpSync(path.join(examDir, task.fixture), dir, { recursive: true });
     const git = (...a: string[]) =>
@@ -97,10 +114,17 @@ async function oneRun(
     git("add", "-A");
     git("commit", "-q", "-m", "the task as given", "--allow-empty");
     const promptFile = `${dir}.prompt.md`;
-    fs.writeFileSync(promptFile, `${skill.trimEnd()}\n\n---\n\n${task.prompt}\n`, "utf8");
-    await sh(agent.split("{prompt_file}").join(promptFile), dir);
+    const prompt = `${skill.trimEnd()}\n\n---\n\n${task.prompt}\n`;
+    fs.writeFileSync(promptFile, prompt, "utf8");
+    fs.writeFileSync(path.join(runDir, "prompt.md"), prompt, "utf8");
+    log({ type: "start", task: task.id });
+    const agentRun = await sh(agent.split("{prompt_file}").join(promptFile), dir, (text) =>
+      log({ type: "output", text })
+    );
+    log({ type: "agent-end", exit: agentRun.code });
     fs.rmSync(promptFile, { force: true });
     const check = await node([CLI, "check", dir, "--json"], dir);
+    log({ type: "check", exit: check.code, summary: checkSummary(check.out) });
     // lab-fixes REQ-697: the hidden check, its files brought in only now.
     let hidden = true;
     if (task.check) {
@@ -113,7 +137,9 @@ async function oneRun(
         fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
         fs.cpSync(path.join(examDir, f), path.join(dir, f), { recursive: true });
       }
-      hidden = (await sh(task.check, dir)).code === 0;
+      const h = await sh(task.check, dir);
+      hidden = h.code === 0;
+      log({ type: "hidden", exit: h.code, output: h.out.slice(-4000) });
     }
     let stages: number[] = [];
     try {
@@ -130,11 +156,26 @@ async function oneRun(
       const m = r.out.match(/-?\d+(?:\.\d+)?/);
       if (m) review = Math.max(0, Math.min(10, Number(m[0]))) / 10;
     }
-    return { correct: check.code === 0 && hidden, stages, reviewer: review, dir };
+    const result = { correct: check.code === 0 && hidden, stages, reviewer: review, dir };
+    log({ type: "end", correct: result.correct, good: goodOf(result) });
+    return result;
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 }
+
+/** `specgate check --json`'s verdict in one line: each stage and its result. */
+function checkSummary(out: string): string {
+  try {
+    const doc = JSON.parse(out) as { stages?: Array<{ stage: string; result: string }> };
+    return (doc.stages || []).map((x) => `${x.stage} ${x.result}`).join(" · ");
+  } catch {
+    return out.trim().split("\n").slice(-1)[0] || "";
+  }
+}
+
+/** REQ-704: only the last exams' folders are kept. */
+const KEEP_EXAMS = 5;
 
 async function pool<T>(jobs: Array<() => Promise<T>>, size: number): Promise<T[]> {
   const out: T[] = new Array(jobs.length);
@@ -160,6 +201,7 @@ export class EvalCommand extends BaseCommand {
     let dirArg = ".";
     let runsArg: number | null = null;
     let agentArg: string | null = null;
+    let listing = false;
     const positional: string[] = [];
     for (let i = 0; i < argv.length; i += 1) {
       const a = argv[i];
@@ -167,11 +209,153 @@ export class EvalCommand extends BaseCommand {
       else if (a === "--runs") runsArg = Number(argv[++i]) || null;
       else if (a === "--agent") agentArg = argv[++i] || null;
       else if (a === "--json") continue;
+      else if (a === "--list") listing = true;
       else if (!a.startsWith("-")) positional.push(a);
       else
         io.usage(NULL_SHAPE, [error("unknown_flag", `Unknown argument for eval: ${a}`, { fix: "specgate eval --help" })]);
     }
+    if (listing) return this.list(path.resolve(dirArg), io);
     void this.run(path.resolve(dirArg), positional[0], runsArg, agentArg, io);
+  }
+
+  /** REQ-702, REQ-703, REQ-704: every exam, its texts, history, progress and last runs. */
+  private list(dir: string, io: AgentIo) {
+    const root = path.join(dir, "evals");
+    let names: string[] = [];
+    try {
+      names = fs
+        .readdirSync(root, { withFileTypes: true })
+        .filter((e) => e.isDirectory() && fs.existsSync(path.join(root, e.name, "eval.yaml")))
+        .map((e) => e.name)
+        .sort();
+    } catch {
+      names = [];
+    }
+    const rel = (f: string) => path.relative(dir, f).split(path.sep).join("/");
+    const read = (f: string) => {
+      try {
+        return fs.readFileSync(f, "utf8");
+      } catch {
+        return null;
+      }
+    };
+    const exams = names.map((name) => {
+      const examDir = path.join(root, name);
+      const examText = read(path.join(examDir, "eval.yaml")) || "";
+      const doc = (parseYamlLite(examText) || {}) as Record<string, unknown>;
+      const skillFile = String(doc.skill || "");
+      const skillText = skillFile ? read(path.join(dir, skillFile)) : null;
+      const version = skillText ? crypto.createHash("sha256").update(skillText).digest("hex").slice(0, 12) : null;
+      const tasks = ((Array.isArray(doc.tasks) ? doc.tasks : []) as Task[]).map((t) => ({
+        id: String(t.id || ""),
+        prompt: String(t.prompt || ""),
+        check: t.check ? String(t.check) : null,
+        hidden: Boolean(t.check),
+      }));
+      const history = (read(path.join(examDir, "history.jsonl")) || "")
+        .split("\n")
+        .filter((l) => l.trim())
+        .flatMap((l) => {
+          try {
+            return [JSON.parse(l) as HistoryEntry];
+          } catch {
+            return [];
+          }
+        });
+      // Per version, its last exam, against the version before it.
+      const versions: Array<{ version: string; at: string; correct: number; good: number | null; vsPrevious: { correct: string | null; good: string | null } | null }> = [];
+      for (const h of history) {
+        const at = versions.findIndex((v) => v.version === h.version);
+        const row = { version: h.version, at: h.at, correct: h.correct, good: h.good, vsPrevious: null };
+        if (at >= 0) versions.splice(at, 1);
+        versions.push(row);
+      }
+      for (let i = 1; i < versions.length; i += 1) {
+        const before = versions[i - 1];
+        const now = versions[i];
+        now.vsPrevious = { correct: trend(now.correct, before.correct), good: trend(now.good, before.good) };
+      }
+      const runningText = read(path.join(examDir, "running.json"));
+      let running: unknown = null;
+      try {
+        running = runningText ? JSON.parse(runningText) : null;
+      } catch {
+        running = null;
+      }
+      // The last exam's runs: the one running, else the newest folder.
+      const runsDir = path.join(examDir, "runs");
+      let stamps: string[] = [];
+      try {
+        stamps = fs.readdirSync(runsDir).sort();
+      } catch {
+        stamps = [];
+      }
+      const lastStamp = (running as { stamp?: string } | null)?.stamp || stamps[stamps.length - 1] || null;
+      const lastRuns = lastStamp
+        ? (() => {
+            let folders: string[] = [];
+            try {
+              folders = fs.readdirSync(path.join(runsDir, lastStamp)).sort();
+            } catch {
+              folders = [];
+            }
+            return folders.map((f) => {
+              const folder = path.join(runsDir, lastStamp, f);
+              const events = (read(path.join(folder, "log.jsonl")) || "")
+                .split("\n")
+                .filter((l) => l.trim())
+                .flatMap((l) => {
+                  try {
+                    return [JSON.parse(l) as Record<string, unknown>];
+                  } catch {
+                    return [];
+                  }
+                });
+              const end = events.find((e) => e.type === "end");
+              const hiddenEv = events.find((e) => e.type === "hidden");
+              return {
+                id: f,
+                task: f.replace(/-\d+$/, ""),
+                folder: rel(folder),
+                state: end ? "ended" : "running",
+                correct: end ? Boolean(end.correct) : null,
+                good: end && typeof end.good === "number" ? end.good : null,
+                hiddenExit: hiddenEv && typeof hiddenEv.exit === "number" ? hiddenEv.exit : null,
+              };
+            });
+          })()
+        : [];
+      return {
+        skill: name,
+        file: rel(path.join(examDir, "eval.yaml")),
+        examText,
+        skillFile,
+        skillText,
+        version,
+        agent: typeof doc.agent === "string" ? doc.agent : null,
+        runs: Number(doc.runs) || 3,
+        tasks,
+        history: history.map((h) => ({ at: h.at, version: h.version, runs: h.runs, correct: h.correct, good: h.good })),
+        versions,
+        running,
+        lastExam: lastStamp,
+        lastRuns,
+      };
+    });
+    io.emit({ evals: { exams } }, () => {
+      const out = (x: string) => process.stdout.write(x);
+      out(ui.header("eval --list", `${exams.length} exam(s)`));
+      const pct = (x: number | null) => (x === null ? "—" : `${Math.round(x * 100)} %`);
+      for (const e of exams) {
+        const last = e.versions[e.versions.length - 1];
+        out(`  ${c.bold}${e.skill}${c.reset}  ${ui.muted(`${e.tasks.length} task(s) · version ${e.version ?? "—"}`)}\n`);
+        if (last)
+          out(`     last: correct ${pct(last.correct)} · good ${pct(last.good)}${last.vsPrevious ? ` · ${last.vsPrevious.correct} than before` : ""}\n`);
+        const r = e.running as { runs?: number; ended?: number; correct?: number } | null;
+        if (r) out(`     running: ${r.ended}/${r.runs} ended · ${r.correct} correct\n`);
+      }
+      out("\n");
+    });
   }
 
   private async run(dir: string, skillName: string, runsArg: number | null, agentArg: string | null, io: AgentIo) {
@@ -214,10 +398,39 @@ export class EvalCommand extends BaseCommand {
     const concurrency = Number(doc.concurrency) || runs;
     const reviewer = typeof doc.reviewer === "string" && doc.reviewer.trim() ? doc.reviewer : null;
 
+    // REQ-704: this exam's folder, its runs' prompts and logs in it; git leaves them out.
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const runsDir = path.join(examDir, "runs");
+    const ignore = path.join(examDir, ".gitignore");
+    if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "runs/\nrunning.json\n", "utf8");
+    // REQ-703: how far the exam got, while it runs.
+    const runningFile = path.join(examDir, "running.json");
+    const progress = { started: new Date().toISOString(), stamp, runs: tasks.length * runs, ended: 0, correct: 0 };
+    const writeProgress = () => fs.writeFileSync(runningFile, `${JSON.stringify(progress)}\n`, "utf8");
+    writeProgress();
     const jobs = tasks.flatMap((t) =>
-      Array.from({ length: runs }, () => () => oneRun(examDir, t, skill, agent, reviewer).then((r) => ({ task: t.id, r })))
+      Array.from({ length: runs }, (_, n) => () =>
+        oneRun(examDir, t, skill, agent, reviewer, path.join(runsDir, stamp, `${t.id}-${n + 1}`)).then((r) => {
+          progress.ended += 1;
+          if (r.correct) progress.correct += 1;
+          writeProgress();
+          return { task: t.id, r };
+        })
+      )
     );
-    const done = await pool(jobs, concurrency);
+    let done: Array<{ task: string; r: RunResult & { dir: string } }>;
+    try {
+      done = await pool(jobs, concurrency);
+    } finally {
+      fs.rmSync(runningFile, { force: true });
+    }
+    try {
+      const exams = fs.readdirSync(runsDir).sort();
+      for (const old of exams.slice(0, Math.max(0, exams.length - KEEP_EXAMS)))
+        fs.rmSync(path.join(runsDir, old), { recursive: true, force: true });
+    } catch {
+      /* no runs folder */
+    }
     const byTask = tasks.map((t) => ({ id: t.id, runs: done.filter((d) => d.task === t.id).map((d) => d.r) }));
     const score = examScore(byTask);
     const tasksOut = byTask.map((t) => ({ ...taskScore(t.id, t.runs), results: t.runs }));

@@ -1122,6 +1122,7 @@
     "flag:drift --json",
     "flag:eval --agent",
     "flag:eval --json",
+    "flag:eval --list",
     "flag:eval --project-dir",
     "flag:eval --runs",
     "flag:eval --test",

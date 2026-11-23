@@ -166,3 +166,128 @@ test("REQ-697 SCN-697a: a hidden check fails — not correct, and unseen while t
   w(exam, "hidden/fee.test.js", "process.exit(0);\n");
   assert.equal(evalOf(dir).tasks.find((t: { id: string }) => t.id === "cancel").correct, 1);
 });
+
+// ── eval-list: REQ-702, REQ-703, REQ-704 ────────────────────────────────────
+const { spawn } = require("node:child_process");
+const listOf = (dir: string) => {
+  const r = sg(dir, "eval", "--list", "--json");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  return JSON.parse(r.stdout).evals.exams;
+};
+const waitFor = async (what: () => boolean, ms = 20_000) => {
+  const until = Date.now() + ms;
+  while (!what()) {
+    if (Date.now() > until) throw new Error("timed out waiting");
+    await new Promise((r) => setTimeout(r, 100));
+  }
+};
+
+test("REQ-702 SCN-702a: two versions of a skill — the task marked hidden, two history rows, b2 against a1", () => {
+  const dir = project("Orders skill. GOOD.");
+  const exam = path.join(dir, "evals/orders");
+  const yaml = read(exam, "eval.yaml").replace(
+    '    prompt: "TASK cancel: let the customer cancel an order"\n',
+    '    prompt: "TASK cancel: let the customer cancel an order"\n    check: "node hidden/ok.js"\n    check_files: [hidden/ok.js]\n'
+  );
+  w(exam, "eval.yaml", yaml);
+  w(exam, "hidden/ok.js", "process.exit(0);\n");
+  const row = (version: string, correct: number, good: number) =>
+    JSON.stringify({ at: `2026-11-23T10:0${version === "a1" ? 0 : 1}:00Z`, version, runs: 3, correct, good, tasks: [] });
+  w(exam, "history.jsonl", `${row("a1", 1, 0.8)}\n${row("b2", 2 / 3, 0.8)}\n`);
+  const [e] = listOf(dir);
+  assert.equal(e.skill, "orders");
+  assert.deepEqual(
+    e.tasks.map((t: { id: string; hidden: boolean }) => [t.id, t.hidden]),
+    [["cancel", true], ["pay", false]]
+  );
+  assert.equal(e.history.length, 2);
+  const b2 = e.versions.find((v: { version: string }) => v.version === "b2");
+  assert.deepEqual(b2.vsPrevious, { correct: "worse", good: "same" });
+  assert.match(e.version, /^[0-9a-f]{12}$/);
+});
+
+test("REQ-703 SCN-703a: half way through — running with its runs, ended and correct; gone once it ends", async () => {
+  const dir = project("Orders skill. GOOD.");
+  const exam = path.join(dir, "evals/orders");
+  // Each run waits a little: the list is read while the exam works.
+  const agent = read(dir, "agent.js");
+  w(dir, "agent.js", `const until = Date.now() + 700; while (Date.now() < until) {}\n${agent}`);
+  w(exam, "eval.yaml", read(exam, "eval.yaml").replace("runs: 3", "runs: 2\nconcurrency: 1"));
+  const child = spawn(process.execPath, [CLI, "eval", "orders", "--json"], { cwd: dir, env: { ...process.env, NO_COLOR: "1" } });
+  const exited = new Promise((r) => child.on("close", r));
+  await waitFor(() => {
+    const e = listOf(dir)[0];
+    return Boolean(e.running && e.running.ended >= 1);
+  });
+  const e = listOf(dir)[0];
+  assert.equal(e.running.runs, 4);
+  assert.ok(e.running.ended >= 1 && e.running.ended < 4, JSON.stringify(e.running));
+  assert.equal(typeof e.running.correct, "number");
+  await exited;
+  assert.equal(listOf(dir)[0].running, null);
+  assert.equal(fs.existsSync(path.join(exam, "running.json")), false);
+});
+
+test("REQ-704 SCN-704a: a run read while it works — its start and output, no end yet, and its prompt", async () => {
+  const dir = project("Orders skill. GOOD.");
+  const exam = path.join(dir, "evals/orders");
+  const go = path.join(dir, "go");
+  w(
+    dir,
+    "agent.js",
+    `console.log("writing src/ausleihe.js");\nconst fs = require("fs");\nconst until = Date.now() + 20000;\nwhile (!fs.existsSync(${JSON.stringify(go)}) && Date.now() < until) {}\nfs.writeFileSync("done.txt", "ok");\n`
+  );
+  w(exam, "eval.yaml", read(exam, "eval.yaml").replace("runs: 3", "runs: 1").replace(/  - id: pay[\s\S]*$/, ""));
+  const child = spawn(process.execPath, [CLI, "eval", "orders", "--json"], { cwd: dir, env: { ...process.env, NO_COLOR: "1" } });
+  const exited = new Promise((r) => child.on("close", r));
+  const runFolder = () => {
+    const runs = path.join(exam, "runs");
+    if (!fs.existsSync(runs)) return null;
+    const [stamp] = fs.readdirSync(runs);
+    return stamp ? path.join(runs, stamp, "cancel-1") : null;
+  };
+  await waitFor(() => {
+    const f = runFolder();
+    return Boolean(f && fs.existsSync(path.join(f, "log.jsonl")) && /writing src\/ausleihe\.js/.test(fs.readFileSync(path.join(f, "log.jsonl"), "utf8")));
+  });
+  const folder = runFolder()!;
+  const events = fs.readFileSync(path.join(folder, "log.jsonl"), "utf8").trim().split("\n").map((l: string) => JSON.parse(l));
+  assert.equal(events[0].type, "start");
+  assert.ok(events.some((e: { type: string; text?: string }) => e.type === "output" && /writing src\/ausleihe\.js/.test(e.text || "")));
+  assert.ok(!events.some((e: { type: string }) => e.type === "end"), "no end yet");
+  const prompt = fs.readFileSync(path.join(folder, "prompt.md"), "utf8");
+  assert.match(prompt, /Orders skill\. GOOD\./);
+  assert.match(prompt, /TASK cancel/);
+  fs.writeFileSync(go, "");
+  await exited;
+  const after = fs.readFileSync(path.join(folder, "log.jsonl"), "utf8");
+  assert.match(after, /"type":"end"/);
+});
+
+test("REQ-704 SCN-704b: the list names the texts and the last exam's runs", () => {
+  const dir = project("Orders skill. GOOD.");
+  const exam = path.join(dir, "evals/orders");
+  w(exam, "hidden/fails.js", "process.exit(3);\n");
+  w(
+    exam,
+    "eval.yaml",
+    read(exam, "eval.yaml")
+      .replace("runs: 3", "runs: 1")
+      .replace(
+        '    prompt: "TASK cancel: let the customer cancel an order"\n',
+        '    prompt: "TASK cancel: let the customer cancel an order"\n    check: "node hidden/fails.js"\n    check_files: [hidden/fails.js]\n'
+      )
+  );
+  evalOf(dir);
+  const [e] = listOf(dir);
+  assert.match(e.skillText, /Orders skill\. GOOD\./);
+  assert.match(e.examText, /check: "node hidden\/fails\.js"/);
+  const cancel = e.tasks.find((t: { id: string }) => t.id === "cancel");
+  assert.equal(cancel.prompt, "TASK cancel: let the customer cancel an order");
+  assert.equal(cancel.check, "node hidden/fails.js");
+  const run = e.lastRuns.find((r: { task: string }) => r.task === "cancel");
+  assert.equal(run.state, "ended");
+  assert.equal(run.correct, false);
+  assert.equal(run.hiddenExit, 3);
+  assert.ok(fs.existsSync(path.join(dir, run.folder, "prompt.md")));
+});
