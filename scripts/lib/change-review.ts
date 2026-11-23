@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import { applyPromotion } from "./trust";
 import * as path from "node:path";
 import { namedBy, questionTable } from "../../packages/core/src/domain/Clarification";
 import { draftReport } from "../cli/commands/spec/DraftCommand";
@@ -164,7 +165,10 @@ export function approveChange(
         .join(" "),
     };
   }
-  return approveLayers(projectDir, id, layer ? [layer] : null, today, who);
+  const out = approveLayers(projectDir, id, layer ? [layer] : null, today, who);
+  // REQ-672: a promotion change raises its module's trust level once it is approved.
+  if (out.ok && out.approved) applyPromotion(projectDir, id);
+  return out;
 }
 
 export interface ReviewNoteRow {

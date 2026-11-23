@@ -318,6 +318,18 @@ export const SURFACE: Command[] = [
     json: { key: "scenarios", gate: true, args: "<REQ>" },
   },
   {
+    name: "trust",
+    // ADR-0046: each module's trust level and its evidence; a person's decision, not an MCP tool yet.
+    mcp: false,
+    script: ["trust.js"],
+    help: {
+      group: "core",
+      icon: "🪜",
+      summary: "How far an agent may go in each module, what it has earned, and its promotion.",
+    },
+    json: { key: "trust", gate: false, args: "[promote <capability>]" },
+  },
+  {
     name: "migrate",
     // REQ-325: a one-time move to 1.0 a person runs and reviews; not an MCP tool.
     mcp: false,

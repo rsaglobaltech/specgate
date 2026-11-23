@@ -9,6 +9,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- Trust levels per module (ADR-0046): `trust:` in `.specgate/gate.yaml` gives each capability a level from 1 (observed) to 5 (triage), checked by the gate (REQ-670).
+- `harness run` skips what a module's level does not allow and says why (`trust_level`); `--chain` is refused while trust levels are declared (REQ-671).
+- `specgate trust promote <capability>` opens the change that raises a level; approving it writes the level and `.specgate/trust-ledger.jsonl` records it. A level raised by hand fails the gate (REQ-672).
+- `propose --kind bug --capability <c>` lowers that module's level by one at once (REQ-673).
+- `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
+
 ## [1.5.0] — 2026-11-23
 
 Use cases, executable scenarios, and a DDD workshop as the brief.

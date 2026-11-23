@@ -133,10 +133,10 @@ export function parseGatePolicy(text: string): GatePolicy {
   }
 
   for (const key of Object.keys(doc)) {
-    if (!["preset", "rules", "enforce_from", "bdd"].includes(key)) {
+    if (!["preset", "rules", "enforce_from", "bdd", "trust"].includes(key)) {
       problems.push({
         message: `\`${key}\` is not a key of the gate policy`,
-        fix: "The keys are preset, rules, enforce_from and bdd.",
+        fix: "The keys are preset, rules, enforce_from, bdd and trust.",
       });
     }
   }

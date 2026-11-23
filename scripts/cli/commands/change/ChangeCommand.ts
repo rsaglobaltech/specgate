@@ -112,6 +112,7 @@ import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { removeTempFile } from "../../../lib/temp-file";
 import { changeApprovals } from "../../../lib/approvals";
+import { lowerOnLeak } from "../../../lib/trust";
 
 // The artefact graph. Dependencies are enablers, not gates: `requires` says
 // what makes an artefact *possible*, never what the author must do next.
@@ -462,6 +463,7 @@ function cmdNew(opts: ChangeOptions) {
 
   // `propose` always leaves a delta to write: named after the change unless
   // the person names the capability (ADR-0035).
+  const namedCapability = opts.capability;
   if (VERB === "propose" && !opts.capability && !opts.fromValueDrift) opts.capability = changeId;
 
   if (opts.capability && opts.fromValueDrift) {
@@ -556,6 +558,10 @@ function cmdNew(opts: ChangeOptions) {
     );
   }
 
+  // REQ-673: a bug in a module lowers its trust level at once.
+  const leak =
+    opts.kind === "bug" && namedCapability ? lowerOnLeak(projectDir, namedCapability, changeId) : null;
+
   emit(
     opts,
     {
@@ -568,6 +574,7 @@ function cmdNew(opts: ChangeOptions) {
         kind: opts.kind || null,
         created,
       },
+      ...(leak ? { trust: leak } : {}),
     },
     () => {
       process.stdout.write(
@@ -591,6 +598,13 @@ function cmdNew(opts: ChangeOptions) {
                   : "after you write the proposal, then the delta"
               ))
       );
+      if (leak) {
+        process.stdout.write(
+          ui.warn(
+            `${leak.capability} went down to trust level ${leak.to} (from ${leak.from}): a bug escaped from it.`
+          )
+        );
+      }
     }
   );
 }

@@ -552,6 +552,11 @@
 | REQ-667 | SCN-667a | `features/brief-drafting/REQ-667.feature` | - | - | - | - | `scripts/draft/workshop-import.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/brief-cards.test.ts | Approved |
 | REQ-668 | SCN-668a | `features/brief-drafting/REQ-668.feature` | - | - | - | - | `packages/core/src/domain/DraftChecklist.ts`, `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/draft-checklist.test.ts | Approved |
 | REQ-669 | SCN-669a, SCN-669b | `features/brief-form/REQ-669.feature` | - | - | - | - | `packages/core/src/domain/BriefForm.ts`, `packages/core/src/domain/BriefCards.ts` | tests/unit/brief-form.test.ts | Approved |
+| REQ-670 | SCN-670a, SCN-670b | `features/trust-levels/REQ-670.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/lib/gate-policy.ts`, `scripts/cli/commands/quality/ValidateSpecsCommand.ts` | tests/unit/trust-levels.test.ts | Approved |
+| REQ-671 | SCN-671a, SCN-671b, SCN-671c | `features/trust-levels/REQ-671.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/harness/run/requirement.ts`, `scripts/harness/run/prepare.ts` | tests/unit/trust-levels.test.ts | Approved |
+| REQ-672 | SCN-672a, SCN-672b | `features/trust-levels/REQ-672.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/lib/change-review.ts`, `scripts/cli/commands/project/TrustCommand.ts` | tests/unit/trust-levels.test.ts | Approved |
+| REQ-673 | SCN-673a | `features/trust-levels/REQ-673.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/trust-levels.test.ts | Approved |
+| REQ-674 | SCN-674a, SCN-674b | `features/trust-levels/REQ-674.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/cli/commands/project/TrustCommand.ts`, `scripts/cli/commands/spec/DoneCommand.ts` | tests/unit/trust-levels.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

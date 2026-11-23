@@ -37,6 +37,7 @@ import { inFlightRequirements } from "../../lib/in-flight";
 import { RunState, writeRunRecord } from "./state";
 import { maskCommand, secretNames } from "../../../packages/core/src/domain/HarnessEvents";
 import { parseArgs } from "./cli";
+import { TRUST_RUN_VAR, chainRefusal } from "../../lib/trust";
 import { quoteArg } from "../../lib/escape";
 import {
   readHarnessConfig,
@@ -369,6 +370,9 @@ export function preflight(
         'Set one first: specgate config set test_cmd "npm test"'
     );
   }
+  // REQ-671: merging alone is level 6, which no capability can declare yet.
+  const noChain = args.chain ? chainRefusal(projectDir) : null;
+  if (noChain) throw new Error(noChain);
   const identity = gitIdentityProblem(projectDir);
   if (identity) throw new Error(identity);
   // REQ-279: a stopped Docker fails every attempt in the tests or the
@@ -437,6 +441,15 @@ export function startRun(
   // `git worktree add` can remove the record of the worktree being created.
   if (!process.env.SPECGATE_HARNESS_WORKER) {
     git(projectDir, ["worktree", "prune"]);
+  }
+
+  // REQ-671: what this run asks of each module's trust level, read by every
+  // requirement before it starts — in this process and in the workers it spawns.
+  if (!process.env.SPECGATE_HARNESS_WORKER) {
+    process.env[TRUST_RUN_VAR] = JSON.stringify({
+      named: args.reqs,
+      concurrency: settings.concurrency,
+    });
   }
 
   const ctx = {

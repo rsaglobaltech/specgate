@@ -1,4 +1,5 @@
 import { readGatePolicy } from "../../../lib/gate-policy";
+import { appendApplied } from "../../../lib/trust";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { archRun } from "../../../lib/quality-run";
 import { error } from "../../../lib/diagnostics";
@@ -378,7 +379,7 @@ export class DoneCommand extends BaseCommand {
       ]);
 
     const result = writeStatus(projectDir, dir, owner, id, opts.status);
-    if (result.ok) warnUntested(opts, dir, id);
+    if (result.ok) applied(opts, projectDir, dir, id);
     if (!result.ok) {
       if (result.code === "traceability_not_found") {
         io.usage(NULL_SHAPE, [
@@ -574,7 +575,7 @@ export class DoneCommand extends BaseCommand {
     for (const id of ids.filter((x) => results.get(x)!.ok)) {
       const owner = view ? view.requirements.find((r) => r.id === id) : undefined;
       const result = writeStatus(projectDir, dir, owner, id, opts.status);
-      if (result.ok) warnUntested(opts, dir, id);
+      if (result.ok) applied(opts, projectDir, dir, id);
       if (!result.ok) {
         results.set(id, {
           ok: false,
@@ -717,6 +718,12 @@ function tickTasksOf(deltaFile: string, id: string): void {
  * when it is in flight (ADR-0035), spec.md or its capability spec otherwise,
  * or the hand-kept matrix of a project that is not derived.
  */
+/** Delivered: say so when no test names it, and keep it as trust evidence when the gate passed (REQ-674). */
+function applied(opts: DoneOptions, projectDir: string, dir: string, id: string): void {
+  warnUntested(opts, dir, id);
+  if (opts.check && opts.status === "Implemented") appendApplied(projectDir, id);
+}
+
 function writeStatus(
   projectDir: string,
   judgedDir: string,

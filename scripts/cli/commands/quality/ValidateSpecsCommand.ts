@@ -1,4 +1,5 @@
 import { bddFindings, inOpenChange } from "../../../lib/bdd";
+import { trustFindings } from "../../../lib/trust";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -1214,6 +1215,9 @@ export class ValidateSpecsCommand extends BaseCommand {
       ...staleDiagramFindings(targetDir),
       // REQ-661: the scenarios executable, before any code, in every project that requires it.
       ...bddFindings(targetDir, bddCmdOf(targetDir)),
+      // REQ-670, REQ-672: each module's trust level, checked; recorded in the
+      // ledger from the working copy, never from a harness worktree.
+      ...trustFindings(targetDir, !isWorktree(targetDir)),
     ];
     const errors = found.filter((d) => d.severity === "error");
     for (const d of found.filter((x) => x.severity !== "error")) {
@@ -1941,5 +1945,14 @@ function bddCmdOf(projectDir: string): string | undefined {
     return readHarnessConfig(projectDir)?.bddCmd;
   } catch {
     return undefined;
+  }
+}
+
+/** A linked git worktree (the harness's): its `.git` is a file, not a folder. */
+function isWorktree(dir: string): boolean {
+  try {
+    return fs.statSync(path.join(dir, ".git")).isFile();
+  } catch {
+    return false;
   }
 }

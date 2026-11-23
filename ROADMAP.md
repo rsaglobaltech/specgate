@@ -4,7 +4,7 @@ Ideas kept for later. Each was an issue, closed as _not planned_ so the tracker 
 progress; its discussion stays on the issue, and it is reopened when work on it starts.
 
 In progress: [#493](https://github.com/rsaglobaltech/specgate/issues/493) (the rest of the brief) and [#546](https://github.com/rsaglobaltech/specgate/issues/546) (gate policy per branch,
-waivers, annotations/SARIF).
+waivers, annotations/SARIF). Locally: the trust curve ([docs/specs/trust-curve.md](docs/specs/trust-curve.md)).
 
 ## Modelling
 

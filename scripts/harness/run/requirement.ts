@@ -46,6 +46,7 @@ import { inFlightRequirements } from "../../lib/in-flight";
 import { isDerivedProject } from "../../lib/derived-writes";
 import { maskCommand } from "../../../packages/core/src/domain/HarnessEvents";
 import { missingApprovals } from "../../lib/approvals";
+import { harnessTrustRefusal, runIntent } from "../../lib/trust";
 import { parseMatrixContexts } from "../../../packages/core/src/domain/TraceabilityFormat";
 import {
   previousFailureFromPrompt,
@@ -260,6 +261,13 @@ function refusedBeforeStarting(
       branch,
       `harness_not_approved: ${unapproved.message} Fix: ${unapproved.fix}`
     );
+  }
+
+  // REQ-671: only what the module's trust level allows.
+  const untrusted = harnessTrustRefusal(projectDir, req.requirement, owning?.change, runIntent());
+  if (untrusted) {
+    warn(`${req.requirement}: ${untrusted}`);
+    return unattempted(req.requirement, req.category, "skipped", branch, untrusted);
   }
 
   const readiness = readinessOf(projectDir, req);
