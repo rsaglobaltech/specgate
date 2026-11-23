@@ -516,7 +516,7 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
 
 /** The draft an agent would write. REQ-004 invents a fee the brief never states. */
 /** The use cases the agent drafted beside the requirements (REQ-626). */
-const DRAFT_USE_CASES = `# Use cases — draft-bookings
+export const DRAFT_USE_CASES = `# Use cases — draft-bookings
 
 ## ADDED Use Cases
 
@@ -527,7 +527,7 @@ const DRAFT_USE_CASES = `# Use cases — draft-bookings
 `;
 
 /** Each use case's specification, its flows naming the scenarios that prove them (REQ-631). */
-const DRAFT_UC_SPECS: Record<string, string> = {
+export const DRAFT_UC_SPECS: Record<string, string> = {
   "UC-002.md": `# UC-002 — Book a court
 
 ## Overview

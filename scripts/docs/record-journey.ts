@@ -31,6 +31,8 @@ import {
   assertNoSecrets,
   buildEnv,
   draftSpec,
+  DRAFT_USE_CASES,
+  DRAFT_UC_SPECS,
   gitInit,
   normalise,
   prepareBin,
@@ -267,10 +269,16 @@ const SCRATCH_SETUP: { before: Hook; steps: Record<string, Hook> } = {
     // Your agent: the first draft, with the fee the brief never states.
     "scratch-draft-check": (project) => {
       write(path.join(project, CHANGE, "specs", "bookings", "spec.md"), draftSpec(false));
+      write(path.join(project, CHANGE, "use-cases.md"), DRAFT_USE_CASES);
+      for (const [file, text] of Object.entries(DRAFT_UC_SPECS))
+        write(path.join(project, CHANGE, "use-cases", file), text);
     },
     // You: the fee becomes a question; the HTTP codes an assumption.
     "scratch-draft-check-again": (project) => {
       write(path.join(project, CHANGE, "specs", "bookings", "spec.md"), draftSpec(true));
+      write(path.join(project, CHANGE, "use-cases.md"), DRAFT_USE_CASES);
+      for (const [file, text] of Object.entries(DRAFT_UC_SPECS))
+        write(path.join(project, CHANGE, "use-cases", file), text);
       write(path.join(project, CHANGE, "assumptions.md"), ASSUMPTIONS_MD);
       write(path.join(project, CHANGE, "questions.md"), QUESTIONS_MD);
     },

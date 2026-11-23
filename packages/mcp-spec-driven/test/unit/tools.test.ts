@@ -198,7 +198,11 @@ test("validate_project succeeds on a freshly generated project", () => {
     // summary this layer invented.
     assert.ok((r as any).validation, `expected a validation document, got: ${JSON.stringify(r)}`);
     assert.equal((r as any).validation.passed, true);
-    assert.deepEqual((r as any).status, []);
+    // A new project with no feature runner is only told how to get one (REQ-663 SCN-663c).
+    assert.deepEqual(
+      (r as any).status.map((d: { code: string; severity: string }) => `${d.severity} ${d.code}`),
+      ["warning bdd_not_set_up"]
+    );
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

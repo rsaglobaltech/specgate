@@ -98,7 +98,7 @@ specgate check
 $ specgate check
   ◆ specgate · check   court-bookings
 
-  ·  Policy         .specgate/gate.yaml (standard): coverage warning
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning
   ↻  docs/specs/actors.md regenerated from its sources
   ·  docs/specs/glossary.md does not define Member — archive adds them as rows to fill
   ·  Ids            not compared with a base — no base branch (pass --base <branch>)
