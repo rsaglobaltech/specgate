@@ -69,10 +69,10 @@ function sections(text: string): Map<string, Array<{ text: string; line: number 
   const out = new Map<string, Array<{ text: string; line: number }>>();
   let current: Array<{ text: string; line: number }> | null = null;
   text.split(/\r?\n/).forEach((raw, i) => {
-    const h = /^##\s+(.+?)\s*$/.exec(raw);
-    if (h) {
+    // Sliced and trimmed, not a lazy group before \s*$: linear on any input (CodeQL).
+    if (/^##\s/.test(raw) && raw.slice(2).trim()) {
       current = [];
-      out.set(h[1]!.toLowerCase(), current);
+      out.set(raw.slice(2).trim().toLowerCase(), current);
       return;
     }
     if (current && raw.trim()) current.push({ text: raw, line: i + 1 });
@@ -81,14 +81,23 @@ function sections(text: string): Map<string, Array<{ text: string; line: number 
 }
 
 function titleName(text: string): string {
-  const m = /^#\s+(?:Delta\s*[—-]\s*)?(.+?)(?:\s*[—-]\s*states)?\s*$/im.exec(text);
-  return m ? m[1]!.trim() : "";
+  const line = text.split(/\r?\n/).find((l) => /^#\s/.test(l));
+  if (!line) return "";
+  let name = line.slice(1).trim();
+  const delta = /^delta\s*[—-]/i.exec(name);
+  if (delta) name = name.slice(delta[0].length).trim();
+  const states = /[—-]\s*states$/i.exec(name);
+  if (states) name = name.slice(0, states.index).trim();
+  return name;
 }
 
 function stateOf(item: string): MachineState | null {
-  const m = /^\s*[-*]\s+(.+?)\s*$/.exec(item);
-  if (!m) return null;
-  const [head, ...rest] = m[1]!.split(/\s+[—–]\s+/);
+  const bullet = item.trim();
+  if (!/^[-*]\s/.test(bullet)) return null;
+  const [head, ...rest] = bullet
+    .slice(1)
+    .trim()
+    .split(/\s+[—–]\s+/);
   const flags = /\(([^)]*)\)\s*$/.exec(head!);
   const name = (flags ? head!.slice(0, flags.index) : head!).trim();
   const words = (flags?.[1] ?? "").toLowerCase();
