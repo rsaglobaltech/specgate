@@ -123,12 +123,7 @@ export interface RunContext {
 /** `question`: the agent asked instead of guessing, and the requirement waits for the answer (REQ-189). */
 /** `unverified`: the gate ran no test — the project has no test command — so nothing proved the code (REQ-649). */
 export type RequirementVerdict =
-  | "pass"
-  | "fail"
-  | "skipped"
-  | "blocked"
-  | "question"
-  | "unverified";
+  "pass" | "fail" | "skipped" | "blocked" | "question" | "unverified";
 
 /** One requirement's line in the report, the run record and a worker's JSON. */
 export interface RequirementResult extends PublishOutcome {
