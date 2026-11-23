@@ -71,3 +71,5 @@
 {"req":"REQ-683","capability":"trust-levels","at":"2026-11-23T17:32:55.172Z"}
 {"req":"REQ-684","capability":"steering","at":"2026-11-23T18:23:33.561Z"}
 {"req":"REQ-685","capability":"steering","at":"2026-11-23T18:23:39.349Z"}
+{"req":"REQ-686","capability":"agent-integration","at":"2026-11-23T19:18:21.416Z"}
+{"req":"REQ-687","capability":"agent-integration","at":"2026-11-23T19:18:31.862Z"}

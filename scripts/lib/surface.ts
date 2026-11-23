@@ -342,6 +342,18 @@ export const SURFACE: Command[] = [
     json: { key: "map", gate: false, args: "[<REQ>] [--capability <c>]" },
   },
   {
+    name: "eval",
+    // REQ-686, REQ-687: a skill examined — the gate judges correct, the review good.
+    mcp: false,
+    script: ["eval.js"],
+    help: {
+      group: "core",
+      icon: "🧪",
+      summary: "Examine a skill: fixed tasks, runs in parallel, correct by the gate, good by the review.",
+    },
+    json: { key: "eval", gate: false, args: "<skill> [--runs <n>]" },
+  },
+  {
     name: "learn",
     // REQ-684, REQ-685: what keeps coming back, proposed as a rule a person approves.
     mcp: false,

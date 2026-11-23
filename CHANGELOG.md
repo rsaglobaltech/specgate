@@ -22,6 +22,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - `apply` refuses a bug never seen red (`apply_not_reproduced`), and keeps the red run beside the green one (REQ-683).
 - `specgate learn [--json]` lists the lessons that keep coming back: review notes alike in two changes or more, and gate stages the agent keeps failing (REQ-684).
 - `specgate learn promote <L> --title <rule> [--forbid … --in … | --run …]` opens a change; once approved, the rule is a principle in `docs/specs/principles.md`, an instruction or a barrier the gate checks (REQ-685).
+- `specgate eval <skill>` examines a skill: each task of `evals/<skill>/eval.yaml` run several times in parallel on clean copies, the skill handed to the agent; correct when `specgate check` passes, good by the architecture and quality stages and an optional reviewer (REQ-686).
+- Each exam is kept in `evals/<skill>/history.jsonl` per version of the skill, and compared with the previous version: better, worse or the same (REQ-687).
 - `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
 
 ### Fixed
