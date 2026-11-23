@@ -241,3 +241,22 @@ test("REQ-698: a sandbox that cannot be made is the requirement's reason, not a 
     p.done();
   }
 });
+
+test("REQ-698: the setup is a script of the project — it runs once, in the first worktree, where the script is", () => {
+  const p = library();
+  try {
+    w(p.dir, "scripts/sandbox-setup.sh", "echo set-up > .sandbox-ready\n");
+    const cfg = path.join(p.dir, "harness.config.yaml");
+    fs.writeFileSync(cfg, fs.readFileSync(cfg, "utf8").replace('setup: "touch .installed"', 'setup: "sh scripts/sandbox-setup.sh"'));
+    git(p.dir, "add", "-A");
+    git(p.dir, "commit", "-qm", "a setup script");
+    const r = p.cli("harness", "run", "--max-attempts", "1", "--req", "REQ-006", "--req", "REQ-007");
+    assert.match(out(r), /2 passed/, out(r));
+    const setups = p.sbx.calls().filter((c) => c[0] === "exec" && c.join(" ").includes("sandbox-setup.sh"));
+    assert.equal(setups.length, 1, "once for the module");
+    assert.match(setups[0][setups[0].indexOf("-w") + 1], /specgate-harness-REQ-006-/, "in the first worktree");
+    assert.equal(p.registry()[0].setUp, true);
+  } finally {
+    p.done();
+  }
+});

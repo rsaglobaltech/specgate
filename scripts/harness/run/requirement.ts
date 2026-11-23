@@ -57,7 +57,7 @@ import { requirementReadiness } from "../../../packages/core/src/domain/Requirem
 import { runWithDeadline, wasInterrupted } from "../../lib/run-with-deadline";
 import { selectProfile } from "../../../packages/core/src/domain/ProfileMatch";
 import { requirementCapabilities } from "../../lib/capabilities";
-import { ensureSandbox } from "../../lib/sandbox-registry";
+import { ensureSandbox, sandboxFor, setUpSandbox } from "../../lib/sandbox-registry";
 import { withWorktreeLock } from "../worktree-lock";
 /**
  * Where a resumed run picks up, and what the gate last said.
@@ -416,6 +416,18 @@ function openWorktree(
         `git worktree add failed:\n${add.stderr || add.stdout}`
       ),
     };
+  }
+  // REQ-698: the sandbox's setup, once, in the first worktree inside it.
+  const sandbox = settingsOf(ctx).sandbox;
+  const box = base && sandbox?.engine === "sbx" ? sandboxFor(projectDir, dir) : null;
+  if (box && sandbox) {
+    try {
+      setUpSandbox(projectDir, sandbox, box, dir);
+    } catch (e) {
+      const why = `sandbox: ${(e as Error).message}`;
+      error(`${req.requirement}: ${why}`);
+      return { refused: unattempted(req.requirement, req.category, "fail", branch, why) };
+    }
   }
   return { dir, survivor: false };
 }

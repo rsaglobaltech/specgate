@@ -31,6 +31,8 @@ export interface SandboxRecord {
   rules: Array<{ host: string; id: string | null }>;
   /** The hosts the kit allows on its own. */
   kitHosts: string[];
+  /** `setup` ran in it (REQ-698). */
+  setUp?: boolean;
 }
 
 const FILE = path.join(".harness", "sandboxes.json");
@@ -186,15 +188,32 @@ function makeSandbox(
   };
   upsert(projectDir, record);
   say(reachLine(record));
-  if (config.setup) {
-    const r = sbxExec(name, workspace, config.setup);
+  return record;
+}
+
+/**
+ * `setup`, once per sandbox (REQ-698), run in the first worktree made inside
+ * it: there the project's files are — a script of the project is found, and a
+ * setup that installs dependencies sees the manifest. Done once, recorded.
+ */
+export function setUpSandbox(
+  projectDir: string,
+  config: SandboxConfig,
+  record: SandboxRecord,
+  worktreeDir: string
+): void {
+  if (!config.setup) return;
+  withSandboxLock(projectDir, record.name, () => {
+    const now = readSandboxes(projectDir).find((r) => r.name === record.name);
+    if (now?.setUp) return;
+    const r = sbxExec(record.name, worktreeDir, config.setup!);
     if (!r.ok) {
       throw new Error(
-        `The sandbox setup failed in ${name}: \`${config.setup}\` exited ${r.status}. ${(r.err || r.out).trim().split("\n").slice(-3).join(" ")}`
+        `The sandbox setup failed in ${record.name}: \`${config.setup}\` exited ${r.status}. ${(r.err || r.out).trim().split("\n").slice(-3).join(" ")}`
       );
     }
-  }
-  return record;
+    upsert(projectDir, { ...(now ?? record), setUp: true });
+  });
 }
 
 /** Removes one recorded sandbox: its rules, the sandbox, its folder, its record. */
