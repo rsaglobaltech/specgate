@@ -38,7 +38,9 @@ const SKIP_DIRS = new Set([
   "obj",
 ]);
 
-const TEST_DIR = /^(test|tests|__tests__|spec|specs|testing|integration-tests|e2e)$/i;
+const TEST_DIR = /^(test|tests|__tests__|testing|integration-tests|e2e)$/i;
+/** RSpec's `spec/`: a test folder only at the root — deeper, `spec` names code (REQ-675). */
+const ROOT_TEST_DIR = /^(spec|specs)$/i;
 const TEST_NAME =
   /([._-](test|spec|it)\.[a-z0-9]+$)|(^test_.*\.py$)|(_test\.(go|py|rb|exs|rs|cc|cpp)$)|((Test|Tests|IT|Spec)\.(java|kt|kts|scala|groovy|cs|swift)$)/;
 const CODE_EXT =
@@ -62,7 +64,8 @@ export function isTestFile(rel: string): boolean {
   if (!CODE_EXT.test(name)) return false;
   if (TEST_NAME.test(name)) return true;
   // `src/test/java/...` (Maven/Gradle) and plain `test/` or `tests/` trees.
-  return parts.slice(0, -1).some((p) => TEST_DIR.test(p));
+  const dirs = parts.slice(0, -1);
+  return dirs.some((p) => TEST_DIR.test(p)) || (dirs.length > 0 && ROOT_TEST_DIR.test(dirs[0]));
 }
 
 function walk(root: string, rel: string, pick: (rel: string) => boolean, out: string[]) {

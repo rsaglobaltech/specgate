@@ -7,6 +7,7 @@ import { BaseCommand } from "../../../lib/command";
 import {
   deriveRows,
   diffRows,
+  diffRowsKept,
   fieldsToReproduce,
   isDerivedMatrix,
   renderDerivedMatrix,
@@ -21,7 +22,8 @@ import {
   scenarioRows,
   type MatrixScenarioRow,
 } from "../../../../packages/core/src/domain/MatrixScenarios";
-import { inFlightView } from "../../../lib/in-flight";
+import { inFlightRequirements, inFlightView } from "../../../lib/in-flight";
+import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { allQuestions } from "../../../lib/clarification";
 
 import { c } from "../../../lib/ui";
@@ -130,7 +132,25 @@ function planMigration(projectDir: string, original: RawMatrixRow[]) {
     byReq.set(id, [...(byReq.get(id) || []), row]);
   }
 
+  // REQ-676: a capability spec states its requirements, and the derivation
+  // reads them there; an open change owns the ones it adds until its archive.
+  // Neither gets a section in spec.md.
+  const inSpec = new Set(requirementsIn(specBefore).map((r) => r.id));
+  const inCapabilities = new Set(
+    readCapabilityRequirements(projectDir)
+      .map((r) => r.req.id)
+      .filter(Boolean)
+  );
+  const inChanges = new Map<string, string>();
+  // One an open change modifies waits too: the hand-kept row may already say
+  // what the change will, and the capability spec says it only once archived.
+  for (const r of inFlightRequirements(projectDir)) {
+    if (byReq.has(r.id) && !inSpec.has(r.id)) inChanges.set(r.id, r.change);
+  }
+  for (const id of inChanges.keys()) byReq.delete(id);
+
   for (const [id, rows] of byReq) {
+    if (inCapabilities.has(id) && !inSpec.has(id)) continue;
     const titleCell = String(rows[0].useCase || "")
       .replace(/^UC-\d+\s*/, "")
       .trim();
@@ -155,12 +175,14 @@ function planMigration(projectDir: string, original: RawMatrixRow[]) {
   }
 
   const derived = deriveRows({ ...sources, spec });
-  const d = diffRows(
-    original.filter((r) => /^REQ-/.test(r.requirement || "")),
-    derived
+  // REQ-677: a row the generated matrix only fills in further is kept, not lost.
+  const waiting = (r: RawMatrixRow) => inChanges.has(String(r.requirement || "").trim());
+  const d = diffRowsKept(
+    original.filter((r) => /^REQ-/.test(r.requirement || "") && !waiting(r)),
+    derived.filter((r) => !waiting(r as RawMatrixRow))
   );
 
-  return { spec, specFile, derived, blocked, d, byReq };
+  return { spec, specFile, derived, blocked, d, byReq, inChanges };
 }
 
 /**
@@ -373,7 +395,10 @@ export class MatrixCommand extends BaseCommand {
       ]);
     }
 
-    const { spec, specFile, derived, blocked, d, byReq } = planMigration(projectDir, original);
+    const { spec, specFile, derived, blocked, d, byReq, inChanges } = planMigration(
+      projectDir,
+      original
+    );
 
     if (blocked.length > 0 || d.missing.length > 0 || d.extra.length > 0) {
       if (!io.json) {
@@ -401,7 +426,30 @@ export class MatrixCommand extends BaseCommand {
       fs.writeFileSync(path.join(projectDir, MATRIX), next, "utf8");
       ensureUnionMerge(projectDir);
     }
+    const owners = new Map<string, string[]>();
+    for (const [id, change] of inChanges) owners.set(change, [...(owners.get(change) || []), id]);
     const notes = [
+      ...(d.richer.length
+        ? [
+            info(
+              "matrix_rows_richer",
+              `${d.richer.length} row(s) name more code or tests than the hand-kept matrix did: ` +
+                "every file a test or a source file mentions the requirement in.",
+              { fix: "Review them in the diff of docs/specs/traceability.md before committing." }
+            ),
+          ]
+        : []),
+      ...(inChanges.size
+        ? [
+            info(
+              "matrix_rows_in_changes",
+              `${inChanges.size} requirement(s) still in open changes join the matrix when archived: ` +
+                [...owners].map(([ch, ids]) => `${ch} (${ids.join(", ")})`).join("; ") +
+                ".",
+              { fix: "specgate archive <change-id> once every requirement in it is applied." }
+            ),
+          ]
+        : []),
       warning(
         "matrix_now_generated",
         "docs/specs/traceability.md is now generated. Edit spec.md, features and tests instead.",

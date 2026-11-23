@@ -484,6 +484,50 @@ export function diffRows(
   return { missing, extra };
 }
 
+/** The columns a generated matrix finds by mention, and so may fill in further than a hand-kept one. */
+const FOUND_BY_MENTION: Array<keyof MatrixRow> = ["technicalArtifact", "testArtifact"];
+
+const listOf = (v: unknown): string[] => {
+  const n = norm(v);
+  return n === "-" ? [] : n.split(", ");
+};
+
+/**
+ * Rows of `expected` that `actual` keeps (REQ-677): every column the same,
+ * except code and tests, where `actual` holds every file `expected` lists and
+ * may name more. `richer` are the rows kept that way; `missing` and `extra`
+ * what neither side keeps of the other.
+ */
+export function diffRowsKept(
+  expected: readonly MatrixRow[],
+  actual: readonly MatrixRow[]
+): { missing: string[]; extra: string[]; richer: string[] } {
+  const strict = COLUMNS.filter((c) => !FOUND_BY_MENTION.includes(c));
+  const unused = actual.map((_, i) => i);
+  const missing: string[] = [];
+  const richer: string[] = [];
+  for (const row of expected) {
+    const at = unused.findIndex((i) => {
+      const got = actual[i];
+      return (
+        strict.every((c) => norm(row[c]) === norm(got[c])) &&
+        FOUND_BY_MENTION.every((c) => {
+          const have = listOf(got[c]);
+          return listOf(row[c]).every((f) => have.includes(f));
+        })
+      );
+    });
+    if (at < 0) {
+      missing.push(rowKey(row));
+      continue;
+    }
+    const got = actual[unused[at]];
+    if (rowKey(got) !== rowKey(row)) richer.push(rowKey(got));
+    unused.splice(at, 1);
+  }
+  return { missing, extra: unused.map((i) => rowKey(actual[i])), richer };
+}
+
 /** The rows a matrix file holds, in the shape `deriveRows` returns. */
 export function rowsOf(matrixContent: string): MatrixRow[] {
   const parsed = parseTraceabilityRows(matrixContent);
@@ -544,8 +588,12 @@ export function fieldsToReproduce(
   set("cmd", "commandOrQuery");
   set("agg", "aggregate");
   set("evt", "event");
-  set("artifact", "technicalArtifact");
-  set("test", "testArtifact");
+  // REQ-677: code and tests the derivation finds by mention are left to it when
+  // it finds every file the hand-kept row lists; pinned only when it misses one.
+  const keeps = (column: keyof MatrixRow) =>
+    listOf(row[column]).every((f) => listOf(first[column]).includes(f));
+  if (!keeps("technicalArtifact")) set("artifact", "technicalArtifact");
+  if (!keeps("testArtifact")) set("test", "testArtifact");
   if (norm(row.status) !== "Draft") fields.status = norm(row.status);
   const unwritable = Object.entries(fields).find(([, v]) => !traceValueWritable(v));
   if (unwritable) {

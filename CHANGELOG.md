@@ -17,6 +17,12 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - `propose --kind bug --capability <c>` lowers that module's level by one at once (REQ-673).
 - `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
 
+### Fixed
+
+- The generated matrix reads code under a folder named `spec` deeper than the root as code, not tests (REQ-675).
+- `matrix --migrate` no longer writes into `spec.md` requirements an open change adds or modifies, or a capability spec states; their rows wait for the archive (`matrix_rows_in_changes`) (REQ-676).
+- `matrix --migrate` keeps a row the generated matrix only fills in with more code or tests (`matrix_rows_richer`), and pins in the trace only what it would miss (REQ-677).
+
 ## [1.5.0] — 2026-11-23
 
 Use cases, executable scenarios, and a DDD workshop as the brief.

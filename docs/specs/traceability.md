@@ -557,6 +557,9 @@
 | REQ-672 | SCN-672a, SCN-672b | `features/trust-levels/REQ-672.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/lib/change-review.ts`, `scripts/cli/commands/project/TrustCommand.ts` | tests/unit/trust-levels.test.ts | Approved |
 | REQ-673 | SCN-673a | `features/trust-levels/REQ-673.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/trust-levels.test.ts | Approved |
 | REQ-674 | SCN-674a, SCN-674b | `features/trust-levels/REQ-674.feature` | - | - | - | - | `scripts/lib/trust.ts`, `scripts/cli/commands/project/TrustCommand.ts`, `scripts/cli/commands/spec/DoneCommand.ts` | tests/unit/trust-levels.test.ts | Approved |
+| REQ-675 | SCN-675a, SCN-675b | `features/trusted-gate/REQ-675.feature` | - | - | - | - | `packages/core/src/infrastructure/DerivedMatrixSources.ts` | tests/unit/matrix-migrate-fixes.test.ts | Approved |
+| REQ-676 | SCN-676a, SCN-676b | `features/trusted-gate/REQ-676.feature` | - | - | - | - | `scripts/cli/commands/spec/MatrixCommand.ts` | tests/unit/matrix-migrate-fixes.test.ts | Approved |
+| REQ-677 | SCN-677a, SCN-677b | `features/trusted-gate/REQ-677.feature` | - | - | - | - | `packages/core/src/domain/DerivedMatrix.ts`, `scripts/cli/commands/spec/MatrixCommand.ts` | tests/unit/matrix-migrate-fixes.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
