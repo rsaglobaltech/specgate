@@ -128,7 +128,9 @@ export function printReport(
         sub(ui.muted(`${ui.sym.corner} full output: --format json · reproduce: --keep-worktrees`));
       }
       if (r.result === "unverified") {
-        sub(`${ui.c.warn}no test ran:${ui.c.reset} set the project's test command, then build it again`);
+        sub(
+          `${ui.c.warn}no test ran:${ui.c.reset} set the project's test command, then build it again`
+        );
       }
       if (r.workPreserved) {
         sub(ui.muted(`↳ the attempt is committed on ${r.branch} — review it`));

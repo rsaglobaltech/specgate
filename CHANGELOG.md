@@ -9,6 +9,73 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-11-23
+
+Use cases, executable scenarios, and a DDD workshop as the brief.
+
+### Added
+
+- **Use cases, checked by the gate** (REQ-625–628, REQ-631–642, #543, #544).
+  A change carries its use cases: `uc_range` is reserved with the draft, each requirement names its use case (`uc=UC-NNN`), and archive merges the change's `use-cases.md` into the catalogue. Each use case has a
+  specification — overview, actors, preconditions, a main flow and
+  alternatives each naming the scenario that proves it, postconditions and
+  business rules — and its diagram and activity are generated in Mermaid and
+  PlantUML, a lane per actor. Each entity's state machine is read, checked and
+  changed by a change's delta. The gate's `use_cases` rule checks all of it; `status --json` and `change show --json` carry it, and `propose --use-cases`
+  catalogues requirements delivered before the catalogue existed (REQ-636).
+- **Executable scenarios** (REQ-660–663, REQ-666, #535). An approved change's
+  scenarios are feature files before any code, tagged `@change:<id>` until archive. A gate with `bdd: required` needs a `bdd_cmd` — `{tags}` stands for
+  the scenarios to run — and every approved requirement's feature file up to
+  date; `apply` runs the requirement's scenarios and refuses while they fail. `specgate scenarios <REQ>` runs them one by one, each passed or not with its
+  line. A new or adopted project whose stack has a runner (playwright-bdd, Cucumber, a `test:bdd` script) requires them, with that runner as its `bdd_cmd`; any other is warned `bdd_not_set_up` and keeps passing until `specgate migrate bdd`.
+- **A DDD workshop becomes the brief** (REQ-655–659). `specgate brief import`
+  turns DDD Toolbox boards — bounded-context canvases, event storming, domain
+  stories — into the brief's modules; the workshop's language becomes the
+  project's. `specgate brief model` answers the domain model to draw, from the workshop or the spec, and `specgate brief export` writes it back as boards.
+- **A plan applied hunk by hunk** (REQ-664, REQ-665).
+  `agent apply --hunk <path>#<n>` applies one part of an agent's plan; `agent revert` takes an
+  applied plan back.
+- **The brief form reads and writes Why and Quality** (REQ-669, #524), rewriting
+  only the section that changed.
+- **Progress for long commands** (REQ-654). `apply` and `check` write each stage as it starts and ends to `SPECGATE_PROGRESS_FILE`, naming the log a running
+  stage writes to.
+- **`change show --json` says what blocks approval** (REQ-619, #538).
+- **A code of conduct** (#511) and a `ROADMAP.md` for the ideas kept for later.
+
+### Changed
+
+- **Nothing unproved passes** (REQ-649). With no test command, `harness run`
+  warns before any agent runs, and a requirement whose gate passed without
+  tests ends `unverified`, not `pass`: committed on its branch, not delivered.
+- **The agent runs without your MCP servers** (REQ-650): Claude Code in print
+  mode gets `--strict-mcp-config` unless the command names its own, and may
+  run the gate's architecture check besides the test command.
+- **`init --forja` finishes the job** (REQ-651, REQ-663): it adopts Specgate in
+  the new project, sets its test, architecture and scenario commands from what
+  forja generated, and commits them.
+- **The drafting language** (REQ-667, REQ-668): a brief's language becomes the
+  project's when it set none, and `D16_scenario_language` flags scenario steps
+  written in another language.
+
+### Fixed
+
+- **A quoted actor name is read whole** (REQ-622, #541), commas included, and
+  written back in quotes.
+- **The agent's front matter is fixed before it is shown** (REQ-653): a front
+  matter with problems gets one fix pass, told each problem.
+- **Two modules drafted at once** leave each other's draft alone (REQ-652).
+- **A repository with no commit** is refused before any agent runs (REQ-643),
+  instead of git's `invalid reference: HEAD`.
+- **A draft with only warnings** is Ready to review and exits 0 (REQ-176).
+- **An open change's feature file is no orphan** for `doctor`, `status` or `fix` (REQ-660).
+- **`validate` reads a 0.35 project again**: a harness config
+  that `migrate 1.0` has yet to fix no longer crashes it.
+- **`brief model` works from the installed package**: it read YAML with a
+  development-only dependency.
+- **`harness init` keeps `bdd_cmd` and `arch_cmd`** in an existing `harness.config.yaml` instead of refusing it as already present.
+- The harness keeps a run's state on its context, with mutation testing over
+  its decisions (#529, #537).
+
 ## [1.4.3] — 2026-11-21
 
 A piped agent command drafts a brief kept outside the project.

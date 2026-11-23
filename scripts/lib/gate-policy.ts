@@ -228,8 +228,13 @@ export function describePolicy(policy: GatePolicy, on = today()): string {
   return `${where}${relaxed.length && !notEnforcedYet(policy, on) ? `: ${relaxed.join(", ")}` : ""}${until}`;
 }
 
-/** The file `specgate init` writes: the standard preset, every rule shown. */
-export function gatePolicyTemplate(): string {
+/**
+ * The file `specgate init` writes: the standard preset, every rule shown, and
+ * `bdd: required` when the project has a runner for its feature files
+ * (REQ-663); without one the line stays a comment, the gate warning
+ * `bdd_not_set_up` until `specgate migrate bdd`.
+ */
+export function gatePolicyTemplate(opts: { bdd?: boolean } = {}): string {
   const width = Math.max(...RULES.map((r) => `${r}: ${PRESET_RULES.standard[r]}`.length));
   const lines = [
     "# What the gate requires — `specgate check` and `validate --strict` read it.",
@@ -242,7 +247,9 @@ export function gatePolicyTemplate(): string {
     ),
     "# enforce_from: 2026-12-31   # until then, every error is reported as a warning",
     "# The scenarios are feature files a runner checks (bdd_cmd), before any code (REQ-661).",
-    "bdd: required",
+    opts.bdd
+      ? "bdd: required"
+      : "# bdd: required   # once a runner runs them: specgate migrate bdd",
     "",
   ];
   return lines.join("\n");

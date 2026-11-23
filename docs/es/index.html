@@ -35,7 +35,7 @@
 
 <header class="top">
   <a class="top__brand" href="./"><span aria-hidden="true">⬡</span> Specgate</a>
-  <span class="top__version">v1.4.3</span>
+  <span class="top__version">v1.5.0</span>
   <button class="top__search" id="search" type="button" aria-label="Buscar en la documentación"
           aria-keyshortcuts="Meta+K Control+K">
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -61,7 +61,7 @@
 <section class="mx">
   <div class="ed-wrap mx__grid">
     <div class="mx__copy">
-      <p class="mx__eyebrow">[ v1.4.3 ] — De un change, un brief o un ticket de Jira a requisitos probados</p>
+      <p class="mx__eyebrow">[ v1.5.0 ] — De un change, un brief o un ticket de Jira a requisitos probados</p>
       <h1 class="mx__title">Sin test,<br>no está <span>hecho.</span></h1>
       <p class="mx__lede">
         Specgate convierte un change que describes, el brief de un cliente o una
@@ -398,8 +398,8 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
 … 2 more lines
 
 ~/courts $ git diff -U0 docs/specs/changes/draft-bookings/specs | grep -E '^[-+]' | grep -vE '^(---|[+]{3}) '
--&lt;!-- specgate:trace actor=Member kind=functional --&gt;
-+&lt;!-- specgate:trace actor=Member kind=functional status=&quot;Needs Clarification&quot; --&gt;
+-&lt;!-- specgate:trace actor=Member kind=functional uc=UC-003 --&gt;
++&lt;!-- specgate:trace actor=Member kind=functional uc=UC-003 status=&quot;Needs Clarification&quot; --&gt;
 -fee of 5 euros when they cancel less than 24 hours before.
 +late cancellation the fee the club decides (Q1).
 -- THEN the response is 204 and a fee of 5 euros is charged
@@ -508,7 +508,7 @@ test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
 ~/courts $ specgate check
   ◆ specgate · check   courts
 
-  ·  Policy         .specgate/gate.yaml (standard): coverage warning
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning
   ↻  docs/specs/actors.md regenerated from its sources
   ·  docs/specs/glossary.md does not define Member — archive adds them as rows to fill
   ·  Ids            not compared with a base — no base branch (pass --base &lt;branch&gt;)
@@ -601,7 +601,7 @@ c5da000 invoices 1.4: refunds
 ~/invoices $ specgate check
   ◆ specgate · check   invoices
 
-  ·  Policy         .specgate/gate.yaml (standard): coverage warning
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning
   ·  Ids            not compared with a base — no base branch (pass --base &lt;branch&gt;)
   ✔  Specification   validate --strict
   ✔  Tests           npm test
@@ -684,7 +684,7 @@ max_attempts: 1
   ◇  REQ-000   passed test command in 1.2 s
 
   Harness report ─────────────────────────────────────────
-  ✔  REQ-000   pass     1 attempt   → harness/REQ-000
+  ✔  REQ-000   pass      1 attempt   → harness/REQ-000
 
   ████████████████████  1 of 1 passed   1 passed · 0 failed · 0 skipped
 … 5 more lines
@@ -711,10 +711,13 @@ max_attempts: 1
 ~/smart-parking $ specgate validate .
   ◆ specgate · validate   smart-parking
 
+  ▲  The scenarios are not executable yet: no feature runner is required by this project's gate.
   ✔  Validation passed
      · Features detected: 1
      · Base SDD structure: complete
      · Traceability mode: rich
+
+… 1 more lines
 </code></pre>
 <!-- specgate:terminal:end -->
         </figure>
@@ -722,7 +725,7 @@ max_attempts: 1
     </div>
 
     <p class="term__meta">
-      Grabado con <strong>v1.4.3</strong>. <a href="./reverse.html">Un repositorio existente →</a> <a href="./tutorial.html">La ejecución del harness, explicada →</a>
+      Grabado con <strong>v1.5.0</strong>. <a href="./reverse.html">Un repositorio existente →</a> <a href="./tutorial.html">La ejecución del harness, explicada →</a>
     </p>
   </div>
 </section>
@@ -1039,7 +1042,7 @@ npx specgate propose --from-brief</code></pre>
       <a href="./release-process.html">Versiones</a>
     </nav>
   </div>
-  <p class="ed-wrap ed-foot__note">Documentación de v1.4.3. Un test comprueba cada número de esta página contra el repositorio.</p>
+  <p class="ed-wrap ed-foot__note">Documentación de v1.5.0. Un test comprueba cada número de esta página contra el repositorio.</p>
 </footer>
 
 <div class="palette" id="palette" hidden>

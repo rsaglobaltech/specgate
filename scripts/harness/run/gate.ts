@@ -442,7 +442,13 @@ export function runGate(
       ...(testCmd ? {} : { unverified: true }),
     };
   }
-  return { ok: true, stage: "", output: "", hint: passHint, ...(testCmd ? {} : { unverified: true }) };
+  return {
+    ok: true,
+    stage: "",
+    output: "",
+    hint: passHint,
+    ...(testCmd ? {} : { unverified: true }),
+  };
 }
 
 /**

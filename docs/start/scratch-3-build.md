@@ -96,7 +96,7 @@ $ specgate harness prompt REQ-003
 
   ◆ specgate · harness run   dry run · 1 requirement(s) would be processed
 
-  Agent         claude --output-format stream-json --verbose --permission-mode acceptEdits --allowedTools "Bash(node --test:*)" -p < {prompt_file} | specgate harness events --from claude
+  Agent         claude --strict-mcp-config --output-format stream-json --verbose --permission-mode acceptEdits --allowedTools "Bash(node --test:*)" -p < {prompt_file} | specgate harness events --from claude
   Setup         none
 
   REQ-003 · NEEDS_EVERYTHING → branch harness/REQ-003 ────

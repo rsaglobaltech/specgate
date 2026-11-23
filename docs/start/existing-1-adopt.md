@@ -141,7 +141,7 @@ specgate check
 $ specgate check
   ◆ specgate · check   invoicing
 
-  ·  Policy         .specgate/gate.yaml (standard): coverage warning
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning
   ·  Ids            not compared with a base — no base branch (pass --base <branch>)
   ✔  Specification   validate --strict
   ✔  Tests           node --test

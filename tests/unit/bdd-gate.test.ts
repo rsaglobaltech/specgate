@@ -70,7 +70,12 @@ function project(o: { gate?: string | null; harness?: string[] } = {}) {
     env: { ...process.env, NO_COLOR: "1" },
   });
   assert.equal(adopted.status, 0, adopted.stdout + adopted.stderr);
-  const harness = read(dir, "harness.config.yaml").replace(/^bdd_cmd:.*\n?/m, "");
+  // adopt writes harness.config.yaml only when it finds something to put in it (an agent here, none in CI).
+  const config = path.join(dir, "harness.config.yaml");
+  const harness = (fs.existsSync(config) ? read(dir, "harness.config.yaml") : "").replace(
+    /^bdd_cmd:.*\n?/m,
+    ""
+  );
   w(
     dir,
     "harness.config.yaml",
@@ -256,9 +261,64 @@ test("REQ-663 SCN-663a: a web project migrated — bdd: required, playwright-bdd
   assert.ok(fs.existsSync(path.join(p.dir, FEATURE)), "the approved change's feature written");
 });
 
-test("REQ-663: a new project's gate requires executable scenarios", () => {
-  const { gatePolicyTemplate } = require("../../scripts/lib/gate-policy");
-  assert.match(gatePolicyTemplate(), /^bdd: required$/m);
+/** A Node project made by `specgate init` here, its package.json as given. */
+function initialised(pkg: object) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-init-bdd-"));
+  madeDirs.push(dir);
+  w(dir, "package.json", JSON.stringify(pkg));
+  git(dir, "init", "-q");
+  const sg = (...args: string[]) =>
+    spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: "utf8" });
+  const r = sg("init", "--no-capabilities");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  return { dir, sg };
+}
+
+test("REQ-663 SCN-663c: a new project with no runner — bdd left unset, the gate warning, apply delivering as before", () => {
+  const { dir, sg } = initialised({ name: "app", scripts: { test: "node --test" } });
+  assert.doesNotMatch(read(dir, ".specgate/gate.yaml"), /^bdd: required$/m);
+  const check = sg("check", "--json");
+  assert.ok(
+    /bdd_not_set_up/.test(check.stdout) && /specgate migrate bdd/.test(check.stdout),
+    check.stdout + check.stderr
+  );
+  const added = JSON.parse(sg("new", "Totals are rounded half-up", "--json").stdout);
+  const id = added.requirement.id ?? added.requirement;
+  const spec = read(dir, "spec.md");
+  const at = spec.indexOf(id);
+  const obligation = /^The system MUST satisfy:.*\n\n> Written by Specgate\..*$/m;
+  w(
+    dir,
+    "spec.md",
+    spec.slice(0, at) +
+      spec.slice(at).replace(obligation, "The system SHALL round every total half-up to the cent.")
+  );
+  const feature = "features/totals-are-rounded-half-up.feature";
+  w(
+    dir,
+    feature,
+    read(dir, feature)
+      .replace("<the state before the action>", "a basket totalling 10.005")
+      .replace("<the action under test>", "the total is shown")
+      .replace("<the observable outcome>", "it reads 10.01")
+  );
+  w(dir, "test/total.test.js", `// ${id}\nrequire("node:test")("${id} totals", () => {});\n`);
+  sg("config", "set", "test_cmd", "node --test");
+  const r = sg("apply", id);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.doesNotMatch(r.stdout + r.stderr, /apply_bdd_missing/);
+});
+
+test("REQ-663 SCN-663d: a new project with its own test:bdd script — required, that script runs the scenarios", () => {
+  const { dir } = initialised({
+    name: "app",
+    scripts: { test: "node --test", "test:bdd": "cucumber-js" },
+  });
+  assert.match(read(dir, ".specgate/gate.yaml"), /^bdd: required$/m);
+  assert.match(
+    read(dir, "harness.config.yaml"),
+    /bdd_cmd: 'npm run test:bdd --silent -- --grep "\{tags\}"'/
+  );
 });
 
 test("REQ-663 SCN-663b: a project with its own test:bdd script — that script runs the scenarios", () => {

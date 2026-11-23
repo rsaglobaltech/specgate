@@ -17,7 +17,6 @@ const os = require("node:os");
 const path = require("node:path");
 import { cli } from "../helpers/cli";
 import type { CliResult } from "../helpers/cli";
-import { withoutBdd } from "../helpers/pre-bdd";
 
 function adopted() {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-new-"));
@@ -27,7 +26,6 @@ function adopted() {
   fs.writeFileSync(path.join(dir, "lib/index.js"), "module.exports = {};\n");
   const r = cli("adopt", "--project-dir", dir, "--no-capabilities");
   assert.equal(r.status, 0, r.stdout + r.stderr);
-  withoutBdd(dir);
   return { parent, dir };
 }
 

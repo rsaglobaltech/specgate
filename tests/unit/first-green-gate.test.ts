@@ -10,7 +10,6 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { pythonInstall } from "../../scripts/cli/commands/config/CiToolchain";
-import { withoutBdd } from "../helpers/pre-bdd";
 
 const ROOT = path.resolve(__dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, ""));
 const CLI = path.join(ROOT, "bin", "specgate.js");
@@ -97,7 +96,6 @@ function adopted(): string {
       'test("REQ-002: a total adds its lines", () => assert.equal(total(1, 2), 3));\n',
   });
   assert.equal(run(dir, "adopt").status, 0);
-  withoutBdd(dir);
   return dir;
 }
 
