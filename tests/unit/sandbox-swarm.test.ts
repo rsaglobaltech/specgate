@@ -45,7 +45,7 @@ const SANDBOX = [
 ].join("\n");
 
 /** A library: katalog's REQ-004, ausleihe's REQ-006 and REQ-007, approved; agents in sbx. */
-function library() {
+function library(extraEnv: Record<string, string> = {}) {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-swarm-"));
   const dir = path.join(parent, "app");
   fs.mkdirSync(dir);
@@ -54,7 +54,7 @@ function library() {
     spawnSync(process.execPath, [CLI, ...args], {
       cwd: dir,
       encoding: "utf8",
-      env: { ...process.env, SPECGATE_SBX: sbx.bin, SPECGATE_SKIP_DOCTOR: "1", SPECGATE_PROFILE: "", NO_COLOR: "1" },
+      env: { ...process.env, SPECGATE_SBX: sbx.bin, SPECGATE_SKIP_DOCTOR: "1", SPECGATE_PROFILE: "", NO_COLOR: "1", ...extraEnv },
     });
   w(dir, "package.json", '{"name":"app","version":"1.0.0"}\n');
   w(dir, "lib/index.js", "module.exports = {};\n");
@@ -209,6 +209,34 @@ test("REQ-701 SCN-701a: one left behind, one stray — --prune removes both, the
     assert.deepEqual(JSON.parse(pruned.stdout).sandboxes.removed.sort(), ["sg-old-pagos", "sg-stray"]);
     assert.deepEqual(Object.keys(p.sbx.state().sandboxes), ["sg-draft-katalog-katalog"]);
     assert.deepEqual(p.registry().map((x: { name: string }) => x.name), ["sg-draft-katalog-katalog"]);
+  } finally {
+    p.done();
+  }
+});
+
+test("REQ-698: two requirements of one module at once — one sandbox made, both agents in it", () => {
+  // Making a sandbox takes a moment: both workers ask for it at the same time.
+  const p = library({ FAKE_SBX_CREATE_MS: "1500" });
+  try {
+    const gate = path.join(p.dir, ".specgate", "gate.yaml");
+    fs.writeFileSync(gate, `${fs.readFileSync(gate, "utf8").replace(/\n*$/, "\n")}trust: { ausleihe: 4, katalog: 4 }\n`);
+    git(p.dir, "add", "-A");
+    git(p.dir, "commit", "-qm", "trust");
+    const r = p.cli("harness", "run", "--max-attempts", "1", "--concurrency", "2");
+    assert.match(out(r), /3 passed/, out(r));
+    const creates = p.sbx.calls().filter((c) => c[0] === "create").map((c) => c[c.indexOf("--name") + 1]);
+    assert.deepEqual(creates.sort(), ["sg-draft-ausleihe-ausleihe", "sg-draft-katalog-katalog"]);
+  } finally {
+    p.done();
+  }
+});
+
+test("REQ-698: a sandbox that cannot be made is the requirement's reason, not a silent worker", () => {
+  const p = library({ FAKE_SBX_FAIL_CREATE: "Docker is not running" });
+  try {
+    const r = p.cli("harness", "run", "--max-attempts", "1", "--req", "REQ-006");
+    assert.match(out(r), /sandbox: sbx could not create the sandbox sg-draft-ausleihe-ausleihe: ERROR: Docker is not running/, out(r));
+    assert.doesNotMatch(out(r), /Worker produced no report/);
   } finally {
     p.done();
   }

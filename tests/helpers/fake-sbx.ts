@@ -28,6 +28,13 @@ fs.appendFileSync(dir + "/calls.jsonl", JSON.stringify(a) + "\n");
 const KIT = Array.from({ length: 29 }, (_, i) => "kit-host-" + i + ".example:443");
 if (a[0] === "create") {
   const name = a[a.indexOf("--name") + 1];
+  if (process.env.FAKE_SBX_FAIL_CREATE) { console.error("ERROR: " + process.env.FAKE_SBX_FAIL_CREATE); process.exit(1); }
+  // As sbx: a name taken is refused; making one takes a moment.
+  if (st.sandboxes[name]) { console.error("ERROR: sandbox " + name + " already exists"); process.exit(1); }
+  const until = Date.now() + Number(process.env.FAKE_SBX_CREATE_MS || 0); while (Date.now() < until) {}
+  const again = fs.existsSync(stateFile) ? JSON.parse(fs.readFileSync(stateFile, "utf8")) : st;
+  if (again.sandboxes[name]) { console.error("ERROR: sandbox " + name + " already exists"); process.exit(1); }
+  Object.assign(st, again);
   const rest = a.filter((x, i) => x !== "create" && x !== "--name" && a[i - 1] !== "--name");
   st.sandboxes[name] = { kit: rest[0], workspace: rest[1] };
   save();

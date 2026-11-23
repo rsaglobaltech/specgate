@@ -105,6 +105,63 @@ export function ensureSandbox(
   module: string,
   say: (line: string) => void = () => {}
 ): SandboxRecord {
+  // Two requirements of one module start at once under --concurrency: one
+  // makes the sandbox, the other waits for it and uses it.
+  return withSandboxLock(projectDir, sandboxNameOf(change, module), () =>
+    makeSandbox(projectDir, config, change, module, say)
+  );
+}
+
+/** Making and setting up a sandbox can take minutes: the lock waits that long. */
+const SANDBOX_LOCK_WAIT_MS = 15 * 60_000;
+
+function withSandboxLock<T>(projectDir: string, name: string, fn: () => T): T {
+  const dir = path.join(projectDir, ".harness", `sandbox-${name}.lock`);
+  fs.mkdirSync(path.dirname(dir), { recursive: true });
+  const deadline = Date.now() + SANDBOX_LOCK_WAIT_MS;
+  const nap = new Int32Array(new SharedArrayBuffer(4));
+  for (;;) {
+    try {
+      fs.mkdirSync(dir);
+      fs.writeFileSync(path.join(dir, "owner"), String(process.pid));
+      break;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+      // A holder that died leaves its lock: broken, not waited out.
+      let owner = 0;
+      try {
+        owner = Number(fs.readFileSync(path.join(dir, "owner"), "utf8"));
+      } catch {
+        owner = 0;
+      }
+      let alive = false;
+      try {
+        alive = owner > 0 && (process.kill(owner, 0), true);
+      } catch {
+        alive = false;
+      }
+      if (owner > 0 && !alive) {
+        fs.rmSync(dir, { recursive: true, force: true });
+        continue;
+      }
+      if (Date.now() > deadline) throw new Error(`the sandbox ${name} stayed locked for ${SANDBOX_LOCK_WAIT_MS / 60_000} minutes`);
+      Atomics.wait(nap, 0, 0, 500);
+    }
+  }
+  try {
+    return fn();
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function makeSandbox(
+  projectDir: string,
+  config: SandboxConfig,
+  change: string,
+  module: string,
+  say: (line: string) => void
+): SandboxRecord {
   const name = sandboxNameOf(change, module);
   const known = readSandboxes(projectDir).find((r) => r.name === name);
   const alive = sbxList();

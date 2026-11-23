@@ -385,8 +385,17 @@ function openWorktree(
   const survivor = resuming ? existingWorktreeFor(projectDir, branch) : null;
   if (survivor) return { dir: survivor, survivor: true };
   // sandbox-swarm REQ-698: inside the folder of its module's sandbox, made the first time.
+  let base: string | null;
+  try {
+    base = sandboxBase(req, ctx);
+  } catch (e) {
+    // Said in the report, as the reason: a worker that throws reports nothing.
+    const why = `sandbox: ${(e as Error).message}`;
+    error(`${req.requirement}: ${why}`);
+    return { refused: unattempted(req.requirement, req.category, "fail", branch, why) };
+  }
   const dir = path.join(
-    sandboxBase(req, ctx) || os.tmpdir(),
+    base || os.tmpdir(),
     `specgate-harness-${req.requirement}-${crypto.randomBytes(4).toString("hex")}`
   );
   const args = resuming
