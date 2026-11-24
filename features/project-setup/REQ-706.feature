@@ -1,4 +1,3 @@
-@change:config-agents
 Feature: The sandbox, set with one command per field
 
   @REQ-706 @SCN-706a

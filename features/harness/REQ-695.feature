@@ -1,4 +1,3 @@
-@change:lab-fixes
 Feature: A dry run shows the trust skip
 
   @REQ-695 @SCN-695a

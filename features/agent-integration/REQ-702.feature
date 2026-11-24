@@ -1,4 +1,3 @@
-@change:eval-list
 Feature: Every exam listed, with its history
 
   @REQ-702 @SCN-702a

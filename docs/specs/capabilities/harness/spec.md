@@ -945,3 +945,147 @@ The system SHALL run Claude Code in print mode — drafting, building, answering
 - THEN it may run both, and no other command
 
 <!-- specgate:trace actor=Developer feature=features/harness/REQ-650.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-692 — The agent reads the principles
+
+The system SHALL, when `docs/specs/principles.md` exists, put each principle's id, title and statement into the harness prompt under a "Principles" heading, so that the agent knows them before it writes code.
+
+> Found on 2026-11-23: P1 was checked only by `specgate check`; the agent complied by imitating existing code.
+
+#### Scenario: SCN-692a — P1 in the prompt
+
+- GIVEN principles.md with `## P1 — Code names its requirement`
+- WHEN the Developer runs `specgate harness run --req REQ-004 --dry-run`
+- THEN the prompt has a "Principles" section naming P1 and its statement
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-692.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-693 — The harness gate runs the principles
+
+The system SHALL, in the harness gate after the test command, run each principle that declares `run=` in the worktree as the stage `principles`, failing the attempt on an error-level principle that exits non-zero — naming its id and command, which the next attempt is told — and reporting a warn-level one without failing.
+
+#### Scenario: SCN-693a — Code without its requirement's id
+
+- GIVEN P1 `run="! grep -L 'REQ-[0-9]' src/*.js | grep ."` and an agent that writes `src/x.js` without a requirement id
+- WHEN the harness gates the attempt
+- THEN the attempt fails at the stage `principles` naming P1
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-693.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-695 — A dry run shows the trust skip
+
+The system SHALL, on `specgate harness run --dry-run`, print for each requirement the trust level would refuse `skipped (trust_level)` and the reason, instead of its prompt.
+
+#### Scenario: SCN-695a — ausleihe at level 2, without --req
+
+- GIVEN `trust: { ausleihe: 2 }` and REQ-006 of ausleihe pending
+- WHEN the Developer runs `specgate harness run --dry-run`
+- THEN REQ-006 shows `skipped (trust_level)` with "needs 3", and no prompt for it
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-695.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-688 — A module has its own agent
+
+The system SHALL match a profile rule of `.harness/profiles.yaml` that says `match: { module: <name> }` against the capability of the requirement being built, as it matches the other keys — first match wins —, so that the harness hands that module's requirements to that profile's agent.
+
+> "I could choose per module or per requirement which one I want to use" (2026-11-23).
+
+#### Scenario: SCN-688a — ausleihe with its own agent
+
+- GIVEN profiles `careful` with `match: { module: ausleihe }` and `cheap` with `match: { module: "*" }`, and REQ-006 of ausleihe and REQ-004 of katalog pending
+- WHEN the harness builds them
+- THEN REQ-006 is built by careful's agent and REQ-004 by cheap's
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-688.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-689 — The agent that drafts, set apart
+
+The system SHALL read `draft_profile` in harness.config.yaml as the profile whose agent drafts, and SHALL run it on `specgate draft <module>` and `specgate propose --from-brief <module>` when neither `--agent` nor `--profile` is given; and SHALL keep writing the drafting guide for the Developer's own agent, running none, with `--no-agent` or when no `draft_profile` is set.
+
+#### Scenario: SCN-689a — Drafted by its own agent
+
+- GIVEN `draft_profile: writer` and the profile writer whose agent writes the module's delta
+- WHEN the Developer runs `specgate draft pedidos`
+- THEN writer's agent ran with the drafting guide, and not the harness's agent
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-689.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-690 — Every agent checked before it is used
+
+The system SHALL, on `specgate harness doctor [--json] [--no-probe]`, list each pending requirement with its module and the profile and agent it gets; and SHALL check each distinct agent once — the drafting one too —: its program on the PATH, and, unless `--no-probe`, a probe that runs it on a prompt saying `Reply with exactly: OK`, passing when it exits 0 within 120 seconds and its output says OK; each failure with the last line the agent printed and a fix; exiting 1 when one fails.
+
+#### Scenario: SCN-690a — One agent answers, one has an expired key
+
+- GIVEN the default agent answers OK, and careful's agent prints "This API key has expired" and exits 1
+- WHEN the Developer runs `specgate harness doctor --json`
+- THEN the default agent passes, careful's fails with "This API key has expired", the requirements of ausleihe name careful, and the doctor exits 1
+
+#### Scenario: SCN-690b — Not installed
+
+- GIVEN a profile whose agent is `nosuchagent -p {prompt_file}`
+- WHEN the Developer runs `specgate harness doctor --no-probe --json`
+- THEN that agent fails as not installed, `nosuchagent` named, and no agent was run
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-690.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-691 — A run checks its agents before it starts
+
+The system SHALL, on `specgate harness run`, before any worktree, run the doctor for the agents of the requirements it will process, and refuse to start with `harness_agent_unavailable` — naming the requirements, the agent and why — when one fails; and SHALL start anyway with `--skip-doctor`.
+
+#### Scenario: SCN-691a — The agent of ausleihe does not answer
+
+- GIVEN careful's agent prints "Free usage limit reached" and exits 1, and REQ-006 of ausleihe pending
+- WHEN the Developer runs `specgate harness run`
+- THEN the harness refuses with `harness_agent_unavailable` naming REQ-006 and "Free usage limit reached", and no worktree was created
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-691.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-698 — The agent in its module's sandbox
+
+The system SHALL, when harness.config.yaml sets `sandbox:` with `engine: sbx`, run each agent session of a requirement inside the Docker sandbox of its change and module, `sg-<change>-<module>`: made by the first requirement of that module with the sandbox's `kit` and the harness's worktrees as its workspace, its `setup` command run once, and recorded in `.harness/sandboxes.json`; later requirements of the module reuse it; the gate runs on the host.
+
+> Found on 2026-11-23: three sandboxes, clones and installs done by hand for one run.
+
+#### Scenario: SCN-698a — Two requirements of ausleihe, one sandbox
+
+- GIVEN `sandbox: { engine: sbx, kit: opencode, setup: "install-node" }`, and REQ-006 and REQ-007 of ausleihe in change draft-ausleihe pending
+- WHEN the Developer runs `specgate harness run --req REQ-006 --req REQ-007`
+- THEN one sandbox `sg-draft-ausleihe-ausleihe` was created, `install-node` ran in it once, both agents ran in it in their worktrees, and `.harness/sandboxes.json` records it
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-698.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-699 — The hosts each sandbox may reach
+
+The system SHALL open each host of `sandbox.allow` for that sandbox alone, record the rules it added, read the sandbox's whole network policy after creating it and record the hosts its kit added apart; and SHALL say, when the run starts a sandbox, how many hosts it may reach — the Developer's and the kit's.
+
+#### Scenario: SCN-699a — Two hosts opened, twenty-nine from the kit
+
+- GIVEN `allow: [registry.npmjs.org, opencode.ai]`, and a kit whose policy allows 29 hosts
+- WHEN the harness creates the sandbox for ausleihe
+- THEN registry.npmjs.org and opencode.ai are allowed for that sandbox alone, the record names those 2 and the kit's 29, and the run says "sg-draft-ausleihe-ausleihe may reach 31 hosts: 2 yours, 29 from the kit opencode"
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-699.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-700 — Archive removes the change's sandboxes
+
+The system SHALL, on `specgate archive <change>`, remove each sandbox recorded for that change together with the network rules the harness added for it, and drop its record.
+
+#### Scenario: SCN-700a — draft-ausleihe archived
+
+- GIVEN `sg-draft-ausleihe-ausleihe` recorded for draft-ausleihe with 2 rules, and `sg-draft-katalog-katalog` for draft-katalog
+- WHEN the Developer runs `specgate archive draft-ausleihe`
+- THEN `sg-draft-ausleihe-ausleihe` and its 2 rules are removed, and `sg-draft-katalog-katalog` stays recorded
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-700.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-701 — No sandbox left behind unseen
+
+The system SHALL, on `specgate harness sandboxes [--json]`, list each recorded sandbox — its change, module, creation date, the hosts allowed and the kit's, and whether it still exists — and each sbx sandbox named `sg-…` that nobody recorded; and SHALL, with `--prune`, remove those whose change is archived or gone and the unrecorded `sg-…` ones, with their rules.
+
+#### Scenario: SCN-701a — One left behind, one stray
+
+- GIVEN `sg-old-pagos` recorded for a change already archived, `sg-stray` existing and unrecorded, and `sg-draft-katalog-katalog` of an open change
+- WHEN the Developer runs `specgate harness sandboxes --prune`
+- THEN `sg-old-pagos` and `sg-stray` are removed, and `sg-draft-katalog-katalog` stays
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-701.feature kind=functional status=Implemented -->

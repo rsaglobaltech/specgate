@@ -1,4 +1,3 @@
-@change:config-agents
 Feature: A profile for a module or a requirement, with one command
 
   @REQ-705 @SCN-705a

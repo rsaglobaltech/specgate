@@ -1,4 +1,3 @@
-@change:eval-list
 Feature: An exam in progress says how far it got
 
   @REQ-703 @SCN-703a

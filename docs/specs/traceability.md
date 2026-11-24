@@ -45,6 +45,10 @@ Map requirements to scenarios, domain model elements, implementation artifacts, 
 | REQ-598 | SCN-598a | `features/agent-integration/REQ-598.feature` | - | - | - | - | `packages/core/src/domain/AgentKickoff.ts, scripts/agents/init.ts, scripts/cli/commands/spec/StatusCommand.ts` | e2e/journeys/utilities.mjs, tests/unit/agent-choice.test.ts | Implemented |
 | REQ-686 | SCN-686a | `features/agent-integration/REQ-686.feature` | - | - | - | - | `packages/core/src/domain/SkillEval.ts, packages/core/src/infrastructure/DerivedMatrixSources.ts, scripts/lib/surface.ts` | e2e/journeys/eval.mjs, tests/unit/skill-evals.test.ts | Implemented |
 | REQ-687 | SCN-687a | `features/agent-integration/REQ-687.feature` | - | - | - | - | `packages/core/src/domain/SkillEval.ts, scripts/lib/surface.ts` | e2e/journeys/eval.mjs, tests/unit/skill-evals.test.ts | Implemented |
+| REQ-697 | SCN-697a | `features/agent-integration/REQ-697.feature` | - | - | - | - | `scripts/cli/commands/harness/EvalCommand.ts` | tests/unit/lab-fixes.test.ts, tests/unit/skill-evals.test.ts | Implemented |
+| REQ-702 | SCN-702a | `features/agent-integration/REQ-702.feature` | - | - | - | - | `scripts/cli/commands/harness/EvalCommand.ts` | tests/unit/skill-evals.test.ts | Implemented |
+| REQ-703 | SCN-703a | `features/agent-integration/REQ-703.feature` | - | - | - | - | `scripts/cli/commands/harness/EvalCommand.ts` | tests/unit/skill-evals.test.ts | Implemented |
+| REQ-704 | SCN-704a | `features/agent-integration/REQ-704.feature` | - | - | - | - | `scripts/cli/commands/harness/EvalCommand.ts` | tests/unit/skill-evals.test.ts | Implemented |
 | REQ-466 | SCN-466a | `features/api/REQ-466.feature` | - | - | - | - | `scripts/api/index.ts, scripts/cli/commands/spec/ClarifyCommands.ts, scripts/cli/commands/spec/MatrixCommand.ts, scripts/cli/commands/spec/StatusCommand.ts` | tests/unit/specgate-api.test.ts | Implemented |
 | REQ-467 | SCN-467a | `features/api/REQ-467.feature` | - | - | - | - | `scripts/cli/commands/spec/MatrixCommand.ts, scripts/cli/commands/spec/StatusCommand.ts` | tests/unit/specgate-api.test.ts | Implemented |
 | REQ-468 | SCN-468a | `features/api/REQ-468.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Implemented |
@@ -285,6 +289,17 @@ Map requirements to scenarios, domain model elements, implementation artifacts, 
 | REQ-592 | SCN-592a | `features/harness/REQ-592.feature` | - | - | - | - | `scripts/lib/deadline-runner.ts` | tests/unit/harness-safety.test.ts | Implemented |
 | REQ-649 | SCN-649a | `features/harness/REQ-649.feature` | - | - | - | - | `packages/core/src/domain/HarnessRun.ts, scripts/harness/run/attempt.ts, scripts/harness/run/gate.ts, scripts/harness/run/prepare.ts, scripts/harness/run/run-report.ts, scripts/harness/run/shared.ts` | tests/helpers/test-cmd.ts, tests/unit/harness-control.test.ts | Implemented |
 | REQ-650 | SCN-650a | `features/harness/REQ-650.feature` | - | - | - | - | `scripts/draft/confined-agent.ts, scripts/harness/run/prepare.ts, scripts/lib/agent-permission.ts` | tests/unit/agent-no-mcp.test.ts, tests/unit/draft-from-brief.test.ts | Implemented |
+| REQ-692 | SCN-692a | `features/harness/REQ-692.feature` | - | - | - | - | `packages/core/src/domain/Principles.ts, scripts/harness/prompt.ts, scripts/lib/steering.ts` | tests/unit/lab-fixes.test.ts | Implemented |
+| REQ-693 | SCN-693a | `features/harness/REQ-693.feature` | - | - | - | - | `scripts/harness/run/gate.ts, scripts/lib/steering.ts` | tests/unit/lab-fixes.test.ts | Implemented |
+| REQ-695 | SCN-695a | `features/harness/REQ-695.feature` | - | - | - | - | `scripts/harness/run/prepare.ts` | tests/unit/lab-fixes.test.ts, tests/unit/trust-gate.test.ts | Implemented |
+| REQ-688 | SCN-688a | `features/harness/REQ-688.feature` | - | - | - | - | `packages/core/src/domain/ProfileMatch.ts, scripts/harness/doctor.ts, scripts/harness/run/requirement.ts` | tests/unit/agent-routing.test.ts | Implemented |
+| REQ-689 | SCN-689a | `features/harness/REQ-689.feature` | - | - | - | - | `packages/core/src/domain/HarnessConfig.ts, scripts/cli/commands/spec/DraftCommand.ts, scripts/lib/config-keys.ts` | tests/unit/agent-routing.test.ts | Implemented |
+| REQ-690 | SCN-690a | `features/harness/REQ-690.feature` | - | - | - | - | `scripts/harness/doctor.ts, scripts/lib/surface.ts` | e2e/journeys/harness.mjs, tests/unit/agent-routing.test.ts | Implemented |
+| REQ-691 | SCN-691a | `features/harness/REQ-691.feature` | - | - | - | - | `scripts/cli/commands/harness/RunCommand.ts, scripts/harness/doctor.ts, scripts/run-tests.cjs` | e2e/journeys/change-harness.mjs, e2e/journeys/harness.mjs, tests/cli.test.ts, tests/unit/agent-routing.test.ts | Implemented |
+| REQ-698 | SCN-698a | `features/harness/REQ-698.feature` | - | - | - | - | `packages/core/src/domain/Sandbox.ts, scripts/harness/run/gate.ts, scripts/harness/run/requirement.ts, scripts/lib/config-keys.ts, scripts/lib/sandbox-registry.ts, scripts/lib/sbx.ts` | tests/helpers/fake-sbx.ts, tests/unit/sandbox-swarm.test.ts | Implemented |
+| REQ-699 | SCN-699a | `features/harness/REQ-699.feature` | - | - | - | - | `packages/core/src/domain/Sandbox.ts, scripts/lib/sandbox-registry.ts` | tests/unit/sandbox-swarm.test.ts | Implemented |
+| REQ-700 | SCN-700a | `features/harness/REQ-700.feature` | - | - | - | - | `scripts/cli/commands/change/ChangeCommand.ts, scripts/lib/sandbox-registry.ts` | tests/unit/sandbox-swarm.test.ts | Implemented |
+| REQ-701 | SCN-701a | `features/harness/REQ-701.feature` | - | - | - | - | `scripts/harness/sandboxes.ts, scripts/lib/sandbox-registry.ts, scripts/lib/sbx.ts, scripts/lib/surface.ts` | e2e/journeys/harness.mjs, tests/helpers/fake-sbx.ts, tests/unit/sandbox-swarm.test.ts | Implemented |
 | REQ-128 | SCN-128a | `features/live-harness/REQ-128.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
 | REQ-129 | SCN-129a | `features/live-harness/REQ-129.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
 | REQ-130 | SCN-130a | `features/live-harness/REQ-130.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
@@ -333,6 +348,9 @@ Map requirements to scenarios, domain model elements, implementation artifacts, 
 | REQ-609 | SCN-609a | `features/project-setup/REQ-609.feature` | - | - | - | - | - | tests/unit/init-wizard.test.ts, tests/unit/proven-packs.test.ts | Implemented |
 | REQ-607 | SCN-607a | `features/project-setup/REQ-607.feature` | - | - | - | - | - | tests/unit/undecided-stack.test.ts | Implemented |
 | REQ-651 | SCN-651a | `features/project-setup/REQ-651.feature` | - | - | - | - | `scripts/cli/commands/project/Forja.ts, scripts/cli/commands/project/InitProjectCommand.ts` | tests/unit/forja-front-door.test.ts | Implemented |
+| REQ-705 | SCN-705a | `features/project-setup/REQ-705.feature` | - | - | - | - | `scripts/lib/config-keys.ts` | tests/unit/config-agents.test.ts | Implemented |
+| REQ-706 | SCN-706a | `features/project-setup/REQ-706.feature` | - | - | - | - | `scripts/lib/config-keys.ts` | e2e/journeys/utilities.mjs, tests/unit/config-agents.test.ts | Implemented |
+| REQ-707 | SCN-707a | `features/project-setup/REQ-707.feature` | - | - | - | - | `packages/core/src/domain/YamlEdit.ts, packages/mcp-spec-driven/src/tools.ts, scripts/cli/commands/config/ConfigSetCommand.ts, scripts/lib/config-keys.ts` | e2e/journeys/utilities.mjs, tests/unit/config-agents.test.ts | Implemented |
 | REQ-218 | SCN-218a | `features/quality/REQ-218.feature` | - | - | - | - | - | tests/unit/quality-checks.test.ts | Implemented |
 | REQ-219 | SCN-219a | `features/quality/REQ-219.feature` | - | - | - | - | - | tests/unit/quality-checks.test.ts | Implemented |
 | REQ-232 | SCN-232a | `features/quality/REQ-232.feature` | - | - | - | - | `scripts/lib/quality-presets.ts` | tests/unit/quality-checks.test.ts | Implemented |
@@ -456,6 +474,8 @@ Map requirements to scenarios, domain model elements, implementation artifacts, 
 | REQ-681 | SCN-681a | `features/trust-levels/REQ-681.feature` | - | - | - | - | `scripts/cli/commands/spec/ReproduceCommand.ts, scripts/lib/surface.ts` | e2e/journeys/reproduce.mjs, tests/unit/reproduce-first.test.ts | Implemented |
 | REQ-682 | SCN-682a | `features/trust-levels/REQ-682.feature` | - | - | - | - | `scripts/cli/commands/spec/ReproduceCommand.ts, scripts/lib/evidence.ts` | e2e/journeys/reproduce.mjs, tests/unit/reproduce-first.test.ts | Implemented |
 | REQ-683 | SCN-683a | `features/trust-levels/REQ-683.feature` | - | - | - | - | `scripts/cli/commands/spec/DoneCommand.ts, scripts/lib/evidence.ts` | tests/unit/reproduce-first.test.ts | Implemented |
+| REQ-694 | SCN-694a | `features/trust-levels/REQ-694.feature` | - | - | - | - | `scripts/lib/trust.ts` | tests/unit/lab-fixes.test.ts, tests/unit/trust-gate.test.ts | Implemented |
+| REQ-696 | SCN-696a | `features/trust-levels/REQ-696.feature` | - | - | - | - | `packages/core/src/infrastructure/DerivedMatrixSources.ts` | tests/unit/lab-fixes.test.ts | Implemented |
 | REQ-117 | SCN-117a | `features/trusted-gate/REQ-117.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
 | REQ-118 | SCN-118a | `features/trusted-gate/REQ-118.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
 | REQ-119 | SCN-119a | `features/trusted-gate/REQ-119.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |

@@ -1,4 +1,3 @@
-@change:lab-fixes
 Feature: An exam check the agent does not see
 
   @REQ-697 @SCN-697a

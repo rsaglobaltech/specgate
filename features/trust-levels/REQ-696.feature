@@ -1,4 +1,3 @@
-@change:lab-fixes
 Feature: Gate tooling and exam fixtures are not code
 
   @REQ-696 @SCN-696a

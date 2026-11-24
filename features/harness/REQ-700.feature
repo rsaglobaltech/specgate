@@ -1,4 +1,3 @@
-@change:sandbox-swarm
 Feature: Archive removes the change's sandboxes
 
   @REQ-700 @SCN-700a

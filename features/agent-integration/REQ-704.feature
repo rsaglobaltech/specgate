@@ -1,4 +1,3 @@
-@change:eval-list
 Feature: Each run's prompt and log, as it happens
 
   @REQ-704 @SCN-704a

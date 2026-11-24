@@ -1,4 +1,3 @@
-@change:agent-routing
 Feature: A run checks its agents before it starts
 
   @REQ-691 @SCN-691a

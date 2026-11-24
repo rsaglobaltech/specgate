@@ -1,4 +1,3 @@
-@change:agent-routing
 Feature: A module has its own agent
 
   @REQ-688 @SCN-688a

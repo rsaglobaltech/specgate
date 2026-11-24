@@ -1,4 +1,3 @@
-@change:sandbox-swarm
 Feature: No sandbox left behind unseen
 
   @REQ-701 @SCN-701a

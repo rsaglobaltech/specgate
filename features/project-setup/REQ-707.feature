@@ -1,4 +1,3 @@
-@change:config-agents
 Feature: A setting, or a whole profile, removed with one command
 
   @REQ-707 @SCN-707a

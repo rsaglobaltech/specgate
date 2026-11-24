@@ -1,4 +1,3 @@
-@change:lab-fixes
 Feature: The agent reads the principles
 
   @REQ-692 @SCN-692a

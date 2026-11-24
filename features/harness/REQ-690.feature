@@ -1,4 +1,3 @@
-@change:agent-routing
 Feature: Every agent checked before it is used
 
   @REQ-690 @SCN-690a

@@ -1,4 +1,3 @@
-@change:lab-fixes
 Feature: The harness gate runs the principles
 
   @REQ-693 @SCN-693a

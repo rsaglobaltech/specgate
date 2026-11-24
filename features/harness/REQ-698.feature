@@ -1,4 +1,3 @@
-@change:sandbox-swarm
 Feature: The agent in its module's sandbox
 
   @REQ-698 @SCN-698a

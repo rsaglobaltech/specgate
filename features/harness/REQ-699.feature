@@ -1,4 +1,3 @@
-@change:sandbox-swarm
 Feature: The hosts each sandbox may reach
 
   @REQ-699 @SCN-699a
