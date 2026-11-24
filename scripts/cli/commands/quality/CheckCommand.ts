@@ -11,6 +11,8 @@ import {
   NO_TEST_COMMAND_WARNING,
 } from "../../../../packages/core/src/domain/DoneVerification";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import { runRequirementScenarios, scenarioCommand, scenariosRequired } from "../../../lib/scenario-runs";
+import { deliveredWithFeature } from "../spec/StatusCommand";
 import type { HarnessSettings } from "../../../../packages/core/src/domain/HarnessConfig";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
@@ -229,6 +231,7 @@ export class CheckCommand extends BaseCommand {
     let last = false;
     let affected = false;
     let noCache = false;
+    let noScenarios = false;
     let baseline = false;
     const positional: string[] = [];
     for (let i = 0; i < argv.length; i++) {
@@ -243,6 +246,8 @@ export class CheckCommand extends BaseCommand {
         baseline = true;
       } else if (a === "--no-cache") {
         noCache = true;
+      } else if (a === "--no-scenarios") {
+        noScenarios = true;
       } else if (a === "--test-cmd") {
         testCmdFlag = argv[++i];
         if (testCmdFlag === undefined) {
@@ -326,6 +331,7 @@ export class CheckCommand extends BaseCommand {
       archCmd: archCmd || null,
       testCmd: plannedTests || null,
       checks: harness.quality ? checksFor(harness.quality, qualityStages) : [],
+      scenariosCmd: scenariosRequired(projectDir) ? scenarioCommand(projectDir) || null : null,
     });
     /** Fail the gate: keep the result, then answer with every stage. */
     const fail = (payload: { check: unknown }, diags: Diagnostic[]): never => {
@@ -736,6 +742,48 @@ export class CheckCommand extends BaseCommand {
       }
     }
     if (verdicts.length > 0) fail(NULL_SHAPE, [...ticketKeys, ...verdicts]);
+
+    // gate-runs-scenarios REQ-734: with executable scenarios required, those of
+    // every delivered requirement — code changed after its delivery is judged too.
+    const scenariosCmd = scenariosRequired(projectDir) ? scenarioCommand(projectDir) : "";
+    if (scenariosCmd && noScenarios) {
+      gate.set("scenarios", "skipped", [
+        info("check_scenarios_skipped", "The scenarios were not run: --no-scenarios.", { target: "scenarios" }),
+      ]);
+      if (!json) process.stdout.write(`  ${ui.muted("·  Scenarios       not run — --no-scenarios")}\n`);
+    } else if (scenariosCmd) {
+      const delivered = deliveredWithFeature(projectDir);
+      const startedScenarios = Date.now();
+      progress({ stage: "scenarios", state: "running" });
+      const broken: Diagnostic[] = [];
+      for (const id of delivered) {
+        const v = runRequirementScenarios(projectDir, id, scenariosCmd);
+        if (v.ok) continue;
+        broken.push(
+          error(
+            "check_scenarios_failed",
+            `${id}'s scenarios did not pass${v.failed.length ? `: ${v.failed.join(", ")}` : ""} — ran ${v.command}`,
+            {
+              target: id,
+              fix: `make the code do what ${v.failed.length ? v.failed.join(", ") : `${id}'s scenarios`} say${v.failed.length === 1 ? "s" : ""}: specgate scenarios ${id}`,
+            }
+          )
+        );
+      }
+      const ms = Date.now() - startedScenarios;
+      if (broken.length > 0) {
+        const verdict = error("check_scenarios_failed", `The gate failed: the scenarios of ${broken.length} delivered requirement(s).`, {
+          target: "scenarios",
+          fix: "specgate scenarios <REQ> runs one requirement's, scenario by scenario",
+        });
+        gate.set("scenarios", "failed", [...broken, verdict], { ms });
+        if (!json) process.stdout.write(ui.fail(`Scenarios       ${delivered.length} delivered requirement(s), ${broken.length} failing`));
+        fail(NULL_SHAPE, [...ticketKeys, ...broken, verdict]);
+      }
+      gate.set("scenarios", "passed", [], { ms });
+      if (!json && delivered.length > 0)
+        process.stdout.write(ui.ok(`Scenarios       ${ui.muted(`${delivered.length} delivered requirement(s)`)}`));
+    }
 
     // ADR-0040: the team's quality and security checks, after the tests. The
     // `attempt` and `end` stages always; `ci` with --ci.

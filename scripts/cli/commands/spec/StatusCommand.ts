@@ -38,6 +38,7 @@ import { petFor } from "./PetCommand";
 import { projectJourneys } from "../../../lib/journeys";
 import { projectStateMachines, projectUseCases } from "../../../lib/domain-docs";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import { requirementsWithScenarios, scenariosRequired } from "../../../lib/scenario-runs";
 import { changesToMigrate, lanesToMigrate } from "../../../lib/migrate";
 import { readConfig } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 
@@ -117,6 +118,22 @@ export interface QueueSummary {
   briefToFill?: string;
   /** A brief at the root that `briefToFill` does not hold yet (REQ-251). */
   rootBrief?: string;
+}
+
+/**
+ * gate-runs-scenarios REQ-734, REQ-735: the delivered requirements that have a
+ * feature file — those whose scenarios a gate can run, or did not.
+ */
+export function deliveredWithFeature(projectDir: string): string[] {
+  return withQueue(projectDir, (summary, dir) => {
+    const withScenarios = requirementsWithScenarios(dir);
+    const out = new Set<string>();
+    for (const it of summary.items) {
+      if (!["Implemented", "Verified", "Released"].includes(String(it.status || ""))) continue;
+      if (withScenarios.has(it.requirement)) out.add(it.requirement);
+    }
+    return [...out].sort();
+  });
 }
 
 /** What `nextCommandPlain` and `nextReason` read from a summary. */
@@ -762,6 +779,15 @@ function statusDocument(
     // REQ-639: each entity's state machine, for the studio to draw.
     stateMachines: projectStateMachines(projectDir),
     packs: lock && lock.packs ? lock.packs : [],
+    // gate-runs-scenarios REQ-735: delivered on a test alone — their scenarios nobody ran.
+    deliveredWithoutScenarios: scenariosRequired(projectDir)
+      ? 0
+      : ((have) =>
+          new Set(
+            summary.items
+              .filter((it) => ["Implemented", "Verified", "Released"].includes(String(it.status || "")) && have.has(it.requirement))
+              .map((it) => it.requirement)
+          ).size)(requirementsWithScenarios(projectDir)),
     requirements: summary.items.map((it) => ({
       id: it.requirement,
       title: titleOf(it) || null,

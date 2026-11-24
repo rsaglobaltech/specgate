@@ -1,0 +1,12 @@
+▶ dist/tests/unit/bdd-gate.test.js
+✔ REQ-733 SCN-733a: built to a test that says something else — the harness fails at the stage scenarios, and delivers nothing (1804.526334ms)
+✔ REQ-733 SCN-733b: its scenarios pass — the gate has the stage scenarios, and the requirement is delivered (1847.335125ms)
+✔ REQ-733 SCN-733c: not required, not run — the harness gate has no stage scenarios (1772.24975ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5513.9005

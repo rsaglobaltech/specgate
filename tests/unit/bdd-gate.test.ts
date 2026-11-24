@@ -411,3 +411,130 @@ test("REQ-666 SCN-666b: no runner — bdd_cmd_missing, its fix config set bdd_cm
   assert.equal(doc.status[0].code, "bdd_cmd_missing");
   assert.match(doc.status[0].fix, /specgate config set bdd_cmd/);
 });
+
+// ── gate-runs-scenarios REQ-733…REQ-735: the scenarios run where the gate runs ──
+
+/** REQ-031's code and test in place and committed; `bdd` is what `bdd_cmd` exits with for each tag. */
+function gatedProject(bdd: Record<string, number>, gate = "preset: standard\nbdd: required\n") {
+  const table = JSON.stringify(bdd).replace(/"/g, "'");
+  const p = project({
+    gate,
+    harness: [
+      'test_cmd: "node -e 0"',
+      `bdd_cmd: "node -e \\"process.exit((${table})[process.argv[1]] ?? 3)\\" {tags}"`,
+    ],
+  });
+  const matrix = read(p.dir, "docs/specs/traceability.md");
+  w(
+    p.dir,
+    "docs/specs/traceability.md",
+    `${matrix.replace(/\s*$/, "")}\n| REQ-031 | SCN-031, SCN-032 | \`features/pedidos/REQ-031.feature\` | - | - | - | - | \`src/orders.js\` | tests/orders.test.js | Approved |\n`
+  );
+  w(p.dir, "src/orders.js", "module.exports = {};\n");
+  w(p.dir, "tests/orders.test.js", "// REQ-031 SCN-031 SCN-032: cancel an order\n");
+  p.approve();
+  git(p.dir, "add", "-A");
+  git(p.dir, "commit", "-qm", "seed");
+  const agent = path.join(path.dirname(p.dir), `agent-${path.basename(p.dir)}.js`);
+  fs.writeFileSync(agent, 'require("node:fs").writeFileSync("src/cancel.js", "// REQ-031\\nmodule.exports = 1;\\n");\n');
+  madeDirs.push(agent);
+  const harness = (...extra: string[]) =>
+    spawnSync(
+      process.execPath,
+      [CLI, "harness", "run", "--project-dir", p.dir, "--req", "REQ-031", "--agent", `"${process.execPath}" "${agent}" {prompt_file}`, "--skip-doctor", "--max-attempts", "1", ...extra],
+      { cwd: p.dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } }
+    );
+  return { ...p, harness };
+}
+
+test("REQ-733 SCN-733a: built to a test that says something else — the harness fails at the stage scenarios, and delivers nothing", () => {
+  const p = gatedProject({ "@REQ-031": 1, "@SCN-031": 1, "@SCN-032": 0 });
+  const r = p.harness();
+  const said = r.stdout + r.stderr;
+  assert.match(said, /0 passed/, said);
+  assert.match(said, /scenarios/, said);
+  assert.match(said, /SCN-031/, "the scenario that failed is named");
+  assert.doesNotMatch(git(p.dir, "show", "harness/REQ-031:docs/specs/changes/draft-pedidos/specs/pedidos/spec.md").stdout, /status=Implemented/);
+});
+
+test("REQ-733 SCN-733b: its scenarios pass — the gate has the stage scenarios, and the requirement is delivered", () => {
+  const p = gatedProject({ "@REQ-031": 0, "@SCN-031": 0, "@SCN-032": 0 });
+  const r = p.harness();
+  const said = r.stdout + r.stderr;
+  assert.match(said, /1 passed/, said);
+  assert.match(said, /passed scenarios/, said);
+});
+
+test("REQ-733 SCN-733c: not required, not run — the harness gate has no stage scenarios", () => {
+  const p = gatedProject({ "@REQ-031": 1 }, "preset: standard\n");
+  const r = p.harness();
+  const said = r.stdout + r.stderr;
+  assert.match(said, /1 passed/, said);
+  assert.doesNotMatch(said, /(started|passed|failed) scenarios/, said);
+});
+
+/** REQ-031 delivered with its scenarios green; then `bdd_cmd` is what the test says. */
+function deliveredProject(after: Record<string, number>) {
+  const p = gatedProject({ "@REQ-031": 0, "@SCN-031": 0, "@SCN-032": 0 });
+  const applied = p.cli("apply", "REQ-031", "--json");
+  assert.equal(applied.status, 0, applied.stdout + applied.stderr);
+  const table = JSON.stringify(after).replace(/"/g, "'");
+  w(
+    p.dir,
+    "harness.config.yaml",
+    read(p.dir, "harness.config.yaml").replace(/^bdd_cmd:.*$/m, `bdd_cmd: "node -e \\"process.exit((${table})[process.argv[1]] ?? 3)\\" {tags}"`)
+  );
+  return p;
+}
+
+test("REQ-734 SCN-734a: code changed after delivery — check fails at scenarios naming the requirement and the scenario", () => {
+  const p = deliveredProject({ "@REQ-031": 1, "@SCN-031": 1, "@SCN-032": 0 });
+  const r = spawnSync(process.execPath, [CLI, "check", p.dir, "--json"], { cwd: p.dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+  assert.notEqual(r.status, 0, r.stdout);
+  const doc = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
+  const stage = doc.stages.find((s: { stage: string }) => s.stage === "scenarios");
+  assert.equal(stage.result, "failed", JSON.stringify(doc.stages));
+  const finding = JSON.stringify(doc.status);
+  assert.match(finding, /check_scenarios_failed/);
+  assert.match(finding, /REQ-031/);
+  assert.match(finding, /SCN-031/);
+  assert.doesNotMatch(finding, /SCN-032 /, "the scenario that passed is not blamed");
+});
+
+test("REQ-734: the delivered requirements' scenarios pass — check passes with the stage scenarios", () => {
+  const p = deliveredProject({ "@REQ-031": 0, "@SCN-031": 0, "@SCN-032": 0 });
+  const r = spawnSync(process.execPath, [CLI, "check", p.dir, "--json"], { cwd: p.dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const doc = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
+  assert.equal(doc.stages.find((s: { stage: string }) => s.stage === "scenarios").result, "passed");
+});
+
+test("REQ-734 SCN-734b: --no-scenarios leaves the stage out at the Developer's word, and says so", () => {
+  const p = deliveredProject({ "@REQ-031": 1, "@SCN-031": 1 });
+  const r = spawnSync(process.execPath, [CLI, "check", p.dir, "--no-scenarios", "--json"], { cwd: p.dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const doc = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
+  const stage = doc.stages.find((s: { stage: string }) => s.stage === "scenarios");
+  assert.equal(stage.result, "skipped");
+  assert.match(JSON.stringify(stage), /--no-scenarios/);
+});
+
+test("REQ-735 SCN-735a SCN-735b: delivered on a test alone — apply says its scenarios were not run, and status counts it", () => {
+  const p = gatedProject({ "@REQ-031": 1 }, "preset: standard\n");
+  const r = p.cli("apply", "REQ-031");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout + r.stderr, /its scenarios were not run/);
+  assert.match(r.stdout + r.stderr, /specgate migrate bdd/);
+  const s = p.cli("status", "--json");
+  const doc = JSON.parse(s.stdout.slice(s.stdout.indexOf("{")));
+  assert.equal(doc.deliveredWithoutScenarios, 1, s.stdout.slice(0, 600));
+});
+
+test("REQ-735: where the scenarios are run, apply does not say they were not", () => {
+  const p = gatedProject({ "@REQ-031": 0, "@SCN-031": 0, "@SCN-032": 0 });
+  const r = p.cli("apply", "REQ-031");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.doesNotMatch(r.stdout + r.stderr, /its scenarios were not run/);
+  const s = p.cli("status", "--json");
+  assert.equal(JSON.parse(s.stdout.slice(s.stdout.indexOf("{"))).deliveredWithoutScenarios, 0);
+});

@@ -45,6 +45,7 @@ import {
 } from "../../../packages/core/src/domain/HarnessRun";
 import { removeTempFile } from "../../lib/temp-file";
 import { runPrinciples } from "../../lib/steering";
+import { runRequirementScenarios, scenarioCommand, scenariosRequired } from "../../lib/scenario-runs";
 import { sandboxAround } from "../../lib/sandbox-registry";
 import { sbxExecLine } from "../../lib/sbx";
 import {
@@ -369,6 +370,9 @@ export function runGate(
       if (warnings.length > 0) passHint = warnings[0].message;
     }
   }
+  // gate-runs-scenarios REQ-733: with executable scenarios required, the requirement's own, after the tests.
+  const scenarios = scenariosStage(worktreeDir, req.requirement || "", report);
+  if (scenarios) return scenarios;
   // lab-fixes REQ-693: the principles that declare a check, after the tests.
   const principles = principlesStage(worktreeDir, report);
   if (principles) return principles;
@@ -800,6 +804,41 @@ export function runAdversarialProbe(
     // The branch carries the implementer's work and nothing else.
     discardWorktreeChanges(worktreeDir);
   }
+}
+
+/**
+ * gate-runs-scenarios REQ-733: the stage `scenarios` — the requirement's
+ * scenarios through `bdd_cmd`, in a project whose gate requires them. The
+ * harness skips apply's own gate, having run its own, so they are run here: a
+ * requirement built to a test that says something else than its scenario is
+ * not delivered. Null: not required, or green.
+ */
+export function scenariosStage(worktreeDir: string, requirement: string, report: GateReport = () => {}): GateResult | null {
+  if (!requirement || !scenariosRequired(worktreeDir)) return null;
+  const bddCmd = scenarioCommand(worktreeDir);
+  if (!bddCmd) {
+    report("scenarios", "fail", { ms: 0 });
+    return {
+      ok: false,
+      stage: "scenarios",
+      output:
+        "The gate requires executable scenarios and no bdd_cmd runs them.\n" +
+        '  fix: specgate config set bdd_cmd "<runs the feature files, with {tags}>"',
+    };
+  }
+  report("scenarios", "start");
+  const v = runRequirementScenarios(worktreeDir, requirement, bddCmd);
+  report("scenarios", v.ok ? "pass" : "fail", { ms: v.ms });
+  if (v.ok) return null;
+  return {
+    ok: false,
+    stage: "scenarios",
+    output:
+      `${requirement}'s scenarios did not pass${v.failed.length ? `: ${v.failed.join(", ")}` : ""}.\n` +
+      `  ran: ${v.command}\n` +
+      (v.output ? `${v.output}\n` : "") +
+      "  fix: make the code do what each scenario says — and its steps check it —, not what a test that disagrees with the scenario says.",
+  };
 }
 
 /**

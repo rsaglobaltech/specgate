@@ -10,7 +10,7 @@
 import type { Diagnostic } from "./diagnostics";
 import { progress } from "./progress";
 
-export type StageName = "ids" | "changes" | "validate" | "architecture" | "tests" | "quality";
+export type StageName = "ids" | "changes" | "validate" | "architecture" | "tests" | "scenarios" | "quality";
 export type StageResult = "passed" | "failed" | "skipped" | "not run";
 
 export interface GateStage {
@@ -34,6 +34,8 @@ export class GateStages {
     archCmd: string | null;
     testCmd: string | null;
     checks: ReadonlyArray<{ name: string; run: string; gate: boolean }>;
+    /** gate-runs-scenarios REQ-734: the command that runs the feature files, in a project whose gate requires them. */
+    scenariosCmd?: string | null;
   }) {
     const stage = (s: StageName, command: string | null, extra: Partial<GateStage> = {}) => ({
       stage: s,
@@ -49,6 +51,7 @@ export class GateStages {
       stage("validate", "specgate validate --strict"),
       stage("architecture", plan.archCmd),
       stage("tests", plan.testCmd),
+      ...(plan.scenariosCmd ? [stage("scenarios", plan.scenariosCmd)] : []),
       ...plan.checks.map((c) => stage("quality", c.run, { name: c.name, gate: c.gate })),
     ];
   }

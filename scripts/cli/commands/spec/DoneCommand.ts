@@ -1,4 +1,5 @@
 import { readGatePolicy } from "../../../lib/gate-policy";
+import { scenariosOf } from "./ScenariosCommand";
 import { keepEvidence, mustReproduce, readRed } from "../../../lib/evidence";
 import type { ScenarioRun } from "../../../lib/evidence";
 import { appendApplied } from "../../../lib/trust";
@@ -412,6 +413,10 @@ export class DoneCommand extends BaseCommand {
             `${c.bold}${id}${c.reset} ${ui.sym.arrow} ${c.ok}${c.bold}${opts.status}${c.reset} ` +
               ui.muted(`(${updated} row${updated > 1 ? "s" : ""} updated)`)
           ) +
+          // gate-runs-scenarios REQ-735: said plainly, at each delivery, what the gate did not check.
+          (gated && readGatePolicy(projectDir).bdd !== "required" && scenariosOf(projectDir, id).length > 0
+            ? `  ${ui.muted(`·  ${id} is delivered on a test that names it: its scenarios were not run. specgate migrate bdd makes the gate run them.`)}\n`
+            : "") +
           (plan.testsUnverified ? "" : nextAfter(queue().items, id, owner, view))
       )
     );
