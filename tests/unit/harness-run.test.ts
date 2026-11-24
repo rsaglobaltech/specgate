@@ -2397,3 +2397,53 @@ test("REQ-417 SCN-417a: the agent writes nothing for one requirement of the run"
     fs.rmSync(parent, { recursive: true, force: true });
   }
 });
+
+/** REQ-000's branch, left by an earlier run: one commit adding `files`. */
+function leftBranch(projectDir: string, files: Array<[string, string]>) {
+  const git = (...args: string[]) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+  assert.equal(git("branch", "harness/REQ-000").status, 0);
+  const wt = fs.mkdtempSync(path.join(os.tmpdir(), "left-branch-"));
+  fs.rmSync(wt, { recursive: true, force: true });
+  assert.equal(git("worktree", "add", wt, "harness/REQ-000").status, 0);
+  for (const [rel, content] of files) {
+    fs.mkdirSync(path.dirname(path.join(wt, rel)), { recursive: true });
+    fs.writeFileSync(path.join(wt, rel), content, "utf8");
+  }
+  const run = (...args: string[]) => spawnSync("git", args, { cwd: wt, encoding: "utf8" });
+  run("add", "-A");
+  assert.equal(run("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "feat(REQ-000): earlier run").status, 0);
+  git("worktree", "remove", "--force", wt);
+}
+
+test("REQ-708 SCN-708a: a continued branch that holds the work is judged by the gate when the agent adds nothing", () => {
+  const { parent, projectDir } = greenableProject();
+  try {
+    leftBranch(projectDir, [
+      ["src/earlier-work.ts", "export const doneByAnEarlierRun = true;\n"],
+      [".specops/harness-prompts/REQ-000-2026-11-22T10-00-00-000Z-attempt-1-agent.md", "# Implement REQ-000\n"],
+    ]);
+    const r = runHarness(projectDir, scriptedAgent(parent, []), ["--resume", "--skip-doctor"]);
+    const said = r.stdout + r.stderr;
+    assert.match(said, /1 passed/, said);
+    assert.doesNotMatch(said, /produced no files/, said);
+    const files = spawnSync("git", ["show", "--stat", "--format=", "harness/REQ-000~1"], { cwd: projectDir, encoding: "utf8" }).stdout;
+    assert.match(files, /earlier-work\.ts/, "the earlier work is what passed");
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("REQ-708 SCN-708b: a continued branch with nothing but the prompt archive still stops as no-op", () => {
+  const { parent, projectDir } = greenableProject();
+  try {
+    leftBranch(projectDir, [
+      [".specops/harness-prompts/REQ-000-2026-11-22T10-00-00-000Z-attempt-1-agent.md", "# Implement REQ-000\n"],
+    ]);
+    const r = runHarness(projectDir, scriptedAgent(parent, []), ["--resume", "--skip-doctor"]);
+    const said = r.stdout + r.stderr;
+    assert.match(said, /0 passed/, said);
+    assert.match(said, /produced no files/, said);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});

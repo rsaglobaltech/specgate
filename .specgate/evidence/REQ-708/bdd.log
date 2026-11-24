@@ -1,0 +1,11 @@
+▶ dist/tests/unit/harness-run.test.js
+✔ REQ-708 SCN-708a: a continued branch that holds the work is judged by the gate when the agent adds nothing (3135.335041ms)
+✔ REQ-708 SCN-708b: a continued branch with nothing but the prompt archive still stops as no-op (2490.685666ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5833.308708
