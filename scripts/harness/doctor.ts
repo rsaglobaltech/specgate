@@ -15,14 +15,13 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { spawnSync } from "node:child_process";
 import { resolveProjectDir } from "../lib/project-root";
 import { agentIo, wantsJson, EXIT } from "../lib/agent";
 import { error } from "../lib/diagnostics";
 import * as ui from "../lib/ui";
-import { forShell } from "../lib/shell-command";
 import { requirementCapabilities } from "../lib/capabilities";
 import { agentInvocation } from "../draft/confined-agent";
+import { runWithDeadline } from "../lib/run-with-deadline";
 import { selectProfile } from "../../packages/core/src/domain/ProfileMatch";
 import { featureFilePath } from "../../packages/core/src/domain/HarnessRun";
 import type { HarnessRequirement } from "../../packages/core/src/domain/HarnessRun";
@@ -185,12 +184,11 @@ export function checkAgent(
     const run = agentInvocation(agent, promptFile);
     const timeout = opts.timeoutMs ?? PROBE_TIMEOUT_MS;
     // In an empty folder: an agent asked to say OK has nothing of the project to touch.
-    const r = spawnSync(forShell(run.command), {
+    // In its own process group, killed whole at the deadline: an agent that ignores
+    // SIGTERM — a hung one — neither holds the doctor nor outlives it (REQ-691).
+    const r = runWithDeadline(run.stdin ? `${run.command} < "${promptFile}"` : run.command, {
       cwd: dir,
-      shell: true,
-      encoding: "utf8",
-      input: run.stdin ? PROBE_PROMPT : undefined,
-      timeout,
+      timeoutMs: timeout,
       maxBuffer: 16 * 1024 * 1024,
     });
     const output = `${r.stdout || ""}\n${r.stderr || ""}`;
@@ -269,7 +267,9 @@ export function agentLabel(command: string): string {
 export function agentPreflight(
   projectDir: string,
   settings: { agent?: string; profileRules?: Array<{ name: string; match: Record<string, string> }>; profileAgents?: Record<string, string> },
-  pending: readonly HarnessRequirement[]
+  pending: readonly HarnessRequirement[],
+  /** The run's own deadline, ms: the probe waits no longer than it. */
+  runTimeoutMs = PROBE_TIMEOUT_MS
 ): void {
   const routing: AgentRouting = {
     rules: settings.profileRules || [],
@@ -278,7 +278,10 @@ export function agentPreflight(
     draftAgent: null,
   };
   const routes = routesOf(projectDir, pending, routing);
-  const bad = checkAgents(projectDir, routes, null, { probe: true }).filter(failed);
+  const bad = checkAgents(projectDir, routes, null, {
+    probe: true,
+    timeoutMs: Math.min(PROBE_TIMEOUT_MS, runTimeoutMs),
+  }).filter(failed);
   if (bad.length === 0) return;
   const lines = bad.map((c) => `${c.usedBy.join(", ")}: ${c.agent} — ${c.reason}\n  fix: ${c.fix}`);
   throw Object.assign(

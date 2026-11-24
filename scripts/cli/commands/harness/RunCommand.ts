@@ -114,7 +114,7 @@ export class RunCommand extends BaseCommand {
         !process.env.SPECGATE_SKIP_DOCTOR?.match(/^(1|true|yes)$/i) &&
         !process.env.SPECGATE_HARNESS_WORKER
       ) {
-        agentPreflight(projectDir, settings, pending);
+        agentPreflight(projectDir, settings, pending, args.timeout * 1000);
       }
       const dirty = preflight(projectDir, args, settings, plan, pending);
       const { ctx, runRecordBase } = startRun(projectDir, args, settings, pending, dirty);

@@ -290,3 +290,47 @@ test("REQ-690: a profile's agent is checked even when nothing pending goes to it
     p.done();
   }
 });
+
+test("REQ-691: a hung agent that ignores SIGTERM neither holds the doctor nor outlives it", { skip: process.platform === "win32" && "process groups are POSIX" }, () => {
+  const { checkAgent } = require("../../scripts/harness/doctor");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-doctor-hang-"));
+  const marker = `specgate-doctor-hang-${process.pid}-${Date.now()}`;
+  const script = path.join(dir, "hung.js");
+  fs.writeFileSync(script, `process.on("SIGTERM", () => {}); setInterval(() => {}, 1000); setTimeout(() => process.exit(0), 300000); // ${marker}\n`);
+  try {
+    const t0 = Date.now();
+    const c = checkAgent(`"${process.execPath}" "${script}" ${marker} {prompt_file}`, dir, { probe: true, timeoutMs: 1500 });
+    assert.ok(Date.now() - t0 < 20000, `held the doctor for ${Date.now() - t0} ms`);
+    assert.equal(c.answered, false);
+    assert.match(c.reason, /did not answer within 2 s|did not answer within 1 s/);
+    assert.equal(spawnSync("pgrep", ["-f", marker], { encoding: "utf8" }).stdout.trim(), "", "the hung agent outlived the doctor");
+  } finally {
+    spawnSync("pkill", ["-9", "-f", marker]);
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-691: a run whose agent hangs is refused within its own deadline, and leaves nothing running", { skip: process.platform === "win32" && "process groups are POSIX" }, () => {
+  const p = library();
+  const marker = `specgate-run-hang-${process.pid}-${Date.now()}`;
+  const script = path.join(p.parent, "hung.js");
+  fs.writeFileSync(script, `process.on("SIGTERM", () => {}); setInterval(() => {}, 1000); setTimeout(() => process.exit(0), 300000); // ${marker}\n`);
+  try {
+    w(p.dir, "harness.config.yaml", `test_cmd: "node pass.js"\nagent: '"${process.execPath}" "${script}" ${marker} {prompt_file}'\n`);
+    p.commit();
+    const t0 = Date.now();
+    const r = spawnSync(process.execPath, [CLI, "harness", "run", "--req", "REQ-004", "--timeout", "3", "--max-attempts", "1"], {
+      cwd: p.dir,
+      encoding: "utf8",
+      timeout: 120000,
+      env: { ...process.env, SPECGATE_SKIP_DOCTOR: "", NO_COLOR: "1" },
+    });
+    assert.ok(Date.now() - t0 < 30000, `took ${Date.now() - t0} ms`);
+    assert.match(out(r), /harness_agent_unavailable/);
+    assert.match(out(r), /did not answer within 3 s/);
+    assert.equal(spawnSync("pgrep", ["-f", marker], { encoding: "utf8" }).stdout.trim(), "");
+  } finally {
+    spawnSync("pkill", ["-9", "-f", marker]);
+    p.done();
+  }
+});

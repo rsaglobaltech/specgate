@@ -2308,7 +2308,8 @@ test(
           "--format",
           "json",
         ],
-        { encoding: "utf8", timeout: 120000 }
+        // The run's own deadline is under test, not the doctor's question before it.
+        { encoding: "utf8", timeout: 120000, env: { ...process.env, SPECGATE_SKIP_DOCTOR: "1" } }
       );
       assert.ok((Date.now() - t0) / 1000 < 60, "cut at the deadline");
       assert.match(r.stdout + r.stderr, /timed out/);
