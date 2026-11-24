@@ -1,4 +1,3 @@
-@change:harness-compat
 Feature: The compatibility exam for a tool, a level and n runs
 
   @REQ-711 @SCN-711a

@@ -1,4 +1,3 @@
-@change:resume-judges-branch
 Feature: A continued branch that holds the work is judged by the gate
 
   @REQ-708 @SCN-708a

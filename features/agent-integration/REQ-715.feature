@@ -1,4 +1,3 @@
-@change:harness-compat
 Feature: A cell's verdict
 
   @REQ-715 @SCN-715a

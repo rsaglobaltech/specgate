@@ -1,4 +1,3 @@
-@change:harness-compat
 Feature: Specgate's MCP server for Codex and OpenCode
 
   @REQ-713 @SCN-713a

@@ -1,4 +1,3 @@
-@change:harness-compat
 Feature: The internal matrix
 
   @REQ-716 @SCN-716a

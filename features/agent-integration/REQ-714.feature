@@ -1,4 +1,3 @@
-@change:harness-compat
 Feature: Only the keys a run was given
 
   @REQ-714 @SCN-714a

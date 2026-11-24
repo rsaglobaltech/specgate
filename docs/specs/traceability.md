@@ -49,6 +49,12 @@ Map requirements to scenarios, domain model elements, implementation artifacts, 
 | REQ-702 | SCN-702a | `features/agent-integration/REQ-702.feature` | - | - | - | - | `scripts/cli/commands/harness/EvalCommand.ts` | tests/unit/skill-evals.test.ts | Implemented |
 | REQ-703 | SCN-703a | `features/agent-integration/REQ-703.feature` | - | - | - | - | `scripts/cli/commands/harness/EvalCommand.ts` | tests/unit/skill-evals.test.ts | Implemented |
 | REQ-704 | SCN-704a | `features/agent-integration/REQ-704.feature` | - | - | - | - | `scripts/cli/commands/harness/EvalCommand.ts` | tests/unit/skill-evals.test.ts | Implemented |
+| REQ-711 | SCN-711a | `features/agent-integration/REQ-711.feature` | - | - | - | - | `packages/core/src/domain/Compat.ts, scripts/cli/commands/harness/CompatCommand.ts, scripts/lib/surface.ts` | compat/hidden/fees.hidden.test.js, e2e/journeys/compat.mjs, tests/unit/harness-compat.test.ts | Implemented |
+| REQ-712 | SCN-712a | `features/agent-integration/REQ-712.feature` | - | - | - | - | `packages/core/src/domain/Compat.ts, scripts/cli/commands/harness/CompatCommand.ts` | tests/unit/harness-compat.test.ts | Implemented |
+| REQ-713 | SCN-713a | `features/agent-integration/REQ-713.feature` | - | - | - | - | `scripts/cli/commands/harness/CompatCommand.ts, scripts/cli/commands/mcp/McpInstallCommand.ts` | tests/unit/harness-compat.test.ts | Implemented |
+| REQ-714 | SCN-714a | `features/agent-integration/REQ-714.feature` | - | - | - | - | `packages/core/src/domain/Compat.ts, scripts/cli/commands/harness/CompatCommand.ts` | tests/unit/harness-compat.test.ts | Implemented |
+| REQ-715 | SCN-715a | `features/agent-integration/REQ-715.feature` | - | - | - | - | `packages/core/src/domain/Compat.ts` | tests/unit/harness-compat.test.ts | Implemented |
+| REQ-716 | SCN-716a | `features/agent-integration/REQ-716.feature` | - | - | - | - | `packages/core/src/domain/Compat.ts, scripts/cli/commands/harness/CompatCommand.ts, scripts/lib/surface.ts` | e2e/journeys/compat.mjs, tests/unit/harness-compat.test.ts | Implemented |
 | REQ-466 | SCN-466a | `features/api/REQ-466.feature` | - | - | - | - | `scripts/api/index.ts, scripts/cli/commands/spec/ClarifyCommands.ts, scripts/cli/commands/spec/MatrixCommand.ts, scripts/cli/commands/spec/StatusCommand.ts` | tests/unit/specgate-api.test.ts | Implemented |
 | REQ-467 | SCN-467a | `features/api/REQ-467.feature` | - | - | - | - | `scripts/cli/commands/spec/MatrixCommand.ts, scripts/cli/commands/spec/StatusCommand.ts` | tests/unit/specgate-api.test.ts | Implemented |
 | REQ-468 | SCN-468a | `features/api/REQ-468.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Implemented |
@@ -300,6 +306,7 @@ Map requirements to scenarios, domain model elements, implementation artifacts, 
 | REQ-699 | SCN-699a | `features/harness/REQ-699.feature` | - | - | - | - | `packages/core/src/domain/Sandbox.ts, scripts/lib/sandbox-registry.ts` | tests/unit/sandbox-swarm.test.ts | Implemented |
 | REQ-700 | SCN-700a | `features/harness/REQ-700.feature` | - | - | - | - | `scripts/cli/commands/change/ChangeCommand.ts, scripts/lib/sandbox-registry.ts` | tests/unit/sandbox-swarm.test.ts | Implemented |
 | REQ-701 | SCN-701a | `features/harness/REQ-701.feature` | - | - | - | - | `scripts/harness/sandboxes.ts, scripts/lib/sandbox-registry.ts, scripts/lib/sbx.ts, scripts/lib/surface.ts` | e2e/journeys/harness.mjs, tests/helpers/fake-sbx.ts, tests/unit/sandbox-swarm.test.ts | Implemented |
+| REQ-708 | SCN-708a | `features/harness/REQ-708.feature` | - | - | - | - | `scripts/harness/run/attempt.ts, scripts/harness/run/worktree-checks.ts` | tests/unit/harness-run.test.ts | Implemented |
 | REQ-128 | SCN-128a | `features/live-harness/REQ-128.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
 | REQ-129 | SCN-129a | `features/live-harness/REQ-129.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
 | REQ-130 | SCN-130a | `features/live-harness/REQ-130.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
