@@ -52,6 +52,7 @@ exports.needsTest = needsTest;
 exports.changedFiles = changedFiles;
 exports.specgateCommand = specgateCommand;
 exports.runSpecgate = runSpecgate;
+exports.hookLog = hookLog;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
 const node_child_process_1 = require("node:child_process");
@@ -215,5 +216,20 @@ function runSpecgate(args, cwd, opts = {}) {
         timeout: opts.timeout ?? 120_000,
         maxBuffer: 16 * 1024 * 1024,
     });
+}
+/**
+ * compat-evidence REQ-717: with SPECGATE_HOOK_LOG set, one line per decision a
+ * hook takes — what the exam counts as the plugin's work. Never throws.
+ */
+function hookLog(event, env = process.env) {
+    const file = env.SPECGATE_HOOK_LOG;
+    if (!file)
+        return;
+    try {
+        fs.appendFileSync(file, `${JSON.stringify({ t: Date.now() / 1000, ...event })}\n`, "utf8");
+    }
+    catch {
+        /* a log that cannot be written never breaks a session */
+    }
 }
 //# sourceMappingURL=project-state.js.map

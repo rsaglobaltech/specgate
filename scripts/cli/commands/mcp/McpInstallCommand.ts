@@ -87,6 +87,8 @@ export class McpInstallCommand extends BaseCommand {
       io.emit({ installed: true, client, configPath: "codex mcp (global)", global: true }, () => {
         console.log("✅ MCP server added to Codex with `codex mcp add specgate`");
         console.log("   This is your own Codex configuration: it applies to every project, not only this one.");
+        console.log("   `codex exec` refuses MCP calls with nobody to approve them: to allow this server's there, add");
+        console.log('   default_tools_approval_mode = "approve"  under [mcp_servers.specgate] in ~/.codex/config.toml');
       });
       return;
     }

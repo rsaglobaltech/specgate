@@ -219,7 +219,10 @@ const run = (over: Partial<CompatRun>): CompatRun => ({
 
 test("REQ-715 SCN-715a: two of three is amber", () => {
   const cell = cellOf([run({}), run({ hidden: false }), run({ seconds: 30 })]);
-  assert.deepEqual(cell, { colour: "amber", passed: 2, runs: 3, medianSeconds: 10 });
+  assert.deepEqual(
+    [cell.colour, cell.passed, cell.runs, cell.medianSeconds],
+    ["amber", 2, 3, 10]
+  );
   assert.equal(cellOf([run({}), run({}), run({})]).colour, "green");
   assert.equal(cellOf([run({ check: false })]).colour, "red");
   assert.equal(cellOf([run({ ran: false })]).colour, "n/a");

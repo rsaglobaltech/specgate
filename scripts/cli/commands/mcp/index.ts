@@ -10,7 +10,7 @@ export class McpCommand extends BaseCommand {
     if (sub === "--help" || sub === "-h") {
       process.stdout.write(
         "\n  specgate mcp install --client <claude|cursor|opencode|codex> [--json]\n" +
-          "  specgate mcp serve\n\n" +
+          "  specgate mcp serve [--log <file>]\n\n" +
           "  install writes the MCP server configuration for one AI client;\n" +
           "  serve runs the server over stdio, which is what that configuration starts.\n\n"
       );
@@ -20,6 +20,9 @@ export class McpCommand extends BaseCommand {
       // `@specgate/mcp-server`, which every generated MCP config pointed at,
       // was never published: the server ships inside this package instead, and
       // its tools call the very CLI that is serving them rather than `npx`.
+      // compat-evidence REQ-717: `--log <file>` — the calls received, one a line.
+      const log = this.args.indexOf("--log");
+      if (log >= 0 && this.args[log + 1]) process.env.SPECGATE_MCP_LOG = this.args[log + 1];
       const root = findCliRoot(__dirname);
       process.env.SPECGATE_CLI = `"${process.execPath}" "${path.join(root, "bin", "specgate.js")}"`;
       const { McpServer } = require(

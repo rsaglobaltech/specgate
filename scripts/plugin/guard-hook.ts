@@ -25,6 +25,7 @@ import {
   isTestFile,
   needsTest,
   openChanges,
+  hookLog,
 } from "./project-state";
 
 /** The tools that write a file, and where each names it. */
@@ -139,7 +140,12 @@ export function main(raw: string, env: Record<string, string | undefined> = proc
     return 0;
   }
   const decision = decide(input, env);
-  if (decision.allow) return 0;
+  const file = String((input.tool_input as { file_path?: unknown } | undefined)?.file_path ?? "");
+  if (decision.allow) {
+    hookLog({ hook: "guard", decision: "allowed", file }, env);
+    return 0;
+  }
+  hookLog({ hook: "guard", decision: "refused", file, reason: decision.message }, env);
   process.stderr.write(`${decision.message}\n`);
   return 2;
 }

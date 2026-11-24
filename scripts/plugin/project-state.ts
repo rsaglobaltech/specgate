@@ -202,3 +202,20 @@ export function runSpecgate(
     maxBuffer: 16 * 1024 * 1024,
   });
 }
+
+/**
+ * compat-evidence REQ-717: with SPECGATE_HOOK_LOG set, one line per decision a
+ * hook takes — what the exam counts as the plugin's work. Never throws.
+ */
+export function hookLog(
+  event: { hook: "guard" | "gate"; decision: "allowed" | "refused" | "passed" | "blocked" | "told"; reason?: string; file?: string },
+  env: Record<string, string | undefined> = process.env
+): void {
+  const file = env.SPECGATE_HOOK_LOG;
+  if (!file) return;
+  try {
+    fs.appendFileSync(file, `${JSON.stringify({ t: Date.now() / 1000, ...event })}\n`, "utf8");
+  } catch {
+    /* a log that cannot be written never breaks a session */
+  }
+}

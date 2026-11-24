@@ -19,7 +19,7 @@ import {
   type GateDiagnostic,
 } from "./gate-hook";
 import { decide as guardDecide } from "./guard-hook";
-import { isSpecDriven } from "./project-state";
+import { hookLog, isSpecDriven } from "./project-state";
 import { sessionContext } from "./session-hook";
 
 /** What the plugin needs from OpenCode's context. */
@@ -83,6 +83,7 @@ export function createHooks(ctx: OpencodeContext, deps: BridgeDeps = {}) {
           { cwd: dir, tool_name: "Write", tool_input: { file_path: file } },
           env
         );
+        hookLog({ hook: "guard", decision: d.allow ? "allowed" : "refused", file, ...(d.allow ? {} : { reason: d.message }) }, env);
         if (!d.allow) throw new Error(d.message);
       }
     },
@@ -102,6 +103,7 @@ export function createHooks(ctx: OpencodeContext, deps: BridgeDeps = {}) {
           told.add(k);
           return false;
         });
+        hookLog({ hook: "gate", decision: decision.block ? "blocked" : decision.message ? "told" : "passed", ...(decision.message ? { reason: decision.message } : {}) }, env);
         if (decision.block) {
           await ctx.client.session.prompt({
             path: { id },

@@ -27,7 +27,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { runSpecgate } from "./project-state";
+import { hookLog, runSpecgate } from "./project-state";
 
 /** What the hook is handed on stdin. Only the fields this hook reads. */
 export interface StopHookInput {
@@ -146,6 +146,11 @@ export function main(raw: string): number {
   }
 
   const decision = decide(input, runValidate, alreadyBlocked);
+  hookLog({
+    hook: "gate",
+    decision: decision.block ? "blocked" : decision.message ? "told" : "passed",
+    ...(decision.message ? { reason: decision.message } : {}),
+  });
   if (decision.message) process.stderr.write(`${decision.message}\n`);
   return decision.block ? 2 : 0;
 }

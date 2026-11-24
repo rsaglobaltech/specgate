@@ -1,0 +1,11 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-724 SCN-724a: delivered without the server — the cell is green, shows 0 calls, and is listed (1.919ms)
+✔ REQ-724 SCN-724b: two models of one tool are two rows, and each task its own table (0.222541ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 55.067791

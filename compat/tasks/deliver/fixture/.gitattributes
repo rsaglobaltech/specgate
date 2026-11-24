@@ -1,0 +1,2 @@
+# The traceability matrix is generated: merge both sides, `specgate check` regenerates it.
+docs/specs/traceability.md merge=union

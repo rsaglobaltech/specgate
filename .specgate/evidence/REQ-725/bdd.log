@@ -1,0 +1,12 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-725 SCN-725a: green at the first step — the next model is not run (1799.626167ms)
+✔ REQ-725 SCN-725b: one step up where the cheapest is red, and the report names the cheapest green model (4273.340417ms)
+✔ REQ-725: the ladder stops at the last model, and the cost per delivered requirement is the cost over the runs that passed (0.513292ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6126.22375
