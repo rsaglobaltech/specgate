@@ -221,10 +221,11 @@ interface Wiring {
 }
 
 /** The copy, given the level's integration (REQ-712, REQ-719); the command line's extra flags. */
-function integrate(dir: string, tool: CompatTool, level: CompatLevel, scratch: string): Wiring {
+function integrate(dir: string, tool: CompatTool, level: CompatLevel, scratch: string, logDir: string): Wiring {
   const it = integrationOf(tool, level)!;
-  const mcpLog = path.join(scratch, "mcp.log");
-  const hookLog = path.join(scratch, "hooks.log");
+  // In the run's folder from the start: what Specgate's side sees can be read while the agent works.
+  const mcpLog = path.join(logDir, "mcp.log");
+  const hookLog = path.join(logDir, "hooks.log");
   if (!it.rules) {
     // REQ-719: nothing of Specgate's to read while the agent works; put back to judge.
     fs.renameSync(path.join(dir, "AGENTS.md"), path.join(scratch, "AGENTS.md"));
@@ -349,7 +350,7 @@ function oneRun(
     git(dir, "add", "-A");
     git(dir, "commit", "-qm", "the exam as given");
     const given = (git(dir, "rev-parse", "HEAD").stdout || "").trim();
-    const wiring = integrate(dir, tool, level, scratch);
+    const wiring = integrate(dir, tool, level, scratch, logDir);
     git(dir, "add", "-A");
     git(dir, "commit", "-qm", `${level} for ${tool}`, "--allow-empty");
 
@@ -370,8 +371,12 @@ function oneRun(
     fs.copyFileSync(promptFile, path.join(logDir, "prompt.md"));
 
     const template = o.agents[tool] || defaultCommand(tool, model);
-    const command = template.split("{extra}").join(wiring.extra).split("{prompt_file}").join(q(promptFile));
-    fs.writeFileSync(path.join(logDir, "command.txt"), `${command}\n`);
+    const agent = template.split("{extra}").join(wiring.extra).split("{prompt_file}").join(q(promptFile));
+    fs.writeFileSync(path.join(logDir, "command.txt"), `${agent}\n`);
+    // REQ-718: the session is kept as it happens, not when the tool ends.
+    const sessionFile = path.join(logDir, "session.jsonl");
+    const stderrFile = path.join(logDir, "stderr.log");
+    const command = `( ${agent} ) > ${q(sessionFile)} 2> ${q(stderrFile)}`;
 
     // REQ-714: the provider keys stay out unless named.
     const saved: Record<string, string> = {};
@@ -403,11 +408,10 @@ function oneRun(
     base.ran = true;
     base.seconds = Math.round((Date.now() - t0) / 100) / 10;
     base.exit = r.status;
-    fs.writeFileSync(path.join(logDir, "session.jsonl"), r.stdout || "");
-    fs.writeFileSync(path.join(logDir, "stderr.log"), r.stderr || "");
+    const said = fs.existsSync(sessionFile) ? fs.readFileSync(sessionFile, "utf8") : "";
 
     // REQ-718: what the tool says it did.
-    const session = sessionOf(tool, r.stdout || "");
+    const session = sessionOf(tool, said);
     base.toolCalls = session.calls.length;
     base.testFirst = testFirst(session, fs.realpathSync(dir));
     base.tokensIn = session.tokensIn;
@@ -418,8 +422,6 @@ function oneRun(
     base.mcpCalls = linesOf(wiring.mcpLog).length;
     base.refusals = hooks.filter((h) => h.hook === "guard" && h.decision === "refused").length;
     base.gateHooks = hooks.filter((h) => h.hook === "gate").length;
-    for (const f of [wiring.mcpLog, wiring.hookLog])
-      if (fs.existsSync(f)) fs.copyFileSync(f, path.join(logDir, path.basename(f)));
 
     // The gate's own file, put back to judge a run that worked without it (REQ-719).
     const kept = path.join(scratch, "AGENTS.md");

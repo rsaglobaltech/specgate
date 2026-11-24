@@ -463,3 +463,26 @@ test("REQ-729 SCN-729a: an exam run starts OpenCode with a configuration folder 
     f.done();
   }
 });
+
+test("REQ-718: the session is in the run's folder while the tool is still working", () => {
+  const body = [
+    'console.log(JSON.stringify({ type: "assistant", message: { content: [{ type: "tool_use", name: "Write", input: { file_path: "test/fees.test.js" } }] } }));',
+    'const dir = fs.readdirSync(process.env.RUNS).map((d) => require("node:path").join(process.env.RUNS, d))[0];',
+    "const until = Date.now() + 1500;",
+    'let seen = "";',
+    'while (Date.now() < until && !seen) { try { seen = fs.readFileSync(dir + "/session.jsonl", "utf8"); } catch {} }',
+    'fs.writeFileSync(require("node:path").join(__dirname, "seen.txt"), seen);',
+  ].join("\n");
+  const f = fakeTool("claude", body);
+  try {
+    const runs = path.join(f.project, ".specgate", "compat", "runs");
+    const r = spawnSync(process.execPath, [CLI, "compat", "run", "--tool", "claude", "--level", "L0", "--runs", "1", "--project-dir", f.project], {
+      encoding: "utf8",
+      env: { ...process.env, RUNS: runs, PATH: `${path.join(f.parent, "bin")}${path.delimiter}${process.env.PATH}` },
+    });
+    assert.equal(r.status, 0, out(r));
+    assert.match(fs.readFileSync(path.join(f.parent, "seen.txt"), "utf8"), /"tool_use"/);
+  } finally {
+    f.done();
+  }
+});
