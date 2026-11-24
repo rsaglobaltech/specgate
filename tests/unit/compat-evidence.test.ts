@@ -436,3 +436,30 @@ test("REQ-726 SCN-726b: delivered through the server — the run passes with its
     f.done();
   }
 });
+
+test("REQ-729 SCN-729a: an exam run starts OpenCode with a configuration folder of its own", () => {
+  const f = fakeTool("opencode", 'fs.writeFileSync(require("node:path").join(__dirname, "xdg.txt"), String(process.env.XDG_CONFIG_HOME));');
+  const mine = fs.mkdtempSync(path.join(os.tmpdir(), "my-xdg-"));
+  try {
+    fs.mkdirSync(path.join(mine, "opencode"));
+    fs.writeFileSync(path.join(mine, "opencode", "opencode.json"), '{"mcp":{"mine":{"type":"remote","url":"https://example.invalid"}}}');
+    const before = process.env.XDG_CONFIG_HOME;
+    process.env.XDG_CONFIG_HOME = mine;
+    let r;
+    try {
+      r = spawnSync(process.execPath, [CLI, "compat", "run", "--tool", "opencode", "--level", "L0", "--runs", "1", "--project-dir", f.project], {
+        encoding: "utf8",
+        env: { ...process.env, PATH: `${path.join(f.parent, "bin")}${path.delimiter}${process.env.PATH}` },
+      });
+    } finally {
+      if (before === undefined) delete process.env.XDG_CONFIG_HOME;
+      else process.env.XDG_CONFIG_HOME = before;
+    }
+    const seen = fs.readFileSync(path.join(f.parent, "xdg.txt"), "utf8");
+    assert.notEqual(seen, mine, out(r));
+    assert.match(seen, /specgate-compat-opencode-L0-.*xdg-config$/);
+  } finally {
+    fs.rmSync(mine, { recursive: true, force: true });
+    f.done();
+  }
+});

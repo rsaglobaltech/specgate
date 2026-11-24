@@ -105,7 +105,8 @@ function defaultCommand(tool: CompatTool, model: string): string {
     case "codex":
       return `codex exec -m ${q(model)} -s workspace-write --skip-git-repo-check --json {extra} - < {prompt_file}`;
     case "opencode":
-      return `opencode run --auto -m ${q(model)} --format json -f {prompt_file} {extra} "Follow the attached instructions exactly."`;
+      // A server of the run's own: the background service has the Developer's configuration and none of the run's environment (REQ-729).
+      return `opencode run --standalone --auto -m ${q(model)} --format json -f {prompt_file} {extra} "Follow the attached instructions exactly."`;
   }
 }
 
@@ -307,6 +308,13 @@ function codexHome(scratch: string): { env: Record<string, string>; done: () => 
   };
 }
 
+/** A configuration folder of the run's own for OpenCode (REQ-729). */
+function opencodeConfig(scratch: string): string {
+  const dir = path.join(scratch, "xdg-config");
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
 const linesOf = (file: string): Array<Record<string, unknown>> => {
   try {
     return fs.readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
@@ -384,6 +392,8 @@ function oneRun(
           PATH: `${bin}${path.delimiter}${process.env.PATH || ""}`,
           SPECGATE_HOOK_LOG: wiring.hookLog,
           ...(home ? home.env : {}),
+          // REQ-729: OpenCode with a configuration of its own — the Developer's servers, keys and plugins stay out.
+          ...(tool === "opencode" ? { XDG_CONFIG_HOME: opencodeConfig(scratch) } : {}),
         },
       });
     } finally {

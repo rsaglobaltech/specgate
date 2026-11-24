@@ -32,7 +32,7 @@ function fakeTool(name: string, behaviour: "implement" | "claim") {
       '  skills: fs.existsSync(".agents/skills"),',
       '  commands: fs.existsSync(".opencode/commands"),',
       '  mcp: fs.existsSync("opencode.json") || fs.existsSync(".mcp.json"),',
-      '  plugin: fs.existsSync(".opencode/plugin"),',
+      '  plugin: fs.existsSync(".opencode/plugins/specgate/index.js"),',
       "}));",
       behaviour === "implement"
         ? [

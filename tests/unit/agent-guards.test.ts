@@ -354,7 +354,7 @@ test("REQ-422: agents init --tool opencode-plugin writes the plugin and the scri
   const files = TOOLS["opencode-plugin"].files();
   const paths = files.map((f: { path: string }) => f.path.split(path.sep).join("/"));
   for (const p of [
-    ".opencode/plugin/specgate.js",
+    ".opencode/plugins/specgate/index.js",
     ".opencode/specgate/opencode-bridge.cjs",
     ".opencode/specgate/guard-hook.cjs",
     ".opencode/specgate/session-hook.cjs",
@@ -363,15 +363,147 @@ test("REQ-422: agents init --tool opencode-plugin writes the plugin and the scri
   ]) {
     assert.ok(paths.includes(p), `${p} missing:\n${paths.join("\n")}`);
   }
-  const plugin = files.find((f: { path: string }) => f.path.endsWith("specgate.js")).contents;
+  const plugin = files.find((f: { path: string }) => f.path.endsWith("index.js")).contents;
   assert.match(plugin, /createRequire\(import\.meta\.url\)/);
-  assert.match(plugin, /\.\.\/specgate\/opencode-bridge\.cjs/);
-  assert.match(plugin, /export const Specgate = async/);
+  assert.match(plugin, /\.\.\/\.\.\/specgate\/opencode-bridge\.cjs/);
   // The copies load each other by their .cjs names, whatever package.json says about modules.
   for (const f of files.filter((x: { path: string }) => x.path.endsWith(".cjs"))) {
     assert.doesNotMatch(f.contents, /require\("\.\/[\w-]+"\)/, f.path);
   }
   assert.equal(TOOLS["opencode-plugin"].optIn, true);
+});
+
+// ── opencode-plugin-v2 REQ-727, REQ-728: the plugin on OpenCode 2 ──
+
+const agentsInit = require("../../scripts/agents/init");
+
+test("REQ-727 SCN-727a: the plugin is the definition OpenCode 2 loads", () => {
+  const files = TOOLS["opencode-plugin"].files();
+  const plugin = files.find((f: { path: string }) =>
+    f.path.split(path.sep).join("/").endsWith(".opencode/plugins/specgate/index.js")
+  ).contents;
+  assert.match(plugin, /import \{ Plugin \} from "@opencode\/plugin";/);
+  assert.match(plugin, /export default Plugin\.define\(\{ id: "specgate", setup: \(ctx\) => setupV2\(ctx\) \}\);/);
+  assert.doesNotMatch(plugin, /export const Specgate/);
+});
+
+test("REQ-727 SCN-727b: the plugin an earlier Specgate generated is taken away, one written by hand is left", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "oc-plugin-"));
+  try {
+    const old = path.join(root, ".opencode", "plugin", "specgate.js");
+    fs.mkdirSync(path.dirname(old), { recursive: true });
+    fs.writeFileSync(old, `${agentsInit.OPENCODE_PLUGIN_MARK}\nexport const Specgate = async () => ({});\n`);
+    const r = spawnSync(process.execPath, [path.join(ROOT_DIR, "bin", "specgate.js"), "agents", "init", "--tool", "opencode-plugin"], { cwd: root, encoding: "utf8" });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.equal(fs.existsSync(old), false, "the generated v1 plugin is still there");
+    assert.ok(fs.existsSync(path.join(root, ".opencode", "plugins", "specgate", "index.js")));
+
+    fs.mkdirSync(path.dirname(old), { recursive: true });
+    fs.writeFileSync(old, "// mine\nexport const Specgate = async () => ({});\n");
+    assert.equal(agentsInit.removeOpencodePluginV1(path.join(root, ".opencode")), false);
+    assert.ok(fs.existsSync(old), "a plugin written by hand was removed");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+/** OpenCode 2's context, as the plugin uses it: its hooks kept to be called, its events fed by hand. */
+function fakeV2(root: string) {
+  const hooks: Record<string, (event: any) => unknown> = {};
+  const sent: { id: string; text: string }[] = [];
+  const queue: any[] = [];
+  let wake: (() => void) | null = null;
+  const ctx = {
+    location: { directory: root },
+    session: {
+      hook: async (name: string, fn: (event: any) => unknown) => {
+        hooks[`session.${name}`] = fn;
+      },
+      prompt: async (o: { sessionID: string; text: string }) => {
+        sent.push({ id: o.sessionID, text: o.text });
+      },
+    },
+    tool: {
+      hook: async (name: string, fn: (event: any) => unknown) => {
+        hooks[`tool.${name}`] = fn;
+      },
+    },
+    event: {
+      subscribe: ({ signal }: { signal: AbortSignal }) => ({
+        async *[Symbol.asyncIterator]() {
+          while (!signal.aborted) {
+            if (queue.length === 0) await new Promise<void>((ok) => (wake = ok));
+            while (queue.length) yield queue.shift();
+          }
+        },
+      }),
+    },
+  };
+  const emit = async (event: unknown) => {
+    queue.push(event);
+    wake?.();
+    await new Promise((ok) => setTimeout(ok, 20));
+  };
+  return { ctx, hooks, sent, emit };
+}
+
+test("REQ-728 SCN-728a SCN-728c: on OpenCode 2, code before its test is refused and recorded, and the session knows the change", async () => {
+  const root = gitProject(ALL_PENDING);
+  const log = path.join(root, "hooks.log");
+  const v2 = fakeV2(root);
+  const stop = await bridge.setupV2(v2.ctx, { env: { SPECGATE_HOOK_LOG: log } });
+  try {
+    const file = path.join(root, "src/core/map/scan.ts");
+    await assert.rejects(
+      async () => v2.hooks["tool.execute.before"]!({ tool: "write", input: { path: file, content: "x" } }),
+      /write the test for REQ-311 first/
+    );
+    await assert.rejects(
+      async () => v2.hooks["tool.execute.before"]!({ tool: "edit", input: { path: file, oldString: "a", newString: "b" } }),
+      /write the test for REQ-311 first/
+    );
+    await v2.hooks["tool.execute.before"]!({ tool: "write", input: { path: "test/module-map.test.ts", content: "x" } });
+    await v2.hooks["tool.execute.before"]!({ tool: "shell", input: { command: "npm test" } });
+    const lines = fs.readFileSync(log, "utf8").trim().split("\n").map((l) => JSON.parse(l));
+    assert.deepEqual(lines.map((l) => l.decision), ["refused", "refused", "allowed"]);
+    assert.equal(lines[0].file, file);
+
+    const event = { system: [{ type: "text", text: "base" }] };
+    await v2.hooks["session.context"]!(event);
+    assert.equal(event.system.length, 2);
+    assert.match(event.system[1]!.text, /module-map/);
+  } finally {
+    stop();
+  }
+});
+
+test("REQ-728 SCN-728b: on OpenCode 2 the gate's findings are sent once per message when the agent stops", async () => {
+  const root = gitProject(ALL_PENDING);
+  const v2 = fakeV2(root);
+  let red = true;
+  const stop = await bridge.setupV2(v2.ctx, {
+    env: {},
+    runValidate: () =>
+      red ? { ok: false, diagnostics: [{ code: "TDD-1", message: "REQ-311 has no test", fix: "write it" }] } : { ok: true, diagnostics: [] },
+  });
+  try {
+    const stopped = () => v2.emit({ type: "session.execution.succeeded", data: { sessionID: "s1" } });
+    await v2.hooks["session.prompt"]!({ sessionID: "s1", messageID: "m1" });
+    await stopped();
+    assert.equal(v2.sent.length, 1);
+    assert.match(v2.sent[0]!.text, /TDD-1/);
+    assert.equal(v2.sent[0]!.id, "s1");
+    await stopped();
+    assert.equal(v2.sent.length, 1, "told once per message, never looped");
+    await v2.emit({ type: "session.text.ended", data: { sessionID: "s1" } });
+    assert.equal(v2.sent.length, 1);
+    await v2.hooks["session.prompt"]!({ sessionID: "s1", messageID: "m2" });
+    red = false;
+    await stopped();
+    assert.equal(v2.sent.length, 1, "a green gate says nothing");
+  } finally {
+    stop();
+  }
 });
 
 // ── REQ-423: installed once per user, quiet where there are no specs ──
@@ -395,7 +527,7 @@ test("REQ-423 SCN-423a: one install for every repository; a second run changes n
   const first = runCli(["agents", "install", "--global"], { cwd: dir, env });
   assert.equal(first.status, 0, first.stderr);
   const pluginDir = path.join(dir, ".config", "opencode");
-  assert.ok(fs.existsSync(path.join(pluginDir, "plugin", "specgate.js")), first.stdout);
+  assert.ok(fs.existsSync(path.join(pluginDir, "plugins", "specgate", "index.js")), first.stdout);
   assert.ok(fs.existsSync(path.join(pluginDir, "specgate", "guard-hook.cjs")));
   // Claude Code installs plugins itself: the two commands, from this repository's marketplace.
   assert.match(first.stdout, /\/plugin marketplace add rsaglobaltech\/specgate/);

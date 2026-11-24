@@ -1,0 +1,11 @@
+▶ dist/tests/unit/agent-guards.test.js
+✔ REQ-728 SCN-728a SCN-728c: on OpenCode 2, code before its test is refused and recorded, and the session knows the change (238.785083ms)
+✔ REQ-728 SCN-728b: on OpenCode 2 the gate's findings are sent once per message when the agent stops (212.635708ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 545.390375

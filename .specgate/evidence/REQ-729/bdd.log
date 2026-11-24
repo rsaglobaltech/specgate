@@ -1,0 +1,10 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-729 SCN-729a: an exam run starts OpenCode with a configuration folder of its own (2038.974916ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2118.734459
