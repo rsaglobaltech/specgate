@@ -2284,7 +2284,9 @@ test(
     const script = path.join(parent, "hang.js");
     fs.writeFileSync(
       script,
-      `process.on("SIGTERM", () => {}); setInterval(() => {}, 1000); // ${marker}\n`
+      // It ignores SIGTERM, as the hung agent did; it still ends by itself after
+      // five minutes, so a test killed before its cleanup leaves no orphan behind.
+      `process.on("SIGTERM", () => {}); setInterval(() => {}, 1000); setTimeout(() => process.exit(0), 300000); // ${marker}\n`
     );
     try {
       const t0 = Date.now();
@@ -2317,7 +2319,8 @@ test(
         "the agent is still running after the harness gave up on it"
       );
     } finally {
-      spawnSync("pkill", ["-f", marker]);
+      // SIGKILL: the agent ignores SIGTERM on purpose.
+      spawnSync("pkill", ["-9", "-f", marker]);
       fs.rmSync(parent, { recursive: true, force: true });
     }
   }
