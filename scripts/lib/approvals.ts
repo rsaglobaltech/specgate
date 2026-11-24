@@ -20,6 +20,8 @@ import {
   type Identity,
   type LayerApproval,
 } from "../../packages/core/src/domain/Approvals";
+import { sealDiff, sealsOf, type Seals } from "../../packages/core/src/domain/DeltaSeal";
+import { error, warning, type Diagnostic } from "./diagnostics";
 
 /**
  * The project side of roles and approvals (REQ-310..315, ADR-0045): the
@@ -82,7 +84,17 @@ function layerTexts(projectDir: string, id: string) {
   });
 }
 
-export function readRecords(projectDir: string, id: string): ApprovalRecord[] {
+/** The record of `approvals.json` that holds the requirements' seals (REQ-739). */
+export const SEALS_LAYER = "requirements";
+
+export interface SealRecord {
+  layer: typeof SEALS_LAYER;
+  seals: Seals;
+  by: Identity;
+  at: string;
+}
+
+function allRecords(projectDir: string, id: string): Array<ApprovalRecord | SealRecord> {
   const text = read(path.join(changeDir(projectDir, id), APPROVALS_FILE));
   if (!text) return [];
   try {
@@ -91,6 +103,81 @@ export function readRecords(projectDir: string, id: string): ApprovalRecord[] {
   } catch {
     return [];
   }
+}
+
+/** The layers' approvals: the seals' record is not one of them. */
+export function readRecords(projectDir: string, id: string): ApprovalRecord[] {
+  return allRecords(projectDir, id).filter(
+    (r): r is ApprovalRecord => (r.layer as string) !== SEALS_LAYER
+  );
+}
+
+/** The seals the last approval recorded, or null when none ever did (REQ-741). */
+export function readSeals(projectDir: string, id: string): SealRecord | null {
+  const found = allRecords(projectDir, id).filter(
+    (r): r is SealRecord => (r.layer as string) === SEALS_LAYER
+  );
+  const last = found[found.length - 1];
+  return last && last.seals && typeof last.seals === "object" ? last : null;
+}
+
+/** Every delta of the change: `specs/<capability>/spec.md`. */
+function deltaTexts(projectDir: string, id: string): string[] {
+  const dir = path.join(changeDir(projectDir, id), "specs");
+  let names: string[] = [];
+  try {
+    names = fs.readdirSync(dir).sort();
+  } catch {
+    return [];
+  }
+  return names
+    .map((n) => read(path.join(dir, n, "spec.md")))
+    .filter((t): t is string => t !== null);
+}
+
+/** The seals of the change's requirements as its deltas are now. */
+export function currentSeals(projectDir: string, id: string): Seals {
+  return sealsOf(deltaTexts(projectDir, id));
+}
+
+function writeRecords(
+  projectDir: string,
+  id: string,
+  records: ApprovalRecord[],
+  seals: SealRecord | null
+): void {
+  fs.writeFileSync(
+    path.join(changeDir(projectDir, id), APPROVALS_FILE),
+    `${JSON.stringify(seals ? [...records, seals] : records, null, 2)}\n`,
+    "utf8"
+  );
+}
+
+export interface SealFinding {
+  requirement: string;
+  what: "changed" | "added" | "gone";
+}
+
+/**
+ * What an approved change's requirements are against their seals (REQ-740):
+ * `unsealed` when its approval recorded none (REQ-741), else each requirement
+ * that changed, was added after the approval, or is gone.
+ */
+export function sealFindings(
+  projectDir: string,
+  id: string
+): { unsealed: boolean; findings: SealFinding[] } {
+  const record = readSeals(projectDir, id);
+  if (!record) return { unsealed: true, findings: [] };
+  const d = sealDiff(record.seals, currentSeals(projectDir, id));
+  return {
+    unsealed: false,
+    findings: [
+      ...d.changed.map((requirement) => ({ requirement, what: "changed" as const })),
+      ...d.added.map((requirement) => ({ requirement, what: "added" as const })),
+      ...d.gone.map((requirement) => ({ requirement, what: "gone" as const })),
+    ],
+  };
 }
 
 export interface ChangeApprovals {
@@ -228,13 +315,15 @@ export function approveLayers(
     );
     if (!already) records.push({ layer: t.id, by: who, role: t.owner, hash, at: today });
   }
-  if (targets.length > 0) {
-    fs.writeFileSync(
-      path.join(changeDir(projectDir, id), APPROVALS_FILE),
-      `${JSON.stringify(records, null, 2)}\n`,
-      "utf8"
-    );
-  }
+  // REQ-739: approving the change seals its requirements, at lite rigor with
+  // nothing written in its layers too. Approving one layer seals them only
+  // when nothing did yet: a layer's owner does not re-seal what another rewrote.
+  const sealed = readSeals(projectDir, id);
+  const seals: SealRecord | null =
+    !layers || !sealed
+      ? { layer: SEALS_LAYER, seals: currentSeals(projectDir, id), by: who, at: today }
+      : sealed;
+  if (targets.length > 0 || seals !== sealed) writeRecords(projectDir, id, records, seals);
   const after = changeApprovals(projectDir, id);
   // A 0.27 change with none of the layers written is approved as 0.27 did it.
   const date = present.length === 0 ? today : after.approvedAt;
@@ -278,5 +367,59 @@ export function missingApprovals(
     fix: layer
       ? `specgate change approve ${id} --layer ${layer.layer}, by the ${layer.owner} role — or approvals: { required: never } in harness.config.yaml for the 0.27 behaviour.`
       : `specgate change approve ${id} — or approvals: { required: never } in harness.config.yaml for the 0.27 behaviour.`,
+  };
+}
+
+const SEAL_SAID = {
+  changed: "changed since the approval: its statement or its scenarios are not what was approved",
+  added: "was added after the approval",
+  gone: "was approved and is gone from the delta",
+};
+
+/**
+ * What the gate says of one open change's approval (REQ-740, REQ-741): an
+ * error for each requirement that is not what was approved, or the warning
+ * that its approval sealed nothing. The fix is in the message too: `check`
+ * and `apply` print one fix line per refusal, their own.
+ */
+export function sealDiagnostics(
+  projectDir: string,
+  id: string
+): { errors: Diagnostic[]; warnings: Diagnostic[] } {
+  const fix = `specgate change approve ${id}`;
+  const target = `docs/specs/changes/${id}`;
+  const state = sealFindings(projectDir, id);
+  if (state.unsealed) {
+    // A project whose roles or approvals cannot be read (0.35 wrote them
+    // otherwise) says so where they are asked for; here it is read by its line.
+    let approved = Boolean(approvedLine(projectDir, id));
+    try {
+      const approvals = changeApprovals(projectDir, id);
+      if (approvals.schema === "layered" || approvals.recorded) approved = approvals.approved;
+    } catch {
+      /* the `approved:` line stands */
+    }
+    return {
+      errors: [],
+      warnings: approved
+        ? [
+            warning(
+              "approval_not_sealed",
+              `${id} was approved before approvals sealed the requirements: one of them can change and the gate will not see it. Seal it: ${fix}.`,
+              { target, fix }
+            ),
+          ]
+        : [],
+    };
+  }
+  return {
+    errors: state.findings.map((f) =>
+      error(
+        "approved_requirement_changed",
+        `${f.requirement} of ${id} ${SEAL_SAID[f.what]}. If that is what is wanted, approve it again: ${fix}.`,
+        { target, fix }
+      )
+    ),
+    warnings: [],
   };
 }

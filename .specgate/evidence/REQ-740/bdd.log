@@ -1,0 +1,15 @@
+▶ dist/tests/unit/approved-delta.test.js
+✔ REQ-740: the difference between two sets of seals says which changed, which were added, which are gone (2.224959ms)
+✔ REQ-740 SCN-740a: a requirement rewritten after approval — the gate fails naming REQ-031 as changed, whose fix is to approve again (1460.169625ms)
+✔ REQ-740 SCN-740b: a scenario loosened — SCN-032's THEN turned around fails the gate naming REQ-031 (1220.840125ms)
+✔ REQ-740 SCN-740c: approved again — the finding is gone (2275.194709ms)
+✔ REQ-740 SCN-740d: a requirement slipped in — REQ-032 added to the delta after the approval fails the gate, named as added (1220.82175ms)
+✔ REQ-740: a sealed requirement taken out of the delta fails the gate, named as gone (1225.727875ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7512.603

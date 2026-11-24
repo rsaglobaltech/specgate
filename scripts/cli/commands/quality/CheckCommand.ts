@@ -16,6 +16,8 @@ import { deliveredWithFeature } from "../spec/StatusCommand";
 import type { HarnessSettings } from "../../../../packages/core/src/domain/HarnessConfig";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
+import { listChangeIds } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
+import { sealDiagnostics } from "../../../lib/approvals";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
 import type { BaseIdCheck } from "../../../lib/base-ids";
 import { prBase, ticketKeyFindings } from "../../../lib/ticket-keys";
@@ -503,11 +505,19 @@ export class CheckCommand extends BaseCommand {
     // Open changes are judged as they will be after archive (ADR-0035): what
     // passes here is what passes once they are archived.
     const changesStarted = Date.now();
-    const unwritten = unwrittenNotes(projectDir);
+    // REQ-741: with them, the changes whose approval sealed no requirement.
+    const unwritten = [
+      ...unwrittenNotes(projectDir),
+      ...listChangeIds(projectDir).flatMap((id) => sealDiagnostics(projectDir, id).warnings),
+    ];
     if (!json) {
       for (const n of unwritten) {
         process.stdout.write(
-          `  ${ui.muted(`·  Change          ${n.target} — delta not written yet, not judged until it is`)}\n`
+          `  ${ui.muted(
+            n.code === "approval_not_sealed"
+              ? `·  Change          ${n.message}`
+              : `·  Change          ${n.target} — delta not written yet, not judged until it is`
+          )}\n`
         );
       }
     }

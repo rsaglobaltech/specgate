@@ -11,6 +11,7 @@ import { ValidateChangeUseCase } from "../../../../packages/core/src/application
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
 import { formatDiagnostic, error, info, warning } from "../../../lib/diagnostics";
 import type { Diagnostic } from "../../../lib/diagnostics";
+import { sealDiagnostics } from "../../../lib/approvals";
 import * as ui from "../../../lib/ui";
 import { leavingRequirements, unwrittenChanges } from "../../../lib/in-flight";
 import { checkAgainstLock } from "../../../specops/against_lock";
@@ -142,6 +143,28 @@ export class ValidateSpecsCommand extends BaseCommand {
    * what it holds that is gone (REQ-531), and cited evidence that is gone (REQ-530).
    */
   private notes: Diagnostic[] = [];
+
+  /**
+   * approved-delta REQ-740, REQ-741: what a person approved is what the gate
+   * judges. A requirement of an approved change that changed, was added or is
+   * gone since its approval fails; an approval that sealed nothing is said so.
+   */
+  private checkApprovedRequirements(targetDir: string, ids: string[]): void {
+    const errors: Diagnostic[] = [];
+    for (const id of ids) {
+      const found = sealDiagnostics(targetDir, id);
+      this.notes.push(...found.warnings);
+      errors.push(...found.errors);
+    }
+    if (errors.length === 0) return;
+    if (this.agent.json) {
+      this.agent.fail({ validation: null }, [...this.notes, ...errors]);
+      return;
+    }
+    this.logError("Approved requirements are not what was approved:");
+    for (const d of errors) process.stderr.write(`  ${formatDiagnostic(d)}\n`);
+    process.exit(1);
+  }
 
   /** The channel, for the checks — every one of them runs after `execute()` set it. */
   private get agent(): AgentIo {
@@ -1742,6 +1765,7 @@ export class ValidateSpecsCommand extends BaseCommand {
         for (const line of problems) process.stderr.write(`  ${line}\n`);
         process.exit(1);
       }
+      if (strict) this.checkApprovedRequirements(targetDir, ids);
     }
 
     let lockChecked = 0;

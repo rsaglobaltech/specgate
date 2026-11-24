@@ -1,0 +1,11 @@
+▶ dist/tests/unit/approved-delta.test.js
+✔ REQ-741 SCN-741a: approved by an earlier Specgate — only `approved:` in change.yaml: the gate passes with the warning approval_not_sealed (1454.778916ms)
+✔ REQ-741: a change nobody approved is not said to be unsealed (587.95225ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2126.945375

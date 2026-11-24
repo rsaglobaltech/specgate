@@ -10,6 +10,6 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-739 — approving seals each requirement
-- [ ] 2.2 REQ-740 — the gate fails when an approved requirement changed
-- [ ] 2.3 REQ-741 — a change approved before seals existed is said to be unsealed
+- [x] 2.1 REQ-739 — approving seals each requirement
+- [x] 2.2 REQ-740 — the gate fails when an approved requirement changed
+- [x] 2.3 REQ-741 — a change approved before seals existed is said to be unsealed

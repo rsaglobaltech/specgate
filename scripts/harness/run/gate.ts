@@ -3,6 +3,8 @@
  * agent checks — and the adversarial probe of a green attempt.
  */
 
+import { listChangeIds } from "../../../packages/core/src/infrastructure/ChangeWorkspace";
+import { sealDiagnostics } from "../../lib/approvals";
 import { sandboxCommand } from "../../../packages/core/src/domain/Sandbox";
 import { quoteArg } from "../../lib/escape";
 import { HarnessInterrupted, runWithDeadline } from "../../lib/run-with-deadline";
@@ -210,15 +212,26 @@ export function runGate(
     // The agent is told about its worktree, not about the copy it was judged in.
     return { ...run, stdout: toProject(run.stdout || ""), stderr: toProject(run.stderr || "") };
   });
-  report("validate --strict", validate.status === 0 ? "pass" : "fail", {
+  // REQ-740: the copy the gate judges has its changes archived, approvals and
+  // all; what was approved is read from the worktree itself.
+  const unapproved = listChangeIds(worktreeDir).flatMap(
+    (id) => sealDiagnostics(worktreeDir, id).errors
+  );
+  const validated = validate.status === 0 && unapproved.length === 0;
+  report("validate --strict", validated ? "pass" : "fail", {
     ms: Date.now() - validateStart,
   });
-  if (validate.status !== 0) {
+  if (!validated) {
     return {
       ok: false,
       stage: "validate --strict",
-      output: validate.stdout + validate.stderr,
-      hint: "",
+      output:
+        validate.stdout +
+        validate.stderr +
+        unapproved.map((d) => `${d.message}  [${d.code}]\n`).join(""),
+      hint: unapproved.length
+        ? "A requirement is not what a person approved. Do not approve it yourself: put it back as it was approved, or stop and say what must change."
+        : "",
     };
   }
   // REQ-199: a requirement used on a screen needs an end-to-end test that

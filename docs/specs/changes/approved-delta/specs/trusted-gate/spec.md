@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-739 — Approving a change seals each of its requirements
 
-<!-- specgate:trace status=Draft feature=features/trusted-gate/REQ-739.feature actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-739.feature actor=Developer kind=functional -->
 
 The system SHALL, on `specgate change approve <id>`, record for each requirement of the change's delta a seal of its heading, its statement and its scenarios — the `specgate:trace` comment left out —, at every rigor, a change of lite rigor with nothing written in its layers included.
 
@@ -24,7 +24,7 @@ The system SHALL, on `specgate change approve <id>`, record for each requirement
 
 ### Requirement: REQ-740 — The gate fails when an approved requirement changed
 
-<!-- specgate:trace status=Draft feature=features/trusted-gate/REQ-740.feature actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-740.feature actor=Developer kind=functional -->
 
 The system SHALL fail `specgate validate --strict` — and so `check`, `apply` and the harness gate — with `approved_requirement_changed` for each requirement of an approved change whose statement or scenarios differ from its seal, that was added after the approval, or that was sealed and is gone, naming the requirement and which of the three, whose fix is to approve the change again; and SHALL pass once it is approved again.
 
@@ -56,7 +56,7 @@ The system SHALL fail `specgate validate --strict` — and so `check`, `apply` a
 
 ### Requirement: REQ-741 — A change approved before seals existed is said to be unsealed
 
-<!-- specgate:trace status=Draft feature=features/trusted-gate/REQ-741.feature actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-741.feature actor=Developer kind=functional -->
 
 The system SHALL, for a change approved with no seals recorded, warn `approval_not_sealed` naming the change, whose fix is `specgate change approve <id>`, and pass the gate as it did.
 
