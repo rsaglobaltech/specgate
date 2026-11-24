@@ -94,3 +94,9 @@
 {"req":"REQ-706","capability":"project-setup","at":"2026-11-24T05:00:51.101Z"}
 {"req":"REQ-707","capability":"project-setup","at":"2026-11-24T05:01:00.195Z"}
 {"req":"REQ-708","capability":"harness","at":"2026-11-24T09:14:39.399Z"}
+{"req":"REQ-711","capability":"agent-integration","at":"2026-11-24T10:07:02.728Z"}
+{"req":"REQ-712","capability":"agent-integration","at":"2026-11-24T10:07:12.847Z"}
+{"req":"REQ-713","capability":"agent-integration","at":"2026-11-24T10:07:20.795Z"}
+{"req":"REQ-714","capability":"agent-integration","at":"2026-11-24T10:07:29.399Z"}
+{"req":"REQ-715","capability":"agent-integration","at":"2026-11-24T10:07:34.979Z"}
+{"req":"REQ-716","capability":"agent-integration","at":"2026-11-24T10:07:40.267Z"}

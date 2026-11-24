@@ -1,0 +1,6 @@
+{
+  "name": "compat-fixture",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": { "test": "node --test" }
+}

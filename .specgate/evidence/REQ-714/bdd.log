@@ -1,0 +1,11 @@
+▶ dist/tests/unit/harness-compat.test.js
+✔ REQ-714 SCN-714a: the company key stays out of the run (2029.555333ms)
+✔ REQ-714: --keep-env lets a named key through (2085.004292ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4196.128208

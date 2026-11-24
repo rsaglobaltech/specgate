@@ -1,0 +1,12 @@
+▶ dist/tests/unit/harness-compat.test.js
+✔ REQ-712 SCN-712a: at L0 the copy has AGENTS.md and no skills, commands, MCP or plugin (2183.062375ms)
+✔ REQ-712: OpenCode at L3 has its commands, its MCP server and its plugin (3048.356666ms)
+✔ REQ-712 SCN-712b: Codex has no plugin — L3 is n/a and no agent starts (360.95175ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5673.527292

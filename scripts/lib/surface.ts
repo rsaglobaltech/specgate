@@ -354,6 +354,18 @@ export const SURFACE: Command[] = [
     json: { key: "eval", gate: false, args: "<skill> [--runs <n>]" },
   },
   {
+    name: "compat",
+    // harness-compat REQ-711…REQ-716: the same exam for Claude Code, Codex and OpenCode, per level.
+    mcp: false,
+    script: ["compat.js"],
+    help: {
+      group: "core",
+      icon: "🧩",
+      summary: "The compatibility exam: each agent tool at each level of integration, judged by the gate.",
+    },
+    json: { key: "compat", gate: false, args: "run|report [--tool <t>] [--level <L>] [--runs <n>]" },
+  },
+  {
     name: "learn",
     // REQ-684, REQ-685: what keeps coming back, proposed as a rule a person approves.
     mcp: false,

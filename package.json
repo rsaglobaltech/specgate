@@ -33,6 +33,7 @@
     "dist/packages/mcp-spec-driven/src/",
     "types/",
     "templates/",
+    "compat/",
     "examples/",
     "vendor/",
     "README.md",

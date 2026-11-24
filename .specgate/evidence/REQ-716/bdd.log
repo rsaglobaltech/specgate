@@ -1,0 +1,10 @@
+▶ dist/tests/unit/harness-compat.test.js
+✔ REQ-716 SCN-716a: the matrix has a row per tool, four levels, today's date, and docs/ untouched (224.099125ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 297.572292

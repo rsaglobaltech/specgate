@@ -70,6 +70,7 @@ not run reports an `error` about itself.
 | `specgate reproduce <change-id> --capability <c> --title <t> | run <REQ> --json` | `reproduce` | no |
 | `specgate map [<REQ>] [--capability <c>] --json` | `map` | no |
 | `specgate eval <skill> [--runs <n>] --json` | `eval` | no |
+| `specgate compat run|report [--tool <t>] [--level <L>] [--runs <n>] --json` | `compat` | no |
 | `specgate learn [promote <L> --title <rule>] --json` | `learn` | no |
 | `specgate trust [promote <capability>] --json` | `trust` | no |
 | `specgate migrate 1.0 [--dry-run] --json` | `migrate` | no |
