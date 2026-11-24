@@ -19,6 +19,7 @@ import {
   resolveKey,
   setYamlKey,
   unknownKeyFix,
+  unsetYamlKey,
 } from "../../../lib/config-keys";
 
 export const CONFIG_DIR = ".specgate";
@@ -211,6 +212,28 @@ export class ConfigSetCommand extends BaseCommand {
       return;
     }
 
+    // config-agents REQ-707: a key, a profile or the sandbox, removed.
+    if (action === "unset") {
+      if (!key) {
+        io.usage(NULL_SHAPE, [
+          error("config_key_unknown", "Name the key to remove.", {
+            fix: "specgate config unset profiles.careful   ·   specgate config unset sandbox",
+          }),
+        ]);
+      }
+      const gone = unsetYamlKey(projectDir, key);
+      if (gone.ok === false) {
+        io.usage(NULL_SHAPE, [error("config_key_unknown", gone.message, { target: key, fix: gone.fix })]);
+      }
+      const done = gone as { file: string; removed: boolean };
+      io.emit({ config: { [key]: null }, removed: done.removed, files: { [key]: done.file } }, () =>
+        process.stdout.write(
+          done.removed ? `  ✔  ${key} removed\n     ${done.file}\n` : `  ${key} was not set: nothing to remove\n`
+        )
+      );
+      process.exit(EXIT.OK);
+    }
+
     const resolved = KEYS[key] ? null : resolveKey(key);
     if (!KEYS[key] && !resolved) {
       io.usage(NULL_SHAPE, [
@@ -237,7 +260,7 @@ export class ConfigSetCommand extends BaseCommand {
       io.usage(NULL_SHAPE, [
         error("config_action_unknown", `Unknown action: ${action || "(none)"}`, {
           target: action,
-          fix: "Use one of: set, get, list, keys.",
+          fix: "Use one of: set, unset, get, list, keys.",
         }),
       ]);
     }

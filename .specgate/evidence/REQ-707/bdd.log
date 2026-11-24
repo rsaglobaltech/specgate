@@ -1,0 +1,10 @@
+▶ dist/tests/unit/config-agents.test.js
+✔ REQ-707 SCN-707a: careful removed — ausleihe back to the default agent; the sandbox removed whole (2805.489125ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2900.25525

@@ -935,6 +935,22 @@ TOOLS["specgate_config_set"] = new GenericCliTool(
   "flag",
   false
 );
+// config-agents REQ-707: a setting, a profile or the sandbox removed.
+TOOLS["specgate_config_unset"] = new GenericCliTool(
+  "specgate_config_unset",
+  "Run specgate config unset",
+  "config unset",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+    },
+    required: ["projectDir"],
+  },
+  "flag",
+  false
+);
 TOOLS["specgate_config_get"] = new GenericCliTool(
   "specgate_config_get",
   "Run specgate config get",

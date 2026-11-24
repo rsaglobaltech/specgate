@@ -1,0 +1,10 @@
+▶ dist/tests/unit/config-agents.test.js
+✔ REQ-705 SCN-705a: ausleihe given its own agent, and a module it lacks refused naming those it has (2243.212542ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2315.867125

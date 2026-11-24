@@ -38,6 +38,9 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - `specgate eval --list [--json]`: every exam with its skill's and its own whole text, its tasks (the hidden checks marked), its history, each version against the one before, the exam in progress and the last exam's runs (REQ-702, REQ-703, REQ-704).
 - While an exam runs, `evals/<skill>/running.json` says how far it got (REQ-703).
 - Each exam run keeps its prompt and a log written as it happens in `evals/<skill>/runs/<stamp>/<task>-<n>/`; the last 5 exams are kept (REQ-704).
+- `config set profiles.<name>.match.module <module>` / `.match.requirement <REQ>` gives a module or a requirement its own agent; a module the project lacks is refused, naming those it has (REQ-705).
+- `config set sandbox.engine|kit|allow|setup|image|network` writes where the agents work, checked as the harness reads it; `draft_profile` and `sandbox.*` are read back by `config list` and `get` (REQ-706).
+- `specgate config unset <key>` removes a setting, `config unset profiles.<name>` a whole profile, `config unset sandbox` the whole block (REQ-707).
 - Each exam is kept in `evals/<skill>/history.jsonl` per version of the skill, and compared with the previous version: better, worse or the same (REQ-687).
 - `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
 

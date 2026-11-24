@@ -1090,6 +1090,7 @@ export const SURFACE: Command[] = [
     subcommands: [
       { name: "init", script: ["config_init.js"] },
       { name: "set", script: ["config_set.js"], argsFrom: 1 },
+      { name: "unset", script: ["config_set.js"], argsFrom: 1 },
       { name: "get", script: ["config_set.js"], argsFrom: 1 },
       { name: "list", script: ["config_set.js"], argsFrom: 1 },
       { name: "keys", script: ["config_set.js"], argsFrom: 1 },
