@@ -227,11 +227,14 @@ export function checkAgents(
   routes: readonly Route[],
   draftAgent: string | null,
   opts: { probe: boolean; timeoutMs?: number },
-  defaultAgent = ""
+  defaultAgent = "",
+  /** Every profile's agent: checked even when nothing pending goes to it. */
+  declared: readonly string[] = []
 ): AgentCheck[] {
   const usedBy = new Map<string, string[]>();
   // The default agent is checked even with nothing pending: it is the one the next run gets.
   if (defaultAgent) usedBy.set(defaultAgent, []);
+  for (const a of declared) if (a && !usedBy.has(a)) usedBy.set(a, []);
   for (const r of routes) {
     if (!r.agent) continue;
     usedBy.set(r.agent, [...(usedBy.get(r.agent) || []), r.requirement]);
@@ -239,7 +242,7 @@ export function checkAgents(
   if (draftAgent) usedBy.set(draftAgent, [...(usedBy.get(draftAgent) || []), "drafting"]);
   return [...usedBy.entries()].map(([agent, users]) => ({
     ...checkAgent(agent, projectDir, opts),
-    usedBy: users.length ? users : ["default"],
+    usedBy: users.length ? users : [agent === defaultAgent ? "default" : "no pending requirement"],
   }));
 }
 
@@ -325,7 +328,14 @@ export function main(argv: string[]): void {
   const { pending } = runQueue(dir, { reqs: [] } as never);
   const routing = routingOf(dir);
   const routes = routesOf(dir, pending, routing);
-  const checks = checkAgents(dir, routes, routing.draftAgent, { probe }, routing.defaultAgent);
+  const checks = checkAgents(
+    dir,
+    routes,
+    routing.draftAgent,
+    { probe },
+    routing.defaultAgent,
+    Object.values(routing.agents)
+  );
   const bad = checks.filter(failed);
   const data = { doctor: { routes, agents: checks, drafting: routing.draftAgent, probed: probe } };
   const findings = bad.map((c) =>

@@ -275,3 +275,18 @@ test("REQ-690: an agent named as a person reads it — its program and model", (
   assert.equal(agentLabel("claude -p --model=sonnet"), "claude · sonnet");
   assert.equal(agentLabel('"/usr/bin/node" agent.js'), "node");
 });
+
+test("REQ-690: a profile's agent is checked even when nothing pending goes to it", () => {
+  const p = library();
+  try {
+    const idle = talker(p.parent, "idle", "Error: This API key has expired", 1);
+    w(p.dir, ".harness/profiles.yaml", `profiles:\n  spare:\n    agent: '${idle}'\n    match:\n      requirement: REQ-999\n`);
+    w(p.dir, "harness.config.yaml", `test_cmd: "node pass.js"\nagent: '${talker(p.parent, "default", "OK")}'\n`);
+    const d = JSON.parse(cli(p.dir, "harness", "doctor", "--json").stdout).doctor;
+    const spare = d.agents.find((a: { agent: string }) => a.agent.includes("idle.js"));
+    assert.equal(spare.answered, false);
+    assert.deepEqual(spare.usedBy, ["no pending requirement"]);
+  } finally {
+    p.done();
+  }
+});
