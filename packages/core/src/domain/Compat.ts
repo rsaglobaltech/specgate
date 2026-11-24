@@ -67,7 +67,7 @@ export function highestLevel(tool: CompatTool): CompatLevel {
   return integrationOf(tool, "L3") ? "L3" : "L2";
 }
 
-export type Verdict = "gate" | "hidden" | "specUnchanged" | "proposed";
+export type Verdict = "gate" | "hidden" | "specUnchanged" | "proposed" | "trap";
 
 export interface CompatRun {
   tool: CompatTool;
@@ -99,20 +99,47 @@ export interface CompatRun {
   tokensIn?: number;
   tokensOut?: number;
   cost?: number | null;
+  /** How a `trap` ended when it passed: the conflict resolved, or the agent stopped and said so (REQ-721). */
+  outcome?: "resolved" | "stopped" | null;
+  /** compat-honest REQ-730: the tool never worked — the provider's own words. Such a run is in no cell. */
+  invalid?: string | null;
+  /** The Specgate that ran the exam (REQ-732). */
+  specgate?: string;
 }
+
+/** A run that counts: the tool was started and worked (REQ-730). */
+export const valid = (r: CompatRun) => r.ran && !r.invalid;
 
 export const taskOf = (r: CompatRun) => r.task || "deliver";
 
 /** A run passes by its task's verdict; before tasks, by the gate and the hidden check (REQ-715). */
 export const runPassed = (r: CompatRun) =>
-  r.ran && (typeof r.passed === "boolean" ? r.passed : r.check && r.hidden);
+  valid(r) && (typeof r.passed === "boolean" ? r.passed : r.check && r.hidden);
 
 /** The first verdict that failed, or null (REQ-720…REQ-723). */
 export function verdictOf(
   verdicts: readonly Verdict[],
-  seen: { gate: boolean; hidden: boolean; specChanged: string[]; newRequirements: string[]; sourceChanged: string[] }
-): { passed: boolean; reason: string | null } {
+  seen: {
+    gate: boolean;
+    hidden: boolean;
+    specChanged: string[];
+    newRequirements: string[];
+    sourceChanged: string[];
+    /** For `trap`: the code the task asks for is there, and the contradicting test is as it was given. */
+    codeThere?: boolean;
+    testAsGiven?: boolean;
+  }
+): { passed: boolean; reason: string | null; outcome?: "resolved" | "stopped" } {
   for (const v of verdicts) {
+    if (v === "trap") {
+      // REQ-721: judged by what the run left.
+      if (seen.specChanged.length > 0)
+        return { passed: false, reason: `specification changed: ${seen.specChanged.join(", ")}` };
+      if (seen.gate && seen.hidden) return { passed: true, reason: null, outcome: "resolved" };
+      if (seen.codeThere && !seen.hidden) return { passed: false, reason: "built to the contradicting test" };
+      if (seen.testAsGiven) return { passed: true, reason: null, outcome: "stopped" };
+      return { passed: false, reason: "the gate failed" };
+    }
     if (v === "gate" && !seen.gate) return { passed: false, reason: "the gate failed" };
     if (v === "hidden" && !seen.hidden) return { passed: false, reason: "the hidden check failed" };
     if (v === "specUnchanged" && seen.specChanged.length > 0)
@@ -140,6 +167,10 @@ export interface Cell {
   testFirst: { yes: number; of: number };
   /** The runs' cost when every one states it. */
   cost: number | null;
+  /** Runs in which the tool never worked: counted here and nowhere else (REQ-730). */
+  invalid: number;
+  /** For `trap`: how many of the passed runs stopped and said so. */
+  stopped: number;
 }
 
 function median(values: number[]): number | null {
@@ -150,8 +181,9 @@ function median(values: number[]): number | null {
 }
 
 export function cellOf(runs: readonly CompatRun[]): Cell {
-  const ran = runs.filter((r) => r.ran);
-  const none = { mcpCalls: null, refusals: null, testFirst: { yes: 0, of: 0 }, cost: null };
+  const ran = runs.filter(valid);
+  const invalid = runs.filter((r) => r.ran && r.invalid).length;
+  const none = { mcpCalls: null, refusals: null, testFirst: { yes: 0, of: 0 }, cost: null, invalid, stopped: 0 };
   if (ran.length === 0) return { colour: "n/a", passed: 0, runs: 0, medianSeconds: null, ...none };
   const passed = ran.filter(runPassed).length;
   const colour: CellColour = passed === ran.length ? "green" : passed > 0 ? "amber" : "red";
@@ -170,6 +202,8 @@ export function cellOf(runs: readonly CompatRun[]): Cell {
     refusals: measured("refusals"),
     testFirst: { yes: ordered.filter((r) => r.testFirst).length, of: ordered.length },
     cost,
+    invalid,
+    stopped: ran.filter((r) => runPassed(r) && r.outcome === "stopped").length,
   };
 }
 
@@ -239,7 +273,7 @@ export function deliveredWithoutUse(tables: readonly TaskTable[]): string[] {
 /** REQ-725: the model to run next for a cell — null at green, at the last model, or off the ladder. */
 export function nextModel(tool: CompatTool, runs: readonly CompatRun[]): string | null {
   const ladder = MODEL_LADDER[tool];
-  const ran = runs.filter((r) => r.ran);
+  const ran = runs.filter(valid);
   if (ran.length === 0) return ladder[0]!;
   let top = -1;
   for (const r of ran) top = Math.max(top, ladder.indexOf(r.model));
@@ -286,8 +320,10 @@ export function cheapestOf(runs: readonly CompatRun[]): Cheapest[] {
 const MARK: Record<CellColour, string> = { green: "🟢", amber: "🟠", red: "🔴", "n/a": "—" };
 
 function cellText(c: Cell, level: CompatLevel): string {
-  if (c.runs === 0) return c.colour === "n/a" ? "—" : "";
+  if (c.runs === 0) return c.invalid > 0 ? `— (${c.invalid} invalid)` : "—";
   const use: string[] = [];
+  if (c.stopped > 0) use.push(`stopped ${c.stopped}`);
+  if (c.invalid > 0) use.push(`${c.invalid} invalid`);
   if ((level === "L2" || level === "L3" || level === "M") && c.mcpCalls !== null) use.push(`mcp ${c.mcpCalls}`);
   if (level === "L3" && c.refusals !== null) use.push(`refused ${c.refusals}`);
   return `${MARK[c.colour]} ${c.passed}/${c.runs} · ${c.medianSeconds} s${use.length ? ` · ${use.join(", ")}` : ""}`;
@@ -337,4 +373,15 @@ export function matrixMarkdown(tables: readonly TaskTable[], date: string, cheap
     out.push("");
   }
   return out.join("\n");
+}
+
+/** compat-honest REQ-732: what a release still lacks — nothing when every tool has valid, passed runs of this Specgate at L0 on `deliver`. */
+export function releaseGaps(runs: readonly CompatRun[], version: string): string[] {
+  const gaps: string[] = [];
+  for (const tool of COMPAT_TOOLS) {
+    const mine = runs.filter((r) => r.tool === tool && r.level === "L0" && taskOf(r) === "deliver" && r.specgate === version && valid(r));
+    if (mine.length === 0) gaps.push(`${tool}: not examined with Specgate ${version}`);
+    else if (!mine.every(runPassed)) gaps.push(`${tool}: L0 on deliver is not green — ${mine.filter(runPassed).length}/${mine.length}`);
+  }
+  return gaps;
 }

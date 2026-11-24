@@ -1,0 +1,12 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-730 SCN-730a: the provider refused — the run is invalid with its words, and in no cell (765.085125ms)
+✔ REQ-730 SCN-730b: after two invalid runs in a row the tool is not asked again (1013.821416ms)
+✔ REQ-730 SCN-730c: an agent that worked and failed is a failure, not an invalid run (1851.619833ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3699.093167

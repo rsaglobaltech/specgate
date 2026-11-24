@@ -22,6 +22,8 @@ export interface Session {
   tokensOut: number;
   /** In US dollars, when the tool states it. */
   cost: number | null;
+  /** What the tool's provider refused it with, in its own words (compat-honest REQ-730); null when it did not. */
+  providerError: string | null;
 }
 
 type Json = Record<string, unknown>;
@@ -44,7 +46,8 @@ function lines(text: string): Json[] {
   return out;
 }
 
-const empty = (): Session => ({ calls: [], mcpCalls: 0, tokensIn: 0, tokensOut: 0, cost: null });
+const empty = (): Session => ({ calls: [], mcpCalls: 0, tokensIn: 0, tokensOut: 0, cost: null, providerError: null });
+const words = (v: unknown): string => (typeof v === "string" ? v : str(obj(v).message) || str(obj(v).type)).slice(0, 300);
 
 function claude(events: Json[]): Session {
   const s = empty();
@@ -65,6 +68,7 @@ function claude(events: Json[]): Session {
       s.tokensIn = num(u.input_tokens) + num(u.cache_creation_input_tokens) + num(u.cache_read_input_tokens);
       s.tokensOut = num(u.output_tokens);
       if (typeof e.total_cost_usd === "number") s.cost = e.total_cost_usd;
+      if (e.is_error === true) s.providerError = words(e.result) || str(e.subtype) || "the tool ended in an error";
     }
   }
   return s;
@@ -90,6 +94,8 @@ function codex(events: Json[]): Session {
       const u = obj(e.usage);
       s.tokensIn += num(u.input_tokens);
       s.tokensOut += num(u.output_tokens);
+    } else if (e.type === "error" || e.type === "turn.failed") {
+      s.providerError = words(e.message) || words(e.error) || "the tool ended in an error";
     }
   }
   return s;
@@ -117,6 +123,8 @@ function opencode(events: Json[]): Session {
           : [];
       s.calls.push({ tool, target: file || str(input.command), wrote });
       if (/^specgate[_.]/.test(tool)) s.mcpCalls += 1;
+    } else if (e.type === "error") {
+      s.providerError = words(e.error) || "the tool ended in an error";
     } else if (e.type === "step_finish") {
       const t = obj(part.tokens);
       s.tokensIn += num(t.input) + num(obj(t.cache).read) + num(obj(t.cache).write);

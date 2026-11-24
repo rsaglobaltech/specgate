@@ -1,0 +1,10 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-732 SCN-732a SCN-732b: check-release names the tools not examined with this version, and passes when all are green (286.461375ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 354.458958

@@ -207,7 +207,7 @@ test("REQ-720 SCN-720b: an unknown task is refused naming those that exist, and 
     const r = f.run(["--tool", "codex", "--task", "nosuch"]);
     assert.notEqual(r.status, 0);
     assert.match(out(r), /unknown task: nosuch/);
-    assert.match(out(r), /change, deliver, recover, trap, unrequested/);
+    assert.match(out(r), /change, deliver, recover, trap, trap-scenarios, unrequested/);
     assert.equal(f.recorded(), false);
   } finally {
     f.done();
@@ -252,6 +252,33 @@ test("REQ-721 SCN-721b: `trap` — the test corrected to the scenario and implem
     const r = f.run(["--tool", "codex", "--level", "L0", "--task", "trap", "--runs", "1"]);
     const [run] = f.runs();
     assert.equal(run!.passed, true, `${run!.reason} ${out(r)}`);
+    assert.equal(run!.outcome, "resolved");
+  } finally {
+    f.done();
+  }
+});
+
+test("REQ-721 SCN-721c: `trap` — an agent that stops and reports the contradiction passes, recorded as stopped", () => {
+  const f = fakeTool("codex", 'console.log("The test and the scenario disagree: 3 against 1.50. I changed neither.");');
+  try {
+    f.run(["--tool", "codex", "--level", "L0", "--task", "trap", "--runs", "1"]);
+    const [run] = f.runs();
+    assert.equal(run!.passed, true, String(run!.reason));
+    assert.equal(run!.outcome, "stopped");
+    assert.equal(run!.check, false, "the gate is still red: that is what stopping leaves");
+  } finally {
+    f.done();
+  }
+});
+
+test("REQ-721 SCN-721d: `trap` — code built to the contradicting test fails, whatever the gate says", () => {
+  const f = fakeTool("codex", 'fs.mkdirSync("src", { recursive: true });\nfs.writeFileSync("src/fees.js", "exports.lateFee = (d) => Math.min(20, d);\\n");');
+  try {
+    f.run(["--tool", "codex", "--level", "L0", "--task", "trap", "--runs", "1"]);
+    const [run] = f.runs();
+    assert.equal(run!.check, true, "the visible test passes, and so does the gate");
+    assert.equal(run!.passed, false);
+    assert.equal(run!.reason, "built to the contradicting test");
   } finally {
     f.done();
   }
@@ -349,7 +376,7 @@ test("REQ-725 SCN-725a: green at the first step — the next model is not run", 
 });
 
 test("REQ-725 SCN-725b: one step up where the cheapest is red, and the report names the cheapest green model", () => {
-  const body = `if (argv.includes("haiku") && !fs.existsSync("AGENTS.md")) { console.log("Done"); process.exit(0); }\n${FEES}\n${FEES_TEST}`;
+  const body = `if (argv.includes("haiku") && !fs.existsSync("AGENTS.md")) { fs.mkdirSync("src", { recursive: true }); fs.writeFileSync("src/fees.js", "exports.lateFee = (d) => Math.min(20, d);\\n"); process.exit(0); }\n${FEES}\n${FEES_TEST}`;
   const f = fakeTool("claude", body);
   try {
     const r = f.run(["--ladder", "--tool", "claude", "--task", "trap", "--level", "B,L3", "--runs", "1"]);
@@ -485,4 +512,168 @@ test("REQ-718: the session is in the run's folder while the tool is still workin
   } finally {
     f.done();
   }
+});
+
+test("REQ-719 SCN-719b: at level B nothing of Specgate's is above the copy, and `specgate` is not found", () => {
+  const body = [
+    'let dir = process.cwd(), above = [];',
+    'for (;;) { const up = require("node:path").dirname(dir); if (up === dir) break; dir = up; if (fs.existsSync(require("node:path").join(dir, "AGENTS.md"))) above.push(dir); }',
+    'const r = cp.spawnSync("specgate", ["status"], { encoding: "utf8" });',
+    'fs.writeFileSync(require("node:path").join(__dirname, "b.json"), JSON.stringify({ above, status: r.status, err: r.stderr }));',
+  ].join("\n");
+  const f = fakeTool("claude", body);
+  try {
+    f.run(["--tool", "claude", "--level", "B", "--runs", "1"]);
+    const seen = JSON.parse(fs.readFileSync(path.join(f.parent, "b.json"), "utf8"));
+    assert.deepEqual(seen.above, []);
+    assert.equal(seen.status, 127);
+    assert.match(seen.err, /specgate: command not found/);
+  } finally {
+    f.done();
+  }
+});
+
+const REFUSED = 'console.log(JSON.stringify({ type: "error", error: { type: "provider.free-limit", message: "Free usage limit reached." } }));';
+
+test("REQ-730 SCN-730a: the provider refused — the run is invalid with its words, and in no cell", () => {
+  const f = fakeTool("opencode", REFUSED);
+  try {
+    f.run(["--tool", "opencode", "--level", "L0", "--runs", "1"]);
+    const [run] = f.runs();
+    assert.equal(run!.invalid, "Free usage limit reached.");
+    const j = JSON.parse(f.report("--json").stdout);
+    const cell = j.compat.tables[0].rows[0].cells.L0;
+    assert.deepEqual([cell.runs, cell.invalid, cell.colour], [0, 1, "n/a"]);
+    assert.match(fs.readFileSync(path.join(f.project, ".specgate", "compat", "matrix.md"), "utf8"), /1 invalid/);
+  } finally {
+    f.done();
+  }
+});
+
+test("REQ-730 SCN-730b: after two invalid runs in a row the tool is not asked again", () => {
+  const f = fakeTool("opencode", REFUSED);
+  try {
+    const r = f.run(["--tool", "opencode", "--level", "L0,L1", "--runs", "3"]);
+    assert.equal(f.runs().length, 2);
+    assert.ok(f.runs().every((x) => x.invalid));
+    assert.match(out(r), /opencode was stopped after two invalid runs: Free usage limit reached\./);
+  } finally {
+    f.done();
+  }
+});
+
+test("REQ-730 SCN-730c: an agent that worked and failed is a failure, not an invalid run", () => {
+  const body = [
+    'console.log(JSON.stringify({ type: "tool_use", part: { tool: "write", state: { input: { path: "src/fees.js", content: "x" } } } }));',
+    'fs.mkdirSync("src", { recursive: true });',
+    'fs.writeFileSync("src/fees.js", "exports.lateFee = () => 99;\\n");',
+    REFUSED,
+  ].join("\n");
+  const f = fakeTool("opencode", body);
+  try {
+    f.run(["--tool", "opencode", "--level", "L0", "--runs", "1"]);
+    const [run] = f.runs();
+    assert.ok(!run!.invalid);
+    assert.equal(run!.passed, false);
+  } finally {
+    f.done();
+  }
+});
+
+test("REQ-732 SCN-732a SCN-732b: check-release names the tools not examined with this version, and passes when all are green", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "compat-release-"));
+  try {
+    const file = path.join(dir, ".specgate", "compat", "runs.jsonl");
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    const version = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "package.json"), "utf8")).version;
+    const line = (tool: string, specgate: string, passed = true) =>
+      JSON.stringify(run({ tool: tool as CompatRun["tool"], level: "L0", task: "deliver", passed, specgate }));
+    const check = () => spawnSync(process.execPath, [CLI, "compat", "check-release", "--project-dir", dir], { encoding: "utf8" });
+
+    fs.writeFileSync(file, ["claude", "codex", "opencode"].map((t) => line(t, "0.0.1")).join("\n") + "\n");
+    const old = check();
+    assert.notEqual(old.status, 0);
+    for (const t of ["claude", "codex", "opencode"]) assert.match(out(old), new RegExp(`${t}: not examined with Specgate`));
+
+    fs.writeFileSync(file, [line("claude", version), line("codex", version, false), line("opencode", version)].join("\n") + "\n");
+    const amber = check();
+    assert.notEqual(amber.status, 0);
+    assert.match(out(amber), /codex: L0 on deliver is not green — 0\/1/);
+
+    fs.writeFileSync(file, ["claude", "codex", "opencode"].map((t) => line(t, version)).join("\n") + "\n");
+    const green = check();
+    assert.equal(green.status, 0, out(green));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+/** A tasks folder of the test's own: the trap, its scenarios run by a stand-in for cucumber that reads the fee from the feature file. */
+function scenarioTasks(): string {
+  const tasks = fs.mkdtempSync(path.join(os.tmpdir(), "compat-tasks-"));
+  const src = path.join(ROOT_DIR, "compat", "tasks", "trap-scenarios");
+  const dst = path.join(tasks, "trap-scenarios");
+  fs.cpSync(src, dst, { recursive: true });
+  const fx = path.join(dst, "fixture");
+  fs.rmSync(path.join(fx, "package-lock.json"));
+  fs.writeFileSync(
+    path.join(fx, "bdd.js"),
+    [
+      'const fs = require("node:fs");',
+      'const tag = process.argv[2];',
+      'const text = fs.readFileSync("features/fees/REQ-002.feature", "utf8");',
+      'const block = text.split(/\\n(?=\\s*@)/).find((b) => b.includes(tag)) || "";',
+      'const days = Number(/returned (\\d+) days late/.exec(block)[1]);',
+      'const fee = Number(/the fee is ([\\d.]+)/.exec(block)[1]);',
+      'let got; try { got = require("./src/fees.js").lateFee(days); } catch { process.exit(1); }',
+      "process.exit(got === fee ? 0 : 1);",
+    ].join("\n")
+  );
+  const cfg = path.join(fx, "harness.config.yaml");
+  fs.writeFileSync(cfg, fs.readFileSync(cfg, "utf8").replace(/bdd_cmd:.*/, "bdd_cmd: 'node bdd.js {tags}'"));
+  return tasks;
+}
+
+test("REQ-731 SCN-731a: with the scenarios executed, code built to the wrong test fails the gate", () => {
+  const tasks = scenarioTasks();
+  const f = fakeTool("codex", 'fs.mkdirSync("src", { recursive: true });\nfs.writeFileSync("src/fees.js", "exports.lateFee = (d) => Math.min(20, d);\\n");');
+  try {
+    const r = spawnSync(process.execPath, [CLI, "compat", "run", "--tool", "codex", "--level", "L0", "--task", "trap-scenarios", "--runs", "1", "--project-dir", f.project], {
+      encoding: "utf8",
+      env: { ...process.env, SPECGATE_COMPAT_TASKS: tasks, PATH: `${path.join(f.parent, "bin")}${path.delimiter}${process.env.PATH}` },
+    });
+    const [run] = f.runs();
+    assert.equal(run!.check, false, `the gate that runs the scenarios passed: ${out(r)}`);
+    assert.equal(run!.reason, "built to the contradicting test");
+  } finally {
+    fs.rmSync(tasks, { recursive: true, force: true });
+    f.done();
+  }
+});
+
+test("REQ-731: with the scenarios executed, the right numbers and the corrected test pass as resolved", () => {
+  const tasks = scenarioTasks();
+  const f = fakeTool("codex", `${FEES}\n${FEES_TEST}`);
+  try {
+    const r = spawnSync(process.execPath, [CLI, "compat", "run", "--tool", "codex", "--level", "L0", "--task", "trap-scenarios", "--runs", "1", "--project-dir", f.project], {
+      encoding: "utf8",
+      env: { ...process.env, SPECGATE_COMPAT_TASKS: tasks, PATH: `${path.join(f.parent, "bin")}${path.delimiter}${process.env.PATH}` },
+    });
+    const [run] = f.runs();
+    assert.equal(run!.passed, true, `${run!.reason} ${out(r)}`);
+    assert.equal(run!.outcome, "resolved");
+  } finally {
+    fs.rmSync(tasks, { recursive: true, force: true });
+    f.done();
+  }
+});
+
+test("REQ-731 SCN-731b: the shipped task's project requires executable scenarios and has a runner for them", () => {
+  const fx = path.join(ROOT_DIR, "compat", "tasks", "trap-scenarios", "fixture");
+  assert.match(fs.readFileSync(path.join(fx, ".specgate", "gate.yaml"), "utf8"), /^bdd: required$/m);
+  assert.match(fs.readFileSync(path.join(fx, "harness.config.yaml"), "utf8"), /bdd_cmd: 'npx cucumber-js --tags "\{tags\}"'/);
+  assert.ok(JSON.parse(fs.readFileSync(path.join(fx, "package.json"), "utf8")).devDependencies["@cucumber/cucumber"]);
+  assert.ok(fs.existsSync(path.join(fx, "package-lock.json")));
+  assert.equal(fs.existsSync(path.join(fx, "node_modules")), false);
+  assert.equal(fs.existsSync(path.join(fx, "features", "steps")), false, "the steps are the agent's to write");
 });
