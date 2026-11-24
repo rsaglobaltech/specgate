@@ -28,5 +28,15 @@
     "role": "developer",
     "hash": "sha256:b52b699bb3a5667d9ba0470568f3b4bae6ae11b092245a23250bc870950be55f",
     "at": "2026-11-24"
+  },
+  {
+    "layer": "design",
+    "by": {
+      "name": "Full Stack Engineer | Oracle Certified Java Programmer",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "architect",
+    "hash": "sha256:b929a88f0485e4589af380946b25155a86832fe9261b1e1bd8b1d12a2788282e",
+    "at": "2026-11-24"
   }
 ]

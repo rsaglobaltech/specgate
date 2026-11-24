@@ -64,7 +64,7 @@ if (a[0] === "create") {
   delete st.sandboxes[name];
   save();
 } else if (a[0] === "ls") {
-  console.log(JSON.stringify(Object.keys(st.sandboxes).map((name) => ({ name }))));
+  console.log(JSON.stringify(Object.keys(st.sandboxes).map((name) => ({ name, workspaces: [st.sandboxes[name].workspace] }))));
 } else if (a[0] === "exec") {
   const env = { ...process.env };
   let i = 1, cwd = process.cwd();

@@ -6,7 +6,7 @@
 
 <!-- specgate:trace status=Implemented feature=features/agent-integration/REQ-736.feature actor=Developer kind=functional -->
 
-The system SHALL, on `specgate compat run --sandbox sbx`, run each tool's agent inside a Docker sandbox whose only host folder is the batch's own, each run in a folder of it removed when the run ends; install inside it this checkout's Specgate at the levels that have Specgate and none at B; give the agent an environment of named variables and none of the host's — no provider key among them; with `--auth-<tool>`, put the Developer's own stored session of that tool in the sandbox's home, for a model that needs an account, removed with the sandbox; judge the run on the host after the agent has ended; and remove the batch's sandboxes when it ends or is interrupted.
+The system SHALL, on `specgate compat run --sandbox sbx`, run each tool's agent inside a Docker sandbox whose only host folder is the batch's own, each run in a folder of it removed when the run ends; install inside it this checkout's Specgate at the levels that have Specgate and none at B; give the agent an environment of named variables and none of the host's — no provider key among them; with `--auth-<tool>`, put the Developer's own stored session of that tool in the sandbox's home, for a model that needs an account, removed with the sandbox; judge the run on the host after the agent has ended; and remove the batch's sandboxes when it ends or is interrupted; with `--use-sandbox <kind>=<name>`, use instead a sandbox the Developer made — logged in to their own account inside —, refusing one whose kind does not match what it has inside, and leave it as it was but for the run's folder.
 
 > Found on 2026-11-24: an agent in no sandbox read the exam's earlier results and searched the Developer's home for the hidden test.
 
@@ -27,6 +27,12 @@ The system SHALL, on `specgate compat run --sandbox sbx`, run each tool's agent 
 - GIVEN `specgate compat run --tool opencode --sandbox sbx --auth-opencode` and a host with OPENCODE_API_KEY set
 - WHEN the agent is started in the sandbox
 - THEN the Developer's own OpenCode session file is in the sandbox's home, the agent's environment has no OPENCODE_API_KEY, and the session file is gone with the sandbox
+
+#### Scenario: SCN-736e — The Developer's own sandbox
+
+- GIVEN a sandbox my-box the Developer made, with Specgate inside
+- WHEN the Developer runs `specgate compat run --tool opencode --level L0 --runs 1 --sandbox sbx --use-sandbox specgate=my-box`
+- THEN the agent runs in my-box, no sandbox is made or removed, and my-box's workspace is empty again
 
 #### Scenario: SCN-736c — Nothing left
 

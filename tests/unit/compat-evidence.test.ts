@@ -836,3 +836,28 @@ test("REQ-721: a change's tasks list and the steps beside the feature files are 
     f.done();
   }
 });
+
+test("REQ-736 SCN-736e: a sandbox the Developer made is used as it is, and left there", () => {
+  const f = fakeTool("opencode", "");
+  const sbx = fakeSbx();
+  const mine = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "compat-mine-")));
+  try {
+    // The stand-in runs a sandbox's commands on this machine, which has specgate: a sandbox with Specgate inside.
+    const env = { ...process.env, NO_COLOR: "1", SPECGATE_SBX: sbx.bin, PATH: `${path.join(f.parent, "bin")}${path.delimiter}${process.env.PATH}` };
+    assert.equal(spawnSync(sbx.bin, ["create", "--name", "my-box", "opencode", mine], { encoding: "utf8" }).status, 0);
+    const r = spawnSync(process.execPath, [CLI, "compat", "run", "--tool", "opencode", "--level", "L0", "--runs", "1", "--sandbox", "sbx", "--use-sandbox", "specgate=my-box", "--project-dir", f.project], { encoding: "utf8", env });
+    assert.equal(r.status, 0, out(r));
+    const calls = sbx.calls();
+    assert.equal(calls.filter((c) => c[0] === "create").length, 1, "the exam made a sandbox of its own");
+    assert.ok(!f.runs()[0]!.invalid, `the run was not started: ${f.runs()[0]!.invalid}`);
+    const agent = calls.find((c) => c[0] === "exec" && c.join(" ").includes("opencode run"))!;
+    assert.ok(agent.includes("my-box") && agent[agent.indexOf("-w") + 1]!.startsWith(mine), "the run did not go in the Developer's sandbox");
+    assert.ok(!calls.some((c) => c[0] === "rm"), "the Developer's sandbox was removed");
+    assert.ok(fs.existsSync(mine), "the Developer's workspace was removed");
+    assert.deepEqual(fs.readdirSync(mine), [], "a run's folder was left in it");
+    assert.match(out(r), /my-box: yours, kept/);
+  } finally {
+    fs.rmSync(mine, { recursive: true, force: true });
+    f.done();
+  }
+});

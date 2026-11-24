@@ -37,7 +37,7 @@ import {
   type Verdict,
 } from "../../../../packages/core/src/domain/Compat";
 import { sessionOf, testFirst } from "../../../../packages/core/src/domain/CompatSession";
-import { makeSandbox, removeSandbox, sandboxLine, type ExamSandbox } from "../../../lib/compat-sandbox";
+import { makeSandbox, removeSandbox, sandboxLine, useSandbox, type ExamSandbox } from "../../../lib/compat-sandbox";
 
 /** Tools whose default command approves its own actions: not run outside a sandbox unless the Developer says so (REQ-738). */
 const SELF_APPROVING: readonly CompatTool[] = ["opencode"];
@@ -88,7 +88,7 @@ function usage(): void {
   process.stdout.write(
     `
   🧩 ${c.bold}specgate compat run${c.reset} [--tool claude,codex,opencode] [--level B,L0,L1,L2,L3,M] [--task <ids>] [--runs <n>]
-                       [--sandbox sbx | --no-sandbox] [--auth-<tool>]
+                       [--sandbox sbx [--use-sandbox specgate=<name>,bare=<name>] | --no-sandbox] [--auth-<tool>]
                        [--ladder] [--agent-<tool> "<cmd>"] [--model-<tool> <m>] [--keep-env <VAR>] [--timeout <s>]
      ${c.bold}specgate compat report${c.reset} [--json]
      ${c.bold}specgate compat check-release${c.reset}   was this Specgate examined with the real tools?
@@ -108,7 +108,8 @@ function usage(): void {
   --sandbox sbx runs each agent in a Docker sandbox that holds its run and
   nothing else of this machine, its network the tool's provider and the package
   registry; --auth-<tool> puts your own stored session of the tool inside, for a
-  model that needs an account. OpenCode approves its own commands: it runs only
+  model that needs an account; --use-sandbox takes sandboxes you made and logged in
+  to yourself, and leaves them as they are. OpenCode approves its own commands: it runs only
   in a sandbox, or with --no-sandbox at your word.
 
   Runs go to .specgate/compat/runs.jsonl; report writes .specgate/compat/matrix.md
@@ -716,11 +717,22 @@ export class CompatCommand extends BaseCommand {
       boxes.clear();
       if (tarball && !process.env.SPECGATE_COMPAT_TARBALL) fs.rmSync(path.dirname(tarball), { recursive: true, force: true });
     };
+    // REQ-736: sandboxes the Developer made, by kind: `--use-sandbox specgate=<name>,bare=<name>`.
+    const given: Partial<Record<"specgate" | "bare", string>> = {};
+    for (const pair of (flag("--use-sandbox") || "").split(",").filter(Boolean)) {
+      const [k, v] = pair.split("=");
+      if ((k === "specgate" || k === "bare") && v) given[k] = v;
+    }
     if (sandbox) {
       o.boxFor = (tool, level) => {
         const kind = level === "B" ? "bare" : "specgate";
         const key = `${tool}:${kind}`;
         let b = boxes.get(key);
+        if (!b && given[kind]) {
+          b = useSandbox(tool, kind, given[kind]!);
+          boxes.set(key, b);
+          if (!json) process.stdout.write(`  ·  ${b.name}: yours, kept — runs go in ${b.workspace}; network ${b.open.join(", ")}\n`);
+        }
         if (!b) {
           if (!json) process.stdout.write(`  ·  making the sandbox for ${tool} (${kind === "bare" ? "no Specgate" : "with Specgate"})…\n`);
           b = makeSandbox(tool, kind, {

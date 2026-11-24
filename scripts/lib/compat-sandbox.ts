@@ -11,7 +11,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { sbxAllow, sbxBin, sbxCreate, sbxDeny, sbxExec, sbxKitHosts, sbxRemove, shq } from "./sbx";
+import { sbxAllow, sbxBin, sbxCreate, sbxDeny, sbxExec, sbxKitHosts, sbxRemove, sbxWorkspace, shq } from "./sbx";
 
 export type SandboxKind = "specgate" | "bare";
 
@@ -25,6 +25,8 @@ export interface ExamSandbox {
   home: string;
   /** The hosts left open (REQ-737). */
   open: string[];
+  /** The Developer made it and keeps it: the exam uses it and does not remove it. */
+  kept?: boolean;
 }
 
 export const REGISTRY_HOST = "registry.npmjs.org";
@@ -138,6 +140,20 @@ export function makeSandbox(
 }
 
 /**
+ * A sandbox the Developer made — logged in to their own account inside — taken as it is (REQ-736):
+ * its workspace is where the runs go, and it is theirs to remove.
+ */
+export function useSandbox(tool: string, kind: SandboxKind, name: string): ExamSandbox {
+  const workspace = sbxWorkspace(name);
+  if (!workspace) throw new Error(`sbx has no sandbox named ${name} with a workspace: sbx ls`);
+  const home = sbxExec(name, workspace, 'printf %s "$HOME"').out.trim() || "/home/agent";
+  const has = sbxExec(name, workspace, 'export PATH="$HOME/.local/bin:$PATH"; command -v specgate >/dev/null 2>&1 && echo yes || echo no').out.trim();
+  if (kind === "specgate" && has !== "yes") throw new Error(`the sandbox ${name} has no specgate inside, and is asked for the levels that have it`);
+  if (kind === "bare" && has === "yes") throw new Error(`the sandbox ${name} has specgate inside, and is asked for the level without it`);
+  return { name, tool, kind, workspace: fs.realpathSync(workspace), home, open: [...(PROVIDER_HOSTS[tool] || []), REGISTRY_HOST], kept: true };
+}
+
+/**
  * The line that runs `command` in the sandbox from `cwd`. The agent's
  * environment is HOME, PATH and `env`: none of the host's variables and none
  * of the kit's, so no provider key reaches it by name (REQ-736).
@@ -155,7 +171,8 @@ export function sandboxLine(box: ExamSandbox, cwd: string, command: string, env:
 }
 
 /** REQ-736: nothing left — the sandbox, and the batch's folder. */
-export function removeSandbox(box: Pick<ExamSandbox, "name" | "workspace">): void {
+export function removeSandbox(box: Pick<ExamSandbox, "name" | "workspace" | "kept">): void {
+  if (box.kept) return;
   sbxRemove(box.name);
   fs.rmSync(box.workspace, { recursive: true, force: true });
 }

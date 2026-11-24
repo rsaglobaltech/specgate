@@ -22,3 +22,4 @@ Measured with sbx on 2026-11-24, kit `opencode`: a sandbox takes 27 s to create,
 - Removal (AC-6): at the batch's end, and on interruption; `specgate harness sandboxes` already lists what a crash leaves.
 
 Claude Code and Codex are not moved into a sandbox here: Claude Code's commands are limited to a list, Codex has its own sandbox for writes, and both would need a login inside. They can be asked for with `--sandbox sbx` once that is solved.
+- A sandbox of the Developer's own (2026-11-24): the stored OpenCode Go key had expired, and a session is better put in by its owner than carried in. `--use-sandbox specgate=<name>,bare=<name>` takes sandboxes the Developer made and logged in to; the exam checks each has, or has not, Specgate inside as its kind says, runs in it, and never removes it.

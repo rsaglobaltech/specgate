@@ -116,3 +116,21 @@ export function sbxList(): string[] | null {
     return null;
   }
 }
+
+/** The host folder a sandbox sbx has was given as its workspace, or null (compat-sandboxed REQ-736). */
+export function sbxWorkspace(name: string): string | null {
+  const r = sbx(["ls", "--format", "json"]);
+  if (!r.ok) return null;
+  try {
+    const doc = JSON.parse(r.out || "[]") as Array<{ name?: string; workspaces?: unknown[]; mounts?: string[] }>;
+    const one = doc.find((d) => d.name === name);
+    if (!one) return null;
+    const first = (one.workspaces || [])[0];
+    if (typeof first === "string" && first) return first;
+    if (first && typeof first === "object" && typeof (first as { path?: unknown }).path === "string") return (first as { path: string }).path;
+    const mount = (one.mounts || []).find((m) => !m.endsWith(":ro"));
+    return mount ? mount.split(":")[0]! : null;
+  } catch {
+    return null;
+  }
+}

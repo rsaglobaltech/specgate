@@ -19,6 +19,12 @@ Feature: The agent runs inside a sandbox that holds its run and nothing else
     When the agent is started in the sandbox
     Then the Developer's own OpenCode session file is in the sandbox's home, the agent's environment has no OPENCODE_API_KEY, and the session file is gone with the sandbox
 
+  @REQ-736 @SCN-736e
+  Scenario: The Developer's own sandbox
+    Given a sandbox my-box the Developer made, with Specgate inside
+    When the Developer runs `specgate compat run --tool opencode --level L0 --runs 1 --sandbox sbx --use-sandbox specgate=my-box`
+    Then the agent runs in my-box, no sandbox is made or removed, and my-box's workspace is empty again
+
   @REQ-736 @SCN-736c
   Scenario: Nothing left
     Given a batch that created two sandboxes
