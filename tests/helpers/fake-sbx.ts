@@ -25,7 +25,7 @@ const st = fs.existsSync(stateFile) ? JSON.parse(fs.readFileSync(stateFile, "utf
 const save = () => fs.writeFileSync(stateFile, JSON.stringify(st));
 const a = process.argv.slice(2);
 fs.appendFileSync(dir + "/calls.jsonl", JSON.stringify(a) + "\n");
-const KIT = Array.from({ length: 29 }, (_, i) => "kit-host-" + i + ".example:443");
+const KIT = process.env.FAKE_SBX_KIT ? process.env.FAKE_SBX_KIT.split(",") : Array.from({ length: 29 }, (_, i) => "kit-host-" + i + ".example:443");
 if (a[0] === "create") {
   const name = a[a.indexOf("--name") + 1];
   if (process.env.FAKE_SBX_FAIL_CREATE) { console.error("ERROR: " + process.env.FAKE_SBX_FAIL_CREATE); process.exit(1); }
@@ -45,6 +45,11 @@ if (a[0] === "create") {
   st.rules.push({ id, sandbox: sb, host: a[a.length - 1] });
   save();
   console.log("Added rule " + id + " to policy local (scope: sandbox:" + sb + "): " + a[a.length - 1] + " [tcp]");
+} else if (a[0] === "policy" && a[1] === "deny") {
+  const sb = a[a.indexOf("--sandbox") + 1];
+  st.denied = (st.denied || []).concat([{ sandbox: sb, host: a[a.length - 1] }]);
+  save();
+  console.log("Added rule to policy local (scope: sandbox:" + sb + "): " + a[a.length - 1] + " [tcp,udp]");
 } else if (a[0] === "policy" && a[1] === "ls") {
   const sb = a[2];
   const rules = [{ name: "kit:" + sb, resource_type: "network", decision: "allow", resources: KIT }]
@@ -71,6 +76,8 @@ if (a[0] === "create") {
   const name = a[i];
   if (!st.sandboxes[name]) { console.error("no sandbox " + name); process.exit(125); }
   const cmd = a.slice(i + 1);
+  // What a sandbox installs inside is not installed on the machine that runs the tests.
+  if (process.env.FAKE_SBX_NO_SETUP && cmd.join(" ").includes("setup.sh")) process.exit(0);
   const r = spawnSync(cmd[0], cmd.slice(1), { cwd, env, stdio: "inherit" });
   process.exit(r.status === null ? 1 : r.status);
 } else { console.error("fake sbx: " + a.join(" ")); process.exit(2); }

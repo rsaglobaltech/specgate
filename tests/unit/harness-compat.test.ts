@@ -53,7 +53,7 @@ function fakeTool(name: string, behaviour: "implement" | "claim") {
     record: () => JSON.parse(fs.readFileSync(record, "utf8")),
     recorded: () => fs.existsSync(record),
     run: (args: string[], env: Record<string, string> = {}) =>
-      spawnSync(process.execPath, [CLI, "compat", "run", ...args, "--project-dir", project], {
+      spawnSync(process.execPath, [CLI, "compat", "run", ...args, "--no-sandbox", "--project-dir", project], {
         encoding: "utf8",
         timeout: 300_000,
         env: { ...process.env, ...env, PATH: `${bin}${path.delimiter}${process.env.PATH}`, NO_COLOR: "1" },

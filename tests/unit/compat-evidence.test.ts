@@ -20,6 +20,8 @@ import {
 } from "../../packages/core/src/domain/Compat";
 import { sessionOf, testFirst } from "../../packages/core/src/domain/CompatSession";
 import { main as guard } from "../../scripts/plugin/guard-hook";
+import { fakeSbx } from "../helpers/fake-sbx";
+import { hostsToDeny } from "../../scripts/lib/compat-sandbox";
 
 const ROOT_DIR = path.resolve(__dirname.split(/[\\/]tests(?:[\\/]|$)/)[0]!.replace(/[\\/]dist$/, ""));
 const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
@@ -57,7 +59,7 @@ function fakeTool(name: string, body: string) {
     record: () => JSON.parse(fs.readFileSync(record, "utf8")),
     recorded: () => fs.existsSync(record),
     run: (args: string[]) =>
-      spawnSync(process.execPath, [CLI, "compat", "run", ...args, "--project-dir", project], { encoding: "utf8", timeout: 300_000, env }),
+      spawnSync(process.execPath, [CLI, "compat", "run", ...args, "--no-sandbox", "--project-dir", project], { encoding: "utf8", timeout: 300_000, env }),
     report: (...args: string[]) =>
       spawnSync(process.execPath, [CLI, "compat", "report", ...args, "--project-dir", project], { encoding: "utf8", env }),
     runs: (): CompatRun[] =>
@@ -474,7 +476,7 @@ test("REQ-729 SCN-729a: an exam run starts OpenCode with a configuration folder 
     process.env.XDG_CONFIG_HOME = mine;
     let r;
     try {
-      r = spawnSync(process.execPath, [CLI, "compat", "run", "--tool", "opencode", "--level", "L0", "--runs", "1", "--project-dir", f.project], {
+      r = spawnSync(process.execPath, [CLI, "compat", "run", "--tool", "opencode", "--level", "L0", "--runs", "1", "--no-sandbox", "--project-dir", f.project], {
         encoding: "utf8",
         env: { ...process.env, PATH: `${path.join(f.parent, "bin")}${path.delimiter}${process.env.PATH}` },
       });
@@ -676,4 +678,161 @@ test("REQ-731 SCN-731b: the shipped task's project requires executable scenarios
   assert.ok(fs.existsSync(path.join(fx, "package-lock.json")));
   assert.equal(fs.existsSync(path.join(fx, "node_modules")), false);
   assert.equal(fs.existsSync(path.join(fx, "features", "steps")), false, "the steps are the agent's to write");
+});
+
+// ── compat-sandboxed REQ-736…REQ-738: the agent in a sandbox that holds its run and nothing else ──
+
+/** A batch in a fake sbx: HOME is the test's own, with an OpenCode session of its own in it. */
+function sandboxed(tool: string, body: string, args: string[], env: Record<string, string> = {}) {
+  const f = fakeTool(tool, body);
+  const sbx = fakeSbx();
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), "compat-home-"));
+  fs.mkdirSync(path.join(home, ".local", "share", "opencode"), { recursive: true });
+  fs.writeFileSync(path.join(home, ".local", "share", "opencode", "auth.json"), '{"opencode":{"type":"api","key":"mine"},"github-copilot":{"type":"oauth","access":"not-for-the-sandbox"}}');
+  const tarball = path.join(home, "specgate-0.0.0.tgz");
+  fs.writeFileSync(tarball, "not a real tarball");
+  const r = spawnSync(process.execPath, [CLI, "compat", "run", "--tool", tool, ...args, "--project-dir", f.project], {
+    encoding: "utf8",
+    timeout: 300_000,
+    env: {
+      ...process.env, ...env, HOME: home, NO_COLOR: "1",
+      SPECGATE_SBX: sbx.bin, FAKE_SBX_NO_SETUP: "1", SPECGATE_COMPAT_TARBALL: tarball,
+      PATH: `${path.join(f.parent, "bin")}${path.delimiter}${process.env.PATH}`,
+    },
+  });
+  return { f, sbx, home, r, done: () => { f.done(); fs.rmSync(home, { recursive: true, force: true }); } };
+}
+
+test("REQ-736 SCN-736a SCN-736c: the agent runs through sbx in the batch's own folder, with named variables, and nothing is left", () => {
+  const t = sandboxed("opencode", 'fs.writeFileSync(require("node:path").join(__dirname, "cwd.txt"), process.cwd());', ["--level", "L0", "--runs", "1", "--sandbox", "sbx"]);
+  try {
+    assert.equal(t.r.status, 0, out(t.r));
+    const calls = t.sbx.calls();
+    const created = calls.filter((c) => c[0] === "create");
+    assert.equal(created.length, 1);
+    const workspace = created[0]![created[0]!.length - 1]!;
+    assert.match(workspace, /specgate-compat-box-/);
+    const agent = calls.find((c) => c[0] === "exec" && c.join(" ").includes("opencode run"))!;
+    assert.ok(agent, "the agent was not run through sbx exec");
+    assert.ok(agent[agent.indexOf("-w") + 1]!.startsWith(workspace), "the agent's folder is not in the batch's");
+    assert.equal(agent.includes("-e"), false, "variables are named inside, where the kit's own are dropped");
+    const inside = agent[agent.length - 1]!;
+    assert.match(inside, /^exec env -i HOME="\$HOME" PATH="\$HOME\/\.local\/bin:\$PATH" TERM=dumb /);
+    const named = [...inside.split(" sh -c ")[0]!.matchAll(/([A-Z_]+)=/g)].map((m) => m[1]);
+    assert.deepEqual(named, ["HOME", "PATH", "TERM", "SPECGATE_HOOK_LOG", "XDG_CONFIG_HOME"]);
+    const [run] = t.f.runs();
+    assert.equal(run!.sandbox, "sbx");
+    assert.deepEqual(run!.network, ["opencode.ai", "*.opencode.ai", "registry.npmjs.org"]);
+    assert.ok(calls.some((c) => c[0] === "rm" && c[c.length - 1] === created[0]![created[0]!.indexOf("--name") + 1]), "the sandbox was not removed");
+    assert.equal(fs.existsSync(workspace), false, "the batch's folder is still there");
+    assert.deepEqual(Object.keys(t.sbx.state().sandboxes), []);
+  } finally {
+    t.done();
+  }
+});
+
+test("REQ-736 SCN-736b: Specgate's tarball goes into the sandbox of L0 and not into the bare one of B", () => {
+  const t = sandboxed("opencode", "", ["--level", "B,L0", "--runs", "1", "--sandbox", "sbx"]);
+  try {
+    assert.equal(t.r.status, 0, out(t.r));
+    const names = t.sbx.calls().filter((c) => c[0] === "create").map((c) => c[c.indexOf("--name") + 1]!);
+    assert.equal(names.length, 2);
+    assert.ok(names.some((n) => /^sgc-opencode-bare-/.test(n)) && names.some((n) => /^sgc-opencode-specgate-/.test(n)), names.join(" "));
+    assert.match(out(t.r), /making the sandbox for opencode \(no Specgate\)/);
+    assert.match(out(t.r), /making the sandbox for opencode \(with Specgate\)/);
+  } finally {
+    t.done();
+  }
+});
+
+test("REQ-736 SCN-736d: --auth-opencode puts the Developer's own session in the sandbox's home, and no key among the agent's variables", () => {
+  const body = 'fs.writeFileSync(require("node:path").join(__dirname, "key.txt"), String(process.env.OPENCODE_API_KEY));';
+  const t = sandboxed("opencode", body, ["--level", "L0", "--runs", "1", "--sandbox", "sbx", "--auth-opencode"], {});
+  try {
+    assert.equal(t.r.status, 0, out(t.r));
+    const put = t.sbx.calls().find((c) => c[0] === "exec" && /\.session/.test(c.join(" ")) && /opencode\/auth\.json/.test(c.join(" ")));
+    assert.ok(put, "the session was not put in the sandbox's home");
+    const inside = JSON.parse(fs.readFileSync(path.join(t.home, ".local", "share", "opencode", "auth.json"), "utf8"));
+    assert.deepEqual(Object.keys(inside), ["opencode"], "another account's session went into the sandbox");
+    const agent = t.sbx.calls().find((c) => c[0] === "exec" && c.join(" ").includes("opencode run"))!;
+    assert.doesNotMatch(agent[agent.length - 1]!.split(" sh -c ")[0]!, /API_KEY|TOKEN|OPENCODE_CONFIG_CONTENT/, "a key is among the agent's variables");
+    assert.match(agent[agent.length - 1]!, /^exec env -i /);
+    assert.equal(fs.readdirSync(os.tmpdir()).filter((d) => d.startsWith("specgate-compat-box-")).some((d) => fs.existsSync(path.join(os.tmpdir(), d, ".session"))), false);
+  } finally {
+    t.done();
+  }
+});
+
+test("REQ-737 SCN-737a: other providers' hosts are denied, the tool's own and the registry left open", () => {
+  assert.deepEqual(
+    hostsToDeny(["api.anthropic.com:443", "api.openai.com:443", "opencode.ai:443", "zen.opencode.ai:443", "registry.npmjs.org:443"], "opencode"),
+    ["api.anthropic.com", "api.openai.com"]
+  );
+  const t = sandboxed("opencode", "", ["--level", "L0", "--runs", "1", "--sandbox", "sbx"], {
+    FAKE_SBX_KIT: "api.anthropic.com:443,api.openai.com:443,opencode.ai:443,registry.npmjs.org:443",
+  });
+  try {
+    const denied = t.sbx.calls().filter((c) => c[0] === "policy" && c[1] === "deny").map((c) => c[c.length - 1]);
+    assert.deepEqual(denied.sort(), ["api.anthropic.com", "api.openai.com"]);
+  } finally {
+    t.done();
+  }
+});
+
+test("REQ-738 SCN-738a: OpenCode without a sandbox is refused, and no agent starts", () => {
+  const f = fakeTool("opencode", "");
+  try {
+    const r = spawnSync(process.execPath, [CLI, "compat", "run", "--tool", "opencode", "--level", "L0", "--project-dir", f.project], {
+      encoding: "utf8",
+      env: { ...process.env, NO_COLOR: "1", PATH: `${path.join(f.parent, "bin")}${path.delimiter}${process.env.PATH}` },
+    });
+    assert.notEqual(r.status, 0);
+    assert.match(out(r), /compat_needs_sandbox/);
+    assert.match(out(r), /--sandbox sbx/);
+    assert.equal(f.recorded(), false);
+  } finally {
+    f.done();
+  }
+});
+
+test("REQ-738 SCN-738b: with --no-sandbox it runs, saying what the agent can read", () => {
+  const f = fakeTool("opencode", "");
+  try {
+    const r = f.run(["--tool", "opencode", "--level", "L0", "--runs", "1"]);
+    assert.equal(r.status, 0, out(r));
+    assert.match(out(r), /--no-sandbox: the agent of opencode can read what you can read/);
+    assert.equal(f.recorded(), true);
+  } finally {
+    f.done();
+  }
+});
+
+test("REQ-736: a sandbox that cannot be made is an invalid run — the agent is not started on the machine instead", () => {
+  const t = sandboxed("opencode", "", ["--level", "L0", "--runs", "1", "--sandbox", "sbx"], { FAKE_SBX_FAIL_CREATE: "docker is not running" });
+  try {
+    const [run] = t.f.runs();
+    assert.match(String(run!.invalid), /no sandbox: .*docker is not running/);
+    assert.equal(t.f.recorded(), false);
+  } finally {
+    t.done();
+  }
+});
+
+test("REQ-721: a change's tasks list and the steps beside the feature files are not the specification", () => {
+  const body = [
+    FEES,
+    FEES_TEST,
+    'fs.mkdirSync("features/step_definitions", { recursive: true });',
+    'fs.writeFileSync("features/step_definitions/fees.steps.js", "// the steps that run the scenarios\\n");',
+    'fs.appendFileSync("docs/specs/changes/draft-fees/tasks.md", "\\n- [x] 2.9 REQ-002 — done, with its test corrected\\n");',
+  ].join("\n");
+  const f = fakeTool("codex", body);
+  try {
+    const r = f.run(["--tool", "codex", "--level", "L0", "--task", "trap", "--runs", "1"]);
+    const [run] = f.runs();
+    assert.equal(run!.passed, true, `${run!.reason} ${out(r)}`);
+    assert.equal(run!.outcome, "resolved");
+  } finally {
+    f.done();
+  }
 });

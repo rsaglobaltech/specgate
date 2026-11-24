@@ -49,6 +49,12 @@ export function sbxAllow(name: string, host: string): string | null {
   return m ? m[1] : null;
 }
 
+/** Closes `host` for this sandbox alone: a deny wins over the kit's allow (compat-sandboxed REQ-737). */
+export function sbxDeny(name: string, host: string): void {
+  const r = sbx(["policy", "deny", "network", "--sandbox", name, host]);
+  if (!r.ok) throw new Error(`sbx could not close ${host} for ${name}: ${(r.err || r.out).trim()}`);
+}
+
 /** The hosts the sandbox's kit allows: its `kit:<name>` network rules. */
 export function sbxKitHosts(name: string): string[] {
   const r = sbx(["policy", "ls", name, "--json"]);

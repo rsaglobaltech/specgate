@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-736 — The agent runs inside a sandbox that holds its run and nothing else
 
-<!-- specgate:trace status=Draft feature=features/agent-integration/REQ-736.feature actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/agent-integration/REQ-736.feature actor=Developer kind=functional -->
 
 The system SHALL, on `specgate compat run --sandbox sbx`, run each tool's agent inside a Docker sandbox whose only host folder is the batch's own, each run in a folder of it removed when the run ends; install inside it this checkout's Specgate at the levels that have Specgate and none at B; give the agent an environment of named variables and none of the host's — no provider key among them; with `--auth-<tool>`, put the Developer's own stored session of that tool in the sandbox's home, for a model that needs an account, removed with the sandbox; judge the run on the host after the agent has ended; and remove the batch's sandboxes when it ends or is interrupted.
 
@@ -36,7 +36,7 @@ The system SHALL, on `specgate compat run --sandbox sbx`, run each tool's agent 
 
 ### Requirement: REQ-737 — The sandbox's network is its provider and the registry
 
-<!-- specgate:trace status=Draft feature=features/agent-integration/REQ-737.feature actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/agent-integration/REQ-737.feature actor=Developer kind=functional -->
 
 The system SHALL, for each exam sandbox, deny every host its kit allows other than the tool's provider and the package registry, so that a secret the sandbox could use for another provider reaches none, and record in the run the hosts left open.
 
@@ -50,7 +50,7 @@ The system SHALL, for each exam sandbox, deny every host its kit allows other th
 
 ### Requirement: REQ-738 — A self-approving tool is not run outside a sandbox
 
-<!-- specgate:trace status=Draft feature=features/agent-integration/REQ-738.feature actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/agent-integration/REQ-738.feature actor=Developer kind=functional -->
 
 The system SHALL refuse, on `specgate compat run`, to start a tool whose default command approves its own actions — OpenCode — without `--sandbox`, naming `--sandbox sbx`; and start it on the machine only with `--no-sandbox`, saying that the agent can read what the Developer can.
 

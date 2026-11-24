@@ -37,6 +37,10 @@ import {
   type Verdict,
 } from "../../../../packages/core/src/domain/Compat";
 import { sessionOf, testFirst } from "../../../../packages/core/src/domain/CompatSession";
+import { makeSandbox, removeSandbox, sandboxLine, type ExamSandbox } from "../../../lib/compat-sandbox";
+
+/** Tools whose default command approves its own actions: not run outside a sandbox unless the Developer says so (REQ-738). */
+const SELF_APPROVING: readonly CompatTool[] = ["opencode"];
 
 /** This checkout's root: its CLI, and the exam it ships under compat/. */
 const ROOT = path.resolve(__dirname, "..", "..", "..", "..", "..");
@@ -84,6 +88,7 @@ function usage(): void {
   process.stdout.write(
     `
   🧩 ${c.bold}specgate compat run${c.reset} [--tool claude,codex,opencode] [--level B,L0,L1,L2,L3,M] [--task <ids>] [--runs <n>]
+                       [--sandbox sbx | --no-sandbox] [--auth-<tool>]
                        [--ladder] [--agent-<tool> "<cmd>"] [--model-<tool> <m>] [--keep-env <VAR>] [--timeout <s>]
      ${c.bold}specgate compat report${c.reset} [--json]
      ${c.bold}specgate compat check-release${c.reset}   was this Specgate examined with the real tools?
@@ -99,6 +104,12 @@ function usage(): void {
   Each run keeps the tool's session, and what Specgate's server and plugin saw.
   --ladder runs each tool's cheapest model first and the next only where a cell
   is not green: ${COMPAT_TOOLS.map((t) => `${t} ${MODEL_LADDER[t].join(" → ")}`).join("; ")}.
+
+  --sandbox sbx runs each agent in a Docker sandbox that holds its run and
+  nothing else of this machine, its network the tool's provider and the package
+  registry; --auth-<tool> puts your own stored session of the tool inside, for a
+  model that needs an account. OpenCode approves its own commands: it runs only
+  in a sandbox, or with --no-sandbox at your word.
 
   Runs go to .specgate/compat/runs.jsonl; report writes .specgate/compat/matrix.md
   (internal). The agent never sees ${PROVIDER_KEYS.join(", ")} unless --keep-env names one.
@@ -198,6 +209,10 @@ function specChanged(dir: string, base: string): string[] {
   const out: string[] = [];
   for (const rel of changedSince(dir, base, SPEC_PATHS)) {
     if (rel === "docs/specs/traceability.md") continue;
+    // What a change's tasks list says is the work's own record, and what sits beside the feature files —
+    // the steps that run them — is code the agent is asked to write: neither is the specification.
+    if (/^docs\/specs\/changes\/[^/]+\/tasks\.md$/.test(rel)) continue;
+    if (rel.startsWith("features/") && !rel.endsWith(".feature")) continue;
     const before = git(dir, "show", `${base}:${rel}`);
     const file = path.join(dir, rel);
     const after = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
@@ -240,11 +255,15 @@ interface Wiring {
 }
 
 /** The copy, given the level's integration (REQ-712, REQ-719); the command line's extra flags. */
-function integrate(dir: string, tool: CompatTool, level: CompatLevel, scratch: string, logDir: string): Wiring {
+function integrate(dir: string, tool: CompatTool, level: CompatLevel, scratch: string, logDir: string, box: ExamSandbox | null): Wiring {
   const it = integrationOf(tool, level)!;
   // In the run's folder from the start: what Specgate's side sees can be read while the agent works.
-  const mcpLog = path.join(logDir, "mcp.log");
-  const hookLog = path.join(logDir, "hooks.log");
+  // In a sandbox they are written inside it, where the run's folder on the host does not exist.
+  // A tool that approves its own commands reads its environment too: on the machine, what points at the
+  // exam's results is kept out of it — an agent found the earlier runs that way (2026-11-24).
+  const away = Boolean(box) || SELF_APPROVING.includes(tool);
+  const mcpLog = path.join(away ? scratch : logDir, "mcp.log");
+  const hookLog = path.join(away ? scratch : logDir, "hooks.log");
   if (!it.rules) {
     // REQ-719: nothing of Specgate's to read while the agent works; put back to judge.
     // Not in the run's own folder: tools look for AGENTS.md in every folder above the project.
@@ -258,7 +277,9 @@ function integrate(dir: string, tool: CompatTool, level: CompatLevel, scratch: s
   for (const t of it.agentsInit) cli(dir, "agents", "init", "--tool", t, "--force");
   if (it.skillsFor) cli(dir, "agents", "init", "--format", "skills", "--tool", it.skillsFor, "--force");
   // REQ-717: the server says what it was asked in the run's own file.
-  const serve = { command: process.execPath, args: [CLI, "mcp", "serve", "--log", mcpLog] };
+  const serve = box
+    ? { command: `${box.home}/.local/bin/specgate`, args: ["mcp", "serve", "--log", mcpLog] }
+    : { command: process.execPath, args: [CLI, "mcp", "serve", "--log", mcpLog] };
   const extra: string[] = [];
   // REQ-726: no shell — the server is the only way to Specgate.
   if (!it.shell) {
@@ -334,7 +355,9 @@ function codexHome(scratch: string): { env: Record<string, string>; done: () => 
 /** A configuration folder of the run's own for OpenCode (REQ-729). */
 function opencodeConfig(scratch: string): string {
   const dir = path.join(scratch, "xdg-config");
-  fs.mkdirSync(dir, { recursive: true });
+  fs.mkdirSync(path.join(dir, "opencode"), { recursive: true });
+  // What OpenCode can be told: no folder outside the project. Its shell is not held by this — a sandbox is.
+  fs.writeFileSync(path.join(dir, "opencode", "opencode.json"), `${JSON.stringify({ permission: { external_directory: "deny" } }, null, 2)}\n`);
   return dir;
 }
 
@@ -347,6 +370,8 @@ const linesOf = (file: string): Array<Record<string, unknown>> => {
 };
 
 interface RunOptions {
+  /** compat-sandboxed REQ-736: the sandbox a tool's run at a level goes in; absent on the machine. */
+  boxFor?: (tool: CompatTool, level: CompatLevel) => ExamSandbox;
   agents: Partial<Record<CompatTool, string>>;
   keep: string[];
   timeoutMs: number;
@@ -364,7 +389,19 @@ function oneRun(
   // REQ-730: a tool that is not there never worked.
   if (version === "unknown" && !o.agents[tool]) return { ...base, ran: true, invalid: `${tool} is not installed`, passed: false };
 
-  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), `specgate-compat-${tool}-${level}-`));
+  // REQ-736: in a sandbox the run is a folder of the batch's own, the only one the sandbox has.
+  let box: ExamSandbox | null = null;
+  try {
+    box = o.boxFor ? o.boxFor(tool, level) : null;
+  } catch (e) {
+    // No sandbox, no run: the agent is never started on the machine instead.
+    return { ...base, ran: true, invalid: `no sandbox: ${(e as Error).message}`, passed: false };
+  }
+  if (box) {
+    base.sandbox = "sbx";
+    base.network = box.open;
+  }
+  const scratch = fs.mkdtempSync(path.join(box ? box.workspace : os.tmpdir(), `specgate-compat-${tool}-${level}-`));
   const dir = path.join(scratch, "project");
   const logDir = path.join(o.outDir, "runs", `${base.at.replace(/[:.]/g, "-")}-${tool}-${level}-${task.id}-${n}`);
   fs.mkdirSync(logDir, { recursive: true });
@@ -380,7 +417,7 @@ function oneRun(
     git(dir, "add", "-A");
     git(dir, "commit", "-qm", "the exam as given");
     const given = (git(dir, "rev-parse", "HEAD").stdout || "").trim();
-    const wiring = integrate(dir, tool, level, scratch, logDir);
+    const wiring = integrate(dir, tool, level, scratch, logDir, box);
     keptDir = wiring.kept;
     git(dir, "add", "-A");
     git(dir, "commit", "-qm", `${level} for ${tool}`, "--allow-empty");
@@ -388,7 +425,9 @@ function oneRun(
     // With Specgate, the agent's `specgate` is this checkout's, first on its PATH.
     const bin = path.join(scratch, "bin");
     fs.mkdirSync(bin);
-    if (level === "M")
+    if (box) {
+      // In a sandbox Specgate is installed inside at the levels that have it, and is not there at B: nothing to shadow.
+    } else if (level === "M")
       // Should a shell be reached all the same, the CLI is not there to answer it.
       fs.writeFileSync(
         path.join(bin, "specgate"),
@@ -410,7 +449,11 @@ function oneRun(
     // REQ-718: the session is kept as it happens, not when the tool ends.
     const sessionFile = path.join(logDir, "session.jsonl");
     const stderrFile = path.join(logDir, "stderr.log");
-    const command = `( ${agent} ) > ${q(sessionFile)} 2> ${q(stderrFile)}`;
+    // In the sandbox too, the tool's configuration is a folder of the run: the kit's own AGENTS.md, skills and servers stay out.
+    const inside = box
+      ? sandboxLine(box, dir, agent, { SPECGATE_HOOK_LOG: wiring.hookLog, XDG_CONFIG_HOME: opencodeConfig(scratch) })
+      : agent;
+    const command = `( ${inside} ) > ${q(sessionFile)} 2> ${q(stderrFile)}`;
 
     // REQ-714: the provider keys stay out unless named.
     const saved: Record<string, string> = {};
@@ -419,7 +462,7 @@ function oneRun(
       saved[k] = process.env[k]!;
       delete process.env[k];
     }
-    const home = tool === "codex" ? codexHome(scratch) : null;
+    const home = tool === "codex" && !box ? codexHome(scratch) : null;
     const t0 = Date.now();
     let r;
     try {
@@ -443,6 +486,12 @@ function oneRun(
     base.seconds = Math.round((Date.now() - t0) / 100) / 10;
     base.exit = r.status;
     const said = fs.existsSync(sessionFile) ? fs.readFileSync(sessionFile, "utf8") : "";
+    // What Specgate's side recorded inside the sandbox, kept with the run.
+    const away = path.dirname(wiring.mcpLog) !== logDir;
+    if (away)
+      for (const f of [wiring.mcpLog, wiring.hookLog])
+        if (fs.existsSync(f)) fs.copyFileSync(f, path.join(logDir, path.basename(f)));
+    const kept = (f: string) => (away ? path.join(logDir, path.basename(f)) : f);
 
     // REQ-718: what the tool says it did.
     const session = sessionOf(tool, said);
@@ -459,8 +508,8 @@ function oneRun(
       return base;
     }
     // REQ-717: what Specgate's own side saw.
-    const hooks = linesOf(wiring.hookLog);
-    base.mcpCalls = linesOf(wiring.mcpLog).length;
+    const hooks = linesOf(kept(wiring.hookLog));
+    base.mcpCalls = linesOf(kept(wiring.mcpLog)).length;
     base.refusals = hooks.filter((h) => h.hook === "guard" && h.decision === "refused").length;
     base.gateHooks = hooks.filter((h) => h.hook === "gate").length;
 
@@ -624,6 +673,75 @@ export class CompatCommand extends BaseCommand {
     const o: RunOptions = { agents, keep, timeoutMs: Number(flag("--timeout") || 900) * 1000, outDir };
     fs.mkdirSync(outDir, { recursive: true });
 
+    // compat-sandboxed REQ-738: a tool that approves its own actions reads what the Developer can.
+    const sandbox = flag("--sandbox");
+    const noSandbox = args.includes("--no-sandbox");
+    if (sandbox && sandbox !== "sbx") {
+      io.fail({ compat: null }, [
+        { code: "compat_bad_flag", message: `unknown sandbox: ${sandbox}`, severity: "error", fix: "--sandbox sbx" },
+      ]);
+      process.exitCode = 2;
+      return;
+    }
+    const exposed = tools.filter((t) => SELF_APPROVING.includes(t));
+    if (!sandbox && !noSandbox && exposed.length > 0) {
+      io.fail({ compat: null }, [
+        {
+          code: "compat_needs_sandbox",
+          message: `${exposed.join(", ")} approves its own commands: outside a sandbox its agent reads whatever you can read.`,
+          severity: "error",
+          fix: "--sandbox sbx runs it in a Docker sandbox that holds its run and nothing else; --no-sandbox runs it on this machine at your word",
+        },
+      ]);
+      process.exitCode = 2;
+      return;
+    }
+    if (!sandbox && noSandbox && exposed.length > 0 && !json)
+      process.stdout.write(`  ▲  --no-sandbox: the agent of ${exposed.join(", ")} can read what you can read on this machine.\n`);
+
+    // REQ-736: one sandbox per tool and kind for the batch, made when first needed, removed when it ends.
+    const boxes = new Map<string, ExamSandbox>();
+    let tarball: string | null = null;
+    const packed = (): string => {
+      if (tarball) return tarball;
+      if (process.env.SPECGATE_COMPAT_TARBALL) return (tarball = process.env.SPECGATE_COMPAT_TARBALL);
+      const dest = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-compat-pack-"));
+      const r = spawnSync("npm", ["pack", "--silent", "--ignore-scripts", "--pack-destination", dest], { cwd: ROOT, encoding: "utf8", shell: process.platform === "win32" });
+      const name = `${r.stdout || ""}`.trim().split("\n").pop() || "";
+      if (r.status !== 0 || !name) throw new Error(`npm pack failed: ${(r.stderr || "").trim().split("\n").slice(-1)[0]}`);
+      return (tarball = path.join(dest, name));
+    };
+    const removeBoxes = () => {
+      for (const b of boxes.values()) removeSandbox(b);
+      boxes.clear();
+      if (tarball && !process.env.SPECGATE_COMPAT_TARBALL) fs.rmSync(path.dirname(tarball), { recursive: true, force: true });
+    };
+    if (sandbox) {
+      o.boxFor = (tool, level) => {
+        const kind = level === "B" ? "bare" : "specgate";
+        const key = `${tool}:${kind}`;
+        let b = boxes.get(key);
+        if (!b) {
+          if (!json) process.stdout.write(`  ·  making the sandbox for ${tool} (${kind === "bare" ? "no Specgate" : "with Specgate"})…\n`);
+          b = makeSandbox(tool, kind, {
+            tarball: kind === "specgate" ? packed() : null,
+            auth: args.includes(`--auth-${tool}`),
+            provider: (models[tool] || CHEAPEST_MODEL[tool]).split("/")[0],
+          });
+          boxes.set(key, b);
+          if (!json) process.stdout.write(`  ·  ${b.name}: sees ${b.workspace} only; network ${b.open.join(", ")}\n`);
+        }
+        return b;
+      };
+      // Whatever ends the batch — its end, an error, an interruption — no sandbox outlives it.
+      process.once("exit", removeBoxes);
+      for (const sig of ["SIGINT", "SIGTERM"] as const)
+        process.once(sig, () => {
+          removeBoxes();
+          process.exit(130);
+        });
+    }
+
     const done: CompatRun[] = [];
     const say = (r: CompatRun, n: number, count: number) => {
       if (json) return;
@@ -680,6 +798,7 @@ export class CompatCommand extends BaseCommand {
         }
       }
     }
+    removeBoxes();
     io.emit({ compat: { runs: done, file: runsFile } }, () => {
       process.stdout.write(`\n  ➜  specgate compat report   the matrix from .specgate/compat/runs.jsonl\n`);
     });

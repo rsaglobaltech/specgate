@@ -105,6 +105,9 @@ export interface CompatRun {
   invalid?: string | null;
   /** The Specgate that ran the exam (REQ-732). */
   specgate?: string;
+  /** compat-sandboxed REQ-736, REQ-737: the sandbox engine the agent ran in, and the hosts it could reach. */
+  sandbox?: string | null;
+  network?: string[];
 }
 
 /** A run that counts: the tool was started and worked (REQ-730). */

@@ -1,0 +1,11 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-738 SCN-738a: OpenCode without a sandbox is refused, and no agent starts (135.824291ms)
+✔ REQ-738 SCN-738b: with --no-sandbox it runs, saying what the agent can read (2369.91ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2612.817584
