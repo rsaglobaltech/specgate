@@ -60,6 +60,15 @@ function writtenFiles(tool: string, args: Record<string, unknown>): string[] {
   return [];
 }
 
+/** OpenCode's shell tool: `shell` in 2, `bash` in 1. Judged by the working tree (REQ-742). */
+function guardShell(tool: string, dir: string, env: Record<string, string | undefined>): void {
+  if (tool !== "shell" && tool !== "bash") return;
+  const d = guardDecide({ cwd: dir, tool_name: "Bash", tool_input: {} }, env);
+  if (d.allow) return;
+  hookLog({ hook: "guard", decision: "refused", file: d.file ?? "", reason: d.message }, env);
+  throw new Error(d.message);
+}
+
 export function createHooks(ctx: OpencodeContext, deps: BridgeDeps = {}) {
   const dir = ctx.directory;
   const env = deps.env ?? process.env;
@@ -79,6 +88,7 @@ export function createHooks(ctx: OpencodeContext, deps: BridgeDeps = {}) {
       input: { tool: string },
       output: { args: Record<string, unknown> }
     ) => {
+      guardShell(input.tool, dir, env);
       for (const file of writtenFiles(input.tool, output.args ?? {})) {
         const d = guardDecide(
           { cwd: dir, tool_name: "Write", tool_input: { file_path: file } },
@@ -158,6 +168,7 @@ export async function setupV2(ctx: OpencodeV2Context, deps: BridgeDeps = {}): Pr
   });
 
   await ctx.tool.hook("execute.before", (event) => {
+    guardShell(event.tool, dir, env);
     for (const file of writtenFiles(event.tool, event.input ?? {})) {
       const d = guardDecide({ cwd: dir, tool_name: "Write", tool_input: { file_path: file } }, env);
       hookLog({ hook: "guard", decision: d.allow ? "allowed" : "refused", file, ...(d.allow ? {} : { reason: d.message }) }, env);

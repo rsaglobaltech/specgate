@@ -11,6 +11,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 
 /** An open change and its requirements, in the order its deltas declare them. */
 export interface OpenChange {
@@ -217,5 +218,51 @@ export function hookLog(
     fs.appendFileSync(file, `${JSON.stringify({ t: Date.now() / 1000, ...event })}\n`, "utf8");
   } catch {
     /* a log that cannot be written never breaks a session */
+  }
+}
+
+/** Where a requirement's step definitions are recorded when its code begins (shortcut-proof REQ-743). */
+export function stepRecordFile(root: string, requirement: string): string {
+  return path.join(root, ".specgate", "evidence", requirement, "steps.json");
+}
+
+/** The step definitions of the project's scenarios: every file under `features/` that is not a feature file, with its hash. */
+export function stepHashes(root: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const walk = (dir: string, rel: string) => {
+    let entries: fs.Dirent[] = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      if (e.name === "node_modules" || e.name.startsWith(".")) continue;
+      const next = `${rel}/${e.name}`;
+      if (e.isDirectory()) walk(path.join(dir, e.name), next);
+      else if (e.isFile() && !e.name.endsWith(".feature")) {
+        const text = fs.readFileSync(path.join(dir, e.name), "utf8").replace(/\r\n/g, "\n");
+        out[next] = `sha256:${createHash("sha256").update(text).digest("hex")}`;
+      }
+    }
+  };
+  walk(path.join(root, "features"), "features");
+  return out;
+}
+
+/** Record the step definitions as they are now — once: the record is of when the code began. Never throws. */
+export function recordSteps(root: string, requirement: string): void {
+  try {
+    if (!/^REQ-\d+$/.test(requirement)) return;
+    const file = stepRecordFile(root, requirement);
+    if (fs.existsSync(file)) return;
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(
+      file,
+      `${JSON.stringify({ requirement, at: new Date().toISOString(), files: stepHashes(root) }, null, 2)}\n`,
+      "utf8"
+    );
+  } catch {
+    // A guard that breaks a session over a file it cannot write is worse than none.
   }
 }

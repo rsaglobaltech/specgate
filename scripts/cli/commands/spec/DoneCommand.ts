@@ -1,4 +1,6 @@
 import { readGatePolicy } from "../../../lib/gate-policy";
+import { endStepRecord, keepStepsReview, stepsVerdict, STEPS_FINDING, STEPS_FIX } from "../../../lib/step-seal";
+import { gitIdentity } from "../../../lib/approvals";
 import { scenariosOf } from "./ScenariosCommand";
 import { keepEvidence, mustReproduce, readRed } from "../../../lib/evidence";
 import type { ScenarioRun } from "../../../lib/evidence";
@@ -79,6 +81,41 @@ export interface DoneOptions {
   /** Overrides `test_cmd:` in harness.config.yaml for this invocation. */
   testCmd?: string;
   json?: boolean;
+  /** `--steps-reviewed`: a person read the steps changed after the code began (REQ-743). */
+  stepsReviewed?: boolean;
+}
+
+/** REQ-743: why the requirement's steps stop its delivery, or null. */
+function stepsRefusal(
+  projectDir: string,
+  id: string,
+  opts: DoneOptions
+): { code: string; message: string; fix: string } | null {
+  const v = stepsVerdict(projectDir, id);
+  if (!v.recorded || v.changed.length === 0) return null;
+  if (!opts.stepsReviewed)
+    return { code: "steps_changed_after_code", message: STEPS_FINDING(id, v.changed), fix: STEPS_FIX(id) };
+  // A person's word is said at a terminal: a tool that runs its own commands has none.
+  if (!process.stdin.isTTY && !process.env.SPECGATE_ASSUME_TTY)
+    return {
+      code: "steps_review_needs_person",
+      message: `--steps-reviewed is a person's word, and this is not a terminal. ${STEPS_FINDING(id, v.changed)}`,
+      fix: `A person runs it in a terminal: specgate apply ${id} --steps-reviewed`,
+    };
+  return null;
+}
+
+/** REQ-743: after the delivery — who reviewed the steps, or that nobody did; the record ends. */
+function stepsDelivered(projectDir: string, id: string, opts: DoneOptions): string {
+  const v = stepsVerdict(projectDir, id);
+  let said = "";
+  if (v.recorded && v.changed.length > 0 && opts.stepsReviewed) {
+    keepStepsReview(projectDir, id, gitIdentity(projectDir), v.changed);
+  } else if (!v.recorded && v.fresh.length > 0) {
+    said = `${id}'s steps (${v.fresh.join(", ")}) were written in the same delivery as the code and were not reviewed: read them against its scenarios.`;
+  }
+  endStepRecord(projectDir, id);
+  return said;
 }
 
 export function parseArgs(argv: string[]): DoneOptions {
@@ -98,6 +135,7 @@ export function parseArgs(argv: string[]): DoneOptions {
     else if (a === "--no-check") opts.noCheck = true;
     else if (a === "--test-cmd" && argv[i + 1]) opts.testCmd = argv[++i];
     else if (a === "--json") opts.json = true;
+    else if (a === "--steps-reviewed") opts.stepsReviewed = true;
     else if (a === "--strict") {
       opts.strict = true;
       opts.check = true;
@@ -381,8 +419,19 @@ export class DoneCommand extends BaseCommand {
         }),
       ]);
 
+    // REQ-743: steps changed after the code began wait for a person.
+    const steps = gated ? stepsRefusal(projectDir, id, opts) : null;
+    if (steps)
+      io.fail(NULL_SHAPE, [
+        error(steps.code, `${id} not marked ${opts.status}: ${steps.message}`, {
+          target: id,
+          fix: steps.fix,
+        }),
+      ]);
+
     const result = writeStatus(projectDir, dir, owner, id, opts.status);
     if (result.ok) applied(opts, projectDir, dir, id);
+    const stepsSaid = result.ok && gated ? stepsDelivered(projectDir, id, opts) : "";
     if (!result.ok) {
       if (result.code === "traceability_not_found") {
         io.usage(NULL_SHAPE, [
@@ -406,7 +455,7 @@ export class DoneCommand extends BaseCommand {
     }
 
     const updated = result.updated;
-    io.emit({ requirement: { id, status: opts.status, rowsUpdated: updated } }, () =>
+    io.emit({ requirement: { id, status: opts.status, rowsUpdated: updated, ...(stepsSaid ? { steps: stepsSaid } : {}) } }, () =>
       process.stdout.write(
         "\n" +
           ui.ok(
@@ -417,6 +466,7 @@ export class DoneCommand extends BaseCommand {
           (gated && readGatePolicy(projectDir).bdd !== "required" && scenariosOf(projectDir, id).length > 0
             ? `  ${ui.muted(`·  ${id} is delivered on a test that names it: its scenarios were not run. specgate migrate bdd makes the gate run them.`)}\n`
             : "") +
+          (stepsSaid ? `  ${ui.muted(`·  ${stepsSaid}`)}\n` : "") +
           (plan.testsUnverified ? "" : nextAfter(queue().items, id, owner, view))
       )
     );
@@ -577,12 +627,15 @@ export class DoneCommand extends BaseCommand {
       for (const id of ids.filter((x) => results.get(x)!.ok)) {
         const bdd = bddRefusal(projectDir, id, !!opts.json);
         if (bdd) results.set(id, { ok: false, code: bdd.code, message: bdd.message });
+        const steps = bdd ? null : stepsRefusal(projectDir, id, opts);
+        if (steps) results.set(id, { ok: false, code: steps.code, message: steps.message });
       }
 
     for (const id of ids.filter((x) => results.get(x)!.ok)) {
       const owner = view ? view.requirements.find((r) => r.id === id) : undefined;
       const result = writeStatus(projectDir, dir, owner, id, opts.status);
       if (result.ok) applied(opts, projectDir, dir, id);
+      if (result.ok && opts.check) stepsDelivered(projectDir, id, opts);
       if (!result.ok) {
         results.set(id, {
           ok: false,

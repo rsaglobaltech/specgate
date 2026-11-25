@@ -31,6 +31,7 @@ export const RULES = [
   "quality",
   "use_cases",
   "state_machines",
+  "scope",
 ] as const;
 export type Rule = (typeof RULES)[number];
 
@@ -54,6 +55,7 @@ export const RULE_MEANING: Record<Rule, string> = {
     "every requirement names a use case of docs/specs/use-cases.md, and every use case is delivered (--strict-use-cases)",
   state_machines:
     "every state machine of docs/specs/state-machines/ starts somewhere, names states and requirements that exist, and takes no forbidden transition",
+  scope: "every new source file is named by the design of an approved change, where one names files",
 };
 
 const STRICT: Record<Rule, Level> = {
@@ -68,6 +70,8 @@ const STRICT: Record<Rule, Level> = {
   use_cases: "warning",
   // REQ-637: a project with no docs/specs/state-machines/ has nothing to check.
   state_machines: "error",
+  // shortcut-proof REQ-744: says nothing where no approved design names a file.
+  scope: "error",
 };
 
 /** The three starting points; `rules:` overrides any rule of the one chosen. */
@@ -75,7 +79,7 @@ export const PRESET_RULES: Record<Preset, Record<Rule, Level>> = {
   // Today's gate: everything fails it.
   strict: STRICT,
   // Coverage is a name match, not a run of the suite: reported, not failed.
-  standard: { ...STRICT, coverage: "warning" },
+  standard: { ...STRICT, coverage: "warning", scope: "warning" },
   // A team adopting the gate: what makes a requirement unproven fails it;
   // wording, coverage and the extras are reported.
   minimal: {
@@ -88,6 +92,7 @@ export const PRESET_RULES: Record<Preset, Record<Rule, Level>> = {
     quality: "warning",
     use_cases: "off",
     state_machines: "warning",
+    scope: "warning",
   },
 };
 

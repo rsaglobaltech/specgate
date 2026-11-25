@@ -22,6 +22,9 @@ import {
 } from "../../packages/core/src/domain/Approvals";
 import { sealDiff, sealsOf, type Seals } from "../../packages/core/src/domain/DeltaSeal";
 import { error, warning, type Diagnostic } from "./diagnostics";
+import { designFiles, outsideDesign } from "../../packages/core/src/domain/DesignScope";
+import { levelOf, readGatePolicy } from "./gate-policy";
+import { needsTest } from "../plugin/project-state";
 
 /**
  * The project side of roles and approvals (REQ-310..315, ADR-0045): the
@@ -390,15 +393,7 @@ export function sealDiagnostics(
   const target = `docs/specs/changes/${id}`;
   const state = sealFindings(projectDir, id);
   if (state.unsealed) {
-    // A project whose roles or approvals cannot be read (0.35 wrote them
-    // otherwise) says so where they are asked for; here it is read by its line.
-    let approved = Boolean(approvedLine(projectDir, id));
-    try {
-      const approvals = changeApprovals(projectDir, id);
-      if (approvals.schema === "layered" || approvals.recorded) approved = approvals.approved;
-    } catch {
-      /* the `approved:` line stands */
-    }
+    const approved = isApproved(projectDir, id);
     return {
       errors: [],
       warnings: approved
@@ -422,4 +417,67 @@ export function sealDiagnostics(
     ),
     warnings: [],
   };
+}
+
+/** Whether the change is approved as the gate reads it; by its `approved:` line where its approvals cannot be read. */
+function isApproved(projectDir: string, id: string): boolean {
+  // A project whose roles or approvals cannot be read (0.35 wrote them
+  // otherwise) says so where they are asked for; here it is read by its line.
+  try {
+    const approvals = changeApprovals(projectDir, id);
+    if (approvals.schema === "layered" || approvals.recorded) return approvals.approved;
+  } catch {
+    /* the `approved:` line stands */
+  }
+  return Boolean(approvedLine(projectDir, id));
+}
+
+/** The source files new in the working tree — untracked or added —, from the project root; none where git cannot say. */
+function newSourceFiles(projectDir: string): string[] {
+  const r = spawnSync("git", ["status", "--porcelain", "--untracked-files=all", "-z"], {
+    cwd: projectDir,
+    encoding: "utf8",
+    timeout: 10_000,
+  });
+  if (r.status !== 0) return [];
+  return (r.stdout || "")
+    .split("\0")
+    .filter((e) => /^(\?\?|A[ M])/.test(e))
+    .map((e) => e.slice(3))
+    .filter(needsTest);
+}
+
+/**
+ * REQ-744: the new source files no approved design names, for the changes
+ * given — as errors or warnings by the gate's rule `scope`, nothing where it
+ * is off or where no approved design names a file.
+ */
+export function scopeDiagnostics(
+  projectDir: string,
+  ids: string[]
+): { errors: Diagnostic[]; warnings: Diagnostic[] } {
+  const none = { errors: [], warnings: [] };
+  let level = "error";
+  try {
+    level = levelOf(readGatePolicy(projectDir), "scope");
+  } catch {
+    return none;
+  }
+  if (level === "off") return none;
+  const designs = ids
+    .filter((id) => isApproved(projectDir, id))
+    .map((id) => ({ id, files: designFiles(layerTexts(projectDir, id).find((l) => l.id === "design")?.text ?? "") }))
+    .filter((d) => d.files.length > 0);
+  if (designs.length === 0) return none;
+  const outside = outsideDesign(
+    newSourceFiles(projectDir),
+    designs.flatMap((d) => d.files)
+  );
+  const change = designs[0]!.id;
+  const found = outside.map((file) => {
+    const message = `${file} is new, and the design of ${designs.map((d) => d.id).join(", ")} does not name it. Name it in docs/specs/changes/${change}/design.md and have the design approved again, or open a change for it: specgate propose <change-id>.`;
+    const extra = { target: file, fix: `Name ${file} in docs/specs/changes/${change}/design.md, then specgate change approve ${change} — or specgate propose <change-id>.` };
+    return level === "error" ? error("file_outside_design", message, extra) : warning("file_outside_design", message, extra);
+  });
+  return level === "error" ? { errors: found, warnings: [] } : { errors: [], warnings: found };
 }

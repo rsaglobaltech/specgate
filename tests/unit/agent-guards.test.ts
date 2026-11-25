@@ -236,7 +236,7 @@ test("REQ-421: the hook's exit code and message, and its place in the plugin", (
   const hooks = JSON.parse(
     files.find((f: { path: string }) => f.path.endsWith("hooks.json")).contents
   );
-  assert.equal(hooks.hooks.PreToolUse[0].matcher, "Write|Edit|MultiEdit|NotebookEdit");
+  assert.equal(hooks.hooks.PreToolUse[0].matcher, "Write|Edit|MultiEdit|NotebookEdit|Bash");
   assert.equal(
     hooks.hooks.PreToolUse[0].hooks[0].command,
     'node "${CLAUDE_PLUGIN_ROOT}/scripts/guard-hook.js"'

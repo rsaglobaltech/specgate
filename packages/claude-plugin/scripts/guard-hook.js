@@ -61,6 +61,8 @@ const WRITERS = {
     MultiEdit: "file_path",
     NotebookEdit: "notebook_path",
 };
+/** The tools that run a command: they write files no hook sees (shortcut-proof REQ-742). */
+const SHELLS = new Set(["Bash"]);
 const ALLOW = { allow: true, message: "" };
 /** A path with its symlinks resolved as far as it exists (`/var` is `/private/var` on macOS). */
 function real(p) {
@@ -89,9 +91,45 @@ function namesAny(root, files, ids) {
         }
     });
 }
+/**
+ * REQ-742: a shell call is judged by the working tree, not by its command — a
+ * file written with `cat >` is written all the same. While the tree holds
+ * changed source and no changed test names a requirement of the open change,
+ * the shell waits; reading and writing the test do not come through here.
+ */
+function shellDecision(cwd, env) {
+    if (!(0, project_state_1.isSpecDriven)(cwd) || (0, project_state_1.guardOff)(cwd, env))
+        return ALLOW;
+    const changed = (0, project_state_1.changedFiles)(cwd);
+    if (changed === null)
+        return ALLOW;
+    const source = changed.filter(project_state_1.needsTest);
+    if (!source.length)
+        return ALLOW;
+    const changes = (0, project_state_1.openChanges)(cwd);
+    const owner = changes.find((c) => c.pending.length);
+    if (!owner)
+        return ALLOW;
+    const next = owner.pending[0];
+    // REQ-743: the code has begun, whatever wrote it.
+    (0, project_state_1.recordSteps)(cwd, next);
+    const ids = changes.flatMap((c) => c.requirements);
+    if (namesAny(cwd, changed.filter(project_state_1.isTestFile), ids))
+        return ALLOW;
+    return {
+        allow: false,
+        file: source[0],
+        message: `specgate: ${source[0]} was written before its test — change \`${owner.id}\`, ${next} next in its tasks. ` +
+            `Write the test that names ${next} with your file tool; until a test new or changed in the working tree names a requirement of \`${owner.id}\`, ` +
+            "the shell waits: reading files and writing that test are allowed. " +
+            "(Turn the guard off for this project with `specgate config set agent_guard off`.)",
+    };
+}
 /** Allow or refuse one tool call. `env` is injected so tests do not depend on the shell. */
 function decide(input, env) {
     try {
+        if (SHELLS.has(input.tool_name ?? ""))
+            return shellDecision(input.cwd ?? process.cwd(), env);
         const key = WRITERS[input.tool_name ?? ""];
         const target = key ? input.tool_input?.[key] : undefined;
         if (typeof target !== "string" || !target)
@@ -116,8 +154,13 @@ function decide(input, env) {
             };
         }
         const ids = changes.flatMap((c) => c.requirements);
-        if (ids.length && namesAny(cwd, changed.filter(project_state_1.isTestFile), ids))
+        if (ids.length && namesAny(cwd, changed.filter(project_state_1.isTestFile), ids)) {
+            // REQ-743: the first source write of the delivery — its steps as they are now.
+            const first = changes.find((c) => c.pending.length)?.pending[0];
+            if (first)
+                (0, project_state_1.recordSteps)(cwd, first);
             return ALLOW;
+        }
         const owner = changes.find((c) => c.pending.length) ?? changes[0];
         // The next requirement as the change's tasks order it (REQ-426).
         const next = owner.pending[0];
@@ -151,9 +194,12 @@ function main(raw, env = process.env) {
         return 0;
     }
     const decision = decide(input, env);
-    const file = String(input.tool_input?.file_path ?? "");
+    const file = decision.file ??
+        String(input.tool_input?.file_path ?? "");
     if (decision.allow) {
-        (0, project_state_1.hookLog)({ hook: "guard", decision: "allowed", file }, env);
+        // A shell call that is let through is not a write: nothing to record.
+        if (!SHELLS.has(input.tool_name ?? ""))
+            (0, project_state_1.hookLog)({ hook: "guard", decision: "allowed", file }, env);
         return 0;
     }
     (0, project_state_1.hookLog)({ hook: "guard", decision: "refused", file, reason: decision.message }, env);

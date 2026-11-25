@@ -53,9 +53,13 @@ exports.changedFiles = changedFiles;
 exports.specgateCommand = specgateCommand;
 exports.runSpecgate = runSpecgate;
 exports.hookLog = hookLog;
+exports.stepRecordFile = stepRecordFile;
+exports.stepHashes = stepHashes;
+exports.recordSteps = recordSteps;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
 const node_child_process_1 = require("node:child_process");
+const node_crypto_1 = require("node:crypto");
 /** Statuses that mean a requirement is delivered. */
 const DONE = new Set(["Implemented", "Verified", "Released", "Deprecated"]);
 /** Is this folder a spec-driven project? The same test the gate hook makes. */
@@ -230,6 +234,51 @@ function hookLog(event, env = process.env) {
     }
     catch {
         /* a log that cannot be written never breaks a session */
+    }
+}
+/** Where a requirement's step definitions are recorded when its code begins (shortcut-proof REQ-743). */
+function stepRecordFile(root, requirement) {
+    return path.join(root, ".specgate", "evidence", requirement, "steps.json");
+}
+/** The step definitions of the project's scenarios: every file under `features/` that is not a feature file, with its hash. */
+function stepHashes(root) {
+    const out = {};
+    const walk = (dir, rel) => {
+        let entries = [];
+        try {
+            entries = fs.readdirSync(dir, { withFileTypes: true });
+        }
+        catch {
+            return;
+        }
+        for (const e of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+            if (e.name === "node_modules" || e.name.startsWith("."))
+                continue;
+            const next = `${rel}/${e.name}`;
+            if (e.isDirectory())
+                walk(path.join(dir, e.name), next);
+            else if (e.isFile() && !e.name.endsWith(".feature")) {
+                const text = fs.readFileSync(path.join(dir, e.name), "utf8").replace(/\r\n/g, "\n");
+                out[next] = `sha256:${(0, node_crypto_1.createHash)("sha256").update(text).digest("hex")}`;
+            }
+        }
+    };
+    walk(path.join(root, "features"), "features");
+    return out;
+}
+/** Record the step definitions as they are now — once: the record is of when the code began. Never throws. */
+function recordSteps(root, requirement) {
+    try {
+        if (!/^REQ-\d+$/.test(requirement))
+            return;
+        const file = stepRecordFile(root, requirement);
+        if (fs.existsSync(file))
+            return;
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, `${JSON.stringify({ requirement, at: new Date().toISOString(), files: stepHashes(root) }, null, 2)}\n`, "utf8");
+    }
+    catch {
+        // A guard that breaks a session over a file it cannot write is worse than none.
     }
 }
 //# sourceMappingURL=project-state.js.map

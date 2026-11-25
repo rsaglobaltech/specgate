@@ -17,7 +17,7 @@ import type { HarnessSettings } from "../../../../packages/core/src/domain/Harne
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
 import { listChangeIds } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
-import { sealDiagnostics } from "../../../lib/approvals";
+import { scopeDiagnostics, sealDiagnostics } from "../../../lib/approvals";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
 import type { BaseIdCheck } from "../../../lib/base-ids";
 import { prBase, ticketKeyFindings } from "../../../lib/ticket-keys";
@@ -509,12 +509,13 @@ export class CheckCommand extends BaseCommand {
     const unwritten = [
       ...unwrittenNotes(projectDir),
       ...listChangeIds(projectDir).flatMap((id) => sealDiagnostics(projectDir, id).warnings),
+      ...scopeDiagnostics(projectDir, listChangeIds(projectDir)).warnings,
     ];
     if (!json) {
       for (const n of unwritten) {
         process.stdout.write(
           `  ${ui.muted(
-            n.code === "approval_not_sealed"
+            n.code === "approval_not_sealed" || n.code === "file_outside_design"
               ? `·  Change          ${n.message}`
               : `·  Change          ${n.target} — delta not written yet, not judged until it is`
           )}\n`

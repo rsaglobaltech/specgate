@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-742 — Source written by any means before its test stops the session
 
-<!-- specgate:trace status=Draft feature=features/trusted-gate/REQ-742.feature actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-742.feature actor=Developer kind=functional -->
 
 The system SHALL, where Specgate's hooks run in the agent's tool, refuse the agent's next tool call — its shell included — while the working tree holds a new or changed source file and no new or changed test names a requirement of the open change, naming the file and the requirement whose test is owed; and SHALL allow a call that reads, and a call that writes a test.
 
@@ -30,7 +30,7 @@ The system SHALL, where Specgate's hooks run in the agent's tool, refuse the age
 
 ### Requirement: REQ-743 — Step definitions changed after the code began fail the gate
 
-<!-- specgate:trace status=Draft feature=features/trusted-gate/REQ-743.feature actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-743.feature actor=Developer kind=functional -->
 
 The system SHALL record the step definitions of a requirement's scenarios as they are when the first source file of its delivery is written, and SHALL fail `specgate apply` and the harness gate with `steps_changed_after_code` when a step definition was added or changed after that, naming the file, whose fix is for a person to review it and run `specgate apply <REQ> --steps-reviewed`; and SHALL say, where nothing recorded them, that the steps were written in the same delivery as the code.
 
@@ -62,7 +62,7 @@ The system SHALL record the step definitions of a requirement's scenarios as the
 
 ### Requirement: REQ-744 — A delivery says the source files its change's design does not name
 
-<!-- specgate:trace status=Draft feature=features/trusted-gate/REQ-744.feature actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-744.feature actor=Developer kind=functional -->
 
 The system SHALL, when the design of an approved change names source files, report `file_outside_design` for each new source file of a delivery that the design does not name, as a warning, and as an error where the gate's rule `scope` is `error`, whose fix is to name the file in the design and have it approved again, or to open a change for it; and SHALL say nothing where the design names no source file.
 

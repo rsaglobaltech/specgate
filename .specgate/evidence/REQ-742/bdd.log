@@ -1,0 +1,16 @@
+▶ dist/tests/unit/shortcut-proof.test.js
+specgate: src/fees.js was written before its test — change `draft-fees`, REQ-002 next in its tasks. Write the test that names REQ-002 with your file tool; until a test new or changed in the working tree names a requirement of `draft-fees`, the shell waits: reading files and writing that test are allowed. (Turn the guard off for this project with `specgate config set agent_guard off`.)
+✔ REQ-742 SCN-742a: written through the shell — the next shell call is refused, naming the file and the requirement (198.755125ms)
+✔ REQ-742 SCN-742b: the test puts it right — writing the test is allowed, and the shell call after it (194.352125ms)
+✔ REQ-742 SCN-742c: reading is not stopped (105.8385ms)
+✔ REQ-742: a test that names another change's requirement does not count; off by setting; nothing owed once every requirement is applied (300.861583ms)
+✔ REQ-742: the hook refuses with exit 2, and Claude Code's plugin sends its shell to the guard (150.148417ms)
+✔ REQ-742 SCN-742a: on OpenCode — 2 and 1 — the shell is refused and recorded while the file has no test (239.984208ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1340.09725

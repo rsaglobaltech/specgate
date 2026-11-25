@@ -26,6 +26,7 @@ import {
   needsTest,
   openChanges,
   hookLog,
+  recordSteps,
 } from "./project-state";
 
 /** The tools that write a file, and where each names it. */
@@ -42,9 +43,14 @@ export interface GuardInput {
   tool_input?: Record<string, unknown>;
 }
 
+/** The tools that run a command: they write files no hook sees (shortcut-proof REQ-742). */
+const SHELLS = new Set(["Bash"]);
+
 export interface GuardDecision {
   allow: boolean;
   message: string;
+  /** The file the refusal is about, when it is not the call's own target. */
+  file?: string;
 }
 
 const ALLOW: GuardDecision = { allow: true, message: "" };
@@ -76,9 +82,41 @@ function namesAny(root: string, files: string[], ids: string[]): boolean {
   });
 }
 
+/**
+ * REQ-742: a shell call is judged by the working tree, not by its command — a
+ * file written with `cat >` is written all the same. While the tree holds
+ * changed source and no changed test names a requirement of the open change,
+ * the shell waits; reading and writing the test do not come through here.
+ */
+function shellDecision(cwd: string, env: Record<string, string | undefined>): GuardDecision {
+  if (!isSpecDriven(cwd) || guardOff(cwd, env)) return ALLOW;
+  const changed = changedFiles(cwd);
+  if (changed === null) return ALLOW;
+  const source = changed.filter(needsTest);
+  if (!source.length) return ALLOW;
+  const changes = openChanges(cwd);
+  const owner = changes.find((c) => c.pending.length);
+  if (!owner) return ALLOW;
+  const next = owner.pending[0];
+  // REQ-743: the code has begun, whatever wrote it.
+  recordSteps(cwd, next);
+  const ids = changes.flatMap((c) => c.requirements);
+  if (namesAny(cwd, changed.filter(isTestFile), ids)) return ALLOW;
+  return {
+    allow: false,
+    file: source[0],
+    message:
+      `specgate: ${source[0]} was written before its test — change \`${owner.id}\`, ${next} next in its tasks. ` +
+      `Write the test that names ${next} with your file tool; until a test new or changed in the working tree names a requirement of \`${owner.id}\`, ` +
+      "the shell waits: reading files and writing that test are allowed. " +
+      "(Turn the guard off for this project with `specgate config set agent_guard off`.)",
+  };
+}
+
 /** Allow or refuse one tool call. `env` is injected so tests do not depend on the shell. */
 export function decide(input: GuardInput, env: Record<string, string | undefined>): GuardDecision {
   try {
+    if (SHELLS.has(input.tool_name ?? "")) return shellDecision(input.cwd ?? process.cwd(), env);
     const key = WRITERS[input.tool_name ?? ""];
     const target = key ? input.tool_input?.[key] : undefined;
     if (typeof target !== "string" || !target) return ALLOW;
@@ -105,7 +143,12 @@ export function decide(input: GuardInput, env: Record<string, string | undefined
       };
     }
     const ids = changes.flatMap((c) => c.requirements);
-    if (ids.length && namesAny(cwd, changed.filter(isTestFile), ids)) return ALLOW;
+    if (ids.length && namesAny(cwd, changed.filter(isTestFile), ids)) {
+      // REQ-743: the first source write of the delivery — its steps as they are now.
+      const first = changes.find((c) => c.pending.length)?.pending[0];
+      if (first) recordSteps(cwd, first);
+      return ALLOW;
+    }
 
     const owner = changes.find((c) => c.pending.length) ?? changes[0];
     // The next requirement as the change's tasks order it (REQ-426).
@@ -140,9 +183,12 @@ export function main(raw: string, env: Record<string, string | undefined> = proc
     return 0;
   }
   const decision = decide(input, env);
-  const file = String((input.tool_input as { file_path?: unknown } | undefined)?.file_path ?? "");
+  const file =
+    decision.file ??
+    String((input.tool_input as { file_path?: unknown } | undefined)?.file_path ?? "");
   if (decision.allow) {
-    hookLog({ hook: "guard", decision: "allowed", file }, env);
+    // A shell call that is let through is not a write: nothing to record.
+    if (!SHELLS.has(input.tool_name ?? "")) hookLog({ hook: "guard", decision: "allowed", file }, env);
     return 0;
   }
   hookLog({ hook: "guard", decision: "refused", file, reason: decision.message }, env);

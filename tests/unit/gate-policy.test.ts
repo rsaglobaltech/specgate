@@ -106,6 +106,7 @@ test("REQ-604 SCN-604a: a preset and an override", () => {
     quality: "error",
     use_cases: "warning",
     state_machines: "error",
+    scope: "warning",
   });
 });
 

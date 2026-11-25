@@ -11,7 +11,7 @@ import { ValidateChangeUseCase } from "../../../../packages/core/src/application
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
 import { formatDiagnostic, error, info, warning } from "../../../lib/diagnostics";
 import type { Diagnostic } from "../../../lib/diagnostics";
-import { sealDiagnostics } from "../../../lib/approvals";
+import { scopeDiagnostics, sealDiagnostics } from "../../../lib/approvals";
 import * as ui from "../../../lib/ui";
 import { leavingRequirements, unwrittenChanges } from "../../../lib/in-flight";
 import { checkAgainstLock } from "../../../specops/against_lock";
@@ -156,12 +156,16 @@ export class ValidateSpecsCommand extends BaseCommand {
       this.notes.push(...found.warnings);
       errors.push(...found.errors);
     }
+    // REQ-744: and the files a delivery adds are the ones its design names.
+    const scope = scopeDiagnostics(targetDir, ids);
+    this.notes.push(...scope.warnings);
+    errors.push(...scope.errors);
     if (errors.length === 0) return;
     if (this.agent.json) {
       this.agent.fail({ validation: null }, [...this.notes, ...errors]);
       return;
     }
-    this.logError("Approved requirements are not what was approved:");
+    this.logError("What was approved is not what is here:");
     for (const d of errors) process.stderr.write(`  ${formatDiagnostic(d)}\n`);
     process.exit(1);
   }

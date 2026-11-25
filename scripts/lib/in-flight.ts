@@ -10,7 +10,7 @@ import { listChangeIds, listDeltas } from "../../packages/core/src/infrastructur
 import type { ChangeDelta } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { isUntouchedDelta } from "../../packages/core/src/domain/ChangeTemplates";
 import { info } from "./diagnostics";
-import { sealDiagnostics } from "./approvals";
+import { scopeDiagnostics, sealDiagnostics } from "./approvals";
 import { refreshDerivedMatrix } from "../cli/commands/spec/MatrixCommand";
 import type { Diagnostic } from "./diagnostics";
 
@@ -201,6 +201,9 @@ export function inFlightView(projectDir: string): InFlightView | null {
   }
 
   const problems: InFlightProblem[] = [];
+  // REQ-744: read from the project — the copy is not a working tree.
+  const open = listChangeIds(projectDir);
+  for (const d of scopeDiagnostics(projectDir, open).errors) problems.push({ ...d, change: open[0] ?? "" });
   const repo = new DiskProjectRepository(dir);
   for (const change of listChangeIds(dir)) {
     // A delta nobody has written yet is not laid over: its placeholders

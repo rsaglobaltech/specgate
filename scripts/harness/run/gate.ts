@@ -3,8 +3,9 @@
  * agent checks — and the adversarial probe of a green attempt.
  */
 
+import { stepsVerdict, STEPS_FINDING } from "../../lib/step-seal";
 import { listChangeIds } from "../../../packages/core/src/infrastructure/ChangeWorkspace";
-import { sealDiagnostics } from "../../lib/approvals";
+import { scopeDiagnostics, sealDiagnostics } from "../../lib/approvals";
 import { sandboxCommand } from "../../../packages/core/src/domain/Sandbox";
 import { quoteArg } from "../../lib/escape";
 import { HarnessInterrupted, runWithDeadline } from "../../lib/run-with-deadline";
@@ -214,9 +215,10 @@ export function runGate(
   });
   // REQ-740: the copy the gate judges has its changes archived, approvals and
   // all; what was approved is read from the worktree itself.
-  const unapproved = listChangeIds(worktreeDir).flatMap(
-    (id) => sealDiagnostics(worktreeDir, id).errors
-  );
+  const unapproved = [
+    ...listChangeIds(worktreeDir).flatMap((id) => sealDiagnostics(worktreeDir, id).errors),
+    ...scopeDiagnostics(worktreeDir, listChangeIds(worktreeDir)).errors,
+  ];
   const validated = validate.status === 0 && unapproved.length === 0;
   report("validate --strict", validated ? "pass" : "fail", {
     ms: Date.now() - validateStart,
@@ -230,7 +232,7 @@ export function runGate(
         validate.stderr +
         unapproved.map((d) => `${d.message}  [${d.code}]\n`).join(""),
       hint: unapproved.length
-        ? "A requirement is not what a person approved. Do not approve it yourself: put it back as it was approved, or stop and say what must change."
+        ? "What is here is not what a person approved. Do not approve it yourself: put it back as it was approved, or stop and say what must change."
         : "",
     };
   }
@@ -386,6 +388,9 @@ export function runGate(
   // gate-runs-scenarios REQ-733: with executable scenarios required, the requirement's own, after the tests.
   const scenarios = scenariosStage(worktreeDir, req.requirement || "", report);
   if (scenarios) return scenarios;
+  // shortcut-proof REQ-743: and its steps are the ones the code was written against.
+  const steps = stepsStage(worktreeDir, req.requirement || "", report);
+  if (steps) return steps;
   // lab-fixes REQ-693: the principles that declare a check, after the tests.
   const principles = principlesStage(worktreeDir, report);
   if (principles) return principles;
@@ -877,5 +882,23 @@ export function principlesStage(worktreeDir: string, report: GateReport = () => 
           `\n  fix: make the code follow ${f.id}, as docs/specs/principles.md states it.`
       )
       .join("\n\n"),
+  };
+}
+
+/**
+ * shortcut-proof REQ-743: the stage `steps` — where the guard recorded the
+ * requirement's step definitions when its code began, they are still those.
+ * Null: nothing recorded, or unchanged.
+ */
+export function stepsStage(worktreeDir: string, requirement: string, report: GateReport = () => {}): GateResult | null {
+  if (!requirement) return null;
+  const v = stepsVerdict(worktreeDir, requirement);
+  if (!v.recorded || v.changed.length === 0) return null;
+  report("steps", "fail", { ms: 0 });
+  return {
+    ok: false,
+    stage: "steps",
+    output: `${STEPS_FINDING(requirement, v.changed)}  [steps_changed_after_code]\n`,
+    hint: "Put the steps back as they were when the code began and make the code do what the scenarios say. If a step was wrong, stop and say which: a person reviews it.",
   };
 }

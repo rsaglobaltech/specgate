@@ -175,7 +175,7 @@ function claudePluginFiles(version: string) {
       // A new session is told the open change and what comes next (REQ-420).
       SessionStart: run("session-hook.js"),
       // An edit to source code waits for a test that names the requirement (REQ-421).
-      PreToolUse: [{ matcher: "Write|Edit|MultiEdit|NotebookEdit", ...run("guard-hook.js")[0] }],
+      PreToolUse: [{ matcher: "Write|Edit|MultiEdit|NotebookEdit|Bash", ...run("guard-hook.js")[0] }],
       Stop: run("gate-hook.js"),
     },
   };
