@@ -1,0 +1,11 @@
+▶ dist/tests/unit/person-approves.test.js
+✔ REQ-748 SCN-748a: an agent's command — no terminal, no approval (537.141ms)
+✔ REQ-748 SCN-748b: a person at a terminal approves as before (578.956083ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1212.923875

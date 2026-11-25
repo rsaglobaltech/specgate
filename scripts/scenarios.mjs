@@ -54,7 +54,15 @@ for (const file of files.sort()) {
   const r = spawnSync(
     process.execPath,
     ["--test", "--test-reporter=spec", `--test-name-pattern=\\b(${ids.join("|")})\\b`, js],
-    { stdio: "inherit", timeout: 600_000 },
+    // As in run-tests.cjs (REQ-691): the suite's agents are scripts that answer
+    // no prompt, so only the tests of that check ask them first.
+    {
+      stdio: "inherit",
+      timeout: 600_000,
+      env: { ...process.env, SPECGATE_SKIP_DOCTOR: process.env.SPECGATE_SKIP_DOCTOR ?? "1",
+        // REQ-748: the suite approves as the person at the terminal would; a test of the refusal unsets it.
+        SPECGATE_ASSUME_TTY: process.env.SPECGATE_ASSUME_TTY ?? "1" },
+    },
   );
   if (r.status !== 0) failed++;
 }

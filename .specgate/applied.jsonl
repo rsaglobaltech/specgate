@@ -137,3 +137,5 @@
 {"req":"REQ-115","capability":"daily-surface","at":"2026-11-25T19:26:44.676Z"}
 {"req":"REQ-116","capability":"daily-surface","at":"2026-11-25T19:26:51.005Z"}
 {"req":"REQ-134","capability":"live-harness","at":"2026-11-25T19:26:58.225Z"}
+{"req":"REQ-748","capability":"trusted-gate","at":"2026-11-25T20:49:08.178Z"}
+{"req":"REQ-749","capability":"agent-integration","at":"2026-11-25T20:49:14.933Z"}

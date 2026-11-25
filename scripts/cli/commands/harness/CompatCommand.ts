@@ -39,6 +39,7 @@ import {
 } from "../../../../packages/core/src/domain/Compat";
 import { sessionOf, testFirst } from "../../../../packages/core/src/domain/CompatSession";
 import { makeSandbox, removeSandbox, sandboxLine, useSandbox, type ExamSandbox } from "../../../lib/compat-sandbox";
+import { CLI_CODE, cliReach, examCli } from "../../../lib/cli-reach";
 
 /** Tools whose default command approves its own actions: not run outside a sandbox unless the Developer says so (REQ-738). */
 const SELF_APPROVING: readonly CompatTool[] = ["opencode"];
@@ -427,20 +428,18 @@ function oneRun(
     // With Specgate, the agent's `specgate` is this checkout's, first on its PATH.
     const bin = path.join(scratch, "bin");
     fs.mkdirSync(bin);
+    // person-approves REQ-749: first by every road — the PATH, npx's prefix, zsh's startup — and marked when reached.
+    const mark = path.join(scratch, "specgate-reached");
+    let reach: Record<string, string> = {};
     if (box) {
       // In a sandbox Specgate is installed inside at the levels that have it, and is not there at B: nothing to shadow.
     } else if (level === "M")
       // Should a shell be reached all the same, the CLI is not there to answer it.
-      fs.writeFileSync(
-        path.join(bin, "specgate"),
-        '#!/bin/sh\necho "specgate: the CLI is not available here — use the tools of the specgate MCP server" >&2\nexit 127\n',
-        { mode: 0o755 }
-      );
+      reach = examCli(scratch, bin, mark, { absent: "specgate: the CLI is not available here — use the tools of the specgate MCP server" });
     else if (level === "B")
       // REQ-719: a Specgate installed for every project on this machine does not answer here.
-      fs.writeFileSync(path.join(bin, "specgate"), '#!/bin/sh\necho "specgate: command not found" >&2\nexit 127\n', { mode: 0o755 });
-    else
-      fs.writeFileSync(path.join(bin, "specgate"), `#!/bin/sh\nexec "${process.execPath}" "${CLI}" "$@"\n`, { mode: 0o755 });
+      reach = examCli(scratch, bin, mark, { absent: "specgate: command not found" });
+    else reach = examCli(scratch, bin, mark, { run: process.execPath, cli: CLI });
     const promptFile = path.join(scratch, "prompt.md");
     fs.copyFileSync(path.join(task.dir, "prompt.md"), promptFile);
     fs.copyFileSync(promptFile, path.join(logDir, "prompt.md"));
@@ -465,6 +464,23 @@ function oneRun(
       delete process.env[k];
     }
     const home = tool === "codex" && !box ? codexHome(scratch) : null;
+    const agentEnv: Record<string, string> = {
+      PATH: `${bin}${path.delimiter}${process.env.PATH || ""}`,
+      ...reach,
+      SPECGATE_HOOK_LOG: wiring.hookLog,
+      ...(home ? home.env : {}),
+      // REQ-729: OpenCode with a configuration of its own — the Developer's servers, keys and plugins stay out.
+      ...(tool === "opencode" ? { XDG_CONFIG_HOME: opencodeConfig(scratch) } : {}),
+    };
+    // REQ-749: the run starts only once the agent's shell and npx reach the exam's specgate.
+    if (!box && process.platform !== "win32") {
+      const r = cliReach(dir, agentEnv, mark);
+      if (!r.ok) {
+        Object.assign(process.env, saved);
+        home?.done();
+        return { ...base, ran: true, invalid: `${CLI_CODE}: ${r.missed.join("; ")}`, passed: false };
+      }
+    }
     // outside-judge REQ-747: the controls before the agent starts, kept here — not in its folder.
     const controlsBefore = controlsOf(dir);
     const t0 = Date.now();
@@ -474,13 +490,7 @@ function oneRun(
         cwd: dir,
         timeoutMs: o.timeoutMs,
         maxBuffer: 256 * 1024 * 1024,
-        env: {
-          PATH: `${bin}${path.delimiter}${process.env.PATH || ""}`,
-          SPECGATE_HOOK_LOG: wiring.hookLog,
-          ...(home ? home.env : {}),
-          // REQ-729: OpenCode with a configuration of its own — the Developer's servers, keys and plugins stay out.
-          ...(tool === "opencode" ? { XDG_CONFIG_HOME: opencodeConfig(scratch) } : {}),
-        },
+        env: agentEnv,
       });
     } finally {
       Object.assign(process.env, saved);

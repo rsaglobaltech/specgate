@@ -676,6 +676,16 @@ function cmdApprove(opts: ChangeOptions) {
   const id = opts.positional[0];
   const nullShape = { approve: null };
   const layer = opts.layer as LayerId | undefined;
+  // person-approves REQ-748: approving is a person's word, said at a terminal — a tool that runs its own commands has none.
+  // The studio's Review approves through approveChange, not here.
+  if (id && !process.stdin.isTTY && !process.env.SPECGATE_ASSUME_TTY) {
+    return fail(opts, nullShape, [
+      error("approve_needs_person", `Approving ${id} is a person's act, and this is not a terminal. Nothing was recorded.`, {
+        target: id,
+        fix: `A person runs it in a terminal: specgate change approve ${id} — or approves it in the studio's Review.`,
+      }),
+    ]);
+  }
   const r = id
     ? approveChange(projectDir, id, new Date().toISOString().slice(0, 10), layer)
     : { ok: false as const, code: "change_not_found", message: "approve needs a change id." };

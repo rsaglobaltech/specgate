@@ -148,6 +148,7 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `traceability_unrecognized` | `scripts/validate_specs.ts` |
 | `unknown_dependency` | `scripts/validate_specs.ts` |
 | `use_cases_header_missing` | `scripts/validate_specs.ts` |
+| `approve_needs_person` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_change_name_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_draft_not_ready` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_requirements_pending` | `scripts/cli/commands/change/ChangeCommand.ts` |
