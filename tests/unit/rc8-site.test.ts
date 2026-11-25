@@ -44,7 +44,7 @@ function picker(html: string) {
   }));
 }
 
-test("SCN-400a: every page of the stable site names both versions, the stable one current", () => {
+test("REQ-400 SCN-400a: every page of the stable site names both versions, the stable one current", () => {
   const dir = built({ channel: "stable", versions });
   const caseStudy = fs
     .readdirSync(path.join(dir, "case-studies"))
@@ -67,14 +67,14 @@ test("SCN-400a: every page of the stable site names both versions, the stable on
   assert.doesNotMatch(read(dir, "harness.html"), /class="candidate-banner"/);
 });
 
-test("SCN-400a: a site of one version keeps the plain badge", () => {
+test("REQ-400 SCN-400a: a site of one version keeps the plain badge", () => {
   const dir = built();
   const html = read(dir, "harness.html");
   assert.equal(picker(html), null);
   assert.match(html, /<span class="top__version">v[0-9]/);
 });
 
-test("SCN-401a: the candidate's pages say so, lead back to the stable docs and edit next/1.0", () => {
+test("REQ-401 SCN-401a: the candidate's pages say so, lead back to the stable docs and edit next/1.0", () => {
   const dir = built({ channel: "next", versions });
   const html = read(dir, "workspace.html");
   const entries = picker(html)!;
@@ -91,7 +91,7 @@ test("SCN-401a: the candidate's pages say so, lead back to the stable docs and e
   assert.equal(picker(read(dir, "index.html"))?.[1].current, true);
 });
 
-test("SCN-402a: the page of new features is in the sidebar and names every candidate", () => {
+test("REQ-402 SCN-402a: the page of new features is in the sidebar and names every candidate", () => {
   assert.ok(navEntry("whats-new-1.0"), "whats-new-1.0 is not in the sidebar");
   const changelog = fs.readFileSync(path.join(ROOT, "CHANGELOG.md"), "utf8");
   const candidates = [...changelog.matchAll(/^## \[(1\.0\.0-rc\.\d+)\]/gm)].map((m) => m[1]);
