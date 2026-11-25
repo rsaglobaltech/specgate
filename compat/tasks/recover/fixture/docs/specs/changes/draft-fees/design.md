@@ -5,7 +5,7 @@
 
 ## Modules
 
-`src/fees.js` owns the late fee: one function, `lateFee(daysLate)`. No other source file is added or changed.
+`src/fees.js` owns the late fee: one function, `lateFee(daysLate)`. No other source file is added.
 
 ## Mechanisms
 
