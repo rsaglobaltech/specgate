@@ -115,6 +115,16 @@ function loop(dir: string): TourStep[] {
   ) {
     return steps;
   }
+  // outside-judge REQ-745: nothing is delivered that a person did not approve.
+  if (
+    step(
+      "approve",
+      ["change", "approve", CHANGE],
+      () => "a person read the change and approved it — only then is a requirement of it delivered"
+    ) === null
+  ) {
+    return steps;
+  }
   if (
     step(
       "apply",

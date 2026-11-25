@@ -6,6 +6,7 @@
  * server and plugin saw; the internal report made from the runs.
  */
 import * as fs from "node:fs";
+import { controlsOf, sessionChanged } from "../../../lib/controls";
 import * as os from "node:os";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -464,6 +465,8 @@ function oneRun(
       delete process.env[k];
     }
     const home = tool === "codex" && !box ? codexHome(scratch) : null;
+    // outside-judge REQ-747: the controls before the agent starts, kept here — not in its folder.
+    const controlsBefore = controlsOf(dir);
     const t0 = Date.now();
     let r;
     try {
@@ -514,6 +517,10 @@ function oneRun(
     base.refusals = hooks.filter((h) => h.hook === "guard" && h.decision === "refused").length;
     base.gateHooks = hooks.filter((h) => h.hook === "gate").length;
 
+    // REQ-747: what the session did to the controls, read before the exam touches the project.
+    const controls = sessionChanged(dir, controlsBefore, kept(wiring.hookLog));
+    if (controls.length) base.controls = controls;
+
     // The gate's own file, put back to judge a run that worked without it (REQ-719).
     if (wiring.kept) fs.copyFileSync(path.join(wiring.kept, "AGENTS.md"), path.join(dir, "AGENTS.md"));
 
@@ -541,6 +548,7 @@ function oneRun(
     }
     const verdict = verdictOf(task.verdicts, {
       gate: base.check, hidden: base.hidden, specChanged: changed, newRequirements: fresh, sourceChanged: source,
+      controlsChanged: controls,
       codeThere: Boolean(task.code) && fs.existsSync(path.join(dir, task.code!)),
       testAsGiven:
         Boolean(task.test) &&

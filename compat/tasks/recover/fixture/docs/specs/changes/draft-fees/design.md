@@ -5,16 +5,8 @@
 
 ## Modules
 
-<!-- Which modules or services change, and what each one owns. -->
+`src/fees.js` owns the late fee: one function, `lateFee(daysLate)`. No other source file is added or changed.
 
 ## Mechanisms
 
-<!-- How: data, rules, flows. Answer each criterion: "AC-1 — …". -->
-
-## Channels
-
-<!-- APIs, events, queues between modules or repositories. -->
-
-## Decisions
-
-<!-- The ADRs this touches, or the choice made here and what was rejected. -->
+AC-1 — `lateFee` multiplies the late days by 0.50 and caps the result at 10.00; it returns 0 when the book is not late.

@@ -1,0 +1,33 @@
+[
+  {
+    "layer": "discover",
+    "by": {
+      "name": "The exam",
+      "email": "exam@example.com"
+    },
+    "role": "product",
+    "hash": "sha256:46a16dfe28a4bac60333a7369c2acf4f68a05eecbc96840458a2dd57c5754241",
+    "at": "2026-11-25"
+  },
+  {
+    "layer": "design",
+    "by": {
+      "name": "The exam",
+      "email": "exam@example.com"
+    },
+    "role": "architect",
+    "hash": "sha256:94caf2e9707029489f782949deb05c000e0dad0a6649d7c7f335d5634f007ab4",
+    "at": "2026-11-25"
+  },
+  {
+    "layer": "requirements",
+    "seals": {
+      "REQ-003": "sha256:c2014cd80cdf3515babddd1c749d0c3d3df9ecfc485363196bb732af63c680b7"
+    },
+    "by": {
+      "name": "The exam",
+      "email": "exam@example.com"
+    },
+    "at": "2026-11-25"
+  }
+]

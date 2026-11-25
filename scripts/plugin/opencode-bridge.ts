@@ -19,7 +19,7 @@ import {
   type GateDiagnostic,
 } from "./gate-hook";
 import { decide as guardDecide } from "./guard-hook";
-import { hookLog, isSpecDriven } from "./project-state";
+import { guardOff, hookLog, isSpecDriven } from "./project-state";
 import { sessionContext } from "./session-hook";
 
 /** What the plugin needs from OpenCode's context. */
@@ -60,10 +60,29 @@ function writtenFiles(tool: string, args: Record<string, unknown>): string[] {
   return [];
 }
 
-/** OpenCode's shell tool: `shell` in 2, `bash` in 1. Judged by the working tree (REQ-742). */
-function guardShell(tool: string, dir: string, env: Record<string, string | undefined>): void {
+/**
+ * outside-judge REQ-746: the guard as it was when the session started. A
+ * session that began with it on keeps it on, whatever its project's config
+ * comes to say; the next session reads the switch again.
+ */
+function heldGuard(dir: string, env: Record<string, string | undefined>): Record<string, string | undefined> {
+  return guardOff(dir, env) ? env : { ...env, SPECGATE_GUARD: "on" };
+}
+
+/** What the call writes, where its tool says: for the acts that are a person's (REQ-746). */
+function writtenText(args: Record<string, unknown>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [from, to] of [["content", "content"], ["newString", "new_string"], ["new_string", "new_string"], ["patchText", "patchText"]]) {
+    if (typeof args[from] === "string") out[to] = args[from] as string;
+  }
+  return out;
+}
+
+/** OpenCode's shell tool: `shell` in 2, `bash` in 1. Judged by the working tree (REQ-742), and by what it asks for (REQ-746). */
+function guardShell(tool: string, args: Record<string, unknown>, dir: string, env: Record<string, string | undefined>): void {
   if (tool !== "shell" && tool !== "bash") return;
-  const d = guardDecide({ cwd: dir, tool_name: "Bash", tool_input: {} }, env);
+  const command = typeof args.command === "string" ? { command: args.command } : {};
+  const d = guardDecide({ cwd: dir, tool_name: "Bash", tool_input: command }, env);
   if (d.allow) return;
   hookLog({ hook: "guard", decision: "refused", file: d.file ?? "", reason: d.message }, env);
   throw new Error(d.message);
@@ -71,7 +90,7 @@ function guardShell(tool: string, dir: string, env: Record<string, string | unde
 
 export function createHooks(ctx: OpencodeContext, deps: BridgeDeps = {}) {
   const dir = ctx.directory;
-  const env = deps.env ?? process.env;
+  const env = heldGuard(dir, deps.env ?? process.env);
   const runValidate = deps.runValidate ?? realValidate;
   /** The last user message of each session: the gate speaks once per message. */
   const lastMessage = new Map<string, string>();
@@ -88,10 +107,10 @@ export function createHooks(ctx: OpencodeContext, deps: BridgeDeps = {}) {
       input: { tool: string },
       output: { args: Record<string, unknown> }
     ) => {
-      guardShell(input.tool, dir, env);
+      guardShell(input.tool, output.args ?? {}, dir, env);
       for (const file of writtenFiles(input.tool, output.args ?? {})) {
         const d = guardDecide(
-          { cwd: dir, tool_name: "Write", tool_input: { file_path: file } },
+          { cwd: dir, tool_name: "Write", tool_input: { file_path: file, ...writtenText(output.args ?? {}) } },
           env
         );
         hookLog({ hook: "guard", decision: d.allow ? "allowed" : "refused", file, ...(d.allow ? {} : { reason: d.message }) }, env);
@@ -156,7 +175,7 @@ export interface OpencodeV2Context {
  */
 export async function setupV2(ctx: OpencodeV2Context, deps: BridgeDeps = {}): Promise<() => void> {
   const dir = ctx.location.directory;
-  const env = deps.env ?? process.env;
+  const env = heldGuard(dir, deps.env ?? process.env);
   const runValidate = deps.runValidate ?? realValidate;
   const lastMessage = new Map<string, string>();
   const told = new Set<string>();
@@ -168,9 +187,9 @@ export async function setupV2(ctx: OpencodeV2Context, deps: BridgeDeps = {}): Pr
   });
 
   await ctx.tool.hook("execute.before", (event) => {
-    guardShell(event.tool, dir, env);
+    guardShell(event.tool, event.input ?? {}, dir, env);
     for (const file of writtenFiles(event.tool, event.input ?? {})) {
-      const d = guardDecide({ cwd: dir, tool_name: "Write", tool_input: { file_path: file } }, env);
+      const d = guardDecide({ cwd: dir, tool_name: "Write", tool_input: { file_path: file, ...writtenText(event.input ?? {}) } }, env);
       hookLog({ hook: "guard", decision: d.allow ? "allowed" : "refused", file, ...(d.allow ? {} : { reason: d.message }) }, env);
       if (!d.allow) throw new Error(d.message);
     }

@@ -5,16 +5,8 @@
 
 ## Modules
 
-<!-- Which modules or services change, and what each one owns. -->
+`src/fees.js` owns the late fee: one function, `lateFee(daysLate, memberType)`. No other source file is added or changed.
 
 ## Mechanisms
 
-<!-- How: data, rules, flows. Answer each criterion: "AC-1 — …". -->
-
-## Channels
-
-<!-- APIs, events, queues between modules or repositories. -->
-
-## Decisions
-
-<!-- The ADRs this touches, or the choice made here and what was rejected. -->
+AC-1 — `lateFee` caps its result at 5.00 when the member type is "child" and at 10.00 otherwise; a call without the type behaves as before.

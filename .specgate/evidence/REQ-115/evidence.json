@@ -1,0 +1,13 @@
+{
+  "requirement": "REQ-115",
+  "at": "2026-11-25T19:26:44.687Z",
+  "scenarios": {
+    "command": "node scripts/scenarios.mjs @REQ-115",
+    "exitCode": 0,
+    "ms": 1922,
+    "tags": [
+      "@REQ-115"
+    ]
+  },
+  "artifacts": []
+}

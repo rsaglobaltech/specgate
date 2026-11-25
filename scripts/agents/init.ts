@@ -288,10 +288,11 @@ const OPENCODE_SCRIPTS = [
   "session-hook.js",
   "gate-hook.js",
   "project-state.js",
+  "person-acts.js",
 ];
 
 /** The compiled scripts the plugin carries: the hooks, and the helper they share. */
-const PLUGIN_SCRIPTS = ["gate-hook.js", "session-hook.js", "guard-hook.js", "project-state.js"];
+const PLUGIN_SCRIPTS = ["gate-hook.js", "session-hook.js", "guard-hook.js", "project-state.js", "person-acts.js"];
 
 const json = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
 

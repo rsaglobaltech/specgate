@@ -47,6 +47,12 @@ import {
   substituteGateCommand,
 } from "../../../packages/core/src/domain/HarnessRun";
 import { removeTempFile } from "../../lib/temp-file";
+import { sessionChanged } from "../../lib/controls";
+import {
+  CONTROLS_CODE,
+  controlsFinding,
+  type ControlRecord,
+} from "../../../packages/core/src/domain/ControlRecord";
 import { runPrinciples } from "../../lib/steering";
 import { runRequirementScenarios, scenarioCommand, scenariosRequired } from "../../lib/scenario-runs";
 import { sandboxAround } from "../../lib/sandbox-registry";
@@ -78,7 +84,11 @@ export function limitFor(
  * The resolved settings plus `verbose`, which is a run flag rather than a
  * project setting and so only ever travels with the gate's copy.
  */
-export type GateSettings = Partial<HarnessSettings> & { verbose?: boolean };
+export type GateSettings = Partial<HarnessSettings> & {
+  verbose?: boolean;
+  /** outside-judge REQ-747: the controls as they were before the agent started, kept by the harness. */
+  controlsBefore?: ControlRecord;
+};
 
 /** What the gate said: green, or the stage it failed at and why. */
 export interface GateResult {
@@ -198,6 +208,20 @@ export function runGate(
   // requirement this attempt exists to deliver.
   // The agent's tests are new evidence for a generated matrix: refresh it so
   // the gate judges the attempt, not the matrix as it was before it.
+  // REQ-747: before anything the worktree says of itself — what the session did
+  // to the controls, against the reading the harness kept from before it.
+  if (settings.controlsBefore) {
+    const changed = sessionChanged(worktreeDir, settings.controlsBefore);
+    if (changed.length) {
+      report("controls", "fail", { ms: 0 });
+      return {
+        ok: false,
+        stage: "controls",
+        output: `${controlsFinding(changed)}  [${CONTROLS_CODE}]\n`,
+        hint: "Approving, switching the guard and reviewing steps are a person's. Put the controls back as they were and do the work they ask for, or stop and say why you cannot.",
+      };
+    }
+  }
   refreshDerivedMatrix(worktreeDir);
   let passHint = "";
   report("validate --strict", "start");

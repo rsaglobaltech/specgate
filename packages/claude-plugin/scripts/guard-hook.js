@@ -54,6 +54,7 @@ exports.main = main;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
 const project_state_1 = require("./project-state");
+const person_acts_1 = require("./person-acts");
 /** The tools that write a file, and where each names it. */
 const WRITERS = {
     Write: "file_path",
@@ -112,7 +113,7 @@ function shellDecision(cwd, env) {
         return ALLOW;
     const next = owner.pending[0];
     // REQ-743: the code has begun, whatever wrote it.
-    (0, project_state_1.recordSteps)(cwd, next);
+    (0, project_state_1.recordSteps)(cwd, next, env);
     const ids = changes.flatMap((c) => c.requirements);
     if (namesAny(cwd, changed.filter(project_state_1.isTestFile), ids))
         return ALLOW;
@@ -121,13 +122,45 @@ function shellDecision(cwd, env) {
         file: source[0],
         message: `specgate: ${source[0]} was written before its test — change \`${owner.id}\`, ${next} next in its tasks. ` +
             `Write the test that names ${next} with your file tool; until a test new or changed in the working tree names a requirement of \`${owner.id}\`, ` +
-            "the shell waits: reading files and writing that test are allowed. " +
-            "(Turn the guard off for this project with `specgate config set agent_guard off`.)",
+            "the shell waits: reading files and writing that test are allowed. ",
     };
+}
+/** outside-judge REQ-746: the call does what is a person's to do — refused, saying so. */
+function personAct(input, env) {
+    const cwd = input.cwd ?? process.cwd();
+    const tool = input.tool_name ?? "";
+    const args = (input.tool_input ?? {});
+    let found = null;
+    let file;
+    if (SHELLS.has(tool)) {
+        if (typeof args.command !== "string")
+            return null;
+        found = (0, person_acts_1.personActInShell)(args.command);
+    }
+    else {
+        const key = WRITERS[tool];
+        const target = key ? args[key] : undefined;
+        if (typeof target !== "string" || !target)
+            return null;
+        const rel = path.relative(real(cwd), real(path.isAbsolute(target) ? target : path.join(cwd, target)));
+        if (rel.startsWith("..") || path.isAbsolute(rel))
+            return null;
+        const text = ["content", "new_string", "newString", "patchText"]
+            .map((k) => (typeof args[k] === "string" ? args[k] : ""))
+            .join("\n");
+        found = (0, person_acts_1.personActInWrite)(rel, text);
+        file = rel;
+    }
+    if (!found || !(0, project_state_1.isSpecDriven)(cwd) || (0, project_state_1.guardOff)(cwd, env))
+        return null;
+    return { allow: false, file: file ?? found.what, message: (0, person_acts_1.personActMessage)(found) };
 }
 /** Allow or refuse one tool call. `env` is injected so tests do not depend on the shell. */
 function decide(input, env) {
     try {
+        const act = personAct(input, env);
+        if (act)
+            return act;
         if (SHELLS.has(input.tool_name ?? ""))
             return shellDecision(input.cwd ?? process.cwd(), env);
         const key = WRITERS[input.tool_name ?? ""];
@@ -149,8 +182,7 @@ function decide(input, env) {
             return {
                 allow: false,
                 message: `specgate: No change is open, so ${rel} has no requirement to answer to. ` +
-                    "Open one with `specgate propose <change-id>` and write its delta, then the test that names its first requirement, then this code. " +
-                    "(Turn the guard off for this project with `specgate config set agent_guard off`.)",
+                    "Open one with `specgate propose <change-id>` and write its delta, then the test that names its first requirement, then this code. ",
             };
         }
         const ids = changes.flatMap((c) => c.requirements);
@@ -158,7 +190,7 @@ function decide(input, env) {
             // REQ-743: the first source write of the delivery — its steps as they are now.
             const first = changes.find((c) => c.pending.length)?.pending[0];
             if (first)
-                (0, project_state_1.recordSteps)(cwd, first);
+                (0, project_state_1.recordSteps)(cwd, first, env);
             return ALLOW;
         }
         const owner = changes.find((c) => c.pending.length) ?? changes[0];

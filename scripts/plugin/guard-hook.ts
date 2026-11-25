@@ -28,6 +28,12 @@ import {
   hookLog,
   recordSteps,
 } from "./project-state";
+import {
+  personActInShell,
+  personActInWrite,
+  personActMessage,
+  type PersonActFound,
+} from "./person-acts";
 
 /** The tools that write a file, and where each names it. */
 const WRITERS: Record<string, string> = {
@@ -99,7 +105,7 @@ function shellDecision(cwd: string, env: Record<string, string | undefined>): Gu
   if (!owner) return ALLOW;
   const next = owner.pending[0];
   // REQ-743: the code has begun, whatever wrote it.
-  recordSteps(cwd, next);
+  recordSteps(cwd, next, env);
   const ids = changes.flatMap((c) => c.requirements);
   if (namesAny(cwd, changed.filter(isTestFile), ids)) return ALLOW;
   return {
@@ -108,14 +114,41 @@ function shellDecision(cwd: string, env: Record<string, string | undefined>): Gu
     message:
       `specgate: ${source[0]} was written before its test — change \`${owner.id}\`, ${next} next in its tasks. ` +
       `Write the test that names ${next} with your file tool; until a test new or changed in the working tree names a requirement of \`${owner.id}\`, ` +
-      "the shell waits: reading files and writing that test are allowed. " +
-      "(Turn the guard off for this project with `specgate config set agent_guard off`.)",
+      "the shell waits: reading files and writing that test are allowed. ",
   };
+}
+
+/** outside-judge REQ-746: the call does what is a person's to do — refused, saying so. */
+function personAct(input: GuardInput, env: Record<string, string | undefined>): GuardDecision | null {
+  const cwd = input.cwd ?? process.cwd();
+  const tool = input.tool_name ?? "";
+  const args = (input.tool_input ?? {}) as Record<string, unknown>;
+  let found: PersonActFound | null = null;
+  let file: string | undefined;
+  if (SHELLS.has(tool)) {
+    if (typeof args.command !== "string") return null;
+    found = personActInShell(args.command);
+  } else {
+    const key = WRITERS[tool];
+    const target = key ? args[key] : undefined;
+    if (typeof target !== "string" || !target) return null;
+    const rel = path.relative(real(cwd), real(path.isAbsolute(target) ? target : path.join(cwd, target)));
+    if (rel.startsWith("..") || path.isAbsolute(rel)) return null;
+    const text = ["content", "new_string", "newString", "patchText"]
+      .map((k) => (typeof args[k] === "string" ? (args[k] as string) : ""))
+      .join("\n");
+    found = personActInWrite(rel, text);
+    file = rel;
+  }
+  if (!found || !isSpecDriven(cwd) || guardOff(cwd, env)) return null;
+  return { allow: false, file: file ?? found.what, message: personActMessage(found) };
 }
 
 /** Allow or refuse one tool call. `env` is injected so tests do not depend on the shell. */
 export function decide(input: GuardInput, env: Record<string, string | undefined>): GuardDecision {
   try {
+    const act = personAct(input, env);
+    if (act) return act;
     if (SHELLS.has(input.tool_name ?? "")) return shellDecision(input.cwd ?? process.cwd(), env);
     const key = WRITERS[input.tool_name ?? ""];
     const target = key ? input.tool_input?.[key] : undefined;
@@ -138,15 +171,14 @@ export function decide(input: GuardInput, env: Record<string, string | undefined
         allow: false,
         message:
           `specgate: No change is open, so ${rel} has no requirement to answer to. ` +
-          "Open one with `specgate propose <change-id>` and write its delta, then the test that names its first requirement, then this code. " +
-          "(Turn the guard off for this project with `specgate config set agent_guard off`.)",
+          "Open one with `specgate propose <change-id>` and write its delta, then the test that names its first requirement, then this code. ",
       };
     }
     const ids = changes.flatMap((c) => c.requirements);
     if (ids.length && namesAny(cwd, changed.filter(isTestFile), ids)) {
       // REQ-743: the first source write of the delivery — its steps as they are now.
       const first = changes.find((c) => c.pending.length)?.pending[0];
-      if (first) recordSteps(cwd, first);
+      if (first) recordSteps(cwd, first, env);
       return ALLOW;
     }
 

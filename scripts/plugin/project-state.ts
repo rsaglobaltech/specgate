@@ -104,7 +104,10 @@ export function openChanges(root: string): OpenChange[] {
 
 /** Is the guard turned off — by `SPECGATE_GUARD=off`, or `agent_guard: off` in `.specgate/config.json`? */
 export function guardOff(root: string, env: Record<string, string | undefined>): boolean {
-  if ((env.SPECGATE_GUARD ?? "").toLowerCase() === "off") return true;
+  const held = (env.SPECGATE_GUARD ?? "").toLowerCase();
+  if (held === "off") return true;
+  // outside-judge REQ-746: a session that started with the guard on keeps it.
+  if (held === "on") return false;
   try {
     const config = JSON.parse(fs.readFileSync(path.join(root, ".specgate", "config.json"), "utf8"));
     return String(config.agent_guard ?? "").toLowerCase() === "off";
@@ -209,7 +212,10 @@ export function runSpecgate(
  * hook takes — what the exam counts as the plugin's work. Never throws.
  */
 export function hookLog(
-  event: { hook: "guard" | "gate"; decision: "allowed" | "refused" | "passed" | "blocked" | "told"; reason?: string; file?: string },
+  event:
+    | { hook: "guard" | "gate"; decision: "allowed" | "refused" | "passed" | "blocked" | "told"; reason?: string; file?: string }
+    // outside-judge REQ-747: the steps of when a requirement's code began, where the session does not look.
+    | { hook: "steps"; requirement: string; files: Record<string, string> },
   env: Record<string, string | undefined> = process.env
 ): void {
   const file = env.SPECGATE_HOOK_LOG;
@@ -251,17 +257,24 @@ export function stepHashes(root: string): Record<string, string> {
 }
 
 /** Record the step definitions as they are now — once: the record is of when the code began. Never throws. */
-export function recordSteps(root: string, requirement: string): void {
+export function recordSteps(
+  root: string,
+  requirement: string,
+  env: Record<string, string | undefined> = process.env
+): void {
   try {
     if (!/^REQ-\d+$/.test(requirement)) return;
     const file = stepRecordFile(root, requirement);
     if (fs.existsSync(file)) return;
+    const files = stepHashes(root);
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(
       file,
-      `${JSON.stringify({ requirement, at: new Date().toISOString(), files: stepHashes(root) }, null, 2)}\n`,
+      `${JSON.stringify({ requirement, at: new Date().toISOString(), files }, null, 2)}\n`,
       "utf8"
     );
+    // REQ-747: the same record where the run's judge reads it, away from the project.
+    hookLog({ hook: "steps", requirement, files }, env);
   } catch {
     // A guard that breaks a session over a file it cannot write is worse than none.
   }

@@ -103,6 +103,9 @@ function openChange(dir: string, id: string, reqs: string[], capability = "comma
     path.join(dir, "docs/specs/changes", id, "specs", capability, "spec.md"),
     `# Delta — ${capability}\n\n## ADDED Requirements\n\n${reqs.join("\n")}`
   );
+  // outside-judge REQ-745: a requirement is delivered once a person approved its change.
+  const approved = cli(dir, "change", "approve", id);
+  if (approved.status !== 0) process.stderr.write(out(approved));
 }
 
 function nameInTest(dir: string, file: string, ...ids: string[]) {
@@ -125,19 +128,32 @@ test("REQ-117 SCN-117a: a command in a code span is not a placeholder", () => {
         "- WHEN the developer generates the guide",
         "- THEN the developer sees `tool verify <module> --level fast` as the quick check, `etc` excluded",
       ]),
-      requirement("REQ-003", "Greet a customer", [
-        "- GIVEN a customer named <name>",
-        "- WHEN the greeting is asked for",
-        "- THEN it reads Hello and the name",
-      ]),
     ]);
-    nameInTest(p.dir, "commands.test.js", "REQ-002", "SCN-002a", "REQ-003", "SCN-003a");
+    nameInTest(p.dir, "commands.test.js", "REQ-002", "SCN-002a");
 
     const literal = cli(p.dir, "apply", "REQ-002");
     assert.equal(literal.status, 0, out(literal));
     assert.doesNotMatch(out(literal), /scenario_placeholder_step|vague_step/);
 
-    const template = cli(p.dir, "apply", "REQ-003");
+    // A change of its own: one with a placeholder is not approved (REQ-745), so nothing of it is delivered.
+    const opened = cli(p.dir, "propose", "greet-template", "--capability", "greeting");
+    assert.equal(opened.status, 0, out(opened));
+    const id = /req_range: \[(REQ-\d+)/.exec(
+      fs.readFileSync(path.join(p.dir, "docs/specs/changes/greet-template/change.yaml"), "utf8")
+    )![1];
+    fs.writeFileSync(
+      path.join(p.dir, "docs/specs/changes/greet-template/specs/greeting/spec.md"),
+      `# Delta — greeting\n\n## ADDED Requirements\n\n${requirement(id, "Greet a customer", [
+        "- GIVEN a customer named <name>",
+        "- WHEN the greeting is asked for",
+        "- THEN it reads Hello and the name",
+      ])}`
+    );
+    nameInTest(p.dir, "greeting.test.js", id, `SCN-${id.slice(4)}a`);
+    const refused = cli(p.dir, "change", "approve", "greet-template");
+    assert.equal(refused.status, 1, out(refused));
+    assert.match(out(refused), /unfilled placeholder/);
+    const template = cli(p.dir, "apply", id);
     assert.equal(template.status, 1, out(template));
     assert.match(out(template), /scenario_placeholder_step/);
   } finally {

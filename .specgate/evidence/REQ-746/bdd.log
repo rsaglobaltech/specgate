@@ -1,0 +1,17 @@
+▶ dist/tests/unit/outside-judge.test.js
+✔ REQ-746 SCN-746a: switching the guard off is refused, as a person's (106.890792ms)
+✔ REQ-746 SCN-746b: approving its own change is refused, as a person's (152.627542ms)
+✔ REQ-746 SCN-746c: a review nobody made is refused — and inside a terminal the session made for itself (105.204334ms)
+✔ REQ-746 SCN-746d: the record removed, or the switch written — refused, naming the file (110.320583ms)
+✔ REQ-746 SCN-746e: reading is allowed, and so is the work (151.893333ms)
+✔ REQ-746 SCN-746f: no refusal of the guard says how to switch it off (277.699917ms)
+✔ REQ-746 SCN-746g: the switch, after an OpenCode session started — the write is still refused (212.277292ms)
+✔ REQ-746: the rule ships with both plugins (2.056833ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1328.682083

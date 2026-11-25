@@ -131,3 +131,9 @@
 {"req":"REQ-742","capability":"trusted-gate","at":"2026-11-25T05:59:05.316Z"}
 {"req":"REQ-743","capability":"trusted-gate","at":"2026-11-25T05:59:19.391Z"}
 {"req":"REQ-744","capability":"trusted-gate","at":"2026-11-25T05:59:32.070Z"}
+{"req":"REQ-745","capability":"trusted-gate","at":"2026-11-25T19:26:22.495Z"}
+{"req":"REQ-746","capability":"trusted-gate","at":"2026-11-25T19:26:33.425Z"}
+{"req":"REQ-747","capability":"trusted-gate","at":"2026-11-25T19:26:38.532Z"}
+{"req":"REQ-115","capability":"daily-surface","at":"2026-11-25T19:26:44.676Z"}
+{"req":"REQ-116","capability":"daily-surface","at":"2026-11-25T19:26:51.005Z"}
+{"req":"REQ-134","capability":"live-harness","at":"2026-11-25T19:26:58.225Z"}

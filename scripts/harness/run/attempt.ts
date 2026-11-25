@@ -85,6 +85,9 @@ import {
   roleInstruction,
 } from "./worktree-checks";
 
+import { controlsOf } from "../../lib/controls";
+import type { ControlRecord } from "../../../packages/core/src/domain/ControlRecord";
+
 /** Where a resumed requirement picks up, and what the gate said last time. */
 export interface ResumeAt {
   attempt: number;
@@ -189,6 +192,8 @@ interface AttemptEnv {
   ctx: AttemptContext;
   /** The live view's file (ADR-0037), in the project, not the worktree. */
   eventsFile: string;
+  /** outside-judge REQ-747: the controls before any agent of this requirement started — held here, not in the worktree. */
+  controlsBefore: ControlRecord;
 }
 
 /** What lasts from one attempt of a requirement to the next. */
@@ -599,7 +604,7 @@ function judgeAtGate(env: AttemptEnv, attempt: number): { decision: Decision; ga
     settings.testCmd,
     timeoutMs,
     req,
-    { ...settings, verbose: ctx.verbose },
+    { ...settings, verbose: ctx.verbose, controlsBefore: env.controlsBefore },
     gateReporter(eventsFile, req.requirement, attempt)
   );
   if (gate.ok) return { decision: PROCEED, gate };
@@ -824,7 +829,7 @@ export function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext)
   let stopRetrying = false;
 
   const eventsFile = eventsFileFor(ctx.projectDir || worktreeDir, req.requirement);
-  const env: AttemptEnv = { req, ctx, eventsFile };
+  const env: AttemptEnv = { req, ctx, eventsFile, controlsBefore: controlsOf(worktreeDir) };
   for (let attempt = firstAttempt; attempt <= settings.maxAttempts; attempt += 1) {
     // REQ-535: a retry is more sessions, and the budget is spent.
     if (state.budget.over()) {

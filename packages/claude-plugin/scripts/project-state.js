@@ -137,8 +137,12 @@ function openChanges(root) {
 }
 /** Is the guard turned off — by `SPECGATE_GUARD=off`, or `agent_guard: off` in `.specgate/config.json`? */
 function guardOff(root, env) {
-    if ((env.SPECGATE_GUARD ?? "").toLowerCase() === "off")
+    const held = (env.SPECGATE_GUARD ?? "").toLowerCase();
+    if (held === "off")
         return true;
+    // outside-judge REQ-746: a session that started with the guard on keeps it.
+    if (held === "on")
+        return false;
     try {
         const config = JSON.parse(fs.readFileSync(path.join(root, ".specgate", "config.json"), "utf8"));
         return String(config.agent_guard ?? "").toLowerCase() === "off";
@@ -267,15 +271,18 @@ function stepHashes(root) {
     return out;
 }
 /** Record the step definitions as they are now — once: the record is of when the code began. Never throws. */
-function recordSteps(root, requirement) {
+function recordSteps(root, requirement, env = process.env) {
     try {
         if (!/^REQ-\d+$/.test(requirement))
             return;
         const file = stepRecordFile(root, requirement);
         if (fs.existsSync(file))
             return;
+        const files = stepHashes(root);
         fs.mkdirSync(path.dirname(file), { recursive: true });
-        fs.writeFileSync(file, `${JSON.stringify({ requirement, at: new Date().toISOString(), files: stepHashes(root) }, null, 2)}\n`, "utf8");
+        fs.writeFileSync(file, `${JSON.stringify({ requirement, at: new Date().toISOString(), files }, null, 2)}\n`, "utf8");
+        // REQ-747: the same record where the run's judge reads it, away from the project.
+        hookLog({ hook: "steps", requirement, files }, env);
     }
     catch {
         // A guard that breaks a session over a file it cannot write is worse than none.

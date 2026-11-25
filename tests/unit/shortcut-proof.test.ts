@@ -135,7 +135,8 @@ test("REQ-742 SCN-742a: on OpenCode — 2 and 1 — the shell is refused and rec
   // OpenCode 1
   const v1 = bridge.createHooks({ directory: root, client: { session: { prompt: async () => {} } } }, { env });
   await assert.rejects(async () => v1["tool.execute.before"]({ tool: "bash" }, { args: { command: "npm test" } }), /REQ-002/);
-  const lines = fs.readFileSync(log, "utf8").trim().split("\n").map((l: string) => JSON.parse(l));
+  // The guard's own lines: the log also keeps the steps of when the code began (REQ-747).
+  const lines = fs.readFileSync(log, "utf8").trim().split("\n").map((l: string) => JSON.parse(l)).filter((l: { hook: string }) => l.hook === "guard");
   assert.deepEqual(lines.map((l: { decision: string }) => l.decision), ["refused", "refused"]);
   w(root, "test/fees.test.js", "// REQ-002\n");
   await v1["tool.execute.before"]({ tool: "bash" }, { args: { command: "npm test" } });

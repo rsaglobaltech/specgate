@@ -100,6 +100,15 @@ function openChange(dir: string, id: string, body: string, capability = "greetin
     path.join(dir, "docs/specs/changes", id, "specs", capability, "spec.md"),
     `# Delta — ${capability}\n\n${body}`
   );
+  // Approved where it can be: a change written to be refused stays as it is,
+  // and a test that delivers from it fails at `apply`, saying why.
+  cli(dir, "change", "approve", id);
+}
+
+/** outside-judge REQ-745: a requirement is delivered once a person approved its change. */
+function approve(dir: string, id: string) {
+  const r = cli(dir, "change", "approve", id);
+  assert.equal(r.status, 0, out(r));
 }
 
 function added(...reqs: string[]) {
@@ -560,6 +569,7 @@ test("REQ-115 SCN-115a: a script written for 0.20 keeps working", () => {
       `# Delta — greeting\n\n${added(requirement("REQ-002", "Greet a customer by name"))}`
     );
     nameInTest(p.dir, "greet.test.js", "REQ-002", "SCN-002a");
+    approve(p.dir, "add-greeting");
     const closed = cli(p.dir, "done", "REQ-002");
     assert.equal(closed.status, 0, out(closed));
 
@@ -582,7 +592,7 @@ test("REQ-115 SCN-115a: a script written for 0.20 keeps working", () => {
 
 // ── REQ-116 ──────────────────────────────────────────────────────────────────
 
-test("REQ-116 SCN-116a: one loop, four verbs", () => {
+test("REQ-116 SCN-116a: one loop, four verbs and an approval", () => {
   const p = adopted("npm test");
   try {
     const proposed = cli(p.dir, "propose", "add-greeting");
@@ -604,7 +614,7 @@ test("REQ-116 SCN-116a: one loop, four verbs", () => {
         'const test = require("node:test");\nconst assert = require("node:assert");\n' +
         'test("greets", () => assert.equal(require("../lib/greet")("Ada"), "Hello, Ada"));\n'
     );
-    for (const args of [["status"], ["apply"], ["archive", "add-greeting"]]) {
+    for (const args of [["status"], ["change", "approve", "add-greeting"], ["apply"], ["archive", "add-greeting"]]) {
       const r = cli(p.dir, ...args);
       assert.equal(r.status, 0, `${args.join(" ")}: ${out(r)}`);
     }

@@ -181,6 +181,9 @@ test("REQ-353 SCN-353a: the harness delivered REQ-002", () => {
     "# Tasks\n\n> Owner: developer\n\n## 2. Implementation\n\n- [ ] 2.1 Build the panel (REQ-002)\n- [ ] 2.2 Docs\n"
   );
   put(path.join(root, "test", "panel.test.js"), "// REQ-002 SCN-002\n");
+  // The harness builds only what a person approved (REQ-315), and so does `done` (REQ-745).
+  const approved = run(root, "change", "approve", "follow");
+  assert.equal(approved.status, 0, out(approved));
   const r = run(root, "done", "REQ-002", "--no-check");
   assert.equal(r.status, 0, out(r));
   const tasks = fs.readFileSync(path.join(dir, "tasks.md"), "utf8");

@@ -1,6 +1,6 @@
 import { readGatePolicy } from "../../../lib/gate-policy";
 import { endStepRecord, keepStepsReview, stepsVerdict, STEPS_FINDING, STEPS_FIX } from "../../../lib/step-seal";
-import { gitIdentity } from "../../../lib/approvals";
+import { gitIdentity, missingApprovals } from "../../../lib/approvals";
 import { scenariosOf } from "./ScenariosCommand";
 import { keepEvidence, mustReproduce, readRed } from "../../../lib/evidence";
 import type { ScenarioRun } from "../../../lib/evidence";
@@ -83,6 +83,30 @@ export interface DoneOptions {
   json?: boolean;
   /** `--steps-reviewed`: a person read the steps changed after the code began (REQ-743). */
   stepsReviewed?: boolean;
+}
+
+/**
+ * outside-judge REQ-745: why nobody's approval stops the delivery, or null. The
+ * question the harness asks (REQ-315), asked of the open change that owns the
+ * requirement; a requirement no change owns is not asked.
+ */
+export function approvalRefusal(
+  projectDir: string,
+  change: string | undefined
+): { code: string; message: string; fix: string } | null {
+  try {
+    if (!change) return null;
+    const missing = missingApprovals(projectDir, change);
+    if (!missing) return null;
+    return {
+      code: "change_not_approved",
+      message: `${missing.message} A requirement is delivered once a person approved its change.`,
+      fix: missing.fix,
+    };
+  } catch {
+    // Approval settings that cannot be read are validate's finding, not this one's.
+    return null;
+  }
 }
 
 /** REQ-743: why the requirement's steps stop its delivery, or null. */
@@ -409,6 +433,20 @@ export class DoneCommand extends BaseCommand {
       ]);
     }
 
+    // REQ-745: nobody approved its change. After the gate — what it finds is
+    // what keeps a change from being approved — and whatever `--no-check`
+    // says: an approval is not one of the gate's checks.
+    const unapproved = DELIVERED_STATUSES.includes(opts.status)
+      ? approvalRefusal(projectDir, owner?.change)
+      : null;
+    if (unapproved)
+      io.fail(NULL_SHAPE, [
+        error(unapproved.code, `${id} not marked ${opts.status}: ${unapproved.message}`, {
+          target: owner!.change,
+          fix: unapproved.fix,
+        }),
+      ]);
+
     // REQ-662: with executable scenarios required, the requirement's own must pass.
     const bdd = gated ? bddRefusal(projectDir, id, !!opts.json) : null;
     if (bdd)
@@ -621,6 +659,14 @@ export class DoneCommand extends BaseCommand {
         }
       }
     }
+
+    // REQ-745: a requirement of a change nobody approved is not delivered.
+    if (DELIVERED_STATUSES.includes(opts.status))
+      for (const id of ids.filter((x) => results.get(x)!.ok)) {
+        const change = view ? view.requirements.find((r) => r.id === id)?.change : undefined;
+        const unapproved = approvalRefusal(projectDir, change);
+        if (unapproved) results.set(id, { ok: false, code: unapproved.code, message: unapproved.message });
+      }
 
     // REQ-662: with executable scenarios required, each requirement's own must pass.
     if (opts.check)

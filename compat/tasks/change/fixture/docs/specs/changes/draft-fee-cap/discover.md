@@ -5,13 +5,13 @@
 
 ## Context
 
-<!-- Who has the problem, and what it costs them today. -->
+Members return books late and the library has no agreed late fee. Staff work it out by hand, and not always the same way.
 
 ## Use case
 
-<!-- What the person does, step by step, once this exists. -->
+1. A member returns a book some days late.
+2. The system works out the late fee, the same way every time.
 
 ## Acceptance criteria
 
-<!-- One line each, numbered: the design must answer every one. -->
-- AC-1:
+- AC-1: a child member's late fee is never more than 5.00; any other member's, never more than 10.00.
