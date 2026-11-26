@@ -200,6 +200,10 @@ function claudePluginFiles(version: string) {
       path: path.join("commands", AGENT_NAMESPACE, `${s.name}.md`),
       contents: slashCommandBody(s),
     })),
+    // walkthrough-fixes-3 REQ-790: the hooks are CommonJS. In a folder whose nearest
+    // package.json says "type": "module" they failed to load, the hook exited 1,
+    // and Claude Code took that as "do not block": the guard let everything through.
+    { path: path.join("scripts", "package.json"), contents: json({ type: "commonjs" }) },
     ...PLUGIN_SCRIPTS.map((name) => ({
       path: path.join("scripts", name),
       contents: pluginScriptSource(name),

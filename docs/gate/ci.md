@@ -68,7 +68,9 @@ A step whose tool is not configured yet — no `test_cmd`, no quality checks,
 no packs — says so in the log and passes, so the job is green on day one and
 checks more as you configure more.
 
-One job on Ubuntu running only the gate, if that is all you want:
+One job on Ubuntu running only the gate, if that is all you want — GitHub
+only, and with no `--base`, so no id comparison and no controls report, no
+pack drift and no plan:
 
 ```bash
 specgate ci init --provider github --minimal --force
@@ -135,7 +137,7 @@ A failing job does not stop a merge on its own:
 
 | Provider | Where | What to turn on |
 | --- | --- | --- |
-| GitHub | Settings → Rules → Rulesets (or Branches) | **Require status checks to pass** and select `spec-gate`. Push a branch once first, so GitHub has seen the job. |
+| GitHub | Settings → Rules → Rulesets (or Branches) | **Require status checks to pass** and select `spec-gate (ubuntu-latest)`, `spec-gate (macos-latest)` and `spec-gate (windows-latest)` — the job runs on three systems (`--minimal`: plain `spec-gate`). Push a branch once first, so GitHub has seen the job. |
 | GitLab | Settings → Merge requests | **Pipelines must succeed** |
 | Azure DevOps | Repos → Branches → your branch → Branch policies | **Build validation** with the pipeline, set to **Required** |
 | Jenkins | Your SCM's branch protection | Require the status Jenkins reports for the `Spec gate` stage — the GitHub or Bitbucket Branch Source plugin reports it |

@@ -1,4 +1,4 @@
-<!-- translation-of: ea16a8048e05 -->
+<!-- translation-of: efa822f8133e -->
 # El gate en CI
 
 Un gate que solo se ejecuta en portátiles es una sugerencia. Al final de esta
@@ -70,7 +70,9 @@ Un paso cuya herramienta aún no está configurada (sin `test_cmd`, sin checks
 de calidad, sin packs) lo dice en el log y pasa, así que el job está en verde
 desde el primer día y comprueba más a medida que configuras más.
 
-Un solo job en Ubuntu que ejecuta solo el gate, si es todo lo que quieres:
+Un solo job en Ubuntu que ejecuta solo el gate, si es todo lo que quieres
+(solo GitHub, y sin `--base`: ni comparación de ids ni informe de controles,
+ni deriva de packs ni plan):
 
 ```bash
 specgate ci init --provider github --minimal --force
@@ -138,7 +140,7 @@ Un job que falla no detiene un merge por sí solo:
 
 | Proveedor | Dónde | Qué activar |
 | --- | --- | --- |
-| GitHub | Settings → Rules → Rulesets (o Branches) | **Require status checks to pass** y selecciona `spec-gate`. Haz push de una rama una vez antes, para que GitHub haya visto el job. |
+| GitHub | Settings → Rules → Rulesets (o Branches) | **Require status checks to pass** y selecciona `spec-gate (ubuntu-latest)`, `spec-gate (macos-latest)` y `spec-gate (windows-latest)`: el job se ejecuta en tres sistemas (`--minimal`: `spec-gate` a secas). Haz push de una rama una vez antes, para que GitHub haya visto el job. |
 | GitLab | Settings → Merge requests | **Pipelines must succeed** |
 | Azure DevOps | Repos → Branches → tu rama → Branch policies | **Build validation** con el pipeline, en **Required** |
 | Jenkins | La protección de ramas de tu SCM | Exige el estado que Jenkins reporta para la etapa `Spec gate`: lo reporta el plugin GitHub o Bitbucket Branch Source |

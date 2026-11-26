@@ -49,7 +49,8 @@ $ specgate ci status
 <!-- specgate:out-scratch-ci:end -->
 
 It checks more than less on purpose: every step says in the YAML what it
-checks and what to delete to remove it. One step only:
+checks and what to delete to remove it. One Ubuntu job running only
+`specgate check`, with no base branch, no pack drift and no plan (GitHub only):
 `specgate ci init --provider github --minimal --force`. Another provider:
 `specgate ci init --provider gitlab`. Commit the file, and make the job a
 required check in your main branch's protection rules: from then on, a pull

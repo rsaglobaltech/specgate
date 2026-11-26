@@ -34,8 +34,11 @@ requests target (`main`, and `develop` if you use it), and turn on:
 
 1. **Require a pull request before merging.**
 2. **Require status checks to pass before merging**, then search for and
-   select the job `specgate ci init` wrote, `spec-gate`. It appears in the list
-   once it has run on one pull request.
+   select the checks of the job `specgate ci init` wrote. It runs on three
+   systems, so GitHub lists `spec-gate (ubuntu-latest)`,
+   `spec-gate (macos-latest)` and `spec-gate (windows-latest)` — select all
+   three (the `--minimal` job is plain `spec-gate`). They appear in the list
+   once the job has run on one pull request.
 
 GitLab (protected branches, "Pipelines must succeed") and Azure DevOps (a
 build validation branch policy) have the same setting. Without it, a pull
@@ -47,18 +50,25 @@ request can be merged while the gate is red.
 
 ```bash
 specgate status                     # what is open, and the next command
-specgate propose invoices-pdf       # proposal, tasks, a delta, REQ ids reserved
+specgate propose invoices-pdf       # discover, design, tasks, a delta, REQ ids reserved
 ```
 
-`propose` opens `docs/specs/changes/invoices-pdf/`. Write two things in it:
+`propose` opens `docs/specs/changes/invoices-pdf/` with `change.yaml`,
+`discover.md`, `design.md`, `tasks.md` and the delta. Write two things in it:
 
-1. **`proposal.md`** — why the change exists, in a paragraph. The reviewer
-   reads it first.
+1. **`discover.md`** — why the change exists: who has the problem, the use
+   case and its acceptance criteria. The reviewer reads it first;
+   `design.md` says how, `tasks.md` the steps.
 2. **The delta, `specs/invoices-pdf/spec.md`** — each requirement as
    `### Requirement: REQ-007 — <name>`, one obligation with `SHALL` or `MUST`,
-   and a scenario of plain `- GIVEN` / `- WHEN` / `- THEN` bullets with real
-   values, not "valid data". `check` fails while a step still has its
-   `<placeholder>` (`scenario_steps_unwritten`).
+   a scenario of plain `- GIVEN` / `- WHEN` / `- THEN` bullets with real
+   values, not "valid data", and a trace comment with its kind:
+   `<!-- specgate:trace kind=functional … -->` (or `non-functional`,
+   `business-rule`). Approval refuses a requirement with no `kind=`
+   (`approve_blocked`). The template `propose` wrote is not judged yet —
+   `check` says `delta not written yet, not judged until it is` and passes;
+   once you start writing it, a step that still has its `<placeholder>` fails
+   (`scenario_steps_unwritten`).
 
 Leave `docs/specs/traceability.md` alone. It is generated.
 
@@ -69,9 +79,10 @@ Then a person approves the change, in a terminal (an agent cannot:
 specgate change approve invoices-pdf   # --layer discover|design|tasks for one layer
 ```
 
-`apply` refuses a change nobody approved (`change_not_approved`), and a
-requirement edited after approval fails the gate
-(`approved_requirement_changed`) until it is approved again.
+Approval writes the change's feature files (`features/…`), its scenarios
+ready to run before any code. `apply` refuses a change nobody approved
+(`change_not_approved`), and a requirement edited after approval fails the
+gate (`approved_requirement_changed`) until it is approved again.
 
 Then write the test, and **mention the requirement in it**. The mention is the
 link; there is nothing else to declare:
@@ -98,10 +109,10 @@ status in the delta. `archive` refuses while one is still pending, naming the
 `specgate apply REQ-…` to run. So the spec and the code merge together, in
 this pull request, after the gate passed.
 
-Commit everything `archive` and `check` touched — the change folder moved to
-`docs/specs/changes/archive/`, the capability spec, the feature file, the
-tests, the code **and** `docs/specs/traceability.md`. A matrix left behind is
-the most common red build on a first PR (see `matrix_stale` below).
+Commit everything `approve`, `archive` and `check` touched — the change folder
+moved to `docs/specs/changes/archive/`, the capability spec, the feature file,
+the tests, the code **and** `docs/specs/traceability.md`. A matrix left behind
+makes a noisy diff on the next pull request (see `matrix_stale` below).
 
 A requirement too small for a change: `specgate new "<title>"` writes it
 straight into `spec.md` with a scenario to fill in, and `specgate apply
@@ -145,11 +156,11 @@ what no tool can judge:
 | The `## REQ-NNN` section in `spec.md` | Is it one obligation? Could two people test it and agree? Is it what the ticket asked for?                                                    |
 | The scenario                          | Do Given / When / Then describe _this_ behaviour with real values, or a generic happy path? Is the interesting edge case missing?             |
 | The test that mentions `REQ-NNN`      | Does it assert what the scenario's _Then_ says — or only that nothing throws? A test that mentions the ID and checks nothing passes the gate. |
-| The proposal and the status           | `proposal.md` says why. Each requirement is `Implemented` — `archive` would not have run otherwise — and its code is in this PR.              |
+| The discover and the status           | `discover.md` says why. Each requirement is `Implemented` — `archive` would not have run otherwise — and its code is in this PR.              |
 
-Skip `docs/specs/traceability.md`. It is generated from the files above, and
-CI fails when it is out of date, so a diff there is a consequence, not a
-decision.
+Skip `docs/specs/traceability.md`. It is generated from the files above —
+`check`, locally and in CI, regenerates it before it judges — so a diff there
+is a consequence, not a decision.
 
 The one thing the gate cannot catch is a test that names a requirement and
 does not test it. That is the reviewer's job, and it is the most valuable
@@ -183,18 +194,23 @@ scenario before you push the change.
      Run `specgate matrix` and commit the result — `specgate check` does it for you.
 ```
 
-Only in CI: a test or a tag changed and the regenerated matrix was not
-committed. Run `specgate check` locally and commit `traceability.md`.
+Only from `specgate validate` run on its own: a test or a tag changed and the
+regenerated matrix was not committed. `specgate check` — what the CI job
+`specgate ci init` wrote runs — regenerates the matrix first and does not fail
+on it. Run `specgate check` locally and commit `traceability.md`.
 
 ### `[TDD-1]` — delivered without a test
 
 ```
-[TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-007)
+✖  --strict-tdd violations detected:
+[TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-007a)
+   TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link; …
 ```
 
-The requirement is past Draft and no test mentions it — usually the test was
-renamed or deleted. Mention `REQ-007` in the test that covers it, or move the
-status back to Draft in `spec.md`.
+`check` reports it under `validate --strict` and fails with
+`check_validate_failed`. The requirement is past Draft and no test mentions
+it — usually the test was renamed or deleted. Mention `REQ-007` in the test
+that covers it, or set `status=Draft` back in its `specgate:trace` comment.
 
 ### `declared_artifact_missing`
 

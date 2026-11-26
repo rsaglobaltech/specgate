@@ -185,6 +185,8 @@ export function buildExpandArgs(
     entry.pack_id,
     "--project-dir",
     projectDir,
+    // Rendered into a throwaway folder seeded with the project's copy, then merged: never over the project itself.
+    "--force",
   ];
   if (cacheDir) {
     out.push("--cache-dir", cacheDir);
@@ -559,21 +561,21 @@ export class SyncCommand extends BaseCommand {
         process.exit(1);
       }
 
-      if (totalConflicts > 0) {
-        process.stdout.write("\n");
-        error(
-          `Sync completed with ${totalConflicts} conflicting file(s). ` +
-            `Resolve them, then re-run 'specops sync'.`
-        );
-        process.exit(1);
-      }
-
       // walkthrough-fixes-2 REQ-786: a pack that brings an id the project already uses is a clash, not a merge.
       const clashes = duplicateRequirementIds(projectDir);
       if (clashes.length > 0) {
         error(
           `After the sync, ${clashes.join(", ")} is defined twice: the pack's new requirement and one of yours share the id. ` +
             `Give yours a free id (and rename it in its tests and features), then run 'specgate check'.`
+        );
+        process.exit(1);
+      }
+
+      if (totalConflicts > 0) {
+        process.stdout.write("\n");
+        error(
+          `Sync completed with ${totalConflicts} conflicting file(s). ` +
+            `Resolve them, then re-run 'specops sync'.`
         );
         process.exit(1);
       }

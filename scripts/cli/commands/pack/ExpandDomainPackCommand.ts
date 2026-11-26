@@ -172,6 +172,30 @@ function usage() {
   );
 }
 
+/** walkthrough-fixes-3 REQ-791: what a project has of its own before any pack — null when nothing, or a pack is already there. */
+export function ownSpecification(projectDir: string): string | null {
+  if (fs.existsSync(path.join(projectDir, ".specops.lock"))) return null;
+  const caps = path.join(projectDir, "docs", "specs", "capabilities");
+  let withReqs = 0;
+  try {
+    for (const d of fs.readdirSync(caps, { withFileTypes: true })) {
+      if (!d.isDirectory()) continue;
+      const f = path.join(caps, d.name, "spec.md");
+      if (fs.existsSync(f) && /REQ-\d+/.test(fs.readFileSync(f, "utf8"))) withReqs += 1;
+    }
+  } catch {
+    /* none */
+  }
+  let archived = 0;
+  try {
+    archived = fs.readdirSync(path.join(projectDir, "docs", "specs", "changes", "archive")).length;
+  } catch {
+    /* none */
+  }
+  if (withReqs === 0 && archived === 0) return null;
+  return [withReqs ? `${withReqs} capability spec(s)` : "", archived ? `${archived} archived change(s)` : ""].filter(Boolean).join(", ");
+}
+
 export function renderStaticFiles(
   pack: ExpandPack,
   packRoot: string,
@@ -880,6 +904,18 @@ export class ExpandDomainPackCommand extends BaseCommand {
       const vars = normalizeVars(requiredVars, args.vars);
 
       ensureProjectDir(args.projectDir, args.dryRun);
+
+      // walkthrough-fixes-3 REQ-791: a first pack over a project with its own
+      // specification rendered over it — spec.md, the catalogs, the capability
+      // specs — and the gate stayed green. Refused, unless asked for.
+      const own = ownSpecification(args.projectDir);
+      if (own && !args.force && !args.dryRun) {
+        logError(
+          `This project already has its own specification (${own}), and no pack yet: the pack would be rendered over it. ` +
+            "Add a pack to a new project, or pass --force to render over this one (commit first, to see what it changed)."
+        );
+        process.exit(1);
+      }
 
       const digest = enforcePackSecurity(args.projectDir, args.pack, packRoot, source);
 

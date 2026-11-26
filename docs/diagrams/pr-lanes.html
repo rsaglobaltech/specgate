@@ -4,8 +4,8 @@
     <title id="sg-pr-t">One change, one pull request: what the author does, what the gate does, what the reviewer reads</title>
     <desc id="sg-pr-d">Three lanes, time running down: the author, the gate and the reviewer.
       One, the author proposes the change with specgate propose invoices-pdf, then writes
-      proposal.md and the delta. Two, a person approves it at a terminal with specgate change
-      approve invoices-pdf; an agent cannot. Three, the author writes the test, mentioning
+      discover.md, which says why, and the delta, each requirement with its kind. Two, a person approves it at a terminal with specgate change
+      approve invoices-pdf; an agent cannot. Approval writes the feature files. Three, the author writes the test, mentioning
       REQ-007 and SCN-007a, which is the link, then the code. Four, the author delivers it with
       specgate apply, which is refused while no test names the requirement; the gate runs, and
       the requirement is Implemented only when it is green. When it is red nothing is written,
@@ -14,9 +14,10 @@
       traceability.md, and opens the pull request. In CI, the gate runs specgate check on every
       pull request. When it is green, six, the reviewer reads what no tool can judge: is the
       requirement one obligation, does the scenario use real values for this behaviour, does
-      the test assert what the Then says, and proposal.md says why; the reviewer skips
+      the test assert what the Then says, and discover.md says why; the reviewer skips
       traceability.md, which is generated. Seven, merge: the spec and the code arrive together.
-      The gate blocks a merge only when the repository requires it.</desc>
+      The gate blocks a merge only when the repository requires it: on GitHub, the checks
+      spec-gate (ubuntu-latest), (macos-latest) and (windows-latest).</desc>
 
     <defs>
       <marker id="sg-pr-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
@@ -61,11 +62,11 @@
     <g>
       <text x="34" y="70" class="dia__h"><tspan class="dia__step">1</tspan><tspan x="58">Propose the change</tspan></text>
       <text x="58" y="90" class="dia__s dia__mono">specgate propose invoices-pdf</text>
-      <text x="58" y="107" class="dia__s">then write proposal.md and the delta</text>
+      <text x="58" y="107" class="dia__s">then write discover.md and the delta (kind=…)</text>
 
       <text x="34" y="158" class="dia__h"><tspan class="dia__step">2</tspan><tspan x="58" class="dia__ok-t">A person approves</tspan></text>
       <text x="58" y="178" class="dia__s dia__mono">specgate change approve invoices-pdf</text>
-      <text x="58" y="195" class="dia__s">at a terminal — an agent cannot</text>
+      <text x="58" y="195" class="dia__s">at a terminal; writes the feature files</text>
 
       <text x="34" y="246" class="dia__h"><tspan class="dia__step">3</tspan><tspan x="58">The test, then the code</tspan></text>
       <text x="58" y="266" class="dia__s dia__mono">// REQ-007 SCN-007a — …</text>
@@ -91,7 +92,7 @@
       <text x="618" y="534" class="dia__s">the requirement: one obligation?</text>
       <text x="618" y="552" class="dia__s">the scenario: real values, this behaviour?</text>
       <text x="618" y="570" class="dia__s">the test: does it assert the Then?</text>
-      <text x="618" y="588" class="dia__s">proposal.md: why the change exists</text>
+      <text x="618" y="588" class="dia__s">discover.md: why the change exists</text>
       <text x="618" y="614" class="dia__s dia__faint">skip traceability.md — it is generated</text>
 
       <text x="594" y="678" class="dia__h"><tspan class="dia__step">7</tspan><tspan x="618">Merge</tspan></text>
@@ -118,7 +119,7 @@
       <line x1="760" y1="636" x2="760" y2="647" marker-end="url(#sg-pr-a)"/>
     </g>
 
-    <text x="0" y="750" class="dia__note">The gate blocks a merge only when the repository requires it: make spec-gate a required check.</text>
+    <text x="0" y="750" class="dia__note">The gate blocks a merge only when the repository requires it: require spec-gate (ubuntu-latest), (macos-latest), (windows-latest).</text>
   </svg>
   </div>
   <figcaption>The author proposes, gets a person's approval and delivers through the gate; CI runs the same gate, and the reviewer reads only what no tool can judge.</figcaption>

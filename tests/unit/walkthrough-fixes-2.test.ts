@@ -160,3 +160,37 @@ test("REQ-784 SCN-784a: a ready draft names the approval next, then apply", () =
   assert.equal(draftNextCommand({ ...ready, approved: true }), "specgate apply");
   assert.equal(draftNextCommand({ ...ready, state: "drafting", findings: 2 }), "specgate propose --from-brief bookings");
 });
+
+test("REQ-790 SCN-790a: in a project whose package.json says type: module, the plugin's guard still refuses", () => {
+  const dir = project();
+  fs.writeFileSync(path.join(dir, "package.json"), '{"name":"x","type":"module"}\n');
+  assert.equal(cli(dir, ["agents", "init", "--tool", "claude-plugin"]).status, 0);
+  const guard = path.join(dir, ".claude", "specgate-plugin", "scripts", "guard-hook.js");
+  const input = JSON.stringify({ cwd: dir, tool_name: "Write", tool_input: { file_path: path.join(dir, "src", "x.js"), content: "x" } });
+  const r = spawnSync(process.execPath, [guard], { cwd: dir, input, encoding: "utf8" });
+  assert.equal(r.status, 2, `the guard must refuse, not crash: ${r.stderr}`);
+  assert.match(r.stderr, /No change is open/);
+});
+
+test("REQ-791 SCN-791a: a first pack over a project with its own specification is refused, nothing written", () => {
+  const { ownSpecification } = require("../../scripts/cli/commands/pack/ExpandDomainPackCommand");
+  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "specgate-wt3-own-")));
+  made.push(dir);
+  assert.equal(ownSpecification(dir), null, "an empty project has nothing of its own");
+  fs.mkdirSync(path.join(dir, "docs/specs/capabilities/loans"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "docs/specs/capabilities/loans/spec.md"), "# Loans\n\n### Requirement: REQ-012 — Renew a loan\n");
+  assert.match(String(ownSpecification(dir)), /1 capability spec/);
+  fs.writeFileSync(path.join(dir, "spec.md"), "# Mine\n");
+  const before = fs.readFileSync(path.join(dir, "spec.md"), "utf8");
+  const packs = path.join(dir, "..", path.basename(dir) + "-packs");
+  made.push(packs);
+  fs.cpSync(path.join(ROOT_DIR, "tests", "fixtures", "pack-upgrade", "v0.1.0"), path.join(packs, "backend"), { recursive: true });
+  const r = spawnSync(process.execPath, [CLI, "expand", "--pack-root", packs, "--pack", "backend", "--project-dir", dir,
+    "--var", "PROJECT_NAME=Lib", "--var", "PROJECT_SLUG=lib", "--var", "DOMAIN=loans"], { encoding: "utf8" });
+  assert.notEqual(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout + r.stderr, /already has its own specification/);
+  assert.equal(fs.readFileSync(path.join(dir, "spec.md"), "utf8"), before, "spec.md untouched");
+  // A pack already there: sync's road, not refused here.
+  fs.writeFileSync(path.join(dir, ".specops.lock"), "{}");
+  assert.equal(ownSpecification(dir), null);
+});

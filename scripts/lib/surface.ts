@@ -1103,9 +1103,10 @@ export const SURFACE: Command[] = [
     name: "config",
     subcommands: [
       { name: "init", script: ["config_init.js"] },
-      { name: "set", script: ["config_set.js"], argsFrom: 1 },
-      { name: "unset", script: ["config_set.js"], argsFrom: 1 },
-      { name: "get", script: ["config_set.js"], argsFrom: 1 },
+      // walkthrough-fixes-3 REQ-792: the MCP tools pass only what they declare (REQ-769) — so they declare it.
+      { name: "set", script: ["config_set.js"], argsFrom: 1, mcpArg: "key value" },
+      { name: "unset", script: ["config_set.js"], argsFrom: 1, mcpArg: "key" },
+      { name: "get", script: ["config_set.js"], argsFrom: 1, mcpArg: "key" },
       { name: "list", script: ["config_set.js"], argsFrom: 1 },
       { name: "keys", script: ["config_set.js"], argsFrom: 1 },
     ],

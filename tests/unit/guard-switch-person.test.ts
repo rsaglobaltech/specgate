@@ -73,3 +73,15 @@ test("REQ-769 SCN-769a: an undeclared argument does not reach the CLI", () => {
   }
   assert.equal(guard(dir), "on");
 });
+
+test("REQ-792 SCN-792a: config set over MCP takes its key and value — in that order — and still cannot switch the guard off", () => {
+  const dir = project();
+  const { TOOLS } = require("../../packages/mcp-spec-driven/src/tools");
+  const tool = TOOLS["specgate_config_set"];
+  // Sent value first: the schema's order is what reaches the CLI.
+  tool.handler({ projectDir: dir, cliPath: CLI, value: "on", key: "pet" });
+  const config = JSON.parse(fs.readFileSync(path.join(dir, ".specgate", "config.json"), "utf8"));
+  assert.equal(config.pet, "on");
+  tool.handler({ projectDir: dir, cliPath: CLI, key: "agent_guard", value: "off" });
+  assert.equal(guard(dir), "on");
+});

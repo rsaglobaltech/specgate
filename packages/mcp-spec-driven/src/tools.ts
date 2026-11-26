@@ -117,11 +117,14 @@ export class GenericCliTool implements ITool {
     if (this.dirStyle === "positional") argv.push(dir);
     else argv.push("--project-dir", dir);
 
-    // Pass args safely
-    // guard-switch-person REQ-769: only the arguments the tool declares reach the CLI.
-    const declared = new Set(Object.keys(((this.inputSchema as { properties?: Record<string, unknown> }) || {}).properties || {}));
-    for (const [k, v] of Object.entries(args)) {
-      if (k === "projectDir" || k === "cliPath" || !declared.has(k)) continue;
+    // guard-switch-person REQ-769: only the arguments the tool declares reach the CLI —
+    // in the schema's order (walkthrough-fixes-3 REQ-792), whatever order the client sent.
+    const declared = Object.keys(
+      ((this.inputSchema as { properties?: Record<string, unknown> }) || {}).properties || {}
+    );
+    for (const k of declared) {
+      if (k === "projectDir" || k === "cliPath") continue;
+      const v = args[k];
       if (typeof v === "string") argv.push(v);
     }
 
@@ -929,13 +932,14 @@ TOOLS["specgate_config_set"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      key: { type: "string", description: "The <key> argument of `specgate config set`." },
+      value: { type: "string", description: "The <value> argument of `specgate config set`." },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "key", "value"],
   },
   "flag",
   false
 );
-// config-agents REQ-707: a setting, a profile or the sandbox removed.
 TOOLS["specgate_config_unset"] = new GenericCliTool(
   "specgate_config_unset",
   "Run specgate config unset",
@@ -945,8 +949,9 @@ TOOLS["specgate_config_unset"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      key: { type: "string", description: "The <key> argument of `specgate config unset`." },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "key"],
   },
   "flag",
   false
@@ -960,8 +965,9 @@ TOOLS["specgate_config_get"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      key: { type: "string", description: "The <key> argument of `specgate config get`." },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "key"],
   },
   "flag",
   false

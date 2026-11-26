@@ -49,7 +49,9 @@ $ specgate ci status
 An older `specgate init` wrote `.github/workflows/specs.yml`, which only
 validated the specification: `specgate ci init --provider github` shows what
 the gate adds, and `--replace` replaces it. Every step of the gate says what
-it checks and what to delete to remove it; `--minimal` writes one step only.
+it checks and what to delete to remove it; `--minimal` (GitHub only) writes
+one Ubuntu job that runs `specgate check` with no base branch — no id
+comparison, no pack drift, no plan.
 
 ## 2. Check locally what CI will run
 
