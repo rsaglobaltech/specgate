@@ -1152,6 +1152,28 @@ html:not(.js) .jn__panel + .jn__panel { margin-top: var(--space-16); }
 .lx-stat__l { margin-top: 8px !important; font-weight: 600; font-size: 14px; }
 .lx-stat__s { margin-top: 4px !important; font: 12px var(--mono); color: var(--fg-faint); }
 .lx-limit { margin: 20px 0 0; font-size: 14px; color: var(--fg-soft); }
+
+/* The evidence, told as jobs a developer knows (the figures a reader can check). */
+.lx-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 32px; border-top: 2px solid var(--fg); }
+.lx-sum__i { padding: 20px 0; border-bottom: 1px solid var(--line); }
+.lx-sum__i p { margin: 0; }
+.lx-sum__n { font-family: var(--display); font-weight: 800; font-size: 40px; line-height: 1; }
+.lx-sum__n span { color: var(--accent); }
+.lx-sum__n small { font: 600 14px var(--sans, inherit); color: var(--fg-soft); margin-left: 6px; }
+.lx-sum__l { margin-top: 8px !important; font-size: 15px; color: var(--fg-soft); max-width: 30em; }
+.lx-cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 24px; }
+.lx-case { min-width: 0; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+.lx-case p, .lx-case h3 { margin: 0; }
+.lx-case__k { font: 11px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-faint); }
+.lx-case h3 { margin-top: 6px; font-family: var(--display); font-size: 18px; line-height: 1.25; text-wrap: balance; }
+.lx-case h3 + p { margin-top: 6px; font-size: 14px; color: var(--fg-soft); }
+.lx-case dl { margin: 14px 0 0; display: grid; gap: 8px; }
+.lx-case dl div { display: grid; grid-template-columns: 7.5em 1fr; gap: 8px; align-items: baseline; }
+.lx-case dt { font: 11px var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-faint); }
+.lx-case dd { margin: 0; font-size: 14px; }
+.lx-case dl div:last-child dd b { color: var(--accent); }
+.lx-method { margin: 16px 0 0; font: 12px var(--mono); color: var(--fg-faint); }
+.lx-method a { color: inherit; }
 .lx-table-wrap { overflow-x: auto; border-top: 2px solid var(--fg); }
 .lx-table { width: 100%; min-width: 720px; border-collapse: collapse; font-size: 14px; }
 .lx-table th, .lx-table td { text-align: left; padding: 11px 14px 11px 0; border-bottom: 1px solid var(--line); vertical-align: baseline; }
