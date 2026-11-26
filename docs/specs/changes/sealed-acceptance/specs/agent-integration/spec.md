@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-760 — No tool of the agent writes a sealed test
 
-<!-- specgate:trace status=Planned actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL refuse, in the guard of Claude Code, Codex and OpenCode, with `acceptance_sealed`, a file write, an edit, a patch or a shell command that writes, moves onto, removes or checks out a sealed acceptance test of an open change; and SHALL add the sealed files' hashes to the controls the outside judge reads, so that a change made where no hook runs is reported.
 

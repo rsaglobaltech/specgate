@@ -1,0 +1,15 @@
+▶ dist/tests/unit/sealed-acceptance-exam.test.js
+✔ REQ-761 SCN-761a: the attack replayed — every road refused by the guard or reported by the judge (195.813167ms)
+✔ REQ-761: with nothing sealed the same attack gets through — the test can fail (314.122625ms)
+✔ REQ-761 SCN-761a: specgate compat attack two-function passes (257.909667ms)
+✔ REQ-761 SCN-761b: the writer sees no source — spec, features and design, no src/ or test/ (5.0925ms)
+✔ REQ-761: what the writer lists comes back sealed; a listed src/ file is refused (11.416375ms)
+✔ REQ-761: L3a is a level, wired as L3 (0.285291ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 859.174833

@@ -1,0 +1,14 @@
+▶ dist/tests/unit/sealed-acceptance.test.js
+✔ REQ-757 SCN-757a: sealed as they are — the approval holds the file's sha256 (679.679583ms)
+✔ REQ-757 SCN-757b: a test that proves no scenario — refused, nothing recorded (519.0775ms)
+✔ REQ-757: a listed file that is not there, or a change not approved — refused (898.989625ms)
+✔ REQ-757: sealing is approving — no terminal, no seal (REQ-748) (492.388083ms)
+✔ REQ-757 SCN-757c: any language — a Maven integration test is sealed the same way (524.745083ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3217.436625

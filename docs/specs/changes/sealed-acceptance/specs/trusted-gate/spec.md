@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-757 — A person approves a change's acceptance tests
 
-<!-- specgate:trace status=Planned actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL, on `specgate change approve <id> --layer acceptance`, read the change's `acceptance.md`, whose lines each name a test file and the scenarios of the change it proves, and record in the change's approvals the layer `acceptance` with a sha256 of each file; and SHALL refuse, recording nothing, when the design is not approved, when a listed file does not exist, or when a line names no scenario of the change's delta.
 
@@ -30,7 +30,7 @@ The system SHALL, on `specgate change approve <id> --layer acceptance`, read the
 
 ### Requirement: REQ-758 — A changed acceptance test fails the gate
 
-<!-- specgate:trace status=Planned actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL fail `specgate check`, and so refuse `apply`, with `acceptance_not_sealed` naming the file, when a sealed acceptance test differs from its seal or is gone, saying to restore it or have a person approve the new version; and SHALL NOT count a change of line endings as a difference.
 
@@ -48,7 +48,7 @@ The system SHALL fail `specgate check`, and so refuse `apply`, with `acceptance_
 
 ### Requirement: REQ-759 — The gate runs the sealed tests with the project's command
 
-<!-- specgate:trace status=Planned actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL, for each open change with sealed acceptance tests, run the project's `acceptance_cmd`, with `{files}` replaced by the sealed paths, and fail the gate with `acceptance_red` and the command's last lines when it exits non-zero; and SHALL fail with `acceptance_no_command` when there are sealed tests and no `acceptance_cmd`; and SHALL NOT install anything in the project.
 

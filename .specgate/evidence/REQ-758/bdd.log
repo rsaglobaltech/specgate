@@ -1,0 +1,23 @@
+▶ dist/tests/unit/gate-policy.test.js
+✔ dist/tests/unit/gate-policy.test.js (46.023292ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50.681959
+▶ dist/tests/unit/sealed-acceptance.test.js
+✔ REQ-758 SCN-758a: one byte changed — the gate fails with acceptance_not_sealed (996.874083ms)
+✔ REQ-758: a sealed test that is gone fails too; line endings are not a change (559.95175ms)
+✔ REQ-758 SCN-758b: approved again — acceptance_not_sealed is gone (1302.073541ms)
+✔ REQ-758, REQ-759: the rule acceptance fails strict and standard gates, warns in minimal (0.24525ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2944.943125

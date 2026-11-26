@@ -1,0 +1,11 @@
+▶ dist/tests/unit/sealed-acceptance.test.js
+✔ REQ-760 SCN-760a: each road refused — Write, a patch, sed -i, a redirect, git checkout (559.648375ms)
+✔ REQ-760 SCN-760b: changed where no hook runs — the judge reports it (527.397375ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1160.882166

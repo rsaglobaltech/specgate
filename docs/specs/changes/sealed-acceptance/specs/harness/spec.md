@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-761 — The exam proves sealed acceptance holds
 
-<!-- specgate:trace status=Planned actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL, in `specgate compat`, replay with no model the recorded two-function attack against a fixture with a sealed step file — through the file tools, a patch, a shell redirect and `git checkout` — and fail when any write is neither refused nor reported; and SHALL offer a level `L3a` in which, before the agent starts, a writer agent that sees no source writes the acceptance tests, they are approved and sealed, and the agent then runs as at L3.
 
