@@ -393,7 +393,11 @@ export function setTraceFields(
       break;
     }
   }
-  const current = at === -1 ? {} : (parseTraceComment(lines[at]) as Record<string, string>);
+  // A trace comment may run over several lines: read and replace it whole.
+  let end = at;
+  while (end !== -1 && end < lines.length - 1 && !lines[end].includes("-->")) end += 1;
+  const current =
+    at === -1 ? {} : (parseTraceComment(lines.slice(at, end + 1).join(" ")) as Record<string, string>);
   const merged: Record<string, string> = { ...current };
   for (const [k, v] of Object.entries(fields)) {
     if (v === "") delete merged[k];
@@ -402,8 +406,8 @@ export function setTraceFields(
   const rendered = renderTraceComment(merged);
 
   if (at !== -1) {
-    if (rendered === null) lines.splice(at, 1);
-    else lines[at] = rendered;
+    if (rendered === null) lines.splice(at, end - at + 1);
+    else lines.splice(at, end - at + 1, rendered);
   } else if (rendered !== null) {
     lines.splice(heading + 1, 0, "", rendered);
   }

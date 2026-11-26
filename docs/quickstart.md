@@ -9,6 +9,7 @@ folder (`npx specgate` uses the version the team pinned):
 ```bash
 npx specgate status                 # what is left, and the next command
 npx specgate propose <change-id>    # open a change; write its delta
+npx specgate change approve <change-id>   # a person, at a terminal: approve the delta
 npx specgate apply REQ-007          # after a test names REQ-007: the gate, then Implemented
 npx specgate archive <change-id>    # every requirement applied: merge the change
 npx specgate check                  # before the pull request — CI runs the same

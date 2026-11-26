@@ -1,4 +1,4 @@
-<!-- translation-of: 88a150b365f2 -->
+<!-- translation-of: 16568b411b7e -->
 # Configurar el gate
 
 No todos los equipos quieren que cada regla haga fallar un pull request desde

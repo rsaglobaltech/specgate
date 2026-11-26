@@ -1,4 +1,4 @@
-<!-- translation-of: cfb40f228c15 -->
+<!-- translation-of: 6b2615c43196 -->
 # Unirte a un proyecto
 
 Otra persona configuró Specgate; tú necesitas el ciclo. ¿Lo configuras tú
@@ -10,6 +10,7 @@ carpeta (`npx specgate` usa la versión que fijó el equipo):
 ```bash
 npx specgate status                 # what is left, and the next command
 npx specgate propose <change-id>    # open a change; write its delta
+npx specgate change approve <change-id>   # una persona, en su terminal: aprueba el delta
 npx specgate apply REQ-007          # after a test names REQ-007: the gate, then Implemented
 npx specgate archive <change-id>    # every requirement applied: merge the change
 npx specgate check                  # before the pull request — CI runs the same

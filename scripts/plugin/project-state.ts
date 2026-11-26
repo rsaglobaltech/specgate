@@ -306,6 +306,17 @@ export function sealedTests(root: string): string[] {
   } catch {
     return [];
   }
+  // A test sealed by a change that is now archived stays sealed.
+  try {
+    ids.push(
+      ...fs
+        .readdirSync(path.join(dir, "archive"), { withFileTypes: true })
+        .filter((e) => e.isDirectory())
+        .map((e) => path.join("archive", e.name))
+    );
+  } catch {
+    /* no archive yet */
+  }
   const out = new Set<string>();
   for (const id of ids) {
     try {

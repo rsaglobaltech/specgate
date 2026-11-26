@@ -683,7 +683,7 @@ function cmdApprove(opts: ChangeOptions) {
     return fail(opts, nullShape, [
       error("approve_needs_person", `Approving ${id} is a person's act, and this is not a terminal. Nothing was recorded.`, {
         target: id,
-        fix: `A person runs it in a terminal: specgate change approve ${id} — or approves it in the studio's Review.`,
+        fix: `A person runs it in a terminal: specgate change approve ${id}${opts.layer ? ` --layer ${opts.layer}` : ""} — or approves it in the studio's Review.`,
       }),
     ]);
   }

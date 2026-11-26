@@ -1,8 +1,7 @@
 # Writing specs
 
 At the end of this page you can add a requirement with its scenario, link it to
-a test, deliver it and remove it, without ever editing the traceability matrix
-by hand.
+a test, deliver it and remove it, without ever editing the traceability matrix by hand.
 
 **You need:** a project where `specgate init` has run. Three terms come up
 throughout: a **requirement** (`REQ-007`) is one sentence the product must
@@ -129,7 +128,7 @@ agent, without reading every `.feature` file.
 
 ```bash
 specgate status          # one line per requirement, and the next command
-specgate plan            # the same queue, with every artifact spelled out
+specgate plan            # every artifact spelled out; an open change's requirements only once archived
 ```
 
 `plan` groups the requirements by what each one still lacks:

@@ -2,8 +2,7 @@
 
 At the end of this page the gate runs on your machine before every pull
 request, and in CI as a required check that blocks a merge when it fails. The
-**gate** is the set of checks that decides whether the specification and the
-code still agree.
+**gate** is the set of checks that decides whether the specification and the code still agree.
 
 **You need:** a project where `specgate init` has run, Specgate installed as a
 dev dependency (`npm install --save-dev @rsaglobaltech/specgate`), and, for the
@@ -21,27 +20,23 @@ specgate check
 
 `check` runs these stages in order, and stops at the first one that fails:
 
-1. The ids against the base branch (below), and, with `--base`, what the
-   branch changes in the controls, named for the reviewer.
-2. Every open change's delta, and what a person approved in it: its
-   requirements, the files its design names, its sealed acceptance tests.
+1. The ids against the base branch (below); with `--base`, what the branch
+   changes in the controls, named for the reviewer.
+2. Every open change, as a person approved it: requirements, design scope, sealed acceptance tests.
 3. `validate --strict`: specs, scenarios, traceability, links and coverage.
-4. Your architecture check, if you set one with
-   `specgate config set arch_cmd "<cmd>"` (ArchUnit, dependency-cruiser, …).
-   With `arch_sarif:` beside it, only a violation the change adds fails.
-5. Your tests, from `specgate config set test_cmd "npm test"` or `--test-cmd`,
-   side by side with step 4 ([`gate_parallel: false`](fast-gate.md) runs them in turn).
-6. The scenarios of every delivered requirement, with `bdd_cmd`, when
-   `.specgate/gate.yaml` says `bdd: required`. `--no-scenarios` skips them.
-7. The acceptance tests a person approved and sealed, with `acceptance_cmd`,
-   when an open change has them.
+4. Your architecture check (`specgate config set arch_cmd "<cmd>"`: ArchUnit,
+   dependency-cruiser…); with `arch_sarif:`, only a violation the change adds fails.
+5. Your tests (`test_cmd`, or `--test-cmd`), beside step 4
+   ([`gate_parallel: false`](fast-gate.md) runs them in turn).
+6. With `bdd: required`, each delivered requirement's scenarios (`bdd_cmd`;
+   `--no-scenarios` skips them).
+7. The sealed acceptance tests, with `acceptance_cmd`.
 8. Your [quality checks](quality.md), if `specgate quality init` wrote them:
    coverage and mutation of what the change adds, SAST, secrets, dependencies,
    Conventional Commits — each in Docker. `--ci` adds the CI-only ones and
    fails a check that cannot run.
 
-Without a test command, `check` still passes and says it checked the
-specification, not the code. Set one.
+Without a test command, `check` still passes and says it checked the specification, not the code. Set one.
 
 `check` also compares requirement ids with the base branch (`--base <branch>`,
 or origin's default branch). The same id with a different title there fails

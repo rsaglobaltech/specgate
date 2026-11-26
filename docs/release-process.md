@@ -7,8 +7,7 @@ registry and to this documentation site — and what support it gets.
 **GitHub Actions are on** (since 2026-10-28): the repository is public, so
 standard GitHub-hosted runners cost nothing. CI, E2E and Security run on every
 push to `main` and `develop` and on pull requests; the publish workflows run on
-a `v*` tag. They were off for months to save a quota that public repositories
-do not have.
+a `v*` tag. They were off for months to save a quota that public repositories do not have.
 <!-- specgate:endnote -->
 
 ## What gets published
@@ -53,8 +52,7 @@ release commit, `contract:check --release <version>` before the tag — see
 **Which versions get fixes.** Pre-1.0, only the latest minor. Backports to an
 older minor are not promised — the upgrade path is forward, and pretending
 otherwise would be a commitment one maintainer cannot keep. The same table is
-in [SECURITY.md](../SECURITY.md#supported-versions) for vulnerabilities
-specifically.
+in [SECURITY.md](../SECURITY.md#supported-versions) for vulnerabilities specifically.
 
 **From 1.0 on, this is a commitment and not an intention.** One supported line
 at a time, plus the previous minor for **six months** from the day its successor

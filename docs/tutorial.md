@@ -329,8 +329,8 @@ specgate plan --json
 ```
 
 `plan` is the detailed view behind `status` for the requirements already in
-`spec.md` — an open change's requirements are listed by `status`, not by
-`plan`, until the change is archived. Per requirement, whether its
+the specification — an open change's requirements are listed by `status`, not
+by `plan`, until the change is archived. Per requirement, whether its
 feature, test and code exist, in a bucket (`NEEDS_FEATURE`,
 `NEEDS_EVERYTHING`, `NEEDS_TEST`, `NEEDS_IMPLEMENTATION`,
 `NEEDS_STATUS_UPDATE`, `DONE`). Its JSON is the task queue the harness
@@ -1154,7 +1154,7 @@ The 📍 / 📦 column is the thing to remember — **where** you run it.
 | `specgate explore ["<question>"]` | 📍 project | A brief of where the project stands, to think with before a change exists |
 | `specgate config set test_cmd "<cmd>"` | 📍 project | Tell `check` and `apply` how to run your tests |
 | `specgate matrix [--check]` | 📍 project | Regenerate the traceability matrix from spec, tags and tests |
-| `specgate plan [--json]` | 📍 project | The per-requirement detail for the requirements in `spec.md` — not those of open changes |
+| `specgate plan [--json]` | 📍 project | The per-requirement detail for the specification's requirements — an open change's are in `status` |
 | `specgate fix [--dry-run]` | 📍 project | Apply the repairs `validate` suggests |
 | `specgate change status \| validate \| show \| list` | 📍 project | What to write next · check the deltas · inspect · enumerate |
 | `specgate change approve <id>` | 📍 project, a person at a terminal | Approve a change before `apply` delivers its requirements; an agent cannot |

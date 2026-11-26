@@ -562,17 +562,26 @@ export class CheckCommand extends BaseCommand {
       // One fix line per refusal: the findings say what, the last says how.
       const problems = view.problems.map(({ fix: _fix, change: _change, ...d }) => d);
       gate.set("changes", "failed", problems, { ms: since(changesStarted) });
+      // What a person approved changed: the fix is to restore it or approve again, not to fix the delta.
+      const APPROVED = new Set(["acceptance_not_sealed", "approved_requirement_changed", "file_outside_design"]);
+      const approvedOnly = problems.every((d) => APPROVED.has(d.code));
       fail(NULL_SHAPE, [
         ...ticketKeys,
         ...problems,
-        error(
-          "check_change_invalid",
-          `The gate failed: open change '${first}' does not validate.`,
-          {
-            target: first,
-            fix: `Fix its delta, then run \`specgate check\` again (\`specgate change validate ${first}\` lists every finding).`,
-          }
-        ),
+        approvedOnly
+          ? error(
+              "check_approved_changed",
+              `The gate failed: what a person approved in open change '${first}' is not what is there now.`,
+              { target: first, fix: view.problems.find((d) => d.fix)?.fix || `specgate change approve ${first}` }
+            )
+          : error(
+              "check_change_invalid",
+              `The gate failed: open change '${first}' does not validate.`,
+              {
+                target: first,
+                fix: `Fix its delta, then run \`specgate check\` again (\`specgate change validate ${first}\` lists every finding).`,
+              }
+            ),
       ]);
     }
     gate.set("changes", view ? "passed" : "skipped", unwritten, { ms: since(changesStarted) });
@@ -837,7 +846,11 @@ export class CheckCommand extends BaseCommand {
       if (acceptance.errors.length > 0) {
         gate.set("acceptance", "failed", findings, { ms: acceptance.ms, command: acceptance.command || null });
         if (!json) process.stdout.write(ui.fail(`Acceptance      ${acceptance.errors[0]!.code}`));
-        fail(NULL_SHAPE, [...ticketKeys, ...acceptance.errors]);
+        const verdict = error("check_acceptance_failed", "The gate failed: the sealed acceptance tests.", {
+          target: "acceptance",
+          fix: acceptance.errors.find((d) => d.fix)?.fix || "specgate check",
+        });
+        fail(NULL_SHAPE, [...ticketKeys, ...acceptance.errors, verdict]);
       }
       gate.set("acceptance", acceptance.ran ? "passed" : "skipped", findings, { ms: acceptance.ms, command: acceptance.command || null });
       if (!json) {

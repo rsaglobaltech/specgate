@@ -142,6 +142,10 @@ The requirement then waits: `status` lists it under "Waiting for an answer",
 `apply` refuses it and the harness will not build it. In the clinical pilot the
 drug-interaction alerts stayed there — nobody may invent that table.
 
+When you have read it, approve the draft yourself, at your terminal:
+`npx specgate change approve draft-<module>`. An agent cannot, and `apply`
+refuses a requirement of a change nobody approved (`change_not_approved`).
+
 ### 9. Build each requirement, test first
 
 The reviewed draft stays an open change while you build it: `status` lists its
@@ -188,8 +192,8 @@ say. In the six pilots, running the product found:
 - a production build or an application context that did not start,
 - a privacy hole: a search that returned clinical data without a trace.
 
-Each gap becomes a short change — `npx specgate propose <module>-2`, then steps 9
-and 10. When the change rewrites a delivered requirement, put it under
+Each gap becomes a short change — `npx specgate propose <module>-2`, then steps 8
+to 10. When the change rewrites a delivered requirement, put it under
 `## MODIFIED Requirements` with all its scenarios and apply it again against
 the new scenario: the change archives only once it is Implemented, and
 archiving regenerates its feature file.
@@ -202,6 +206,7 @@ as a Jira ticket:
 ```bash
 npx specgate propose <change-id>          # a change: a delta to write, REQ ids reserved
 npx specgate propose --from-ticket <KEY>  # or a Jira story: see From a Jira ticket
+npx specgate change approve <change-id>   # a person, at a terminal, after reading the delta
 npx specgate apply                        # the next requirement through the gate
 npx specgate status                       # what each requirement still needs, and what waits for an answer
 npx specgate archive <change-id>          # once every requirement in it is Implemented

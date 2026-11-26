@@ -3,15 +3,13 @@
 At the end of this page you can add or change requirements in a live project
 through a **change**, so the specs, the feature files and the traceability
 matrix never drift apart. A change is a folder under
-`docs/specs/changes/<id>/` that holds the requirements being added, modified
-or removed until they are built.
+`docs/specs/changes/<id>/` that holds the requirements being added, modified or removed until they are built.
 
 **You need:** a project where `specgate init` has run, and a test command
 configured (`specgate config set test_cmd "npm test"`).
 
 The loop is four commands: `propose` opens the change, `apply` delivers each
-requirement, `status` says what is left, and `archive` closes the change once
-every requirement in it is delivered
+requirement, `status` says what is left, and `archive` closes the change once every requirement in it is delivered
 ([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)). Between `propose`
 and `apply`, a person approves the change. For writing your
 first requirements on a new project, see [Writing specs](writing-specs.md).
@@ -98,12 +96,10 @@ The validator is strict about two things:
 - **The body needs an obligation keyword** (`SHALL`, `MUST`, `SHOULD` or
   `MAY`), otherwise you get `no_rfc2119_keyword`.
 
-Every requirement needs a `specgate:trace` comment with `kind=` (functional,
-non-functional or business-rule): without it `change validate` reports
-`change_not_approvable` and `change approve` refuses the change
-(`approve_blocked`). The rest of the comment is optional: `uc`, `cmd`, `agg`
-and `evt` fill those columns of the matrix, and without them the requirement
-still archives, with `-` there.
+The `specgate:trace` comment's `kind=` (functional, non-functional or
+business-rule) is required: without it `change approve` refuses the change
+(`approve_blocked`; `change validate` says `change_not_approvable`). `uc`,
+`cmd`, `agg` and `evt` are optional matrix columns, `-` when missing.
 
 While the change is open, its requirements already count: `status` lists
 REQ-014 as to do, and `apply`, `check` and `harness run` judge the project as
@@ -120,10 +116,8 @@ yet.
 Separate several with commas: `depends=REQ-014, REQ-016`. Then:
 
 - **`specgate plan` orders the queue** so a requirement never comes before the
-  work it needs, and marks one whose dependency is pending as `⛔ blocked`.
-  `plan` reads the requirements in the specification, so it orders a change's
-  requirements once the change is archived; while it is open, `status` lists
-  them.
+  work it needs, and marks one whose dependency is pending as `⛔ blocked` —
+  once the change is archived; while it is open, `status` lists them.
 - **`specgate validate` fails** on a cycle (`requirement_cycle`), on a
   dependency that names no requirement (`unknown_dependency`) and on a
   requirement that depends on itself (`self_dependency`).
@@ -206,36 +200,9 @@ the next requirement `status` names. `apply` does not commit: commit after it.
 
 ### Sealed acceptance tests
 
-A change can carry acceptance tests written by someone other than the agent
-that implements it, ideally from the spec and the design, never from the
-source. List them in `docs/specs/changes/<id>/acceptance-tests.md`, one line
-per file with the scenarios it proves, in any language:
-
-```markdown
-- test/acceptance/pricing.spec.ts — SCN-014, SCN-015
-- src/test/java/PricingIT.java — SCN-014
-```
-
-Once the change is approved, a person seals them, at a terminal:
-
-```bash
-specgate change approve add-dynamic-pricing --layer acceptance
-```
-
-Each file is recorded in `approvals.json` by its sha256. From then on `check`
-has an `acceptance` stage:
-
-- A sealed file changed or gone fails it (`acceptance_not_sealed`). Restore it
-  (`git checkout -- <file>`), or have a person approve the new version with the
-  same command.
-- It runs `acceptance_cmd` from `harness.config.yaml`, `{files}` standing for
-  the sealed paths — `npx playwright test {files}`, `pytest {files}`. A red
-  run fails it (`acceptance_red`); sealed tests and no command fail it too
-  (`acceptance_no_command`). Specgate installs nothing.
-
-The agent guards refuse writes to a sealed test (`acceptance_sealed`). This is
-not `acceptance.md`, the sign-off checklist `specgate acceptance <change>`
-writes.
+A change can also carry acceptance tests written by someone other than the
+implementing agent, approved by a person and sealed, so the agent cannot change
+them: [Sealed acceptance tests](sealed-acceptance.md).
 
 ## 6. Archive it
 
@@ -304,43 +271,27 @@ scenarios it lacks (`archive_feature_stale`).
 
 ### With domain packs
 
-| You want | Command |
-| --- | --- |
-| Review an upstream pack upgrade as a change, not a file diff | `specops diff --as-change --pack-version v0.2.0` |
-| Send a local change back to the pack | `specops contribute --change add-dynamic-pricing` |
-| Fail CI when the project has drifted from the installed pack | `validate --against-lock` |
-
-[Domain packs](domain-packs.md) describes how a pack version upgrade works.
+An upstream pack upgrade can be reviewed as a change (`specops diff --as-change
+--pack-version v0.2.0`), a local change sent back to the pack (`specops
+contribute --change <id>`), and drift from the installed pack fail CI
+(`validate --against-lock`): [Domain packs](domain-packs.md).
 
 ## Have an agent draft a file
 
-`specgate change author` has an agent write one file of a change (the proposal
-or the delta), confined to the change folder:
+`specgate change author` has an agent write one file of a change — the
+proposal or the delta — confined to the change folder:
 
 ```bash
-specgate change author add-dynamic-pricing --artifact proposal --agent "claude -p < {prompt_file}"
-specgate change author add-dynamic-pricing --artifact specs --agent-profile local-claude
+specgate change author add-dynamic-pricing --artifact specs --agent "claude -p < {prompt_file}"
 ```
 
-Specgate writes the prompt to a temporary file and puts its path where
-`{prompt_file}` stands. The prompt is `specgate change instructions` rendered
-for an agent, so the agent gets the same template, rules and reserved ids a
-person does. Profiles such as `local-claude` are described in
-[Choosing and wiring your agent](agent-setup.md).
-
-- **The scope is enforced.** The agent may write only inside
-  `docs/specs/changes/<id>/`. Anything it writes elsewhere is undone before you
-  see it, so it cannot edit the capability spec it is meant to propose a change
-  to.
-- **It refuses to run on a dirty tree.** Undoing the agent's writes must never
-  touch your own work, so commit first.
-- **`--dry-run`** prints the prompt and writes nothing.
-
-This is separate from `specgate harness run`, which delivers requirements that
-already exist, each in its own worktree, against `validate --strict` and your
-tests. A change has no requirements until someone writes them. To draft a
-change from a brief, see [From a client brief](from-a-brief.md); from a Jira
-ticket, see [From a Jira ticket](from-a-ticket.md).
+The prompt is `specgate change instructions` rendered for an agent: the same
+template, rules and reserved ids a person gets (profiles: [Choosing and
+wiring your agent](agent-setup.md)). Anything written outside
+`docs/specs/changes/<id>/` is undone; it refuses a dirty tree, so commit
+first; `--dry-run` prints the prompt and writes nothing. To draft from a brief
+or a ticket: [From a client brief](from-a-brief.md) ·
+[From a Jira ticket](from-a-ticket.md).
 
 ## Next
 

@@ -118,11 +118,52 @@ function openIds(projectDir: string): string[] {
   }
 }
 
-/** Every sealed acceptance test of the open changes, with its change and seal. */
-export function sealedAcceptance(projectDir: string): Array<{ change: string; file: string; hash: string }> {
-  return openIds(projectDir).flatMap((change) =>
-    Object.entries(readAcceptanceSeals(projectDir, change)?.seals || {}).map(([file, hash]) => ({ change, file, hash }))
-  );
+/** The archived changes, oldest first: their folders start with the date. */
+function archivedIds(projectDir: string): string[] {
+  try {
+    return fs
+      .readdirSync(path.join(projectDir, "docs", "specs", "changes", "archive"), { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => `archive/${e.name}`)
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Every sealed acceptance test, with the change that sealed it last and its
+ * seal: archived changes first, oldest to newest, then the open ones — a
+ * newer seal of the same file replaces an older one. A test sealed by a
+ * change that is now archived stays sealed (sealed-acceptance, 2026-11-26).
+ */
+export function sealedAcceptance(projectDir: string): Array<{ change: string; file: string; hash: string; archived: boolean }> {
+  const byFile = new Map<string, { change: string; file: string; hash: string; archived: boolean }>();
+  for (const change of [...archivedIds(projectDir), ...openIds(projectDir)]) {
+    const archived = change.startsWith("archive/");
+    for (const [file, hash] of Object.entries(readAcceptanceSeals(projectDir, change)?.seals || {})) {
+      byFile.set(file, { change, file, hash, archived });
+    }
+  }
+  return [...byFile.values()];
+}
+
+/** The sealed tests of archived changes that differ from their seal or are gone. */
+export function archivedAcceptanceDiagnostics(projectDir: string): { errors: Diagnostic[]; warnings: Diagnostic[] } {
+  const found: Diagnostic[] = [];
+  for (const t of sealedAcceptance(projectDir).filter((x) => x.archived)) {
+    const text = read(path.join(projectDir, t.file));
+    if (text !== null && fileHash(text) === t.hash) continue;
+    const what = text === null ? "is gone" : "is not what was approved";
+    found.push(
+      error(
+        "acceptance_not_sealed",
+        `${t.file}, an acceptance test a person approved and sealed (${t.change.replace(/^archive\//, "")}), ${what}. Restore it (git checkout -- ${t.file}), or open a change that lists it in its acceptance-tests.md and have a person approve it.`,
+        { target: t.file, fix: `git checkout -- ${t.file} — or specgate propose <change-id>, list it in acceptance-tests.md, and a person: specgate change approve <change-id> --layer acceptance` }
+      )
+    );
+  }
+  return split(found, ruleLevel(projectDir));
 }
 
 export type SealOutcome =
@@ -271,6 +312,9 @@ export function acceptanceRun(projectDir: string): AcceptanceVerdict {
   const level = ruleLevel(projectDir);
   const none: AcceptanceVerdict = { ran: false, command: "", ms: null, errors: [], warnings: [] };
   if (sealed.length === 0 || level === "off") return none;
+  // A sealed test of an archived change is still the contract.
+  const archived = archivedAcceptanceDiagnostics(projectDir);
+  if (archived.errors.length) return { ...none, errors: archived.errors, warnings: archived.warnings };
   const files = [...new Set(sealed.map((s) => s.file))];
   const cmd = acceptanceCommand(projectDir);
   if (!cmd) {

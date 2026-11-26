@@ -149,6 +149,7 @@ test("REQ-757: sealing is approving — no terminal, no seal (REQ-748)", () => {
   const r = sealAcceptance(dir, false);
   assert.notEqual(r.status, 0);
   assert.ok(codes(r.stdout).includes("approve_needs_person"), r.stdout);
+  assert.match(r.stdout, /change approve export-csv --layer acceptance/);
   assert.equal(readAcceptanceSeals(dir, "export-csv"), null);
 });
 
@@ -164,7 +165,7 @@ test("REQ-757 SCN-757c: any language — a Maven integration test is sealed the 
 
 // ── REQ-758 ──
 
-test("REQ-758 SCN-758a: one byte changed — the gate fails with acceptance_not_sealed", () => {
+test("REQ-758 SCN-758a, REQ-780 SCN-780a: one byte changed — the gate fails with acceptance_not_sealed and says what to do", () => {
   const { dir } = listed();
   assert.equal(sealAcceptance(dir).status, 0);
   assert.deepEqual(acceptanceSealDiagnostics(dir, "export-csv").errors, []);
@@ -176,6 +177,9 @@ test("REQ-758 SCN-758a: one byte changed — the gate fails with acceptance_not_
   const r = cli(dir, ["check", "--json"]);
   assert.notEqual(r.status, 0);
   assert.ok(codes(r.stdout).includes("acceptance_not_sealed"), r.stdout);
+  // The verdict says what was approved changed — not "fix its delta".
+  assert.ok(codes(r.stdout).includes("check_approved_changed"), r.stdout);
+  assert.ok(!codes(r.stdout).includes("check_change_invalid"), r.stdout);
 });
 
 test("REQ-758: a sealed test that is gone fails too; line endings are not a change", () => {
@@ -337,4 +341,21 @@ test("REQ-757 SCN-757d: the sign-off checklist is not a list of tests — accept
   assert.match(r.stdout, /acceptance-tests\.md/);
   assert.equal(fs.readFileSync(file, "utf8"), before);
   assert.equal(readAcceptanceSeals(p.dir, "export-csv"), null);
+});
+
+test("REQ-779 SCN-779a: the seal outlives the change — an archived change's sealed test is still checked and guarded", () => {
+  const { dir } = listed();
+  assert.equal(sealAcceptance(dir).status, 0);
+  const archive = path.join(dir, "docs/specs/changes/archive");
+  fs.mkdirSync(archive, { recursive: true });
+  fs.renameSync(path.join(dir, "docs/specs/changes/export-csv"), path.join(archive, "2026-11-26-export-csv"));
+  setCmd(dir, "node -e 0");
+  assert.deepEqual(acceptanceRun(dir).errors, []);
+  write(dir, TEST, "test('always', () => {});\n");
+  const v = acceptanceRun(dir);
+  assert.equal(v.errors[0]?.code, "acceptance_not_sealed");
+  assert.match(v.errors[0].message, /acceptance-tests\.md/);
+  const d = decide({ cwd: dir, tool_name: "Write", tool_input: { file_path: TEST, content: "x" } }, {});
+  assert.equal(d.allow, false);
+  assert.match(d.message, /acceptance_sealed/);
 });
