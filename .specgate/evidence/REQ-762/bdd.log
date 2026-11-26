@@ -1,5 +1,5 @@
 ▶ dist/tests/unit/landing-evidence.test.js
-✔ REQ-762 SCN-762a: the first screen — without and with the gate, and the measured figures (15.900584ms)
+✔ REQ-762 SCN-762a: the first screen — without and with the gate, and the measured figures (0.458375ms)
 ℹ tests 1
 ℹ suites 0
 ℹ pass 1
@@ -7,4 +7,4 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 487.098208
+ℹ duration_ms 47.631875
