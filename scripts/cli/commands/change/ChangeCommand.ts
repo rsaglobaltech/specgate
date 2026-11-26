@@ -84,7 +84,7 @@ import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { impactOf } from "../../../lib/change-impact";
 import { parseUseCaseDelta } from "../../../../packages/core/src/domain/UseCaseDelta";
 import { approvalBlockers, approveChange, noteChange, reviewOf } from "../../../lib/change-review";
-import { sealAcceptance } from "../../../lib/acceptance";
+import { sealAcceptance, firstAcceptanceRun } from "../../../lib/acceptance";
 import type { LayerId } from "../../../../packages/core/src/domain/ChangeLayers";
 import {
   declaredSpecValues,
@@ -691,12 +691,18 @@ function cmdApprove(opts: ChangeOptions) {
   if (id && (layer as string) === "acceptance") {
     const a = sealAcceptance(projectDir, id, new Date().toISOString().slice(0, 10));
     if (!a.ok) return fail(opts, nullShape, [error(a.code, a.message, { target: id, ...(a.fix ? { fix: a.fix } : {}) })]);
-    return emit(opts, { approve: { ok: true, change: id, layers: ["acceptance"], sealed: a.sealed } }, () =>
+    // guard-scope-and-seal-run REQ-794: run once, so the person sees why they fail before the code exists.
+    const first = firstAcceptanceRun(projectDir, a.sealed);
+    return emit(opts, { approve: { ok: true, change: id, layers: ["acceptance"], sealed: a.sealed, firstRun: first } }, () =>
       process.stdout.write(
         ui.header("change approve", id) +
           ui.ok(`Acceptance of ${id} approved and sealed — ${a.sealed.length} test(s).`) +
           "\n" +
-          a.sealed.map((f) => `    🔒 ${f}\n`).join("")
+          a.sealed.map((f) => `    🔒 ${f}\n`).join("") +
+          (first
+            ? `\n  Ran once — ${first.command}: ${first.passed ? "they pass already." : "they fail, as they should before the code exists. Read why: a test that fails for a file outside this change will never pass — if so, fix it and seal it again."}\n` +
+              (first.passed ? "" : first.output.split("\n").map((l) => `    ${l}\n`).join(""))
+            : "")
       )
     );
   }

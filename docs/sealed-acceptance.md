@@ -38,6 +38,8 @@ Then a person reads the tests against the scenarios and seals them:
 specgate change approve <change-id> --layer acceptance
 ```
 
+Once sealed, it runs them once with `acceptance_cmd` (step 3) and shows why they fail. Before the code exists they should fail for the code; a test that fails because it loads a file from a wrong path will never pass — fix it and seal it again.
+
 It refuses, recording nothing, when a listed file is missing, when a line
 names no scenario of the change, or when the change is not approved. Run with
 no terminal — by an agent's tool — it refuses with `approve_needs_person`.

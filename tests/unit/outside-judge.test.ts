@@ -95,7 +95,11 @@ test("REQ-745 SCN-745a: its own requirement — apply fails with change_not_appr
 
 test("REQ-745 SCN-745b: an approved change is delivered", () => {
   const p = loansProject();
-  const approved = p.cli("change", "approve", "export-loans");
+  // A person approves — the fixture stands for them at a terminal (REQ-748).
+  const approved = spawnSync(process.execPath, [CLI, "change", "approve", "export-loans", "--project-dir", p.dir], {
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "1", SPECGATE_ASSUME_TTY: "1" },
+  });
   assert.equal(approved.status, 0, approved.stdout + approved.stderr);
   const r = p.apply();
   assert.equal(r.status, 0, r.stdout + r.stderr);

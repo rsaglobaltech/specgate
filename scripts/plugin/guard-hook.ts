@@ -20,6 +20,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import {
   changedFiles,
+  designScope,
   guardOff,
   isSpecDriven,
   isTestFile,
@@ -231,6 +232,23 @@ export function decide(input: GuardInput, env: Record<string, string | undefined
     const changed = changedFiles(cwd);
     if (changed === null) return ALLOW;
     const changes = openChanges(cwd);
+    // guard-scope-and-seal-run REQ-793: a new source file the approved design does not
+    // name is refused now, as the gate's rule scope refuses it at the end — before
+    // the code is written, not after.
+    const scope = designScope(cwd);
+    const relPosix = rel.split(path.sep).join("/");
+    if (scope.length && !scope.includes(relPosix) && !fs.existsSync(path.join(root, rel))) {
+      const owner = changes.find((c) => c.pending.length) ?? changes[0];
+      const id = owner ? owner.id : "<change-id>";
+      return {
+        allow: false,
+        file: relPosix,
+        message:
+          `specgate: file_outside_design — ${relPosix} is new, and the approved design of \`${id}\` names ${scope.map((f) => `\`${f}\``).join(", ")}, not it. ` +
+          "Work nobody approved waits for a person: open a change for it (`specgate propose <change-id>`) and stop there, or ask the person to name it in the design and approve it again. " +
+          "Do not link it to a requirement it does not deliver.",
+      };
+    }
     if (!changes.length) {
       return {
         allow: false,

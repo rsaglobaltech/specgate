@@ -362,3 +362,30 @@ export function acceptanceRun(projectDir: string): AcceptanceVerdict {
     ),
   };
 }
+
+/**
+ * guard-scope-and-seal-run REQ-794: the tests just sealed, run once with the
+ * project's command, for the person who sealed them to read. Before the code
+ * exists they are expected to fail — but for the code, not for a path that
+ * leads nowhere. Null when no command is set.
+ */
+export function firstAcceptanceRun(
+  projectDir: string,
+  files: string[]
+): { command: string; passed: boolean; output: string } | null {
+  const cmd = acceptanceCommand(projectDir);
+  if (!cmd || files.length === 0) return null;
+  const command = cmd.includes("{files}") ? cmd.split("{files}").join(files.map(quote).join(" ")) : cmd;
+  const run = spawnSync(forShell(command), {
+    cwd: projectDir,
+    encoding: "utf8",
+    shell: true,
+    timeout: 300_000,
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  const lines = `${run.stdout || ""}${run.stderr || ""}`.trim().split("\n");
+  // The lines that say why — an error, a failure, a missing file — rather than a stack's tail.
+  const why = lines.filter((l) => /error|fail|cannot|not found|no such|✖|assert/i.test(l) && !/^\s+at\s/.test(l));
+  const output = (why.length ? why.slice(0, 10) : lines.slice(-15)).join("\n");
+  return { command, passed: run.status === 0, output };
+}

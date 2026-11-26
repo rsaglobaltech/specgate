@@ -176,7 +176,7 @@ function scopeProject(o: { design?: string | null; gate?: string } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-scope-"));
   made.push(dir);
   const run = (cmd: string, args: string[]) =>
-    spawnSync(cmd, args, { cwd: dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+    spawnSync(cmd, args, { cwd: dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1", SPECGATE_ASSUME_TTY: "1" } }); // the fixture stands for a person (REQ-748)
   run("git", ["init", "-q"]);
   run("git", ["config", "user.email", "t@t"]);
   run("git", ["config", "user.name", "t"]);

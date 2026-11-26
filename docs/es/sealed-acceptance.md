@@ -1,4 +1,4 @@
-<!-- translation-of: 4d14230b0993 -->
+<!-- translation-of: e5f40473030f -->
 # Tests de aceptación sellados
 
 El agente que implementa un requisito no debería escribir también el test que
@@ -39,6 +39,8 @@ Después una persona lee los tests frente a los escenarios y los sella:
 ```bash
 specgate change approve <change-id> --layer acceptance
 ```
+
+Una vez sellados, los ejecuta una vez con `acceptance_cmd` (paso 3) y muestra por qué fallan. Antes de que exista el código deben fallar por el código; un test que falla porque carga un fichero desde una ruta errónea no pasará nunca: corrígelo y séllalo de nuevo.
 
 Se niega, sin registrar nada, cuando falta un fichero listado, cuando una línea
 no nombra ningún escenario del change, o cuando el change no está aprobado.

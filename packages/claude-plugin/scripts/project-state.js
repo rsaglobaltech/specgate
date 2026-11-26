@@ -46,6 +46,7 @@ exports.isSpecDriven = isSpecDriven;
 exports.deltaRequirements = deltaRequirements;
 exports.taskOrder = taskOrder;
 exports.openChanges = openChanges;
+exports.designScope = designScope;
 exports.guardOff = guardOff;
 exports.isTestFile = isTestFile;
 exports.needsTest = needsTest;
@@ -136,6 +137,46 @@ function openChanges(root) {
             pending: byTasks(reqs.filter((r) => !DONE.has(r.status)).map((r) => r.id), path.join(dir, id, "tasks.md")),
         };
     });
+}
+/**
+ * guard-scope-and-seal-run REQ-793: the source files the designs of the
+ * approved open changes name — the same reading as the gate's rule `scope`
+ * (packages/core/src/domain/DesignScope.ts; repeated here because the plugin's
+ * scripts stand alone). Empty when no approved design names a file, or the
+ * rule is off.
+ */
+function designScope(root) {
+    try {
+        const gate = fs.readFileSync(path.join(root, ".specgate", "gate.yaml"), "utf8");
+        if (/^\s*scope:\s*off\b/m.test(gate))
+            return [];
+    }
+    catch {
+        /* no policy: the rule's default */
+    }
+    const SOURCE = /\.([cm]?[jt]sx?|java|kt|kts|scala|groovy|py|go|rb|cs|php|rs|swift|c|cc|cpp|h|hpp|vue|svelte)$/;
+    const norm = (p) => p.replace(/\\/g, "/").replace(/^\.\//, "");
+    const dir = path.join(root, "docs", "specs", "changes");
+    const out = [];
+    for (const change of openChanges(root)) {
+        let yaml = "";
+        let design = "";
+        try {
+            yaml = fs.readFileSync(path.join(dir, change.id, "change.yaml"), "utf8");
+            design = fs.readFileSync(path.join(dir, change.id, "design.md"), "utf8");
+        }
+        catch {
+            continue;
+        }
+        if (!/^approved:\s*\S/m.test(yaml))
+            continue;
+        for (const m of design.matchAll(/`([^`\s]+)`/g)) {
+            const f = norm(m[1]);
+            if (SOURCE.test(f) && !/^(docs|features)\//.test(f) && !out.includes(f))
+                out.push(f);
+        }
+    }
+    return out;
 }
 /** Is the guard turned off — by `SPECGATE_GUARD=off`, or `agent_guard: off` in `.specgate/config.json`? */
 function guardOff(root, env) {
