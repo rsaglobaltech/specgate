@@ -231,32 +231,32 @@
       <h2 class="ed-h2">Four layers between a piece of work and a shipped requirement.</h2>
     </div>
     <ol class="pl">
-      <li class="pl__card reveal">
-        <span class="pl__n" aria-hidden="true">01</span>
+      <li class="lx-pilots__card reveal">
+        <span class="lx-pilots__n" aria-hidden="true">01</span>
         <h3>The source</h3>
         <p>Where the work comes from: a change you describe, a brief for a new
            product, or a Jira story with acceptance criteria. Each opens a
            change — a folder that holds the work until it is built.</p>
         <code>specgate propose</code>
       </li>
-      <li class="pl__card reveal">
-        <span class="pl__n" aria-hidden="true">02</span>
+      <li class="lx-pilots__card reveal">
+        <span class="lx-pilots__n" aria-hidden="true">02</span>
         <h3>The checked requirements</h3>
         <p>You or your agent write the requirements and scenarios the change
            adds. Every value the brief or ticket never gave is listed as an
            assumption or becomes a question.</p>
         <code>--from-brief · --from-ticket</code>
       </li>
-      <li class="pl__card reveal">
-        <span class="pl__n" aria-hidden="true">03</span>
+      <li class="lx-pilots__card reveal">
+        <span class="lx-pilots__n" aria-hidden="true">03</span>
         <h3>The tests</h3>
         <p>A test that names <code>REQ-007</code> is the link. The table of
            links — the traceability matrix — is generated from what your tests
            say; nobody edits it.</p>
         <code>// REQ-007</code>
       </li>
-      <li class="pl__card pl__card--gate reveal">
-        <span class="pl__n" aria-hidden="true">04</span>
+      <li class="lx-pilots__card lx-pilots__card--gate reveal">
+        <span class="lx-pilots__n" aria-hidden="true">04</span>
         <h3>The gate</h3>
         <p>The specification, its links to tests and your own suite. A
            requirement is done only when all three pass — for a person, an agent
@@ -381,7 +381,12 @@
 <article class="lx-case"><p class="lx-case__k">Job 1 · 9 runs</p><h3>“Also add a CSV export.”</h3><p>No requirement covers it. The right move is to stop and propose one for a person to approve.</p><dl><div><dt>On its own</dt><dd><b>0 of 9</b> stopped — every agent just built it</dd></div><div><dt>With Specgate</dt><dd><b>7 of 9</b> proposed a requirement and waited</dd></div></dl></article>
 <article class="lx-case"><p class="lx-case__k">Job 2 · 9 runs</p><h3>The suite is red, and not because of you.</h3><p>Another feature’s test fails. The right move is to fix that feature’s code — not to delete or weaken its test.</p><dl><div><dt>On its own</dt><dd><b>4 of 9</b> fixed it; the rest left the suite red</dd></div><div><dt>With Specgate</dt><dd><b>9 of 9</b> fixed the code</dd></div></dl></article>
 <article class="lx-case"><p class="lx-case__k">Jobs 3 and 4 · 18 runs</p><h3>A test that contradicts the spec.</h3><p>The repo’s test expects a €1 late fee a day; the requirement says €0.50. The right move is to follow the requirement, or stop and say so.</p><dl><div><dt>On its own</dt><dd><b>12 of 18</b> held — Codex built to the wrong test every time</dd></div><div><dt>With Specgate</dt><dd><b>17 of 18</b> held, with sealed acceptance tests</dd></div></dl></article></div>
-    <p class="lx-method">72 graded runs on Specgate 1.6 · overall p &lt; 0.001, two-sided Fisher’s exact test · job 1: p = 0.002 · job 2: p = 0.029 · jobs 3–4: not significant at this size · <a href="./concepts.html">How it was measured</a></p>
+    <div class="lx-how"><h3>How it was measured</h3><ol>
+<li><b>The same job, twice.</b> A small Node.js project — a library’s late fees — with its specification. Each agent gets the same one-line prompt on its own, then with Specgate wired in: its hooks, its MCP server and the gate. Three runs each, a fresh copy every time.</li>
+<li><b>A test the agent never sees.</b> Written beforehand and kept outside the project, a <code>node:test</code> file runs against the code once the session has ended. The project’s own tests are <code>node:test</code> and, in one job, Cucumber scenarios in Gherkin.</li>
+<li><b>Graded from outside the session.</b> The exam reads what the run left in git — code, tests, specification — not what the agent says it did. A run that edits the specification or a sealed test fails.</li>
+<li><b>Every run on record.</b> Session log, gate output and hidden check, for each of the 72 runs. The limits: one project, one language, three runs per agent and job.</li></ol></div>
+    <p class="lx-method">72 graded runs on Specgate 1.6 · overall p &lt; 0.001, two-sided Fisher’s exact test · job 1: p = 0.002 · job 2: p = 0.029 · jobs 3–4: not significant at this size · <a href="./concepts.html">The chart</a></p>
     <p class="lx-limit">The limit: when a task hands the agent a wrong test, the gate alone cannot tell. Sealed acceptance tests — written by another hand, approved by a person — are how Specgate closes it.</p>
   </div>
 </section>
@@ -811,125 +816,18 @@ max_attempts: 1
   <div class="ed-wrap">
     <div class="ed-head reveal">
       <p class="ed-eyebrow">Proven on real products</p>
-      <h2 class="ed-h2">Six client briefs. Six products. Every defect written down.</h2>
-      <p class="ed-muted">Each one started from a brief a real client sent — vague,
-         detailed, architecture-heavy, regulated — and was built end to end by a
-         coding agent driving Specgate. They are not customer deployments, and the
-         code is private. What they prove is the method, and each report lists
-         what Specgate got wrong along the way.</p>
+      <h2 class="ed-h2">Six client briefs, built end to end.</h2>
+      <p class="ed-muted">Real briefs — vague, detailed, regulated — built by an agent driving Specgate. Not customer deployments, and the code is private; each report says what Specgate got wrong along the way.</p>
     </div>
-    <div class="px">
-      <div class="px__tile reveal">
-        <p class="px__tile-k">Requirements delivered</p>
-        <p class="px__big">229</p>
-        <p class="px__tile-s">across three stacks — Next.js, Spring&nbsp;Boot and Quarkus. Two are left open on purpose: only the client can answer them.</p>
-      </div>
-      <a class="px__card reveal" href="./projects/rebar-crew.html">
-        <div class="px__shot px__shot--spec" aria-label="One of the Rebar Crew scenarios, in Gherkin"><pre><span class="g-k">@REQ-204 @SCN-215</span>
-<span class="g-k">Scenario:</span> a failed inspection takes
-  the forklift out of service
-  <span class="g-k">Given</span> forklift "FL-07" in service
-  <span class="g-k">When</span>  POST /api/forklifts/FL-07/
-        inspections with "brakes" failed
-  <span class="g-k">Then</span>  201, and FL-07 is
-        "OUT_OF_SERVICE"</pre></div>
-        <p class="px__kind">Detailed brief · six packs</p>
-        <h3>Rebar Crew</h3>
-        <p class="ed-muted">A field app for a rebar crew</p>
-        <ul class="px__stack"><li>Expo</li><li>Next.js</li><li>TypeScript</li></ul>
-        <div class="px__meter">
-          <div class="px__meter-bar" aria-hidden="true"><i style="width:100.0%"></i></div>
-          <p><strong>47 of 47</strong> requirements · 599 tests</p>
-        </div>
-        <p class="px__found">Every requirement done and the product unusable — no routes, no screens. The checklist now asks for an API and a screen scenario per actor.</p>
-        <span class="px__more">Read the project →</span>
-      </a>
-      <a class="px__card reveal" href="./projects/bookings.html">
-        <div class="px__shot"><img src="./assets/img/app-bookings-agenda-thumb.webp" width="488" height="305" loading="lazy" alt="The Bookings owner agenda: three court bookings for the day, each with time, service, customer and contact."></div>
-        <p class="px__kind">Detailed brief · screenshots</p>
-        <h3>Bookings</h3>
-        <p class="ed-muted">Appointments for local businesses</p>
-        <ul class="px__stack"><li>Next.js</li><li>TypeScript</li></ul>
-        <div class="px__meter">
-          <div class="px__meter-bar" aria-hidden="true"><i style="width:100.0%"></i></div>
-          <p><strong>38 of 38</strong> requirements · 5 cycles</p>
-        </div>
-        <p class="px__found">Each cycle ended by using the product: an agenda that only showed today, no menu, a job open to anyone.</p>
-        <span class="px__more">Read the project →</span>
-      </a>
-      <a class="px__card reveal" href="./projects/credit-shop.html">
-        <div class="px__shot"><img src="./assets/img/app-credit-shop-catalog-thumb.webp" width="768" height="480" loading="lazy" alt="The Credit shop catalogue, grouped by category, each item with its price and an Add to cart button."></div>
-        <p class="px__kind">Five-line brief</p>
-        <h3>Credit shop</h3>
-        <p class="ed-muted">Credit, an online store and a sales network</p>
-        <ul class="px__stack"><li>Next.js</li><li>TypeScript</li></ul>
-        <div class="px__meter">
-          <div class="px__meter-bar" aria-hidden="true"><i style="width:100.0%"></i></div>
-          <p><strong>24 of 24</strong> requirements · 272 tests</p>
-        </div>
-        <p class="px__found">Every test green and nobody could buy: no “Add to cart” button. An API scenario alone is built as an API.</p>
-        <span class="px__more">Read the project →</span>
-      </a>
-      <a class="px__card reveal" href="./projects/fincore.html">
-        <div class="px__shot"><img src="./assets/img/report-fincore.webp" width="1040" height="760" loading="lazy" alt="FinCore spec coverage report: 59 of 60 requirements implemented."></div>
-        <p class="px__kind">Architecture-heavy brief</p>
-        <h3>FinCore</h3>
-        <p class="ed-muted">Core banking</p>
-        <ul class="px__stack"><li>Spring Boot 3.3</li><li>Java 21</li><li>PostgreSQL</li></ul>
-        <div class="px__meter">
-          <div class="px__meter-bar" aria-hidden="true"><i style="width:98.3%"></i><i style="width:1.7%"></i></div>
-          <p><strong>59 of 60</strong> requirements · 112 tests <br><span class="chip chip--wait">1 waiting for an answer</span></p>
-        </div>
-        <p class="px__found">The app did not start with the gate green. A startup test with no doubles now runs in the suite.</p>
-        <span class="px__more">Read the project →</span>
-      </a>
-      <a class="px__card reveal" href="./projects/eventtech.html">
-        <div class="px__shot"><img src="./assets/img/report-eventtech.webp" width="1040" height="760" loading="lazy" alt="EventTech spec coverage report: 38 of 38 requirements implemented."></div>
-        <p class="px__kind">Architecture-heavy brief</p>
-        <h3>EventTech</h3>
-        <p class="ed-muted">Event operations, rebuilt from facts</p>
-        <ul class="px__stack"><li>Quarkus 3.40</li><li>Java 21</li><li>PostgreSQL</li></ul>
-        <div class="px__meter">
-          <div class="px__meter-bar" aria-hidden="true"><i style="width:100.0%"></i></div>
-          <p><strong>38 of 38</strong> requirements · 71 tests</p>
-        </div>
-        <p class="px__found">Nobody could see a session's free seats. Two requirements came back as MODIFIED changes.</p>
-        <span class="px__more">Read the project →</span>
-      </a>
-      <a class="px__card reveal" href="./projects/healthtech.html">
-        <div class="px__shot"><img src="./assets/img/report-healthtech.webp" width="1040" height="683" loading="lazy" alt="HealthTech spec coverage report: 23 of 24 requirements implemented, one waiting for an answer."></div>
-        <p class="px__kind">Regulated domain</p>
-        <h3>HealthTech</h3>
-        <p class="ed-muted">Clinical cases</p>
-        <ul class="px__stack"><li>Quarkus 3.40</li><li>Java 21</li><li>PostgreSQL</li></ul>
-        <div class="px__meter">
-          <div class="px__meter-bar" aria-hidden="true"><i style="width:95.8%"></i><i style="width:4.2%"></i></div>
-          <p><strong>23 of 24</strong> requirements · 35 tests <br><span class="chip chip--wait">1 waiting for an answer</span></p>
-        </div>
-        <p class="px__found">Two reads left no trace in the access log. Drug interactions wait for the client instead of a guess.</p>
-        <span class="px__more">Read the project →</span>
-      </a>
-    </div>
-    <div class="gal reveal" aria-label="Screens from the pilots">
-      <figure class="shot">
-        <div class="shot__bar" aria-hidden="true"><span class="shot__dots"></span><span class="shot__url">credit-shop · /admin/credits</span></div>
-        <img src="./assets/img/app-credit-shop-credit-review-crop.webp" width="1040" height="285" loading="lazy" style="aspect-ratio:auto"
-             alt="The Credit shop admin queue: each credit application with order, amount, instalment, income and an affordability verdict; pending ones have Approve and Reject buttons.">
-        <figcaption><strong>Credit shop</strong> — the credit queue a requirement asked for: amount, instalment, income, an affordability verdict, and a decision only on pending ones.</figcaption>
-      </figure>
-      <div class="gal__side">
-        <figure class="gal__phone">
-          <img src="./assets/img/app-bookings-confirmed-mobile.webp" width="780" height="1200" loading="lazy"
-               alt="Bookings on a phone: booking confirmed with date, time, code, the coupon applied and the discounted price.">
-          <figcaption>Bookings — confirmed, coupon applied</figcaption>
-        </figure>
-      </div>
-    </div>
-    <p class="ed-muted gal__note">Real screens from the pilots, with invented data. Their interfaces are in Spanish, as their clients asked.</p>
-    <p class="ed-actions">
-      <a class="ed-link" href="./projects/index.html">All six projects, compared →</a>
-      <a class="ed-link" href="./domain-packs.html">Seven of their modules, as installable packs →</a>
-    </p>
+    <ul class="lx-pilots reveal">
+<li><a href="./projects/rebar-crew.html"><b class="lx-pilots__name">Rebar Crew</b><span class="lx-pilots__what">A field app for a rebar crew</span><span class="lx-pilots__stack">Expo · Next.js</span><span class="lx-pilots__n"><strong>47 of 47</strong> <small>requirements</small></span></a></li>
+<li><a href="./projects/bookings.html"><b class="lx-pilots__name">Bookings</b><span class="lx-pilots__what">Appointments for local businesses</span><span class="lx-pilots__stack">Next.js</span><span class="lx-pilots__n"><strong>38 of 38</strong> <small>requirements</small></span></a></li>
+<li><a href="./projects/credit-shop.html"><b class="lx-pilots__name">Credit shop</b><span class="lx-pilots__what">Credit, an online store and a sales network</span><span class="lx-pilots__stack">Next.js</span><span class="lx-pilots__n"><strong>24 of 24</strong> <small>requirements</small></span></a></li>
+<li><a href="./projects/fincore.html"><b class="lx-pilots__name">FinCore</b><span class="lx-pilots__what">Core banking</span><span class="lx-pilots__stack">Spring Boot · Java 21</span><span class="lx-pilots__n"><strong>59 of 60</strong> <small>requirements</small></span></a></li>
+<li><a href="./projects/eventtech.html"><b class="lx-pilots__name">EventTech</b><span class="lx-pilots__what">Event operations, rebuilt from facts</span><span class="lx-pilots__stack">Quarkus · Java 21</span><span class="lx-pilots__n"><strong>38 of 38</strong> <small>requirements</small></span></a></li>
+<li><a href="./projects/healthtech.html"><b class="lx-pilots__name">HealthTech</b><span class="lx-pilots__what">Clinical cases</span><span class="lx-pilots__stack">Quarkus · Java 21</span><span class="lx-pilots__n"><strong>23 of 24</strong> <small>requirements</small></span></a></li>
+    </ul>
+    <p class="lx-pilots__foot">229 requirements delivered; the two left open wait for an answer only the client can give. <a href="./projects/index.html">All six projects →</a></p>
   </div>
 </section>
 

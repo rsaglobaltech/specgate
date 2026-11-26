@@ -409,7 +409,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-4);
 }
-.pl__card {
+.lx-pilots__card {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -419,7 +419,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
 }
-.pl__n {
+.lx-pilots__n {
   font-family: var(--display);
   font-weight: 800;
   font-size: 2.8rem;
@@ -427,13 +427,13 @@
   letter-spacing: -0.04em;
   color: var(--line-strong);
 }
-.pl__card:nth-child(2) .pl__n { color: var(--fg-faint); }
-.pl__card:nth-child(3) .pl__n { color: var(--fg-soft); }
-.pl__card h3 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 1.4rem; letter-spacing: -0.02em; }
-.pl__card p { margin: 0; flex: 1; color: var(--fg-soft); line-height: 1.6; }
-.pl__card > code { align-self: flex-start; color: var(--accent); }
-.pl__card--gate { border-top: 3px solid var(--brand); }
-.pl__card--gate .pl__n { color: var(--brand-text); }
+.lx-pilots__card:nth-child(2) .lx-pilots__n { color: var(--fg-faint); }
+.lx-pilots__card:nth-child(3) .lx-pilots__n { color: var(--fg-soft); }
+.lx-pilots__card h3 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 1.4rem; letter-spacing: -0.02em; }
+.lx-pilots__card p { margin: 0; flex: 1; color: var(--fg-soft); line-height: 1.6; }
+.lx-pilots__card > code { align-self: flex-start; color: var(--accent); }
+.lx-pilots__card--gate { border-top: 3px solid var(--brand); }
+.lx-pilots__card--gate .lx-pilots__n { color: var(--brand-text); }
 
 /* ── Journey: rising pillars ─────────────────────────────────────────────── */
 
@@ -1174,6 +1174,26 @@ html:not(.js) .jn__panel + .jn__panel { margin-top: var(--space-16); }
 .lx-case dl div:last-child dd b { color: var(--accent); }
 .lx-method { margin: 16px 0 0; font: 12px var(--mono); color: var(--fg-faint); }
 .lx-method a { color: inherit; }
+
+/* How the exam was measured: four steps. */
+.lx-how { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
+.lx-how h3 { margin: 0 0 12px; font-family: var(--display); font-size: 18px; }
+.lx-how ol { margin: 0; padding: 0; list-style: none; counter-reset: how; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px 24px; }
+.lx-how li { counter-increment: how; min-width: 0; font-size: 14px; color: var(--fg-soft); line-height: 1.5; }
+.lx-how li::before { content: counter(how); display: block; font: 700 12px var(--mono); color: var(--accent); margin-bottom: 4px; }
+.lx-how b { color: var(--fg); }
+/* The pilots, one line each. */
+.lx-pilots { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--fg); }
+.lx-pilots a { display: grid; grid-template-columns: 9em minmax(0, 1fr) 11em 8.5em; gap: 4px 16px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--line); color: inherit; text-decoration: none; }
+.lx-pilots a:hover .lx-pilots__name { color: var(--accent); }
+.lx-pilots__name { font-family: var(--display); font-size: 16px; }
+.lx-pilots__what { color: var(--fg-soft); font-size: 14px; }
+.lx-pilots__stack { font: 12px var(--mono); color: var(--fg-faint); }
+.lx-pilots__n { font-weight: 600; font-size: 14px; text-align: right; }
+.lx-pilots__n strong { font: inherit; color: var(--fg); }
+.lx-pilots__n small { font-weight: 400; color: var(--fg-faint); }
+.lx-pilots__foot { margin: 14px 0 0; font-size: 14px; color: var(--fg-soft); }
+@media (max-width: 720px) { .lx-pilots a { grid-template-columns: minmax(0, 1fr) auto; } .lx-pilots__what, .lx-pilots__stack { grid-column: 1 / -1; } .lx-pilots__n { grid-row: 1; grid-column: 2; } }
 .lx-table-wrap { overflow-x: auto; border-top: 2px solid var(--fg); }
 .lx-table { width: 100%; min-width: 720px; border-collapse: collapse; font-size: 14px; }
 .lx-table th, .lx-table td { text-align: left; padding: 11px 14px 11px 0; border-bottom: 1px solid var(--line); vertical-align: baseline; }
