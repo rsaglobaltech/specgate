@@ -1,4 +1,4 @@
-<!-- translation-of: 228816b42355 -->
+<!-- translation-of: 37efc1080b19 -->
 # Del brief de un cliente a una especificación
 
 Un proyecto suele empezar como un brief: una página, un documento, unas
@@ -23,6 +23,8 @@ código es opcional, pero ahorra casi toda la escritura.
 de un brief? Usa el camino del ticket: [Desde un ticket de Jira](from-a-ticket.md).
 
 <!-- specgate:diagram lifecycle -->
+
+<!-- specgate:diagram brief-to-draft -->
 
 ## 1. Guarda el brief en el repositorio
 
