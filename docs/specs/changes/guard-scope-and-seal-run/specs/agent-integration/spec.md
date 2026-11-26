@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-793 — The guard refuses a new file the approved design does not name
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL refuse, in the agent guards, a write that creates a source file when an open change's approved design names source files and not that one, unless the gate's rule `scope` is off — with `file_outside_design`, the files the design names, and that the work waits for a person: a change of its own, or the design named and approved again; and SHALL leave alone a file that already exists and one the design names.
 
@@ -18,7 +18,7 @@ The system SHALL refuse, in the agent guards, a write that creates a source file
 
 ### Requirement: REQ-794 — Sealing acceptance tests runs them once for the person
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL, once `specgate change approve <id> --layer acceptance` has sealed the tests and when `acceptance_cmd` is set, run the sealed tests once and show the person whether they pass and, when they fail, the lines that say why — so a test that can never pass, such as one that loads a file by a wrong path, is seen before an agent is given it.
 
