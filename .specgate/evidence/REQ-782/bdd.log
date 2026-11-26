@@ -1,0 +1,10 @@
+▶ dist/tests/unit/walkthrough-fixes-2.test.js
+✔ REQ-782 SCN-782a: a requirement waiting for an answer — harness run starts no agent and makes no branch (2458.958ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2577.895958

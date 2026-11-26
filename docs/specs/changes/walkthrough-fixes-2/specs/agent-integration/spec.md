@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-781 — The Claude Code plugin, generated in a project, goes under .claude/
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL, on `specgate agents init --tool claude-plugin` in a Specgate project, write the plugin under `.claude/specgate-plugin/`, where the guard never judges a file as source, and SHALL write it at the given `--project-dir` when that is not a Specgate project.
 
@@ -16,7 +16,7 @@ The system SHALL, on `specgate agents init --tool claude-plugin` in a Specgate p
 
 ### Requirement: REQ-782 — A requirement waiting for an answer is never handed to an agent
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL, in `specgate harness run`, skip a requirement marked Needs Clarification before it makes a worktree or a branch or starts an agent, saying it waits for an answer.
 
@@ -28,7 +28,7 @@ The system SHALL, in `specgate harness run`, skip a requirement marked Needs Cla
 
 ### Requirement: REQ-783 — A client's answer is a source for its requirements' values
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL accept, in the draft checklist's rule D6, a value a scenario states when the Answer of an answered question that blocks the scenario's requirement states it, as it accepts a value the brief states.
 
@@ -52,7 +52,7 @@ The system SHALL name `specgate change approve <change>` as the next step of a d
 
 ### Requirement: REQ-785 — A branch that changes no control is reported as changing none
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL compare, in `specgate check --base`, the sealed acceptance tests as they are at the base with the branch's, so that a branch that changes no control names none.
 
@@ -64,7 +64,7 @@ The system SHALL compare, in `specgate check --base`, the sealed acceptance test
 
 ### Requirement: REQ-786 — Diff fails on a pack it cannot render; sync fails on an id clash
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL exit non-zero from `specgate specops diff` when a pack's expansion fails, and from `specgate specops sync` when, after the merge, a requirement id is defined twice across `spec.md` and the capability specs, naming the ids and saying to give the project's requirement a free id.
 

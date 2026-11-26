@@ -1,0 +1,85 @@
+<figure class="dia dia--card dia--exam">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 420" class="dia__svg" role="img" aria-labelledby="sg-ec-t sg-ec-d">
+    <title id="sg-ec-t">The compatibility exam, without and with Specgate</title>
+    <desc id="sg-ec-d">Paired horizontal bars, without Specgate and with it, on an axis from 0 to
+      100 percent of runs. Met the specification: 16 of 36 runs, 44 percent, without; 26 of
+      36, 72 percent, with; p = 0.031. Delivered wrong or unrequested work, where lower is
+      better: 15 of 36, 42 percent, without; 6 of 36, 17 percent, with; p = 0.037. Stopped
+      at work nobody asked for and proposed a requirement instead: 0 of 9 without; 8 of 9,
+      89 percent, with; p &lt; 0.001. Trap tasks, which hand the agent a test that contradicts
+      the scenario, in a later batch with acceptance tests written by a second agent and
+      sealed by a person: 12 of 18 runs held without Specgate, 67 percent, and 17 of 18, 94
+      percent, with the gate and the sealed tests; the gate alone, in an earlier version,
+      held 13 of 18. Not significant at this size. The first three measures come from 72
+      graded runs of Claude Haiku, Claude Sonnet and Codex, each doing the same four tasks
+      with and without Specgate, graded by a hidden check the agent never sees; p-values
+      from a two-sided Fisher's exact test.</desc>
+
+    <g>
+      <rect x="300" y="20" width="18" height="10" rx="5" fill="var(--fg-faint)"/>
+      <text x="326" y="29" class="dia__s">without Specgate</text>
+      <rect x="460" y="20" width="18" height="10" rx="5" fill="var(--accent)"/>
+      <text x="486" y="29" class="dia__s">with Specgate</text>
+    </g>
+
+    <g stroke="var(--line)" stroke-width="1">
+      <line x1="300" y1="52" x2="300" y2="376"/>
+      <line x1="425" y1="52" x2="425" y2="376"/>
+      <line x1="550" y1="52" x2="550" y2="376"/>
+      <line x1="675" y1="52" x2="675" y2="376"/>
+      <line x1="800" y1="52" x2="800" y2="376"/>
+    </g>
+    <g text-anchor="middle" class="dia__note">
+      <text x="300" y="394">0%</text>
+      <text x="425" y="394">25%</text>
+      <text x="550" y="394">50%</text>
+      <text x="675" y="394">75%</text>
+      <text x="800" y="394">100%</text>
+    </g>
+    <text x="300" y="414" class="dia__note">share of runs</text>
+
+    <g fill="var(--fg-faint)">
+      <path d="M300 68 H516 A6 6 0 0 1 516 80 H300 Z"/>
+      <path d="M300 148 H502 A6 6 0 0 1 502 160 H300 Z"/>
+      <path d="M300 308 H627 A6 6 0 0 1 627 320 H300 Z"/>
+    </g>
+    <g fill="var(--accent)">
+      <path d="M300 88 H655 A6 6 0 0 1 655 100 H300 Z"/>
+      <path d="M300 168 H377 A6 6 0 0 1 377 180 H300 Z"/>
+      <path d="M300 248 H738 A6 6 0 0 1 738 260 H300 Z"/>
+      <path d="M300 328 H766 A6 6 0 0 1 766 340 H300 Z"/>
+    </g>
+
+    <g>
+      <text x="20" y="78" class="dia__h">Met the specification</text>
+      <text x="20" y="96" class="dia__s">graded by the hidden check</text>
+      <text x="20" y="114" class="dia__s dia__mono dia__small">p = 0.031</text>
+
+      <text x="20" y="158" class="dia__h">Wrong or unrequested work</text>
+      <text x="20" y="176" class="dia__s">delivered — lower is better</text>
+      <text x="20" y="194" class="dia__s dia__mono dia__small">p = 0.037</text>
+
+      <text x="20" y="238" class="dia__h">Stopped at unrequested work</text>
+      <text x="20" y="256" class="dia__s">asked for what no requirement covers</text>
+      <text x="20" y="274" class="dia__s dia__mono dia__small">p &lt; 0.001</text>
+
+      <text x="20" y="318" class="dia__h">Trap tasks held</text>
+      <text x="20" y="336" class="dia__s">with: gate + sealed acceptance tests</text>
+      <text x="20" y="354" class="dia__s dia__small">not significant at this size</text>
+    </g>
+
+    <g class="dia__s">
+      <text x="530" y="78"><tspan class="dia__h">16</tspan> of 36 · 44%</text>
+      <text x="669" y="98"><tspan class="dia__h">26</tspan> of 36 · 72%</text>
+      <text x="516" y="158"><tspan class="dia__h">15</tspan> of 36 · 42%</text>
+      <text x="391" y="178"><tspan class="dia__h">6</tspan> of 36 · 17%</text>
+      <text x="308" y="238"><tspan class="dia__h">0</tspan> of 9 · 0%</text>
+      <text x="752" y="258"><tspan class="dia__h">8</tspan> of 9 · 89%</text>
+      <text x="641" y="318"><tspan class="dia__h">12</tspan> of 18 · 67%</text>
+      <text x="780" y="338"><tspan class="dia__h">17</tspan> of 18 · 94%</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>72 graded runs — Claude Haiku, Claude Sonnet and Codex, the same tasks with and without Specgate, graded by a hidden check; p from a two-sided Fisher's exact test.</figcaption>
+</figure>
