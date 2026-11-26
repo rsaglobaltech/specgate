@@ -315,3 +315,11 @@ test("REQ-760 SCN-760c: the sealed test came first — a source write is allowed
     false
   );
 });
+
+test("REQ-757: a line of acceptance.md without its bullet is read; prose is not", () => {
+  const { acceptanceList } = require("../../scripts/lib/acceptance");
+  const { dir, scn } = listed();
+  write(dir, "docs/specs/changes/export-csv/acceptance.md", `# Acceptance\n\nThese prove the export - see below.\n\n${TEST} — ${scn}\n- \`src/test/java/A.java\` — ${scn}\n`);
+  const list = acceptanceList(dir, "export-csv");
+  assert.deepEqual(list.map((l: { path: string }) => l.path), [TEST, "src/test/java/A.java"]);
+});

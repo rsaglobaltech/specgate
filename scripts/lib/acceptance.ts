@@ -62,8 +62,9 @@ export function acceptanceList(projectDir: string, id: string): AcceptanceLine[]
   if (text === null) return null;
   const out: AcceptanceLine[] = [];
   for (const line of text.split(/\r?\n/)) {
-    const m = /^\s*[-*]\s+`?([^\s`]+)`?\s+(?:—|–|--|-|:)\s+(.+)$/.exec(line);
-    if (!m) continue;
+    // The bullet is optional: a writer may leave it out. The line is a path — it has a `/` or a `.` — then the scenarios.
+    const m = /^\s*(?:[-*]\s+)?`?([^\s`]+)`?\s+(?:—|–|--|-|:)\s+(.+)$/.exec(line);
+    if (!m || !/[/.]/.test(m[1]!) || !/SCN-/.test(m[2]!)) continue;
     out.push({ path: norm(m[1]!), scenarios: m[2]!.match(/SCN-[\w-]+/g) || [], text: line.trim() });
   }
   return out;

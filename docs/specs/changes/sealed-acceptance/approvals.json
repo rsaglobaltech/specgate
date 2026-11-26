@@ -30,9 +30,19 @@
     "at": "2026-11-26"
   },
   {
+    "layer": "design",
+    "by": {
+      "name": "Full Stack Engineer | Oracle Certified Java Programmer",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "architect",
+    "hash": "sha256:812ffc4261043ca768a76fabd0dda4dc4eadcb3662d30c6b0a0b2b61bcdf0bb3",
+    "at": "2026-11-26"
+  },
+  {
     "layer": "requirements",
     "seals": {
-      "REQ-760": "sha256:bd341a643127661b793e7eb87ca98f251a7b9c0a9b54162ca3921381a64abb09",
+      "REQ-760": "sha256:8607830464c35bd7d45663e175b7c78d26dd2a432d13c80027cbaaad7c0c6e46",
       "REQ-761": "sha256:9a95a9dca5537be8e864eb822b73a4ac9ce7de863a2584469acb7441316ca5ba",
       "REQ-757": "sha256:cbe89e7e407b09a0d27b275e3478ae69945ad59b2e232215c0e52b59994c1904",
       "REQ-758": "sha256:a3cedf5099885e046f82ce00d63893fed064bec8da0e1fb1eb6c33c290a70e26",
