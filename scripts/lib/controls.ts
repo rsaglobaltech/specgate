@@ -105,7 +105,8 @@ export function branchControls(
   const prefix = git(["rev-parse", "--show-prefix"]).stdout.trim();
   const listed = git(["ls-tree", "-r", "--name-only", at, "--", ".specgate", "docs/specs/changes"]);
   if (listed.status !== 0) return { state: "skipped", reason: `'${base}' cannot be read` };
-  const wanted = /^(\.specgate\/(gate\.yaml|config\.json|evidence\/[^/]+\/evidence\.json)|docs\/specs\/changes\/(?!archive\/)[^/]+\/(change\.yaml|approvals\.json))$/;
+  // An archived change's approvals too: the tests it sealed stay sealed (REQ-779).
+  const wanted = /^(\.specgate\/(gate\.yaml|config\.json|evidence\/[^/]+\/evidence\.json)|docs\/specs\/changes\/(?!archive\/)[^/]+\/(change\.yaml|approvals\.json)|docs\/specs\/changes\/archive\/[^/]+\/approvals\.json)$/;
   const there = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-base-controls-"));
   try {
     for (const rel of listed.stdout.split("\n").filter((f) => wanted.test(f))) {
@@ -113,6 +114,13 @@ export function branchControls(
       if (shown.status !== 0) continue;
       fs.mkdirSync(path.dirname(path.join(there, rel)), { recursive: true });
       fs.writeFileSync(path.join(there, rel), shown.stdout);
+    }
+    // walkthrough-fixes-2 REQ-785: the sealed tests as they are at the base, so an unchanged one reads unchanged.
+    for (const t of sealedAcceptance(there)) {
+      const shown = git(["show", `${at}:${prefix}${t.file}`]);
+      if (shown.status !== 0) continue;
+      fs.mkdirSync(path.dirname(path.join(there, t.file)), { recursive: true });
+      fs.writeFileSync(path.join(there, t.file), shown.stdout);
     }
     const archived = dirs(path.join(projectDir, "docs", "specs", "changes", "archive"));
     const changed = controlsChanged(controlsOf(there), controlsOf(projectDir)).filter((line) => {

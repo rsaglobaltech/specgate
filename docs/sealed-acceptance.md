@@ -6,6 +6,8 @@ Sealed acceptance tests separate the roles. Someone else writes them, a person
 approves them, and from then on the agent cannot change them — the gate runs
 them with your own test command.
 
+<!-- specgate:diagram sealed-acceptance -->
+
 Specgate reads no test. It only controls who may change one, so this works in
 any language your project tests in: JUnit, pytest, Playwright, Cucumber steps.
 

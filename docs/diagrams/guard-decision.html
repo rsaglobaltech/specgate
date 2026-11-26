@@ -1,0 +1,95 @@
+<figure class="dia dia--card dia--guard">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 350" class="dia__svg" role="img" aria-labelledby="sg-gd-t sg-gd-d">
+    <title id="sg-gd-t">How the guard decides on one tool call</title>
+    <desc id="sg-gd-d">A tool call — Write, Edit, a patch or a shell command — goes through four
+      questions in order. First: is it a person's act? If yes, it is refused, because it is a
+      person's act. If no: does it write a sealed test? If yes, it is refused, because the
+      sealed test is the contract. If no: does it write a source file? If no, it is allowed.
+      If yes: does a test that is changed in the working tree, or a sealed test, name a
+      requirement of the open change? If no, it is refused with the step to take: write the
+      test first. If yes, it is allowed, and the guard records the step-definition files.</desc>
+
+    <defs>
+      <marker id="sg-gd-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+      <marker id="sg-gd-g" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--green)"/>
+      </marker>
+      <marker id="sg-gd-r" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--red)"/>
+      </marker>
+    </defs>
+
+    <g class="dia__box dia__box--ink"><rect x="4" y="130" width="140" height="80"/></g>
+    <g class="dia__dec">
+      <polygon points="258,116 342,170 258,224 174,170"/>
+      <polygon points="456,116 540,170 456,224 372,170"/>
+      <polygon points="654,116 738,170 654,224 570,170"/>
+      <polygon points="862,104 950,170 862,236 774,170"/>
+    </g>
+    <g class="dia__box dia__box--no">
+      <rect x="178" y="8" width="160" height="56"/>
+      <rect x="376" y="8" width="160" height="56"/>
+      <rect x="782" y="8" width="160" height="56"/>
+    </g>
+    <g class="dia__box dia__box--ok">
+      <rect x="574" y="282" width="160" height="56"/>
+      <rect x="782" y="282" width="160" height="56"/>
+    </g>
+
+    <g class="dia__ico dia__ico--brand" transform="translate(16 142) scale(.75)"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></g>
+
+    <g text-anchor="middle">
+      <text x="84" y="157" class="dia__h dia__on-ink">Tool call</text>
+      <text x="74" y="180" class="dia__s dia__on-ink">Write · Edit ·</text>
+      <text x="74" y="197" class="dia__s dia__on-ink">patch · shell</text>
+
+      <text x="258" y="166" class="dia__s dia__h">A person's</text>
+      <text x="258" y="184" class="dia__s dia__h">act?</text>
+      <text x="456" y="166" class="dia__s dia__h">Sealed</text>
+      <text x="456" y="184" class="dia__s dia__h">test?</text>
+      <text x="654" y="166" class="dia__s dia__h">Source</text>
+      <text x="654" y="184" class="dia__s dia__h">file?</text>
+      <text x="862" y="158" class="dia__s dia__h">A changed or</text>
+      <text x="862" y="175" class="dia__s dia__h">sealed test</text>
+      <text x="862" y="192" class="dia__s dia__h">names its REQ?</text>
+
+      <text x="258" y="32" class="dia__h dia__no-t">Refuse</text>
+      <text x="258" y="51" class="dia__s">it is a person's act</text>
+      <text x="456" y="32" class="dia__h dia__no-t">Refuse</text>
+      <text x="456" y="51" class="dia__s">it is the contract</text>
+      <text x="862" y="32" class="dia__h dia__no-t">Refuse</text>
+      <text x="862" y="51" class="dia__s">write the test first</text>
+
+      <text x="654" y="315" class="dia__h dia__ok-t">Allow</text>
+      <text x="862" y="306" class="dia__h dia__ok-t">Allow</text>
+      <text x="862" y="325" class="dia__s">and record the steps</text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="146" y1="170" x2="170" y2="170" marker-end="url(#sg-gd-a)"/>
+      <line x1="344" y1="170" x2="368" y2="170" marker-end="url(#sg-gd-a)"/>
+      <text x="356" y="160" text-anchor="middle">no</text>
+      <line x1="542" y1="170" x2="566" y2="170" marker-end="url(#sg-gd-a)"/>
+      <text x="554" y="160" text-anchor="middle">no</text>
+      <line x1="740" y1="170" x2="770" y2="170" marker-end="url(#sg-gd-a)"/>
+      <text x="755" y="160" text-anchor="middle">yes</text>
+
+      <line x1="258" y1="114" x2="258" y2="69" class="dia__no" marker-end="url(#sg-gd-r)"/>
+      <text x="268" y="96" class="dia__no-t">yes</text>
+      <line x1="456" y1="114" x2="456" y2="69" class="dia__no" marker-end="url(#sg-gd-r)"/>
+      <text x="466" y="96" class="dia__no-t">yes</text>
+      <line x1="862" y1="102" x2="862" y2="69" class="dia__no" marker-end="url(#sg-gd-r)"/>
+      <text x="872" y="91" class="dia__no-t">no</text>
+
+      <line x1="654" y1="226" x2="654" y2="277" class="dia__ok" marker-end="url(#sg-gd-g)"/>
+      <text x="664" y="256" class="dia__ok-t">no</text>
+      <line x1="862" y1="238" x2="862" y2="277" class="dia__ok" marker-end="url(#sg-gd-g)"/>
+      <text x="872" y="262" class="dia__ok-t">yes</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>The guard asks four questions of every tool call, in this order; a refusal names the step to take instead.</figcaption>
+</figure>

@@ -1,0 +1,82 @@
+<figure class="dia dia--card dia--approval">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 262" class="dia__svg" role="img" aria-labelledby="sg-al-t sg-al-d">
+    <title id="sg-al-t">One change, from propose to archive, and who does each step</title>
+    <desc id="sg-al-d">Six steps from left to right, each labelled with who does it. The agent
+      proposes: it opens the change, a reviewable delta. A person approves it at a terminal,
+      which seals each requirement. The agent writes a test that names the requirement, then
+      the code, until the test passes. The gate runs on apply: when it passes, the
+      requirement is delivered; when it is red, the work goes back to the code. A person says
+      when the change is archived.</desc>
+
+    <defs>
+      <marker id="sg-al-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+      <marker id="sg-al-r" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--red)"/>
+      </marker>
+    </defs>
+
+    <g class="dia__box"><rect x="6" y="56" width="140" height="130"/></g>
+    <g class="dia__box dia__box--ok"><rect x="166" y="56" width="140" height="130"/></g>
+    <g class="dia__box"><rect x="326" y="56" width="140" height="130"/></g>
+    <g class="dia__box"><rect x="486" y="56" width="140" height="130"/></g>
+    <g class="dia__box dia__box--gate"><rect x="646" y="56" width="140" height="130"/></g>
+    <g class="dia__box dia__box--ok"><rect x="806" y="56" width="140" height="130"/></g>
+
+    <g class="dia__ico" transform="translate(64 70)"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></g>
+    <g class="dia__ico dia__ico--ok" transform="translate(224 70)"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></g>
+    <g class="dia__ico" transform="translate(384 70)"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></g>
+    <g class="dia__ico" transform="translate(544 70)"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></g>
+    <g class="dia__ico dia__ico--on-gate" transform="translate(704 70)"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></g>
+    <g class="dia__ico dia__ico--ok" transform="translate(864 70)"><path d="m16 16 2 2 4-4"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="m7.5 4.27 9 5.15"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" x2="12" y1="22" y2="12"/></g>
+
+    <g text-anchor="middle">
+      <text x="76"  y="42" class="dia__who">AGENT</text>
+      <text x="236" y="42" class="dia__who dia__who--ok">PERSON</text>
+      <text x="396" y="42" class="dia__who">AGENT</text>
+      <text x="556" y="42" class="dia__who">AGENT</text>
+      <text x="716" y="42" class="dia__who dia__who--gate">GATE</text>
+      <text x="876" y="42" class="dia__who dia__who--ok">PERSON</text>
+
+      <text x="76" y="122" class="dia__h dia__mono">propose</text>
+      <text x="76" y="144" class="dia__s">opens the change,</text>
+      <text x="76" y="160" class="dia__s">a reviewable delta</text>
+
+      <text x="236" y="122" class="dia__h dia__ok-t">approve</text>
+      <text x="236" y="144" class="dia__s">at a terminal —</text>
+      <text x="236" y="160" class="dia__s">seals each</text>
+      <text x="236" y="176" class="dia__s">requirement</text>
+
+      <text x="396" y="122" class="dia__h">test</text>
+      <text x="396" y="144" class="dia__s">names the REQ —</text>
+      <text x="396" y="160" class="dia__s dia__mono">REQ-007</text>
+
+      <text x="556" y="122" class="dia__h">code</text>
+      <text x="556" y="144" class="dia__s">until the test</text>
+      <text x="556" y="160" class="dia__s">passes</text>
+
+      <text x="716" y="122" class="dia__h dia__mono dia__on-gate">apply</text>
+      <text x="716" y="144" class="dia__s dia__on-gate">the gate passes:</text>
+      <text x="716" y="160" class="dia__s dia__on-gate">delivered</text>
+
+      <text x="876" y="122" class="dia__h dia__mono">archive</text>
+      <text x="876" y="144" class="dia__s">when a person</text>
+      <text x="876" y="160" class="dia__s">says so</text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="148" y1="121" x2="161" y2="121" marker-end="url(#sg-al-a)"/>
+      <line x1="308" y1="121" x2="321" y2="121" marker-end="url(#sg-al-a)"/>
+      <line x1="468" y1="121" x2="481" y2="121" marker-end="url(#sg-al-a)"/>
+      <line x1="628" y1="121" x2="641" y2="121" marker-end="url(#sg-al-a)"/>
+      <line x1="788" y1="121" x2="801" y2="121" marker-end="url(#sg-al-a)"/>
+
+      <path d="M716 188 V222 H556 V191" class="dia__no" stroke-dasharray="5 4" marker-end="url(#sg-al-r)"/>
+      <text x="636" y="244" text-anchor="middle" class="dia__no-t">red — back to the code</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>The agent proposes and builds, a person approves and closes, and the gate decides what is delivered.</figcaption>
+</figure>

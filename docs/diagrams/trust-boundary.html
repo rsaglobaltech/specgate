@@ -1,0 +1,123 @@
+<figure class="dia dia--card dia--trust">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 570" class="dia__svg" role="img" aria-labelledby="sg-tb-t sg-tb-d">
+    <title id="sg-tb-t">The trust boundary: what the agent's session holds, and what stays outside it</title>
+    <desc id="sg-tb-d">Two areas. Inside the trust boundary is the agent's session: the coding
+      agent (Claude Code, Codex or OpenCode), the guard hook, the working folder, the gate on
+      stop and the refusals. Every tool call the agent makes goes to the guard hook, which
+      judges it test first, over the whole working tree, against the step record and against
+      a person's acts. An allowed call reaches the working folder: src, tests and features;
+      docs/specs, the approved contract; approvals.json, which seals by hash; and .specgate,
+      the policy and the evidence. A call that breaks a rule is refused, with the next step to
+      take. When the agent stops, the gate on stop runs specgate check, which reads the
+      working folder: specs and links, the sealed approval, the design scope, approved
+      changes only. Outside the session is a person at a terminal, who approves, seals and
+      reviews steps, and whose seals land in the working folder; and the outside judge, which
+      reads the controls before the agent starts and compares them when it stops, and gives
+      a verdict independent of the session. A tool with no hooks has no guard; the gate, the
+      seals, the approval rule and the outside judge still hold.</desc>
+
+    <defs>
+      <marker id="sg-tb-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+      <marker id="sg-tb-g" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--green)"/>
+      </marker>
+      <marker id="sg-tb-r" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--red)"/>
+      </marker>
+    </defs>
+
+    <g class="dia__band"><rect x="1" y="1" width="598" height="522"/></g>
+    <g class="dia__band dia__band--out"><rect x="642" y="1" width="317" height="522"/></g>
+    <text x="18" y="26" class="dia__band-t">THE AGENT'S SESSION — INSIDE THE TRUST BOUNDARY</text>
+    <text x="660" y="26" class="dia__band-t">OUTSIDE THE SESSION</text>
+
+    <g class="dia__box dia__box--ink"><rect x="24" y="48" width="176" height="100"/></g>
+    <g class="dia__box dia__box--gate"><rect x="264" y="48" width="312" height="100"/></g>
+    <g class="dia__box dia__box--strong"><rect x="24" y="212" width="176" height="140"/></g>
+    <g class="dia__box"><rect x="264" y="196" width="312" height="172"/></g>
+    <g class="dia__box dia__box--no"><rect x="24" y="412" width="176" height="100"/></g>
+    <g class="dia__box dia__box--ok"><rect x="662" y="48" width="276" height="100"/></g>
+    <g class="dia__box dia__box--ink"><rect x="662" y="212" width="276" height="140"/></g>
+    <g class="dia__box"><rect x="662" y="412" width="276" height="100"/></g>
+
+    <g class="dia__ico dia__ico--brand" transform="translate(100 58)"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></g>
+    <g class="dia__ico dia__ico--on-gate" transform="translate(408 58)"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></g>
+    <g class="dia__ico" transform="translate(100 224)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></g>
+    <g class="dia__ico" transform="translate(408 208)"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></g>
+    <g class="dia__ico dia__ico--no" transform="translate(100 422)"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></g>
+    <g class="dia__ico dia__ico--ok" transform="translate(788 58)"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></g>
+    <g class="dia__ico dia__ico--brand" transform="translate(788 224)"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></g>
+    <g class="dia__ico" transform="translate(788 422)"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></g>
+
+    <g text-anchor="middle">
+      <text x="112" y="104" class="dia__h dia__on-ink">Coding agent</text>
+      <text x="112" y="124" class="dia__s dia__on-ink">Claude Code · Codex</text>
+      <text x="112" y="140" class="dia__s dia__on-ink">OpenCode</text>
+
+      <text x="420" y="104" class="dia__h dia__on-gate">Gate on stop · specgate check</text>
+      <text x="420" y="124" class="dia__s dia__on-gate">specs and links · sealed approval ·</text>
+      <text x="420" y="140" class="dia__s dia__on-gate">design scope · approved changes only</text>
+
+      <text x="112" y="270" class="dia__h">Guard hook</text>
+      <text x="112" y="290" class="dia__s">test first ·</text>
+      <text x="112" y="306" class="dia__s">whole working tree ·</text>
+      <text x="112" y="322" class="dia__s">step record ·</text>
+      <text x="112" y="338" class="dia__s">a person's acts</text>
+
+      <text x="420" y="254" class="dia__h">Working folder</text>
+      <text x="420" y="278" class="dia__s dia__mono">src/ · tests/ · features/</text>
+      <text x="420" y="298" class="dia__s dia__mono">docs/specs/ — the approved contract</text>
+      <text x="420" y="318" class="dia__s dia__mono">approvals.json — seals by hash</text>
+      <text x="420" y="338" class="dia__s dia__mono">.specgate/ — policy, evidence</text>
+
+      <text x="112" y="468" class="dia__h dia__no-t">Refused</text>
+      <text x="112" y="488" class="dia__s">with the next step</text>
+      <text x="112" y="504" class="dia__s">to take</text>
+
+      <text x="800" y="104" class="dia__h">Person at a terminal</text>
+      <text x="800" y="124" class="dia__s">approves · seals · reviews steps</text>
+
+      <text x="800" y="270" class="dia__h dia__on-ink">Outside judge</text>
+      <text x="800" y="292" class="dia__s dia__on-ink">reads the controls before</text>
+      <text x="800" y="308" class="dia__s dia__on-ink">the agent starts; compares</text>
+      <text x="800" y="324" class="dia__s dia__on-ink">when it stops</text>
+
+      <text x="800" y="468" class="dia__h">Verdict</text>
+      <text x="800" y="488" class="dia__s">independent of the session</text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="112" y1="150" x2="112" y2="207" marker-end="url(#sg-tb-a)"/>
+      <text x="122" y="184">tool call</text>
+
+      <line x1="202" y1="282" x2="259" y2="282" marker-end="url(#sg-tb-a)"/>
+      <text x="231" y="274" text-anchor="middle">allowed</text>
+
+      <line x1="112" y1="354" x2="112" y2="407" class="dia__no" marker-end="url(#sg-tb-r)"/>
+      <text x="122" y="386" class="dia__no-t">refused</text>
+
+      <line x1="202" y1="98" x2="259" y2="98" marker-end="url(#sg-tb-a)"/>
+      <text x="231" y="90" text-anchor="middle">on stop</text>
+
+      <line x1="420" y1="150" x2="420" y2="191" marker-end="url(#sg-tb-a)"/>
+      <text x="430" y="176">reads</text>
+
+      <path d="M660 98 H620 V236 H581" class="dia__ok" marker-end="url(#sg-tb-g)"/>
+      <text x="628" y="170" class="dia__ok-t">seals</text>
+
+      <line x1="660" y1="312" x2="581" y2="312" marker-end="url(#sg-tb-a)"/>
+      <text x="620" y="290" text-anchor="middle">before</text>
+      <text x="620" y="304" text-anchor="middle">+ after</text>
+
+      <line x1="800" y1="354" x2="800" y2="407" marker-end="url(#sg-tb-a)"/>
+      <text x="810" y="386">verdict</text>
+    </g>
+
+    <text x="0" y="554" class="dia__note">A tool with no hooks has no guard; the gate, the seals, the approval rule and the outside judge still hold.</text>
+  </svg>
+  </div>
+  <figcaption>The guard and the gate work inside the agent's session; the approvals, the seals and the outside judge's verdict come from outside it.</figcaption>
+</figure>

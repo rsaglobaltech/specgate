@@ -151,7 +151,7 @@ specgate harness run --req REQ-003 --agent "claude -p < {prompt_file}" --max-att
 ```
 
 Requirements waiting for an answer are skipped on purpose: `harness run --req
-REQ-004` says `REQ-004 is not a pending requirement — skipped.` The landing page
+REQ-004` says it waits for an answer (Needs Clarification) and starts no agent. The landing page
 has [a recording of a full harness run](../index.html#watch), and
 [the harness guide](../harness.md) covers agents, retries, concurrency and cost.
 

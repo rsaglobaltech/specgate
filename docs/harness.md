@@ -9,10 +9,10 @@ several onto a branch, run them in parallel, and read a failure.
 
 **You need:** a project where `specgate init` has run, git, a test command
 (`specgate config set test_cmd "npm test"`) and a coding agent you can run from
-the command line. Which agent, and how to call it, is on
-[Choosing and wiring your agent](agent-setup.md).
+the command line. Which agent, and how to call it, is on [Choosing and wiring your agent](agent-setup.md).
 
 <!-- specgate:diagram lifecycle -->
+<!-- specgate:diagram trust-boundary -->
 
 ## One turn, in sequence
 

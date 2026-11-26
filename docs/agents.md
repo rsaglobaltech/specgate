@@ -179,6 +179,8 @@ three hooks that run whatever the agent decides:
 - **The gate** — before the session ends (Claude Code, Codex) or when it goes
   idle (OpenCode), a red gate sends its findings back, once per prompt.
 
+<!-- specgate:diagram guard-decision -->
+
 The guards stop a session, not a determined process outside it. The
 [harness](harness.md) and `specgate compat run` add an outside judge: they read
 the controls before the agent starts and compare when it stops

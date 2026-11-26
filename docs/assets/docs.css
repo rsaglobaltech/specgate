@@ -1317,3 +1317,35 @@ details.top__version > summary:hover { color: var(--fg); }
   border-left-color: var(--accent);
   background: var(--accent-soft);
 }
+
+/* ── Card diagrams ───────────────────────────────────────────────────────────
+ * The landing page's look, drawn with the same tokens: rounded cards, a line
+ * icon on each, a dark card for an agent or the judge, the brand card for the
+ * gate. Wider than a sequence diagram, so the scroll starts earlier. */
+.dia--card .dia__svg { min-width: 40rem; max-width: 100%; }
+.dia--card .dia__box rect { rx: 10px; fill: var(--bg-raised); stroke: var(--line-strong); }
+.dia--card .dia__box--ok rect { fill: color-mix(in srgb, var(--green) 10%, var(--bg-raised)); stroke: var(--green); }
+.dia--card .dia__box--no rect { fill: color-mix(in srgb, var(--red) 8%, var(--bg-raised)); stroke: var(--red); }
+.dia--card .dia__box--gate rect { fill: var(--brand); stroke: var(--brand); }
+.dia--card .dia__box--strong rect { stroke: var(--fg); }
+.dia--card .dia__h { font-size: 15px; }
+.dia--card .dia__s { font-size: 13px; }
+.dia--card .dia__mono { font-size: 12.5px; }
+.dia--card .dia__msg text { font-size: 12.5px; }
+.dia--card .dia__msg line,
+.dia--card .dia__msg path { stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.dia--card .dia__box--ink rect { fill: var(--inverse-bg); stroke: var(--inverse-bg); }
+.dia__on-ink, .dia__on-ink tspan { fill: var(--inverse-fg) !important; }
+.dia__band rect { fill: var(--bg-soft); stroke: var(--line-strong); stroke-dasharray: 6 5; rx: 14px; }
+.dia__band--out rect { fill: var(--bg-raised); stroke-dasharray: none; }
+.dia__band-t { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em; fill: var(--fg-faint); }
+.dia__dec polygon { fill: var(--bg-code); stroke: var(--line-strong); stroke-width: 1; }
+.dia__ico { fill: none; stroke: var(--fg); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.dia__ico--brand { stroke: var(--brand); }
+.dia__ico--ok { stroke: var(--green); }
+.dia__ico--no { stroke: var(--red); }
+.dia__ico--on-gate { stroke: var(--on-brand); }
+.dia__who { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; fill: var(--fg-faint); }
+.dia__who--ok { fill: var(--green); }
+.dia__who--gate { fill: var(--brand-text); }
+.dia__big { font-family: var(--display); font-size: 30px; font-weight: 700; fill: var(--fg); }

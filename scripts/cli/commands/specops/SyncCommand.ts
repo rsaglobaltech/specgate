@@ -299,6 +299,19 @@ export function previousRender(entry: PackEntry, args: SyncArgs, projectDir: str
   }
 }
 
+/** walkthrough-fixes-2 REQ-786: the requirement ids `spec.md` holds more than once. */
+export function duplicateRequirementIds(projectDir: string): string[] {
+  let text = "";
+  try {
+    text = fs.readFileSync(path.join(projectDir, "spec.md"), "utf8");
+  } catch {
+    return [];
+  }
+  const seen = new Map<string, number>();
+  for (const m of text.matchAll(/^#{2,4}\s+(?:Requirement:\s*)?(REQ-\d+)\b/gm)) seen.set(m[1]!, (seen.get(m[1]!) || 0) + 1);
+  return [...seen].filter(([, n]) => n > 1).map(([id]) => id).sort();
+}
+
 function syncPack(entry: PackEntry, args: SyncArgs, projectDir: string) {
   const version = args.packVersion || entry.version;
   const bumping = args.packVersion && args.packVersion !== entry.version;
@@ -538,6 +551,16 @@ export class SyncCommand extends BaseCommand {
         error(
           `Sync completed with ${totalConflicts} conflicting file(s). ` +
             `Resolve them, then re-run 'specops sync'.`
+        );
+        process.exit(1);
+      }
+
+      // walkthrough-fixes-2 REQ-786: a pack that brings an id the project already uses is a clash, not a merge.
+      const clashes = duplicateRequirementIds(projectDir);
+      if (clashes.length > 0) {
+        error(
+          `Sync wrote ${clashes.join(", ")} twice into spec.md: the pack's new requirement and one of yours share the id. ` +
+            `Give yours a free id (and rename it in its tests and features), then run 'specgate check'.`
         );
         process.exit(1);
       }

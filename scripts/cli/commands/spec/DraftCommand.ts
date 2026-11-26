@@ -14,6 +14,7 @@
  * whoever writes it; every run after that checks it and says what is next.
  */
 
+import { missingApprovals } from "../../../lib/approvals";
 import {
   LAYERED_SCHEMA,
   templateLayeredDesign,
@@ -467,6 +468,8 @@ export interface ModuleStatus {
   findings: number;
   /** The archive directory's name, once archived. */
   archivedAs?: string;
+  /** walkthrough-fixes-2 REQ-784: a ready draft a person approved — delivery comes next, not approval. */
+  approved?: boolean;
 }
 
 /** The placeholder `templateDelta` writes: a draft nobody has written yet. */
@@ -495,13 +498,22 @@ export function moduleStatus(projectDir: string, module: string, brief = ""): Mo
   const result = draftReport(projectDir, change, brief);
   if ("failure" in result) return { ...base, state: "drafting", findings: 1 };
   const findings = errorCount(result.report.status);
-  return { ...base, state: findings === 0 ? "ready" : "drafting", findings };
+  return { ...base, state: findings === 0 ? "ready" : "drafting", findings, approved: findings === 0 && isApprovedChange(projectDir, change) };
 }
 
 /**
  * Where the brief stands, for `status`: its modules, and the first one not
  * yet archived. Null when there is no brief, or it lists no modules.
  */
+/** Whether a person approved the change (REQ-745): what `apply` asks before it delivers. */
+function isApprovedChange(projectDir: string, changeId: string): boolean {
+  try {
+    return missingApprovals(projectDir, changeId) === null;
+  } catch {
+    return false;
+  }
+}
+
 export function briefProgress(
   projectDir: string
 ): { brief: string; modules: ModuleStatus[]; next?: ModuleStatus } | null {
@@ -520,7 +532,9 @@ export function briefProgress(
 
 /** What to run for this module, given where it stands. */
 export function draftNextCommand(s: ModuleStatus): string {
-  return s.state === "ready" ? "specgate apply" : `specgate propose --from-brief ${s.module}`;
+  // walkthrough-fixes-2 REQ-784: a ready draft waits for a person's approval before anything is applied.
+  if (s.state === "ready") return s.approved ? "specgate apply" : `specgate change approve ${s.change}`;
+  return `specgate propose --from-brief ${s.module}`;
 }
 
 /** `➜ claude -p … is drafting catalogo…`, and why a flag was added. */
@@ -1891,7 +1905,8 @@ export class DraftCommand extends BaseCommand {
             fs.existsSync(path.join(projectDir, CHANGES, changeId, "questions.md"))
               ? `Answer what you can in ${dir}/questions.md`
               : `Check ${dir}/assumptions.md, if the agent wrote one`,
-            [next, "its requirements, one at a time; then specgate archive " + changeId]
+            [`specgate change approve ${changeId}`, "you, at your terminal, once it reads right — apply waits for it"],
+            ["specgate apply", "its requirements, one at a time; then specgate archive " + changeId]
           );
           const after = nextModuleAfter(projectDir, brief, opts.module);
           steps.push(

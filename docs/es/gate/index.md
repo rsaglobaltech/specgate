@@ -1,4 +1,4 @@
-<!-- translation-of: d375dfb5c4b6 -->
+<!-- translation-of: 5264ebf79fd7 -->
 # El gate
 
 El gate es lo que hay entre un change y tu rama principal. Demuestra que cada
@@ -23,6 +23,8 @@ fallo que reporte.
 `specgate check` ejecuta las etapas en este orden. Una etapa que falla detiene
 las siguientes, salvo el check de arquitectura y los tests, que se ejecutan
 en paralelo.
+
+<!-- specgate:diagram gate-stages -->
 
 | Etapa | Qué demuestra | Falla con |
 | --- | --- | --- |

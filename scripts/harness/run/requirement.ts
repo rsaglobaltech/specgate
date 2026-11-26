@@ -274,7 +274,9 @@ function refusedBeforeStarting(
 
   const readiness = readinessOf(projectDir, req);
   const unrunnable = readiness.blockers.find((b) => b.code === "requirement_scenario_unrunnable");
-  const hardStop = unrunnable || (ctx.skipNotReady && !readiness.ready);
+  // walkthrough-fixes-2 REQ-782: a requirement waiting for an answer is never handed to an agent.
+  const waits = readiness.blockers.find((b) => b.code === "requirement_needs_clarification");
+  const hardStop = unrunnable || waits || (ctx.skipNotReady && !readiness.ready);
 
   for (const b of readiness.blockers) {
     const line = `${req.requirement}: ${b.message} [${b.code}]`;
@@ -298,7 +300,9 @@ function refusedBeforeStarting(
       req.category,
       "skipped",
       branch,
-      unrunnable
+      waits
+        ? `It waits for an answer (Needs Clarification): answer its question, then run it.`
+        : unrunnable
         ? `Its scenario would pass without testing anything, so the gate could not ` +
             `tell success from failure. Run \`specgate validate <dir> --strict-scenarios\` ` +
             `to see every one.`

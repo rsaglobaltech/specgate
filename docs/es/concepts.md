@@ -1,8 +1,10 @@
-<!-- translation-of: 2d8b1d5c5c9c -->
+<!-- translation-of: c69fd4d4ba68 -->
 # Cómo piensa Specgate
 
 Seis ideas explican todo lo que hace la CLI. Léelas una vez y cada comando,
 error y flag tendrá una razón que puedes predecir.
+
+<!-- specgate:diagram with-without -->
 
 ## 1. Un requisito es una frase que puede ser falsa
 

@@ -23,6 +23,8 @@ git.
 ones after it, except the architecture check and the tests, which run side
 by side.
 
+<!-- specgate:diagram gate-stages -->
+
 | Stage | What it proves | Fails with |
 | --- | --- | --- |
 | Ids | No requirement id here means something else on the base branch; with `--base`, what the branch changes in the controls is named for the reviewer | `id_taken_on_base`, `controls_changed_on_branch` |

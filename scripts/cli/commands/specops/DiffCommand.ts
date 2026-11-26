@@ -375,6 +375,7 @@ export class DiffCommand extends BaseCommand {
         status: [] as Diagnostic[],
       };
       let matched = 0;
+      let failed = 0;
       for (const entry of lock.packs) {
         if (args.pack && entry.pack_id !== args.pack) continue;
         matched += 1;
@@ -397,6 +398,8 @@ export class DiffCommand extends BaseCommand {
             } else {
               error(`expand failed for ${entry.pack_id}:\n${result.stderr || result.stdout}`);
             }
+            // walkthrough-fixes-2 REQ-786: a pack that could not be rendered is a failed diff, not an empty one.
+            failed += 1;
             continue;
           }
           const changes = diffDirs(projectDir, tmpDir);
@@ -424,9 +427,10 @@ export class DiffCommand extends BaseCommand {
 
       if (args.format === "json") {
         process.stdout.write(JSON.stringify(jsonOut, null, 2) + "\n");
-      } else {
+      } else if (failed === 0) {
         info(`Diff completed for ${matched} pack(s).`);
       }
+      if (failed > 0) process.exit(1);
     } catch (err) {
       return io.fail({ changes: null }, [
         {

@@ -4,4 +4,4 @@ created: 2026-11-26
 rigor: lite
 skip_specs: false
 retire_capabilities: false
-req_range: [REQ-781, REQ-783]
+req_range: [REQ-781, REQ-786]

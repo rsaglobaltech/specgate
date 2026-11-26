@@ -5,14 +5,14 @@ through a **change**, so the specs, the feature files and the traceability
 matrix never drift apart. A change is a folder under
 `docs/specs/changes/<id>/` that holds the requirements being added, modified or removed until they are built.
 
-**You need:** a project where `specgate init` has run, and a test command
-configured (`specgate config set test_cmd "npm test"`).
+**You need:** a project where `specgate init` has run, and a test command configured (`specgate config set test_cmd "npm test"`).
 
 The loop is four commands: `propose` opens the change, `apply` delivers each
 requirement, `status` says what is left, and `archive` closes the change once every requirement in it is delivered
 ([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)). Between `propose`
-and `apply`, a person approves the change. For writing your
-first requirements on a new project, see [Writing specs](writing-specs.md).
+and `apply`, a person approves the change. For writing your first requirements on a new project, see [Writing specs](writing-specs.md).
+
+<!-- specgate:diagram approval-loop -->
 
 ## 1. Open the change
 
