@@ -13,7 +13,21 @@ file (`package.json`, `pom.xml`, `build.gradle`, `go.mod`, `pyproject.toml`,
 
 The example is a small Node invoicing service with two modules
 (`src/invoices`, `src/customers`) and its own tests. Maven, Gradle, Go,
-Python, Cargo and .NET projects go the same way.
+Python, Cargo and .NET projects go the same way. The code phase 3 tests is
+`src/invoices/total.js`, which takes the lines and the VAT rate:
+
+```js
+/** Sum of the lines, VAT included, rounded to the cent. */
+function total(lines, vatRate) {
+  const net = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
+  return Math.round(net * (1 + vatRate) * 100) / 100;
+}
+
+module.exports = { total };
+```
+
+Its test, `test/total.test.js`, calls `total(lines, 0.21)` and names no
+requirement yet: phase 3 adds the name.
 
 | Who | Does what in this phase |
 | --- | --- |
@@ -113,7 +127,12 @@ $ specgate init
 only files that do not exist yet. The areas it reads off the code (Invoices,
 Customers) go to `docs/specs/adoption.md` with their folders and tests — a map
 to specify from, not requirements. It saves the test command and the agent it
-detects, asking first, and ends with a readiness list.
+detects, asking first, and ends with a readiness list. With no terminal to ask
+in — a script, CI, an agent's tool — it does not ask: it saves both, the agent
+as `agent: claude --output-format stream-json --verbose --permission-mode
+acceptEdits -p < {prompt_file} | specgate harness events --from claude` in
+`harness.config.yaml`. Read that line, and change it with
+`specgate config set agent "<command>"` if your agent must not edit unasked.
 
 ## 4. Check the test command it saved — or set it
 

@@ -1,4 +1,4 @@
-<!-- translation-of: 7ce153d2b8a5 -->
+<!-- translation-of: cb0d202103c0 -->
 # Escribe el brief
 
 > **La versión corta** de ambos caminos, en seis comandos: [Empezar](../start.md). Esta página es el mismo paso en detalle, con la salida grabada.
@@ -85,6 +85,19 @@ advertencia `B15_why_unmeasured`.
 
 - Bien: "A student finds today's lesson in under 10 seconds."
 - Mal: "Fast and easy to use." Ningún test puede comprobarlo.
+
+El de Lingo, que va bajo el título del ejemplo completo del final de esta
+página, antes de su primer `## Module:`:
+
+```markdown
+## Why
+
+Students lose track of their lessons between classes, and the teacher cannot
+see who is falling behind.
+
+- A student finds today's lesson in under 10 seconds.
+- The teacher sees each student's progress in under 2 seconds.
+```
 
 ## Paso 2 — Quién y dónde (3 minutos)
 
@@ -288,7 +301,8 @@ abajo.)
 
 ## El ejemplo completo
 
-El brief de Lingo, revisado:
+El brief de Lingo, revisado. Su `## Why` es el del paso 1, bajo el título
+`# Lingo`; el bloque de abajo lo omite:
 
 <!-- specgate:example-brief -->
 ```markdown

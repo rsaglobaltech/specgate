@@ -37,11 +37,24 @@ each finding with `code`, `file`, `line` and `fix`.
 | `check_arch_failed` | Your `arch_cmd` failed | Move the code where the architecture expects it, or change the rule on purpose |
 | `check_tests_failed` | Your `test_cmd` failed; its output is above | Make the tests pass |
 | `check_scenarios_failed` | With `bdd: required`, a delivered requirement's scenarios failed with `bdd_cmd` | Make the code do what the failing scenarios say; `specgate scenarios <REQ>` runs one requirement's, scenario by scenario |
+| `check_approved_changed` | What a person approved in an open change is not what is there now; `approved_requirement_changed` above it names the requirement | Put it back, or have a person approve the change again: `specgate change approve <id>` |
+| `check_acceptance_failed` | The sealed acceptance tests: `acceptance_not_sealed`, `acceptance_red` or `acceptance_no_command` above it | Fix what the finding above it says |
 | `acceptance_red` | The acceptance tests a person approved did not pass with `acceptance_cmd`; the last lines of its output are above | Make the code do what the approved tests say: the tests are the contract, not the thing to change |
 | `acceptance_no_command` | Acceptance tests are sealed and the project names no command that runs them | `specgate config set acceptance_cmd "<command>"`, `{files}` the sealed paths: `npx playwright test {files}`, `pytest {files}` |
 | `check_quality_failed` | A quality check found something new, or could not run under `--ci` | Each check's own finding is above it: `quality_check_failed` |
 | `baseline_incomplete` | `check --baseline` was asked to record what a baseline cannot hold | Fix what validate reports, then record again — [Adopt it without a red build](baselines.md) |
 | `gate_policy_invalid` | `.specgate/gate.yaml` names a preset, rule, level or date it cannot read | Use what the fix lists — [Configure the gate](policy.md) |
+
+A `trust:` entry in `.specgate/gate.yaml` that is not a level from 1 to 5, or
+names no capability, is not reported as `gate_policy_invalid`. It shows inside
+the specification stage, under `Domain language findings`, and the gate fails
+as `check_validate_failed`:
+
+```text
+       ✖  Domain language findings: 1
+       trust: nowhere is not a capability of this project.
+          fix: Use one of: reservations.
+```
 
 ## What a person approved
 

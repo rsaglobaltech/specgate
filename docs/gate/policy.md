@@ -88,8 +88,10 @@ rather than a run of the suite, and new files outside the design (`scope`).
 is a warning in every preset: who approved cannot be told from a branch, so
 the gate names the change for the reviewer. `state_machines`, `scope` and
 `acceptance` say nothing in a project with no state machines, no approved
-design that names files, or no sealed acceptance tests. `rules:` overrides any
-rule of the preset.
+design that names files, or no sealed acceptance tests. `scope` judges only the
+files git sees as new — untracked, or added and not yet committed: once a file
+is committed, `scope` no longer names it, so run `check` before you commit.
+`rules:` overrides any rule of the preset.
 
 **Changing `preset:` alone relaxes nothing that `init` wrote.** `specgate init`
 writes every rule out in full under `rules:`, and a rule written there wins

@@ -42,15 +42,18 @@ and a repository.
 npm install --save-dev @rsaglobaltech/specgate
 npx specgate init --no-capabilities        # a new project: no proposals from folders
 npx specgate config set test_cmd "<cmd>"   # the tests `check` and `apply` run
+# a test named "REQ-001 SCN-001: the application starts", then:
 npx specgate apply REQ-001                 # the adoption baseline
 npx specgate ci status                     # init wrote the gate for CI: what it checks
 ```
 
 `init` detects the stack and proposes the test command (`npm test`,
-`./mvnw -B test`, `./gradlew test`). In a Spring or Quarkus project keep one
-test that boots the real application with no test doubles: in one pilot the
-application did not start for a whole module while every test, and CI, were
-green.
+`./mvnw -B test`, `./gradlew test`). It also writes `REQ-001 — Existing
+behaviour is preserved`, the adoption baseline, and `apply REQ-001` refuses it
+(`apply_no_test`) until a test names `REQ-001` and its scenario `SCN-001`. Make
+that the test that boots the real application with no test doubles — in a
+Spring or Quarkus project above all: in one pilot the application did not
+start for a whole module while every test, and CI, were green.
 
 ### 4. Keep the brief in the repository
 
@@ -192,8 +195,10 @@ say. In the six pilots, running the product found:
 - a production build or an application context that did not start,
 - a privacy hole: a search that returned clinical data without a trace.
 
-Each gap becomes a short change — `npx specgate propose <module>-2`, then steps 8
-to 10. When the change rewrites a delivered requirement, put it under
+Each gap becomes a short change — `npx specgate propose <module>-2 --capability
+<module>`, then steps 8 to 10. `--capability` points the delta at the module's
+capability; without it the delta targets a new capability named `<module>-2`.
+When the change rewrites a delivered requirement, put it under
 `## MODIFIED Requirements` with all its scenarios and apply it again against
 the new scenario: the change archives only once it is Implemented, and
 archiving regenerates its feature file.

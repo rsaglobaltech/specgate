@@ -1,4 +1,4 @@
-<!-- translation-of: 7d7f370d3b70 -->
+<!-- translation-of: db2314b9e605 -->
 # Lee un fallo del gate
 
 Cada fallo que reporta el gate dice dónde, qué, su código entre corchetes, y
@@ -39,11 +39,24 @@ muestra cada una como `not run`. En CI el mismo texto está en el log del job;
 | `check_arch_failed` | Tu `arch_cmd` falló | Mueve el código adonde lo espera la arquitectura, o cambia la regla a propósito |
 | `check_tests_failed` | Tu `test_cmd` falló; su salida está encima | Haz que los tests pasen |
 | `check_scenarios_failed` | Con `bdd: required`, los escenarios de un requisito entregado fallaron con `bdd_cmd` | Haz que el código haga lo que dicen los escenarios que fallan; `specgate scenarios <REQ>` ejecuta los de un requisito, escenario a escenario |
+| `check_approved_changed` | Lo que aprobó una persona en un change abierto ya no es lo que hay; `approved_requirement_changed`, encima, nombra el requisito | Devuélvelo a como estaba, o que una persona apruebe el change otra vez: `specgate change approve <id>` |
+| `check_acceptance_failed` | Los tests de aceptación sellados: `acceptance_not_sealed`, `acceptance_red` o `acceptance_no_command` encima | Corrige lo que dice el hallazgo de encima |
 | `acceptance_red` | Los tests de aceptación que aprobó una persona no pasaron con `acceptance_cmd`; las últimas líneas de su salida están encima | Haz que el código haga lo que dicen los tests aprobados: los tests son el contrato, no lo que hay que cambiar |
 | `acceptance_no_command` | Hay tests de aceptación sellados y el proyecto no nombra ningún comando que los ejecute | `specgate config set acceptance_cmd "<comando>"`, con `{files}` las rutas selladas: `npx playwright test {files}`, `pytest {files}` |
 | `check_quality_failed` | Un check de calidad encontró algo nuevo, o no pudo ejecutarse con `--ci` | El hallazgo propio de cada check está encima: `quality_check_failed` |
 | `baseline_incomplete` | Se pidió a `check --baseline` registrar lo que un baseline no puede contener | Corrige lo que reporta validate y vuelve a registrar: [Adóptalo sin un build en rojo](baselines.md) |
 | `gate_policy_invalid` | `.specgate/gate.yaml` nombra un preset, una regla, un nivel o una fecha que no puede leer | Usa lo que indica la corrección: [Configurar el gate](policy.md) |
+
+Una entrada de `trust:` en `.specgate/gate.yaml` que no es un nivel del 1 al 5,
+o que no nombra una capability, no se reporta como `gate_policy_invalid`.
+Aparece dentro de la etapa de la especificación, bajo `Domain language
+findings`, y el gate falla como `check_validate_failed`:
+
+```text
+       ✖  Domain language findings: 1
+       trust: nowhere is not a capability of this project.
+          fix: Use one of: reservations.
+```
 
 ## Lo que aprobó una persona
 

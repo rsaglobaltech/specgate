@@ -126,9 +126,14 @@ $ specgate propose free-courts
 
 Replace the template in the change's delta,
 `docs/specs/changes/free-courts/specs/free-courts/spec.md`, with the
-requirement and its scenario:
+requirement and its scenario, under the `## ADDED Requirements` heading the
+template has:
 
 ```markdown
+# Delta — free-courts
+
+## ADDED Requirements
+
 ### Requirement: REQ-012 — A member sees which courts are free on a day
 
 <!-- specgate:trace actor=Member kind=functional -->
@@ -188,10 +193,19 @@ after.
 
 ## 4. When the client answers
 
-Write the answer into the change's `questions.md`, update the requirement and
-its scenario with the real value, remove `status="Needs Clarification"` from
-its `specgate:trace`, and it rejoins the queue: `status` lists it, the harness
-builds it, `apply` marks it done.
+The requirement it blocked rejoins the queue in five steps:
+
+1. In the change's `questions.md`, write the answer in the question's `Answer`
+   cell and set its `Status` to `answered`. `status` now lists the requirement
+   under "Answered — update the spec".
+2. Write the value into the requirement's text and its scenario.
+3. Remove `status="Needs Clarification"` from its `specgate:trace`.
+4. Approve the change again, yourself, at your terminal:
+   `specgate change approve <change>`. The text is no longer what was
+   approved, so `apply` refuses it (`approved_requirement_changed`) until then;
+   the client's answer in `questions.md` is the source of the new value.
+5. Write its test, then `specgate apply REQ-…`. Until step 3 the harness skips
+   it and `apply` refuses it (`done_needs_clarification`).
 
 ## Gato, the cat that keeps the gate
 

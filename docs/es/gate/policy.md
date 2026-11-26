@@ -1,4 +1,4 @@
-<!-- translation-of: 16568b411b7e -->
+<!-- translation-of: 081c55bce4e6 -->
 # Configurar el gate
 
 No todos los equipos quieren que cada regla haga fallar un pull request desde
@@ -91,8 +91,10 @@ proyecto escribe su catálogo. `controls` es un warning en todos los presets:
 desde una rama no se puede saber quién aprobó, así que el gate nombra el
 cambio para quien revisa. `state_machines`, `scope` y `acceptance` no dicen
 nada en un proyecto sin máquinas de estados, sin un diseño aprobado que nombre
-archivos o sin tests de aceptación sellados. `rules:` sobrescribe cualquier
-regla del preset.
+archivos o sin tests de aceptación sellados. `scope` juzga solo los archivos
+que git ve como nuevos — sin seguimiento, o añadidos y aún sin commit: una vez
+hecho el commit, `scope` ya no los nombra, así que ejecuta `check` antes del
+commit. `rules:` sobrescribe cualquier regla del preset.
 
 **Cambiar solo `preset:` no relaja nada de lo que escribió `init`.**
 `specgate init` escribe todas las reglas bajo `rules:`, y una regla escrita

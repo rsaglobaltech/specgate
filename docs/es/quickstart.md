@@ -8,18 +8,18 @@ Con el repositorio clonado y sus dependencias instaladas, ejecuta esto desde su
 carpeta (`npx specgate` usa la versión que fijó el equipo):
 
 ```bash
-npx specgate status                 # what is left, and the next command
-npx specgate propose <change-id>    # open a change; write its delta
+npx specgate status                 # lo que falta, y el siguiente comando
+npx specgate propose <change-id>    # abre un change; escribe su delta
 npx specgate change approve <change-id>   # una persona, en su terminal: aprueba el delta
-npx specgate apply REQ-007          # after a test names REQ-007: the gate, then Implemented
-npx specgate archive <change-id>    # every requirement applied: merge the change
-npx specgate check                  # before the pull request — CI runs the same
+npx specgate apply REQ-007          # cuando un test nombra REQ-007: el gate, luego Implemented
+npx specgate archive <change-id>    # todos los requisitos aplicados: haz merge del change
+npx specgate check                  # antes del pull request — CI ejecuta lo mismo
 ```
 
 ¿Trabajas a partir de un ticket de Jira? `npx specgate propose --from-ticket KAN-13` — consulta
-[Desde un ticket de Jira](from-a-ticket.md).
+[Desde un ticket de Jira](../from-a-ticket.md).
 
 ## Siguiente
 
 - [Conceptos](concepts.md#vocabulario) — las palabras
-- [El primer pull request de tu equipo](first-pr.md) — qué escribe el autor, qué lee el revisor
+- [El primer pull request de tu equipo](../first-pr.md) — qué escribe el autor, qué lee el revisor

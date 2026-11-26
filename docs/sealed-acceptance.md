@@ -79,6 +79,24 @@ guarded. To change one, open a change that lists it in its own
 `acceptance-tests.md`, and have a person approve it: the new seal replaces the
 old.
 
+That change needs a delta. With none, `change approve` refuses it
+(`approve_blocked`: no `specs/<capability>/spec.md`), and a change that is not
+approved cannot seal (`acceptance_change_not_approved`). The delta restates the
+requirement the test proves under `## MODIFIED Requirements`, with the
+scenario the test names, and `acceptance-tests.md` names that scenario:
+
+```bash
+specgate propose reseal-pricing --capability pricing
+# specs/pricing/spec.md: ## MODIFIED Requirements, then REQ-014 whole,
+#   with "#### Scenario: SCN-014 — …"
+# acceptance-tests.md:   - test/acceptance/pricing.spec.ts — SCN-014
+specgate change approve reseal-pricing                      # a person
+specgate change approve reseal-pricing --layer acceptance   # the new seal
+```
+
+Then `apply` the requirement again and archive the change, as for any
+`MODIFIED` requirement.
+
 ## Next
 
 - [Change a shipped requirement](reviewing-changes.md) — the whole review, from propose to archive

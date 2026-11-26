@@ -30,8 +30,8 @@ Una carpeta vacía, quizá con el brief de un cliente.
 ## Siguiente
 
 - [Conceptos](concepts.md) — las palabras: change, delta, gate, matriz
-- [Referencia de comandos](commands.md) — todos los comandos
-- [El studio](studio.md) — los mismos caminos en una app
-- [Especificar un sistema que ya funciona](reverse.md) — requisitos redactados a partir del propio código
+- [Referencia de comandos](../commands.md) — todos los comandos
+- [El studio](../studio.md) — los mismos caminos en una app
+- [Especificar un sistema que ya funciona](../reverse.md) — requisitos redactados a partir del propio código
 - [Unirte a un proyecto](quickstart.md) — otra persona lo configuró
-- Paso a paso, con la salida grabada: [código existente](start/existing-1-adopt.md) · [un proyecto nuevo](start/scratch-1-install.md)
+- Paso a paso, con la salida grabada: [código existente](../start/existing-1-adopt.md) · [un proyecto nuevo](../start/scratch-1-install.md)

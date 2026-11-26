@@ -82,7 +82,7 @@ configured threshold.
 - THEN the peak tariff is applied
 
 <!-- specgate:trace kind=functional uc=UC-007 cmd=CMD-011 agg=AGG-Pricing
-     evt=EVT-PriceApplied feature=features/pricing/dynamic_pricing.feature -->
+     evt=EVT-PriceApplied feature=features/pricing/REQ-014.feature -->
 ```
 
 Three sections are valid: `## ADDED Requirements`, `## MODIFIED Requirements`
@@ -97,9 +97,10 @@ The validator is strict about two things:
   `MAY`), otherwise you get `no_rfc2119_keyword`.
 
 The `specgate:trace` comment's `kind=` (functional, non-functional or
-business-rule) is required: without it `change approve` refuses the change
-(`approve_blocked`; `change validate` says `change_not_approvable`). `uc`,
-`cmd`, `agg` and `evt` are optional matrix columns, `-` when missing.
+business-rule) is required, and the template `propose` writes has none: add it,
+or `change approve` refuses the change (`approve_blocked`; `change validate`
+says `change_not_approvable`). `uc`, `cmd`, `agg` and `evt` are optional matrix
+columns, `-` when missing. `feature=` is one file per requirement.
 
 While the change is open, its requirements already count: `status` lists
 REQ-014 as to do, and `apply`, `check` and `harness run` judge the project as
@@ -184,8 +185,7 @@ specgate apply REQ-014
      fix: write a test that names REQ-014 (and its scenario SCN-014), then run specgate apply REQ-014
 ```
 
-Write the test first and name the requirement in it (that mention is the
-link), then the code, and run it again:
+Write the test first, naming the requirement (the link), then the code; run it again:
 
 ```
   ✔  Specification   the gate, for REQ-014
@@ -241,19 +241,19 @@ specgate archive add-dynamic-pricing
 
     Specs         1 added · 0 modified · 0 removed
     Traceability  1 row(s) added · 0 updated · 0 removed
-    Features      1 materialised
+    Features      0 materialised
 ```
 
-The delta is merged into `docs/specs/capabilities/pricing/spec.md`, the
-feature file is written, and the matrix row arrives already delivered:
+`Features 0 materialised` is expected: `change approve` already wrote
+`features/pricing/REQ-014.feature`. The delta is merged into
+`docs/specs/capabilities/pricing/spec.md`; the matrix row arrives delivered:
 
 ```
 | REQ-014 | SCN-014 | `features/pricing/REQ-014.feature` | UC-007 | CMD-011 | AGG-Pricing | EVT-PriceApplied | - | test/pricing.test.js | Implemented |
 ```
 
-The spec and its code reach review in one pull request, after the gate passed.
-A test that disproves the spec text is fixed in the same change, not in a
-second one.
+The spec and its code reach review in one pull request, after the gate passed;
+a test that disproves the spec text is fixed in the same change.
 
 ### When the change modifies a shipped requirement
 
