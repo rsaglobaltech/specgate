@@ -86,7 +86,7 @@ export function attackProject(fixture: string, into: string, seal = true): strin
   fs.mkdirSync(path.dirname(path.join(dir, STEPS)), { recursive: true });
   fs.writeFileSync(path.join(dir, STEPS), HONEST);
   fs.writeFileSync(
-    path.join(dir, "docs", "specs", "changes", CHANGE, "acceptance.md"),
+    path.join(dir, "docs", "specs", "changes", CHANGE, "acceptance-tests.md"),
     `# Acceptance\n\n- ${STEPS} — SCN-002a, SCN-002b\n`
   );
   if (seal) {

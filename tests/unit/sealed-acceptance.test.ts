@@ -85,7 +85,7 @@ function listed(): { dir: string; scn: string } {
   const p = csvProject();
   assert.equal(cli(p.dir, ["change", "approve", "export-csv"]).status, 0);
   write(p.dir, TEST, TEST_TEXT);
-  write(p.dir, "docs/specs/changes/export-csv/acceptance.md", `# Acceptance\n\n- ${TEST} — ${p.scn}\n`);
+  write(p.dir, "docs/specs/changes/export-csv/acceptance-tests.md", `# Acceptance\n\n- ${TEST} — ${p.scn}\n`);
   return p;
 }
 
@@ -120,7 +120,7 @@ test("REQ-757 SCN-757a: sealed as they are — the approval holds the file's sha
 
 test("REQ-757 SCN-757b: a test that proves no scenario — refused, nothing recorded", () => {
   const { dir } = listed();
-  write(dir, "docs/specs/changes/export-csv/acceptance.md", `- ${TEST} — SCN-999z\n`);
+  write(dir, "docs/specs/changes/export-csv/acceptance-tests.md", `- ${TEST} — SCN-999z\n`);
   const r = sealAcceptance(dir);
   assert.notEqual(r.status, 0, r.stdout);
   assert.ok(codes(r.stdout).includes("acceptance_unknown_scenario"), r.stdout);
@@ -130,14 +130,14 @@ test("REQ-757 SCN-757b: a test that proves no scenario — refused, nothing reco
 
 test("REQ-757: a listed file that is not there, or a change not approved — refused", () => {
   const { dir, scn } = listed();
-  write(dir, "docs/specs/changes/export-csv/acceptance.md", `- tests/acceptance/missing.spec.ts — ${scn}\n`);
+  write(dir, "docs/specs/changes/export-csv/acceptance-tests.md", `- tests/acceptance/missing.spec.ts — ${scn}\n`);
   let r = sealAcceptance(dir);
   assert.notEqual(r.status, 0);
   assert.ok(codes(r.stdout).includes("acceptance_file_missing"), r.stdout);
 
   const fresh = csvProject();
   write(fresh.dir, TEST, TEST_TEXT);
-  write(fresh.dir, "docs/specs/changes/export-csv/acceptance.md", `- ${TEST} — ${fresh.scn}\n`);
+  write(fresh.dir, "docs/specs/changes/export-csv/acceptance-tests.md", `- ${TEST} — ${fresh.scn}\n`);
   r = cli(fresh.dir, ["change", "approve", "export-csv", "--layer", "acceptance", "--json"]);
   assert.notEqual(r.status, 0);
   assert.ok(codes(r.stdout).includes("acceptance_change_not_approved"), r.stdout);
@@ -157,7 +157,7 @@ test("REQ-757 SCN-757c: any language — a Maven integration test is sealed the 
   const java = "src/test/java/shop/FeesAcceptanceIT.java";
   const text = "package shop;\nclass FeesAcceptanceIT { @org.junit.jupiter.api.Test void fees() {} }\n";
   write(dir, java, text);
-  write(dir, "docs/specs/changes/export-csv/acceptance.md", `- ${java} — ${scn}\n`);
+  write(dir, "docs/specs/changes/export-csv/acceptance-tests.md", `- ${java} — ${scn}\n`);
   assert.equal(sealAcceptance(dir).status, 0);
   assert.deepEqual(readAcceptanceSeals(dir, "export-csv").seals, { [java]: sha(text) });
 });
@@ -316,10 +316,25 @@ test("REQ-760 SCN-760c: the sealed test came first — a source write is allowed
   );
 });
 
-test("REQ-757: a line of acceptance.md without its bullet is read; prose is not", () => {
+test("REQ-757: a line of acceptance-tests.md without its bullet is read; prose is not", () => {
   const { acceptanceList } = require("../../scripts/lib/acceptance");
   const { dir, scn } = listed();
-  write(dir, "docs/specs/changes/export-csv/acceptance.md", `# Acceptance\n\nThese prove the export - see below.\n\n${TEST} — ${scn}\n- \`src/test/java/A.java\` — ${scn}\n`);
+  write(dir, "docs/specs/changes/export-csv/acceptance-tests.md", `# Acceptance\n\nThese prove the export - see below.\n\n${TEST} — ${scn}\n- \`src/test/java/A.java\` — ${scn}\n`);
   const list = acceptanceList(dir, "export-csv");
   assert.deepEqual(list.map((l: { path: string }) => l.path), [TEST, "src/test/java/A.java"]);
+});
+
+test("REQ-757 SCN-757d: the sign-off checklist is not a list of tests — acceptance.md stays specgate acceptance's", () => {
+  const p = csvProject();
+  assert.equal(cli(p.dir, ["change", "approve", "export-csv"]).status, 0);
+  const checklist = cli(p.dir, ["acceptance", "export-csv"]);
+  assert.equal(checklist.status, 0, checklist.stdout + checklist.stderr);
+  const file = path.join(p.dir, "docs/specs/changes/export-csv/acceptance.md");
+  const before = fs.readFileSync(file, "utf8");
+  const r = sealAcceptance(p.dir);
+  assert.notEqual(r.status, 0);
+  assert.ok(codes(r.stdout).includes("acceptance_not_listed"), r.stdout);
+  assert.match(r.stdout, /acceptance-tests\.md/);
+  assert.equal(fs.readFileSync(file, "utf8"), before);
+  assert.equal(readAcceptanceSeals(p.dir, "export-csv"), null);
 });

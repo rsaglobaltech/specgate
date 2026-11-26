@@ -2,7 +2,7 @@
  * sealed-acceptance: a change's acceptance tests as part of its approved
  * contract. Someone other than the agent that implements the change writes
  * them, in the project's own test language, and lists each in the change's
- * `acceptance.md` with the scenarios it proves; a person approves them and the
+ * `acceptance-tests.md` with the scenarios it proves; a person approves them and the
  * approval seals each file by its hash (REQ-757). A sealed file that changes
  * fails the gate (REQ-758); the gate runs them with the project's own
  * `acceptance_cmd` (REQ-759); the guard keeps the agent's tools off them, and
@@ -22,7 +22,7 @@ import { levelOf, readGatePolicy } from "./gate-policy";
 import { forShell } from "./shell-command";
 
 export const ACCEPTANCE_LAYER = "acceptance";
-export const ACCEPTANCE_FILE = "acceptance.md";
+export const ACCEPTANCE_FILE = "acceptance-tests.md";
 
 export interface AcceptanceRecord {
   layer: typeof ACCEPTANCE_LAYER;
@@ -56,7 +56,7 @@ export const fileHash = (text: string): string =>
 
 const norm = (p: string) => p.replace(/\\/g, "/").replace(/^\.\//, "");
 
-/** The lines of a change's `acceptance.md`: `- <path> — SCN-…[, SCN-…]`; null when it has none. */
+/** The lines of a change's `acceptance-tests.md`: `- <path> — SCN-…[, SCN-…]`; null when it has none. */
 export function acceptanceList(projectDir: string, id: string): AcceptanceLine[] | null {
   const text = read(path.join(changeDir(projectDir, id), ACCEPTANCE_FILE));
   if (text === null) return null;
@@ -131,7 +131,7 @@ export type SealOutcome =
 
 /**
  * REQ-757: a person approves the change's acceptance tests: each line of its
- * `acceptance.md` names a file that is there and a scenario of the change; the
+ * `acceptance-tests.md` names a file that is there and a scenario of the change; the
  * change itself is approved. Recorded as one more line of `approvals.json`.
  */
 export function sealAcceptance(

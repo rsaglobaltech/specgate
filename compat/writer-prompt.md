@@ -6,7 +6,7 @@ For each scenario of the change, write a test that proves it through the interfa
 
 Write: {kind}
 
-Then list each file you wrote in docs/specs/changes/<change-id>/acceptance.md, one line each:
+Then list each file you wrote in docs/specs/changes/<change-id>/acceptance-tests.md, one line each:
 
 - <path> — <the scenario ids it proves, as SCN-NNNx, comma-separated>
 

@@ -79,7 +79,7 @@ test("REQ-761: what the writer lists comes back sealed; a listed src/ file is re
   const steps = "features/step_definitions/fees.steps.js";
   fs.mkdirSync(path.join(writer, "features", "step_definitions"), { recursive: true });
   fs.writeFileSync(path.join(writer, steps), "// the writer's steps\n");
-  const list = path.join(writer, "docs", "specs", "changes", "draft-fees", "acceptance.md");
+  const list = path.join(writer, "docs", "specs", "changes", "draft-fees", "acceptance-tests.md");
   fs.writeFileSync(list, `- ${steps} — SCN-002a, SCN-002b\n`);
   const r = takeAcceptance(writer, project, "2026-11-26");
   assert.equal(r.ok, true, JSON.stringify(r));

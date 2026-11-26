@@ -2,7 +2,7 @@
  * sealed-acceptance REQ-761: the exam's level L3a — before the agent that
  * implements starts, another agent writes the acceptance tests, in a folder
  * that holds the specification and the design and no source. What it lists in
- * a change's `acceptance.md` comes back to the project, and is sealed as a
+ * a change's `acceptance-tests.md` comes back to the project, and is sealed as a
  * person would seal it.
  */
 import * as fs from "node:fs";
@@ -38,7 +38,7 @@ const changeIds = (dir: string): string[] => {
 };
 
 /**
- * What the writer listed comes back: each change's `acceptance.md` and the
+ * What the writer listed comes back: each change's `acceptance-tests.md` and the
  * files it names, inside the project, outside `src/`. Then each is sealed.
  */
 export function takeAcceptance(
@@ -59,7 +59,7 @@ export function takeAcceptance(
       fs.mkdirSync(path.dirname(path.join(projectDir, rel)), { recursive: true });
       fs.copyFileSync(from, path.join(projectDir, rel));
     }
-    const doc = path.join("docs", "specs", "changes", id, "acceptance.md");
+    const doc = path.join("docs", "specs", "changes", id, "acceptance-tests.md");
     fs.copyFileSync(path.join(writerDir, doc), path.join(projectDir, doc));
     const r = sealAcceptance(projectDir, id, today, { name: "exam (as the person)", email: "exam@specgate.invalid" });
     if (!r.ok) return { ok: false, reason: `the writer's tests could not be sealed: ${r.message}` };

@@ -10,4 +10,4 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-757 — the sealed tests are listed in acceptance-tests.md, apart from the sign-off checklist
+- [x] 2.1 REQ-757 — the sealed tests are listed in acceptance-tests.md, apart from the sign-off checklist
