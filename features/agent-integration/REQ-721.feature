@@ -1,4 +1,3 @@
-@change:compat-evidence
 Feature: The trap
 
   @REQ-721 @SCN-721a

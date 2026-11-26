@@ -1,4 +1,3 @@
-@change:compat-sandboxed
 Feature: A self-approving tool is not run outside a sandbox
 
   @REQ-738 @SCN-738a

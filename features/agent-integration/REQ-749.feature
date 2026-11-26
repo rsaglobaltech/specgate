@@ -1,4 +1,3 @@
-@change:person-approves
 Feature: The exam proves which Specgate the agent reaches
 
   @REQ-749 @SCN-749a

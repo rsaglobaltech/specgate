@@ -1,4 +1,3 @@
-@change:compat-evidence
 Feature: Several tasks, each with its verdict
 
   @REQ-720 @SCN-720a

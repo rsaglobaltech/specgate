@@ -196,23 +196,24 @@ SHALL name that verb in the first line of each old name's `--help`.
 
 #### Scenario: SCN-115a — A script written for 0.20
 
-- GIVEN a CI script that runs `specgate change new add-dynamic-pricing` and later `specgate done REQ-002`
+- GIVEN a CI script that runs `specgate change new add-dynamic-pricing` and later, the change approved, `specgate done REQ-002`
 - WHEN it runs against this version
 - THEN both commands succeed as `propose` and `apply` would
 - AND `specgate change archive --help` starts with "Same as specgate archive"
 
 <!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-115.feature kind=functional status=Implemented test=tests/unit/compact-use.test.ts -->
 
-### Requirement: REQ-116 — One loop, four verbs
+### Requirement: REQ-116 — One loop: four verbs and an approval
 
 The system SHALL let a developer take a requirement from nothing to archived
 and Implemented using only `init`, `propose`, `apply`, `archive` and `status`,
-editing only the change's delta, a test and the code.
+and the approval of the change, `change approve`, before `apply`, editing only
+the change's delta, a test and the code.
 
 #### Scenario: SCN-116a — The loop end to end
 
 - GIVEN a Node.js repository with code, a `package.json` and a passing `npm test`
-- WHEN the developer runs `specgate init`, `specgate propose add-greeting`, writes one requirement in the change's delta, a test naming it and the code, then runs `specgate status`, `specgate apply` and `specgate archive add-greeting`
+- WHEN the developer runs `specgate init`, `specgate propose add-greeting`, writes one requirement in the change's delta, a test naming it and the code, then runs `specgate status`, `specgate change approve add-greeting`, `specgate apply` and `specgate archive add-greeting`
 - THEN every command exits 0, the requirement is Implemented in its capability spec, and `specgate status` no longer lists it as pending
 - AND no other specgate command was run
 

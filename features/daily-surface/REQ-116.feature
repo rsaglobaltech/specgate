@@ -1,4 +1,3 @@
-@change:outside-judge
 Feature: One loop: four verbs and an approval
 
   @REQ-116 @SCN-116a

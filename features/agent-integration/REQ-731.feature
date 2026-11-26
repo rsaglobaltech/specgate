@@ -1,4 +1,3 @@
-@change:compat-honest
 Feature: The trap with the scenarios executed
 
   @REQ-731 @SCN-731a

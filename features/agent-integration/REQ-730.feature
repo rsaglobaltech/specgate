@@ -1,4 +1,3 @@
-@change:compat-honest
 Feature: A run in which the tool never worked is invalid, not failed
 
   @REQ-730 @SCN-730a

@@ -1,4 +1,3 @@
-@change:compat-evidence
 Feature: The control without Specgate
 
   @REQ-719 @SCN-719a

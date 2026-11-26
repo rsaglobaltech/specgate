@@ -1,4 +1,3 @@
-@change:compat-evidence
 Feature: Recovering from a red gate
 
   @REQ-722 @SCN-722a

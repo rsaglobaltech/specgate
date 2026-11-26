@@ -1,4 +1,3 @@
-@change:outside-judge
 Feature: A guided tour of the loop that leaves the repository untouched
 
   @REQ-134 @SCN-134a

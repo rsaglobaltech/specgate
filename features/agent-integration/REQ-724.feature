@@ -1,4 +1,3 @@
-@change:compat-evidence
 Feature: Delivery and use apart, per tool, model and task
 
   @REQ-724 @SCN-724a

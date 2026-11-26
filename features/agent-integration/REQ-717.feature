@@ -1,4 +1,3 @@
-@change:compat-evidence
 Feature: Specgate's server and plugin record what they saw
 
   @REQ-717 @SCN-717a

@@ -1,4 +1,3 @@
-@change:codex-guard
 Feature: Each level gives the tool exactly its integration
 
   @REQ-712 @SCN-712a

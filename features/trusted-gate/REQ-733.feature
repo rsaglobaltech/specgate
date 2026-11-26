@@ -1,4 +1,3 @@
-@change:gate-runs-scenarios
 Feature: The harness gate runs the requirement's scenarios
 
   @REQ-733 @SCN-733a

@@ -1,4 +1,3 @@
-@change:gate-runs-scenarios
 Feature: Check runs the delivered requirements' scenarios
 
   @REQ-734 @SCN-734a

@@ -705,7 +705,7 @@ The system SHALL, on `specgate scenarios <REQ> [--json]`, run each scenario of t
 - WHEN the Developer runs `specgate scenarios REQ-031 --json`
 - THEN it is refused with `bdd_cmd_missing`, its fix `specgate config set bdd_cmd`
 
-<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-666.feature artifact='scripts/cli/commands/spec/ScenariosCommand.ts, scripts/scenarios.ts' actor=Developer kind=functional -->
+<!-- specgate:trace actor=Developer artifact="scripts/cli/commands/spec/ScenariosCommand.ts, scripts/scenarios.ts" feature=features/trusted-gate/REQ-666.feature kind=functional status=Implemented -->
 
 ### Requirement: REQ-503 — Every check answer lists its stages
 
@@ -819,7 +819,7 @@ The system SHALL read what the gate requires from `.specgate/gate.yaml`: a `pres
 - WHEN the developer runs `specgate validate . --strict`
 - THEN it exits 1 with `gate_policy_invalid`, naming `lax` and `speed` and the presets and rules to use
 
-<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-604.feature test='tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts' actor=Developer kind=functional -->
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-604.feature kind=functional status=Implemented test="tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts" -->
 
 ### Requirement: REQ-605 — The gate fails, reports or skips each rule as the policy says
 
@@ -843,7 +843,7 @@ The system SHALL, under `validate --strict` and `check`, report the findings of 
 - WHEN the developer runs `specgate check`
 - THEN it exits 1 with `check_validate_failed`, and prints no `Policy` line
 
-<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-605.feature test='tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts' actor=Developer kind=functional -->
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-605.feature kind=functional status=Implemented test="tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts" -->
 
 ### Requirement: REQ-606 — The policy is configured, and a new project starts standard
 
@@ -861,7 +861,7 @@ The system SHALL accept `specgate config set gate.preset <preset>`, `gate.rules.
 - WHEN the developer runs `specgate init --no-ci`
 - THEN `.specgate/gate.yaml` says `preset: standard` and lists the seven rules
 
-<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-606.feature test='tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts' actor=Developer kind=functional -->
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-606.feature kind=functional status=Implemented test="tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts" -->
 
 ### Requirement: REQ-654 — A command that takes time tells how far it is
 
@@ -888,3 +888,379 @@ The system SHALL, when SPECGATE_PROGRESS_FILE names a file, have `specgate apply
 - THEN the file says validate running and how it ended, then tests running and how it ended
 
 <!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-654.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-739 — Approving a change seals each of its requirements
+
+The system SHALL, on `specgate change approve <id>`, record for each requirement of the change's delta a seal of its heading, its statement and its scenarios — the `specgate:trace` comment left out —, at every rigor, a change of lite rigor with nothing written in its layers included.
+
+> Found on 2026-11-24: an approval remembered the discover, the design and the tasks, and not the requirements; at lite rigor, a date.
+
+#### Scenario: SCN-739a — Sealed at lite rigor
+
+- GIVEN draft-pedidos of lite rigor with REQ-031 and nothing written in its layers
+- WHEN the Developer runs `specgate change approve draft-pedidos`
+- THEN approvals.json has a seal for REQ-031
+
+#### Scenario: SCN-739b — Delivering is not changing
+
+- GIVEN draft-pedidos approved with REQ-031 sealed
+- WHEN `specgate apply REQ-031` writes its status in the delta
+- THEN REQ-031's seal still matches, and the gate says nothing of it
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-739.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-740 — The gate fails when an approved requirement changed
+
+The system SHALL fail `specgate validate --strict` — and so `check`, `apply` and the harness gate — with `approved_requirement_changed` for each requirement of an approved change whose statement or scenarios differ from its seal, that was added after the approval, or that was sealed and is gone, naming the requirement and which of the three, whose fix is to approve the change again; and SHALL pass once it is approved again.
+
+> Measured on 2026-11-24: an approved requirement rewritten from "0.50 a day, at most 10.00" to "1.00 a day, at most 20.00", and `specgate check` passed.
+
+#### Scenario: SCN-740a — A requirement rewritten after approval
+
+- GIVEN draft-pedidos approved, then REQ-031's statement changed to let a shipped order be cancelled
+- WHEN the Developer runs `specgate check`
+- THEN the gate fails with `approved_requirement_changed` naming REQ-031 as changed, whose fix is `specgate change approve draft-pedidos`
+
+#### Scenario: SCN-740b — A scenario loosened
+
+- GIVEN draft-pedidos approved, then SCN-032's THEN changed from "is not cancelled" to "is cancelled"
+- WHEN the Developer runs `specgate check`
+- THEN the gate fails with `approved_requirement_changed` naming REQ-031
+
+#### Scenario: SCN-740c — Approved again
+
+- GIVEN the same change after its requirement was rewritten
+- WHEN the Developer runs `specgate change approve draft-pedidos` and then `specgate check`
+- THEN the finding is gone
+
+#### Scenario: SCN-740d — A requirement slipped in
+
+- GIVEN draft-pedidos approved, then REQ-032 added to its delta
+- WHEN the Developer runs `specgate check`
+- THEN the gate fails with `approved_requirement_changed` naming REQ-032 as added after the approval
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-740.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-741 — A change approved before seals existed is said to be unsealed
+
+The system SHALL, for a change approved with no seals recorded, warn `approval_not_sealed` naming the change, whose fix is `specgate change approve <id>`, and pass the gate as it did.
+
+> Every project approved its changes before this: they are not broken by it.
+
+#### Scenario: SCN-741a — Approved by an earlier Specgate
+
+- GIVEN draft-pedidos approved with only `approved: 2026-11-01` in its change.yaml
+- WHEN the Developer runs `specgate check`
+- THEN the gate passes with the warning `approval_not_sealed` naming draft-pedidos
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-741.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-733 — The harness gate runs the requirement's scenarios
+
+The system SHALL, on `specgate harness run` in a project with `bdd: required`, run the requirement's scenarios through `bdd_cmd` as the gate's stage `scenarios`, after the test command; fail the attempt when they do not end well, telling the next attempt which scenarios failed and what they printed; and mark no requirement delivered whose scenarios failed.
+
+> Found on 2026-11-24: the harness marked a requirement delivered without running its scenarios — it skips apply's gate, having run its own, and the scenarios were in neither.
+
+#### Scenario: SCN-733a — Built to a test that says something else
+
+- GIVEN a project with `bdd: required`, REQ-004 pending, and an agent whose code passes the test command and fails REQ-004's scenarios
+- WHEN the Developer runs `specgate harness run --req REQ-004 --max-attempts 1`
+- THEN REQ-004 fails at the stage `scenarios`, is not Implemented, and the report names the scenario that failed
+
+#### Scenario: SCN-733b — Its scenarios pass
+
+- GIVEN the same project and an agent whose code passes the test command and REQ-004's scenarios
+- WHEN the Developer runs `specgate harness run --req REQ-004`
+- THEN the gate's stages include `scenarios`, passed, and REQ-004 is Implemented
+
+#### Scenario: SCN-733c — Not required, not run
+
+- GIVEN a project whose gate.yaml does not say `bdd: required`
+- WHEN the Developer runs `specgate harness run --req REQ-004`
+- THEN the gate has no stage `scenarios`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-733.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-734 — Check runs the delivered requirements' scenarios
+
+The system SHALL, on `specgate check` in a project with `bdd: required` and a `bdd_cmd`, run as the stage `scenarios` the scenarios of each delivered requirement that has a feature file, one requirement after the other, and fail naming each requirement and scenario that did not end well; with `--no-scenarios` it SHALL leave the stage out and report it as skipped at the Developer's word.
+
+> What CI runs is `specgate check`: code changed after its requirement was delivered, to say something else than its scenario, passed there.
+
+#### Scenario: SCN-734a — Code changed after delivery
+
+- GIVEN a project with `bdd: required`, REQ-004 Implemented, and code changed so REQ-004's scenario SCN-004a fails while the test command passes
+- WHEN the Developer runs `specgate check`
+- THEN the gate fails at the stage `scenarios` with `check_scenarios_failed` naming REQ-004 and SCN-004a
+
+#### Scenario: SCN-734b — Left out at the Developer's word
+
+- GIVEN the same project
+- WHEN the Developer runs `specgate check --no-scenarios`
+- THEN the stage `scenarios` is reported skipped, naming the flag, and the other stages decide
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-734.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-735 — A delivery on a test alone says so
+
+The system SHALL, in a project whose gate does not require executable scenarios, say on `specgate apply <REQ>` that the requirement was delivered on a test that names it and that its scenarios were not run, with `specgate migrate bdd` as the way; and show on `specgate status` how many delivered requirements stand so.
+
+> One warning for the whole project let every requirement look checked against its scenarios.
+
+#### Scenario: SCN-735a — Delivered, and said plainly
+
+- GIVEN a project without `bdd: required` and REQ-004 with a passing test that names it
+- WHEN the Developer runs `specgate apply REQ-004`
+- THEN REQ-004 is Implemented and the output says its scenarios were not run, naming `specgate migrate bdd`
+
+#### Scenario: SCN-735b — Status counts the requirements delivered on a test alone
+
+- GIVEN that project with three requirements delivered
+- WHEN the Developer runs `specgate status --json`
+- THEN the answer says 3 requirements were delivered without their scenarios run
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-735.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-742 — Source written by any means before its test stops the session
+
+The system SHALL, where Specgate's hooks run in the agent's tool, refuse the agent's next tool call — its shell included — while the working tree holds a new or changed source file and no new or changed test names a requirement of the open change, naming the file and the requirement whose test is owed; and SHALL allow a call that reads, and a call that writes a test.
+
+> Measured on 2026-11-24: refused a write to src/fees.js, an agent wrote it with `cat > src/fees.js` in its shell, five times of six.
+
+#### Scenario: SCN-742a — Written through the shell
+
+- GIVEN draft-fees open with REQ-002 and no test changed, and src/fees.js written by a shell command
+- WHEN the agent calls its shell again
+- THEN the call is refused, naming src/fees.js and REQ-002
+
+#### Scenario: SCN-742b — The test puts it right
+
+- GIVEN the same session, refused
+- WHEN the agent writes test/fees.test.js naming REQ-002, then calls its shell
+- THEN the write is allowed, and the shell call after it
+
+#### Scenario: SCN-742c — Reading is not stopped
+
+- GIVEN the same session, refused
+- WHEN the agent reads spec.md
+- THEN the call is allowed
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-742.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-743 — Step definitions changed after the code began fail the gate
+
+The system SHALL record the step definitions of a requirement's scenarios as they are when the first source file of its delivery is written, and SHALL fail `specgate apply` and the harness gate with `steps_changed_after_code` when a step definition was added or changed after that, naming the file, whose fix is for a person to review it and run `specgate apply <REQ> --steps-reviewed`; and SHALL say, where nothing recorded them, that the steps were written in the same delivery as the code.
+
+> Measured on 2026-11-24: its code built to a test that said otherwise, an agent wrote the step "the fee is {float}" as `assert.equal(fee, expected * 2)`, and the gate's scenarios passed, three times of three.
+
+#### Scenario: SCN-743a — Steps bent to the code
+
+- GIVEN REQ-002's steps recorded when src/fees.js was first written
+- WHEN features/step_definitions/fees.steps.js is changed, and the Developer runs `specgate apply REQ-002`
+- THEN apply fails with `steps_changed_after_code` naming features/step_definitions/fees.steps.js
+
+#### Scenario: SCN-743b — Steps first
+
+- GIVEN REQ-002's step definitions written before any source file, and not changed since
+- WHEN the Developer runs `specgate apply REQ-002`
+- THEN the gate says nothing of the steps
+
+#### Scenario: SCN-743c — A person looked
+
+- GIVEN the finding of SCN-743a
+- WHEN the Developer runs `specgate apply REQ-002 --steps-reviewed`
+- THEN REQ-002 is delivered, and its evidence says the steps were reviewed and by whom
+
+#### Scenario: SCN-743d — Nothing recorded them
+
+- GIVEN REQ-002 delivered with no hook and no harness, its step definitions new in the working tree
+- WHEN the Developer runs `specgate apply REQ-002`
+- THEN apply passes, saying the steps were written in the same delivery as the code and were not reviewed
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-743.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-744 — A delivery says the source files its change's design does not name
+
+The system SHALL, when the design of an approved change names source files, report `file_outside_design` for each new source file of a delivery that the design does not name, as a warning, and as an error where the gate's rule `scope` is `error`, whose fix is to name the file in the design and have it approved again, or to open a change for it; and SHALL say nothing where the design names no source file.
+
+> Measured on 2026-11-24: asked for a function no requirement asked for, an agent wrote src/export.js and a test that named REQ-002, the late fee, and the gate passed, three times of three.
+
+#### Scenario: SCN-744a — A file nobody designed
+
+- GIVEN draft-fees approved, its design naming src/fees.js, and the rule `scope: error`
+- WHEN a delivery adds src/export.js and the Developer runs `specgate check`
+- THEN the gate fails with `file_outside_design` naming src/export.js
+
+#### Scenario: SCN-744b — A warning by default
+
+- GIVEN the same project with no `scope` rule
+- WHEN the Developer runs `specgate check`
+- THEN the gate passes with the warning `file_outside_design` naming src/export.js
+
+#### Scenario: SCN-744c — A design that names no file
+
+- GIVEN draft-fees of lite rigor, its design not written
+- WHEN a delivery adds src/export.js and the Developer runs `specgate check`
+- THEN the gate says nothing of it
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-744.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-745 — A requirement of a change nobody approved is not delivered
+
+The system SHALL refuse `specgate apply` for a requirement of an open change that is not approved, where the project's approvals are required, with `change_not_approved`, naming the change and the approval it waits for, whose fix is `specgate change approve`, by a person; and SHALL deliver as before a requirement of an approved change, a requirement no change owns, and any requirement where `approvals.required` is `never`.
+
+> Measured on 2026-11-25: asked for something no requirement asks for, an agent opened a change, wrote REQ-005 itself and delivered it with `specgate apply`. Nobody approved it.
+
+#### Scenario: SCN-745a — Its own requirement
+
+- GIVEN export-loans open with REQ-005, written in the session and approved by nobody
+- WHEN `specgate apply REQ-005` runs with the gate green
+- THEN apply fails with `change_not_approved` naming export-loans, and REQ-005 stays as it was
+
+#### Scenario: SCN-745b — An approved change is delivered
+
+- GIVEN the same change, approved
+- WHEN `specgate apply REQ-005` runs
+- THEN REQ-005 is delivered
+
+#### Scenario: SCN-745c — A project that asks for no approvals
+
+- GIVEN the change of SCN-745a and `approvals: { required: never }`
+- WHEN `specgate apply REQ-005` runs
+- THEN REQ-005 is delivered
+
+#### Scenario: SCN-745d — No change owns it
+
+- GIVEN REQ-001 written straight into spec.md
+- WHEN `specgate apply REQ-001` runs
+- THEN apply says nothing of approvals
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-745.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-746 — A person's acts are refused to the agent's session
+
+The system SHALL, where Specgate's hooks run in the agent's tool, refuse a tool call of the agent's that approves a change, switches the guard, says a person reviewed the steps, or writes, moves or removes the files the controls keep — the guard's switch, the gate's policy, the evidence, a change's approvals — saying the act is a person's; SHALL allow a call that reads them; SHALL NOT say, in any refusal of the guard, how to switch the guard off; and SHALL, in OpenCode, keep the guard as it was when the session started.
+
+> Measured on 2026-11-25: refused, an agent ran `specgate config set agent_guard off` — the refusal had told it to — in two runs of twelve, removed `.specgate/evidence` in three, and ran `specgate apply --steps-reviewed` inside a terminal it made for itself in one.
+
+#### Scenario: SCN-746a — Switching the guard off
+
+- GIVEN a session of the agent's in a project with the guard on
+- WHEN the agent's shell runs `specgate config set agent_guard off`
+- THEN the call is refused, saying that switching the guard is a person's
+
+#### Scenario: SCN-746b — Approving its own change
+
+- GIVEN the same session
+- WHEN the agent's shell runs `specgate change approve draft-fees`
+- THEN the call is refused, saying that approving is a person's
+
+#### Scenario: SCN-746c — A review nobody made
+
+- GIVEN the same session
+- WHEN the agent's shell runs `specgate apply REQ-002 --steps-reviewed`
+- THEN the call is refused, saying that reviewing the steps is a person's
+
+#### Scenario: SCN-746d — The record removed
+
+- GIVEN the same session
+- WHEN the agent's shell runs `rm -rf .specgate/evidence`, or its file tool writes `.specgate/config.json`
+- THEN the call is refused, naming the file
+
+#### Scenario: SCN-746e — Reading is allowed
+
+- GIVEN the same session
+- WHEN the agent's shell runs `cat .specgate/evidence/REQ-002/steps.json`
+- THEN the call is allowed
+
+#### Scenario: SCN-746f — No way out in the refusal
+
+- GIVEN source written before its test
+- WHEN the guard refuses
+- THEN the refusal does not name `agent_guard`
+
+#### Scenario: SCN-746g — The switch, after the session started
+
+- GIVEN an OpenCode session started with the guard on
+- WHEN `.specgate/config.json` comes to say `agent_guard: off`, and the agent writes source before its test
+- THEN the write is refused
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-746.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-747 — A run that changed the controls fails, judged from outside it
+
+The system SHALL, in `specgate harness run` and in `specgate compat run`, read the controls before the agent starts — the guard's switch, the gate's policy, each open change's approvals, the evidence, the steps said to be reviewed — keep that reading where the agent does not write, and fail the attempt or the run with `controls_changed_by_session` when the agent stops, naming each one that changed; SHALL read the steps against the record the guard wrote to the hook log, where there is one, so a record removed from the project is still seen; and SHALL say nothing of a run that changed none.
+
+> Measured on 2026-11-25: every control a run went around was a file in the folder the run was writing.
+
+#### Scenario: SCN-747a — The guard switched off
+
+- GIVEN a run whose project has the guard on when the agent starts
+- WHEN the agent stops with `agent_guard: off` in the project
+- THEN the run fails with `controls_changed_by_session`, naming the guard
+
+#### Scenario: SCN-747b — Approved by the session
+
+- GIVEN a run whose change export-loans has no approval when the agent starts
+- WHEN the agent stops with export-loans approved
+- THEN the run fails with `controls_changed_by_session`, naming the approval of export-loans
+
+#### Scenario: SCN-747c — The record removed
+
+- GIVEN a run whose guard wrote REQ-002's steps to the hook log
+- WHEN the agent stops with no record in the project and features/fees/REQ-002.steps.js changed since
+- THEN the run fails with `controls_changed_by_session`, naming the steps of REQ-002
+
+#### Scenario: SCN-747d — A run that kept to them
+
+- GIVEN a run that wrote its test, its code and its evidence
+- WHEN the agent stops
+- THEN the judge says nothing of the controls
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-747.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-748 — Approving takes a person at a terminal
+
+The system SHALL refuse `specgate change approve` when its input is not a terminal and `SPECGATE_ASSUME_TTY` is not set, with `approve_needs_person`, saying approving is a person's act and recording nothing; and SHALL approve as before at a terminal and through the studio's Review.
+
+> Measured on 2026-11-25: Codex, which runs Specgate with no hooks, ran `specgate change approve export-csv --layer design` on the change it had just written, and the command approved it.
+
+#### Scenario: SCN-748a — An agent's command
+
+- GIVEN export-csv open and not approved
+- WHEN `specgate change approve export-csv` runs with no terminal
+- THEN it fails with `approve_needs_person`, and export-csv has no approval
+
+#### Scenario: SCN-748b — A person at a terminal
+
+- GIVEN the same change
+- WHEN a person runs `specgate change approve export-csv` at a terminal
+- THEN export-csv is approved
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-748.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-754 — A branch's changes to the controls are named for its reviewer
+
+The system SHALL, when `specgate check` compares the project with a base, name with `controls_changed_on_branch` each control the branch changed against the merge base — the guard switched off, the gate's policy, an open change's approval, a requirement's evidence removed —, leaving out the approval of a change the branch archived; SHALL report them as warnings unless the gate's policy sets `controls: error`, which fails the gate; and SHALL say nothing of a branch that changed none.
+
+> Measured on 2026-11-25: every control an agent went around was a file of the project. On a branch, nothing told the reviewer that one had changed.
+
+#### Scenario: SCN-754a — The guard switched off on a branch
+
+- GIVEN a branch of main whose `.specgate/config.json` switches the guard off
+- WHEN `specgate check --base main` runs
+- THEN it warns with `controls_changed_on_branch` that the guard was switched off, and the gate passes
+
+#### Scenario: SCN-754b — The policy says error
+
+- GIVEN the same branch, and `controls: error` in `.specgate/gate.yaml` on main
+- WHEN `specgate check --base main` runs
+- THEN the gate fails with `controls_changed_on_branch`
+
+#### Scenario: SCN-754c — An archived change, and a branch that changed nothing
+
+- GIVEN a branch of main that archived an approved change, and one that only changed the code
+- WHEN `specgate check --base main` runs on each
+- THEN neither is told of `controls_changed_on_branch`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-754.feature kind=functional status=Implemented -->

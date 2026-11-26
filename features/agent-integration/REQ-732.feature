@@ -1,4 +1,3 @@
-@change:compat-honest
 Feature: The exam before a release
 
   @REQ-732 @SCN-732a

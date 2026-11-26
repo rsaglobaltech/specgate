@@ -1,4 +1,3 @@
-@change:codex-guard
 Feature: Codex runs Specgate's guards
 
   @REQ-751 @SCN-751a

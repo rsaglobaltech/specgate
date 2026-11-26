@@ -1,4 +1,3 @@
-@change:shortcut-proof
 Feature: A delivery says the source files its change's design does not name
 
   @REQ-744 @SCN-744a

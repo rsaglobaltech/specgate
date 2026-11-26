@@ -1,4 +1,3 @@
-@change:approved-delta
 Feature: The gate fails when an approved requirement changed
 
   @REQ-740 @SCN-740a

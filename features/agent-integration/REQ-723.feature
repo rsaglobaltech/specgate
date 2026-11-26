@@ -1,4 +1,3 @@
-@change:compat-evidence
 Feature: A request with no requirement
 
   @REQ-723 @SCN-723a

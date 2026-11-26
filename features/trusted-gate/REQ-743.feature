@@ -1,4 +1,3 @@
-@change:shortcut-proof
 Feature: Step definitions changed after the code began fail the gate
 
   @REQ-743 @SCN-743a

@@ -1,4 +1,3 @@
-@change:compat-evidence
 Feature: The tool's own session kept
 
   @REQ-718 @SCN-718a

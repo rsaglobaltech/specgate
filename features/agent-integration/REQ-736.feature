@@ -1,4 +1,3 @@
-@change:compat-sandboxed
 Feature: The agent runs inside a sandbox that holds its run and nothing else
 
   @REQ-736 @SCN-736a

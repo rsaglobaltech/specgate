@@ -1,4 +1,3 @@
-@change:opencode-plugin-v2
 Feature: The exam runs OpenCode with a configuration of its own
 
   @REQ-729 @SCN-729a

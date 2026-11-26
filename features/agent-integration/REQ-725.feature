@@ -1,4 +1,3 @@
-@change:compat-evidence
 Feature: The model ladder and the cost per delivered requirement
 
   @REQ-725 @SCN-725a

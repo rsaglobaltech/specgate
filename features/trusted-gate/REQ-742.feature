@@ -1,4 +1,3 @@
-@change:shortcut-proof
 Feature: Source written by any means before its test stops the session
 
   @REQ-742 @SCN-742a

@@ -1,4 +1,3 @@
-@change:opencode-plugin-v2
 Feature: The OpenCode plugin loads in OpenCode 2
 
   @REQ-727 @SCN-727a

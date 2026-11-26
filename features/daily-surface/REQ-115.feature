@@ -1,4 +1,3 @@
-@change:outside-judge
 Feature: The old names keep working
 
   @REQ-115 @SCN-115a

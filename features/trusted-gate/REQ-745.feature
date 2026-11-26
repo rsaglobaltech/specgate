@@ -1,4 +1,3 @@
-@change:outside-judge
 Feature: A requirement of a change nobody approved is not delivered
 
   @REQ-745 @SCN-745a

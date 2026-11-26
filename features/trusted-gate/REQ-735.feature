@@ -1,4 +1,3 @@
-@change:gate-runs-scenarios
 Feature: A delivery on a test alone says so
 
   @REQ-735 @SCN-735a

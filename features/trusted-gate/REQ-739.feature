@@ -1,4 +1,3 @@
-@change:approved-delta
 Feature: Approving a change seals each of its requirements
 
   @REQ-739 @SCN-739a

@@ -1,4 +1,3 @@
-@change:opencode-plugin-v2
 Feature: The plugin's three jobs on OpenCode 2's hooks
 
   @REQ-728 @SCN-728a

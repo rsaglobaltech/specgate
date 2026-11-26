@@ -1,4 +1,3 @@
-@change:person-approves
 Feature: Approving takes a person at a terminal
 
   @REQ-748 @SCN-748a

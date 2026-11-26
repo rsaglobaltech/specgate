@@ -1,4 +1,3 @@
-@change:compat-sandboxed
 Feature: The sandbox's network is its provider and the registry
 
   @REQ-737 @SCN-737a

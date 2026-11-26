@@ -1,4 +1,3 @@
-@change:outside-judge
 Feature: A person's acts are refused to the agent's session
 
   @REQ-746 @SCN-746a

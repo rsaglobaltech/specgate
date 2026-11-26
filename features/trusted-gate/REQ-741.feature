@@ -1,4 +1,3 @@
-@change:approved-delta
 Feature: A change approved before seals existed is said to be unsealed
 
   @REQ-741 @SCN-741a

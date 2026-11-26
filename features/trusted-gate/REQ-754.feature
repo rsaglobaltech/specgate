@@ -1,4 +1,3 @@
-@change:branch-controls
 Feature: A branch's changes to the controls are named for its reviewer
 
   @REQ-754 @SCN-754a

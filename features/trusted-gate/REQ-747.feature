@@ -1,4 +1,3 @@
-@change:outside-judge
 Feature: A run that changed the controls fails, judged from outside it
 
   @REQ-747 @SCN-747a

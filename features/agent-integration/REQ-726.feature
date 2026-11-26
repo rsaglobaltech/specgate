@@ -1,4 +1,3 @@
-@change:compat-evidence
 Feature: The server as the only way to Specgate
 
   @REQ-726 @SCN-726a
