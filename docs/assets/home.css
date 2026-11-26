@@ -1118,7 +1118,7 @@ html:not(.js) .jn__panel + .jn__panel { margin-top: var(--space-16); }
 }
 .lx-hero .lx-wrap { display: flex; flex-direction: column; gap: 22px; }
 .lx-eyebrow { margin: 0; font: 500 12px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #ff8a5c; }
-.lx-title { margin: 0; font-family: var(--display); font-weight: 800; font-size: clamp(38px, 6vw, 76px); line-height: .98; letter-spacing: -.03em; max-width: 12em; text-wrap: balance; }
+.lx-title { margin: 0; font-family: var(--display); font-weight: 800; font-size: clamp(30px, 6vw, 76px); hyphens: auto; overflow-wrap: break-word; line-height: .98; letter-spacing: -.03em; max-width: 12em; text-wrap: balance; }
 .lx-title span { color: #ff5b1f; }
 .lx-lede-row { display: flex; flex-wrap: wrap; gap: 18px 48px; align-items: flex-end; justify-content: space-between; }
 .lx-lede { margin: 0; flex: 1 1 440px; min-width: 0; max-width: 40em; font-size: 17px; line-height: 1.55; color: #bdb7ac; }
