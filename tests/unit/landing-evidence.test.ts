@@ -21,10 +21,11 @@ test("REQ-762 SCN-762a: the first screen — without and with the gate, and the 
   assert.match(firstSection, /Without Specgate/);
   assert.match(firstSection, /With Specgate/);
   assert.match(firstSection, /44%/);
-  assert.match(firstSection, /72%/);
+  // landing-figures-v16: the replication on the released version, both arms in one session.
+  assert.match(firstSection, /89%/);
   assert.match(firstSection, /16 of 36/);
-  assert.match(firstSection, /26 of 36/);
-  assert.match(firstSection, /p = 0\.031/);
+  assert.match(firstSection, /32 of 36/);
+  assert.match(firstSection, /p &lt; 0\.001/);
 });
 
 test("REQ-763 SCN-763a: named figures — the trust boundary with the outside judge, and the guard's decision", () => {
