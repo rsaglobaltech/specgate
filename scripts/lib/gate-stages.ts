@@ -10,7 +10,7 @@
 import type { Diagnostic } from "./diagnostics";
 import { progress } from "./progress";
 
-export type StageName = "ids" | "changes" | "validate" | "architecture" | "tests" | "scenarios" | "quality";
+export type StageName = "ids" | "changes" | "validate" | "architecture" | "tests" | "scenarios" | "acceptance" | "quality";
 export type StageResult = "passed" | "failed" | "skipped" | "not run";
 
 export interface GateStage {
@@ -36,6 +36,8 @@ export class GateStages {
     checks: ReadonlyArray<{ name: string; run: string; gate: boolean }>;
     /** gate-runs-scenarios REQ-734: the command that runs the feature files, in a project whose gate requires them. */
     scenariosCmd?: string | null;
+    /** sealed-acceptance REQ-759: an open change sealed its acceptance tests. */
+    acceptance?: boolean;
   }) {
     const stage = (s: StageName, command: string | null, extra: Partial<GateStage> = {}) => ({
       stage: s,
@@ -52,6 +54,8 @@ export class GateStages {
       stage("architecture", plan.archCmd),
       stage("tests", plan.testCmd),
       ...(plan.scenariosCmd ? [stage("scenarios", plan.scenariosCmd)] : []),
+      // sealed-acceptance REQ-759: only where an open change sealed its acceptance tests.
+      ...(plan.acceptance ? [stage("acceptance", null)] : []),
       ...plan.checks.map((c) => stage("quality", c.run, { name: c.name, gate: c.gate })),
     ];
   }

@@ -168,6 +168,16 @@ const BASE: KeySpec[] = [
     kind: "string",
   },
   {
+    key: "acceptance_cmd",
+    description:
+      "The command that runs the acceptance tests a person approved and sealed (mvn verify, pytest, playwright…), {files} their paths: run by the gate (REQ-759).",
+    values: null,
+    pattern: null,
+    default: null,
+    file: HARNESS_FILE,
+    kind: "string",
+  },
+  {
     key: "app_url",
     description:
       "Where the running app is reached (http://localhost:5173): `specgate map` and the agent's prompt give each requirement's address from it (REQ-678).",

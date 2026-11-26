@@ -28,6 +28,7 @@ import {
   patchFiles,
   hookLog,
   recordSteps,
+  sealedTests,
 } from "./project-state";
 import {
   personActInShell,
@@ -119,6 +120,49 @@ function shellDecision(cwd: string, env: Record<string, string | undefined>): Gu
   };
 }
 
+/** Words of a shell command that write, move onto, remove or check out a file. */
+const SHELL_WRITES =
+  /(?:^|[\s;&|(`$])(?:rm|mv|cp|unlink|truncate|tee|chmod|touch|dd|install|ln|patch)(?=\s)|\bsed\s+(?:-[a-zA-Z]*i|--in-place)|\bperl\s+-[a-zA-Z]*i|\bgit\s+(?:checkout|restore|rm|stash|reset|apply|mv)\b|\b(?:rmSync|unlinkSync|writeFileSync|appendFileSync|renameSync|copyFileSync|os\.remove|os\.unlink|shutil\.move|shutil\.copy\w*|write_text)\b/;
+
+/** sealed-acceptance REQ-760: the message for a sealed test. */
+const sealedMessage = (file: string) =>
+  `specgate: acceptance_sealed — ${file} is an acceptance test a person approved and sealed: it is the contract, not the session's to write, move or remove. ` +
+  "Make the code pass it. If the test itself is wrong, say so and stop: changing it is a change of contract, and a person approves it again (specgate change approve <id> --layer acceptance). Reading it is allowed.";
+
+/** sealed-acceptance REQ-760: the call writes a sealed acceptance test — refused. */
+function sealedWrite(input: GuardInput, env: Record<string, string | undefined>): GuardDecision | null {
+  const cwd = input.cwd ?? process.cwd();
+  const tool = input.tool_name ?? "";
+  const args = (input.tool_input ?? {}) as Record<string, unknown>;
+  const sealed = sealedTests(cwd);
+  if (!sealed.length) return null;
+  let file: string | undefined;
+  if (SHELLS.has(tool)) {
+    if (typeof args.command !== "string") return null;
+    const command = args.command.replace(/\\/g, "/");
+    for (const part of command.split(/\n|;|&&|\|\||\|/)) {
+      const words = part.trim().split(/\s+/);
+      const named = (f: string, text: string) => text.includes(f) || text.includes(path.basename(f));
+      // A redirect onto it.
+      file = sealed.find((f) => [...part.matchAll(/>>?\s*["']?([^\s"';|&]+)/g)].some((m) => named(f, m[1]!)));
+      // A copy, a link or an install writes its last word only: copying the test away reads it.
+      if (!file && /^(?:cp|install|ln)$/.test(words[0] ?? "")) file = sealed.find((f) => named(f, words[words.length - 1] ?? ""));
+      else if (!file && SHELL_WRITES.test(part)) file = sealed.find((f) => named(f, part));
+      if (file) break;
+    }
+  } else {
+    const key = WRITERS[tool];
+    const target = key ? args[key] : undefined;
+    if (typeof target !== "string" || !target) return null;
+    const rel = path
+      .relative(real(cwd), real(path.isAbsolute(target) ? target : path.join(cwd, target)))
+      .replace(/\\/g, "/");
+    file = sealed.find((f) => f === rel);
+  }
+  if (!file || guardOff(cwd, env)) return null;
+  return { allow: false, file, message: sealedMessage(file) };
+}
+
 /** outside-judge REQ-746: the call does what is a person's to do — refused, saying so. */
 function personAct(input: GuardInput, env: Record<string, string | undefined>): GuardDecision | null {
   const cwd = input.cwd ?? process.cwd();
@@ -164,6 +208,8 @@ export function decide(input: GuardInput, env: Record<string, string | undefined
   try {
     const act = personAct(input, env);
     if (act) return act;
+    const sealed = sealedWrite(input, env);
+    if (sealed) return sealed;
     if (SHELLS.has(input.tool_name ?? "")) return shellDecision(input.cwd ?? process.cwd(), env);
     const key = WRITERS[input.tool_name ?? ""];
     const target = key ? input.tool_input?.[key] : undefined;

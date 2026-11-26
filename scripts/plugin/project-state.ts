@@ -288,3 +288,34 @@ export function patchFiles(patchText: string): string[] {
   }
   return out;
 }
+
+/**
+ * sealed-acceptance REQ-760: the acceptance tests a person approved in the
+ * open changes, relative to the project with `/` — the guard keeps the
+ * agent's tools off them. Read from each change's `approvals.json`, its last
+ * acceptance record.
+ */
+export function sealedTests(root: string): string[] {
+  const dir = path.join(root, "docs", "specs", "changes");
+  let ids: string[] = [];
+  try {
+    ids = fs
+      .readdirSync(dir, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && e.name !== "archive")
+      .map((e) => e.name);
+  } catch {
+    return [];
+  }
+  const out = new Set<string>();
+  for (const id of ids) {
+    try {
+      const records = JSON.parse(fs.readFileSync(path.join(dir, id, "approvals.json"), "utf8"));
+      if (!Array.isArray(records)) continue;
+      const last = records.filter((r) => r && r.layer === "acceptance" && r.seals && typeof r.seals === "object").pop();
+      for (const f of Object.keys(last?.seals ?? {})) out.add(f.replace(/\\/g, "/"));
+    } catch {
+      /* no approvals, nothing sealed */
+    }
+  }
+  return [...out].sort();
+}

@@ -54,6 +54,8 @@ export const KNOWN_KEYS = new Set([
   "arch_cmd",
   // REQ-661: the command that runs the feature files, `{tags}` the scenarios to run.
   "bdd_cmd",
+  // sealed-acceptance REQ-759: the command that runs the approved acceptance tests, `{files}` their paths.
+  "acceptance_cmd",
   "draft_profile",
   // ADR-0028 points 3-4 (REQ-231): the SARIF the architecture tool writes.
   "arch_sarif",

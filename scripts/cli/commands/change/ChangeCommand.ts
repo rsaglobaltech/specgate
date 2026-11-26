@@ -84,6 +84,7 @@ import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { impactOf } from "../../../lib/change-impact";
 import { parseUseCaseDelta } from "../../../../packages/core/src/domain/UseCaseDelta";
 import { approvalBlockers, approveChange, noteChange, reviewOf } from "../../../lib/change-review";
+import { sealAcceptance } from "../../../lib/acceptance";
 import type { LayerId } from "../../../../packages/core/src/domain/ChangeLayers";
 import {
   declaredSpecValues,
@@ -197,7 +198,7 @@ function usage() {
       `    ${c.green}author <id>${c.reset}    ${c.dim}Have an agent write one artefact, confined to the change.${c.reset}\n` +
       `    ${c.green}validate [id]${c.reset}  ${c.dim}Check the deltas against the capability specs.${c.reset}\n` +
       `    ${c.green}impact <REQ|id>${c.reset} ${c.dim}Spec, features, tests, files and requirements a change to it touches.${c.reset}\n` +
-      `    ${c.green}approve <id>${c.reset}   ${c.dim}Approve the layers you own (--layer discover|design|tasks): Build waits for all.${c.reset}\n` +
+      `    ${c.green}approve <id>${c.reset}   ${c.dim}Approve the layers you own (--layer discover|design|tasks), or seal its acceptance tests (--layer acceptance).${c.reset}\n` +
       `    ${c.green}note <id> "<text>"${c.reset} ${c.dim}Ask the draft for a change in your words (--req REQ).${c.reset}\n` +
       `    ${c.green}archive <id>${c.reset}   ${c.dim}Once its requirements are Implemented: merge, sync traceability, archive.${c.reset}\n\n` +
       `  ${c.bold}OPTIONS${c.reset}\n` +
@@ -685,6 +686,19 @@ function cmdApprove(opts: ChangeOptions) {
         fix: `A person runs it in a terminal: specgate change approve ${id} — or approves it in the studio's Review.`,
       }),
     ]);
+  }
+  // sealed-acceptance REQ-757: the acceptance tests are approved as they are, and sealed.
+  if (id && (layer as string) === "acceptance") {
+    const a = sealAcceptance(projectDir, id, new Date().toISOString().slice(0, 10));
+    if (!a.ok) return fail(opts, nullShape, [error(a.code, a.message, { target: id, ...(a.fix ? { fix: a.fix } : {}) })]);
+    return emit(opts, { approve: { ok: true, change: id, layers: ["acceptance"], sealed: a.sealed } }, () =>
+      process.stdout.write(
+        ui.header("change approve", id) +
+          ui.ok(`Acceptance of ${id} approved and sealed — ${a.sealed.length} test(s).`) +
+          "\n" +
+          a.sealed.map((f) => `    🔒 ${f}\n`).join("")
+      )
+    );
   }
   const r = id
     ? approveChange(projectDir, id, new Date().toISOString().slice(0, 10), layer)

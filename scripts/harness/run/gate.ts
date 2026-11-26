@@ -6,6 +6,7 @@
 import { stepsVerdict, STEPS_FINDING } from "../../lib/step-seal";
 import { listChangeIds } from "../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { scopeDiagnostics, sealDiagnostics } from "../../lib/approvals";
+import { acceptanceSealDiagnostics } from "../../lib/acceptance";
 import { sandboxCommand } from "../../../packages/core/src/domain/Sandbox";
 import { quoteArg } from "../../lib/escape";
 import { HarnessInterrupted, runWithDeadline } from "../../lib/run-with-deadline";
@@ -241,6 +242,8 @@ export function runGate(
   // all; what was approved is read from the worktree itself.
   const unapproved = [
     ...listChangeIds(worktreeDir).flatMap((id) => sealDiagnostics(worktreeDir, id).errors),
+    // sealed-acceptance REQ-758.
+    ...listChangeIds(worktreeDir).flatMap((id) => acceptanceSealDiagnostics(worktreeDir, id).errors),
     ...scopeDiagnostics(worktreeDir, listChangeIds(worktreeDir)).errors,
   ];
   const validated = validate.status === 0 && unapproved.length === 0;

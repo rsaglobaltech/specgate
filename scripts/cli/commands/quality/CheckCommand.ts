@@ -18,6 +18,7 @@ import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
 import { listChangeIds } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { scopeDiagnostics, sealDiagnostics } from "../../../lib/approvals";
+import { acceptanceRun, acceptanceSealDiagnostics, sealedAcceptance } from "../../../lib/acceptance";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
 import { branchControls } from "../../../lib/controls";
 import type { BaseIdCheck } from "../../../lib/base-ids";
@@ -335,6 +336,7 @@ export class CheckCommand extends BaseCommand {
       testCmd: plannedTests || null,
       checks: harness.quality ? checksFor(harness.quality, qualityStages) : [],
       scenariosCmd: scenariosRequired(projectDir) ? scenarioCommand(projectDir) || null : null,
+      acceptance: sealedAcceptance(projectDir).length > 0,
     });
     /** Fail the gate: keep the result, then answer with every stage. */
     const fail = (payload: { check: unknown }, diags: Diagnostic[]): never => {
@@ -532,12 +534,14 @@ export class CheckCommand extends BaseCommand {
       ...unwrittenNotes(projectDir),
       ...listChangeIds(projectDir).flatMap((id) => sealDiagnostics(projectDir, id).warnings),
       ...scopeDiagnostics(projectDir, listChangeIds(projectDir)).warnings,
+      // sealed-acceptance REQ-758: where the rule `acceptance` is a warning.
+      ...listChangeIds(projectDir).flatMap((id) => acceptanceSealDiagnostics(projectDir, id).warnings),
     ];
     if (!json) {
       for (const n of unwritten) {
         process.stdout.write(
           `  ${ui.muted(
-            n.code === "approval_not_sealed" || n.code === "file_outside_design"
+            n.code === "approval_not_sealed" || n.code === "file_outside_design" || n.code === "acceptance_not_sealed"
               ? `·  Change          ${n.message}`
               : `·  Change          ${n.target} — delta not written yet, not judged until it is`
           )}\n`
@@ -816,6 +820,23 @@ export class CheckCommand extends BaseCommand {
       gate.set("scenarios", "passed", [], { ms });
       if (!json && delivered.length > 0)
         process.stdout.write(ui.ok(`Scenarios       ${ui.muted(`${delivered.length} delivered requirement(s)`)}`));
+    }
+
+    // sealed-acceptance REQ-759: the acceptance tests a person approved, run
+    // with the project's own command — red is red, and the fix is in the code.
+    const acceptance = acceptanceRun(projectDir);
+    if (acceptance.ran || acceptance.errors.length || acceptance.warnings.length) {
+      const findings = [...acceptance.errors, ...acceptance.warnings];
+      if (acceptance.errors.length > 0) {
+        gate.set("acceptance", "failed", findings, { ms: acceptance.ms, command: acceptance.command || null });
+        if (!json) process.stdout.write(ui.fail(`Acceptance      ${acceptance.errors[0]!.code}`));
+        fail(NULL_SHAPE, [...ticketKeys, ...acceptance.errors]);
+      }
+      gate.set("acceptance", acceptance.ran ? "passed" : "skipped", findings, { ms: acceptance.ms, command: acceptance.command || null });
+      if (!json) {
+        if (acceptance.ran) process.stdout.write(ui.ok(`Acceptance      ${ui.muted(acceptance.command)}`));
+        for (const w of acceptance.warnings) process.stdout.write(`  ${ui.muted(`·  Acceptance     ${w.message}`)}\n`);
+      }
     }
 
     // ADR-0040: the team's quality and security checks, after the tests. The

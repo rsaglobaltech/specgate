@@ -33,6 +33,7 @@ export const RULES = [
   "state_machines",
   "scope",
   "controls",
+  "acceptance",
 ] as const;
 export type Rule = (typeof RULES)[number];
 
@@ -59,6 +60,8 @@ export const RULE_MEANING: Record<Rule, string> = {
   scope: "every new source file is named by the design of an approved change, where one names files",
   controls:
     "what the branch changes in the controls — the guard, the gate's policy, approvals, evidence — is named for the person who reviews it (--base)",
+  acceptance:
+    "the acceptance tests a person approved are as they were approved, and pass with the project's acceptance_cmd",
 };
 
 const STRICT: Record<Rule, Level> = {
@@ -77,6 +80,8 @@ const STRICT: Record<Rule, Level> = {
   scope: "error",
   // branch-controls REQ-754: reported for the reviewer; who approved cannot be told from a branch.
   controls: "warning",
+  // sealed-acceptance REQ-758, REQ-759: says nothing where no change sealed its acceptance tests.
+  acceptance: "error",
 };
 
 /** The three starting points; `rules:` overrides any rule of the one chosen. */
@@ -99,6 +104,7 @@ export const PRESET_RULES: Record<Preset, Record<Rule, Level>> = {
     state_machines: "warning",
     scope: "warning",
     controls: "warning",
+    acceptance: "warning",
   },
 };
 

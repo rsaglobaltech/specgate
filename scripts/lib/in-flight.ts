@@ -11,6 +11,7 @@ import type { ChangeDelta } from "../../packages/core/src/infrastructure/ChangeW
 import { isUntouchedDelta } from "../../packages/core/src/domain/ChangeTemplates";
 import { info } from "./diagnostics";
 import { scopeDiagnostics, sealDiagnostics } from "./approvals";
+import { acceptanceSealDiagnostics } from "./acceptance";
 import { refreshDerivedMatrix } from "../cli/commands/spec/MatrixCommand";
 import type { Diagnostic } from "./diagnostics";
 
@@ -215,6 +216,8 @@ export function inFlightView(projectDir: string): InFlightView | null {
     // REQ-740: what is judged is what was approved — read from the project,
     // before the copy archives the change and its approvals with it.
     for (const d of sealDiagnostics(projectDir, change).errors) problems.push({ ...d, change });
+    // sealed-acceptance REQ-758: the acceptance tests a person approved, as approved.
+    for (const d of acceptanceSealDiagnostics(projectDir, change).errors) problems.push({ ...d, change });
     // Tasks and the draft checklist are the person's gate at archive; here only
     // the specification is laid over, so it can be judged.
     const plan = new ArchiveChangeUseCase(repo).execute(change, { force: true, draft: true });

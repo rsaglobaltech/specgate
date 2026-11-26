@@ -9,6 +9,7 @@ import {
   type ControlRecord,
 } from "../../packages/core/src/domain/ControlRecord";
 import { guardOff, stepHashes, stepRecordFile } from "../plugin/project-state";
+import { fileHash, sealedAcceptance } from "./acceptance";
 
 /**
  * outside-judge REQ-747: the controls as they are in a project. Read before the
@@ -66,6 +67,12 @@ export function controlsOf(projectDir: string): ControlRecord {
     approvals,
     evidence,
     stepsReviewed,
+    acceptance: Object.fromEntries(
+      sealedAcceptance(projectDir).map((t) => {
+        const text = read(path.join(projectDir, t.file));
+        return [t.file, text === "" && !fs.existsSync(path.join(projectDir, t.file)) ? "" : fileHash(text)];
+      })
+    ),
   };
 }
 

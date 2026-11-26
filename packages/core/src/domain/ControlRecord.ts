@@ -15,6 +15,8 @@ export interface ControlRecord {
   evidence: string[];
   /** The requirements whose steps the evidence says a person reviewed. */
   stepsReviewed: string[];
+  /** sealed-acceptance REQ-760: each sealed acceptance test of the open changes, hashed as it is; "" when gone. */
+  acceptance?: Record<string, string>;
 }
 
 /** The steps of a requirement as the guard wrote them to the hook log when its code began. */
@@ -67,6 +69,13 @@ export function controlsChanged(
   }
   for (const req of after.stepsReviewed) {
     if (!before.stepsReviewed.includes(req)) out.push(`the steps of ${req} were said to be reviewed`);
+  }
+  // sealed-acceptance REQ-760: a sealed test is the contract — changed by any road, it is named.
+  const tests = before.acceptance ?? {};
+  for (const file of Object.keys(tests).sort()) {
+    const now = after.acceptance?.[file];
+    if (now === undefined || now === tests[file]) continue;
+    out.push(now ? `the acceptance test ${file} changed` : `the acceptance test ${file} is gone`);
   }
   for (const entry of steps?.log ?? []) {
     const now = steps!.now;
