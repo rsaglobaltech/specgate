@@ -1,3 +1,4 @@
+@change:walkthrough-fixes
 Feature: A draft is approved by a person
 
   @REQ-206 @SCN-206a
