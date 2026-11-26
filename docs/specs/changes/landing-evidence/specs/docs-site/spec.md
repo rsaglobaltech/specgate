@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-762 — The landing page shows the agent without and with the gate
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL show, in the first screen of `docs/index.html`, a figure of an agent without Specgate and one with it, each with the measured share of exam runs that met the specification — 44% (16 of 36) without, 72% (26 of 36) with, and its p-value 0.031.
 
@@ -16,7 +16,7 @@ The system SHALL show, in the first screen of `docs/index.html`, a figure of an 
 
 ### Requirement: REQ-763 — The landing page shows where each control runs
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL show on `docs/index.html` a figure of the trust boundary — the guard and the gate inside the agent's session, the person and the outside judge outside it — and a figure of the guard's decision on one tool call, each a `<figure>` whose drawing has `role="img"` and an `aria-label`, and a `<figcaption>`.
 
@@ -28,7 +28,7 @@ The system SHALL show on `docs/index.html` a figure of the trust boundary — th
 
 ### Requirement: REQ-764 — The landing page lists the nine controls and what agents tried
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL list on `docs/index.html` and `docs/es/index.html` the controls C1 to C9, each with what it refuses and, where the exam saw one, what an agent tried against it.
 

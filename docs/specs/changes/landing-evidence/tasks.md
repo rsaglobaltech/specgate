@@ -10,6 +10,6 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-762 — the first screen: without and with the gate, and the measured figures
-- [ ] 2.2 REQ-763 — the trust boundary, the guard and the gate, as named figures
-- [ ] 2.3 REQ-764 — the nine controls with what agents tried, in English and Spanish
+- [x] 2.1 REQ-762 — the first screen: without and with the gate, and the measured figures
+- [x] 2.2 REQ-763 — the trust boundary, the guard and the gate, as named figures
+- [x] 2.3 REQ-764 — the nine controls with what agents tried, in English and Spanish

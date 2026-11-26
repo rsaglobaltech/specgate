@@ -158,3 +158,6 @@
 {"req":"REQ-779","capability":"trusted-gate","at":"2026-11-26T11:03:17.276Z"}
 {"req":"REQ-780","capability":"trusted-gate","at":"2026-11-26T11:03:57.665Z"}
 {"req":"REQ-206","capability":"studio","at":"2026-11-26T11:04:27.104Z"}
+{"req":"REQ-762","capability":"docs-site","at":"2026-11-26T11:05:20.514Z"}
+{"req":"REQ-763","capability":"docs-site","at":"2026-11-26T11:05:48.383Z"}
+{"req":"REQ-764","capability":"docs-site","at":"2026-11-26T11:06:18.786Z"}

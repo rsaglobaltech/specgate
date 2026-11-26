@@ -1,0 +1,10 @@
+▶ dist/tests/unit/landing-evidence.test.js
+✔ REQ-764 SCN-764a: both pages list C1 to C9, the Spanish one in Spanish (15.603791ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 390.698792
