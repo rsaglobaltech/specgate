@@ -155,3 +155,25 @@ test("REQ-685 SCN-685b: an instruction, in prose", () => {
   assert.equal(sg(dir, "change", "approve", "learn-buttons-in-brand-blue").status, 0);
   assert.match(read(dir, "docs/specs/principles.md"), /^## P2 — Buttons in brand blue$/m);
 });
+
+test("REQ-685: a learned principle reads back exactly as written — quotes, backslashes and a regular expression's \\s", () => {
+  const { withPrinciple } = require("../../packages/core/src/domain/Lessons");
+  const { parsePrinciples } = require("../../packages/core/src/domain/Principles");
+  const forbid = 'password\\s*=\\s*"[^"\\\\]+"';
+  const run = 'grep -rn "C:\\\\temp" src';
+  const doc = parsePrinciples(
+    withPrinciple(null, { title: "No secrets", forbid, in: "src/**", lesson: "L1", from: [] }) +
+      withPrinciple(null, { title: "No temp paths", run, lesson: "L2", from: [] }).replace(
+        /^---[\s\S]*?# Principles\n/,
+        ""
+      )
+  );
+  const p = doc.principles;
+  assert.equal(p.find((x: { forbid?: string }) => x.forbid)?.forbid, forbid);
+  assert.equal(p.find((x: { run?: string }) => x.run)?.run, run);
+  // A principle written by hand keeps its regular expression: \s is not an escape.
+  const hand = parsePrinciples(
+    '## P1 — No credentials\n<!-- specgate:principle forbid="password\\s*=\\s*\\"" in="src/**" -->\n'
+  );
+  assert.equal(hand.principles[0].forbid, 'password\\s*=\\s*"');
+});

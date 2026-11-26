@@ -132,7 +132,9 @@ export function withPrinciple(current: string | null, rule: LearnedRule): string
       : "---\nprinciples_version: 1.0.0\n---\n\n# Principles\n";
   let next = 1;
   for (const m of base.matchAll(/^#{2,4}\s+P(\d+)\b/gm)) next = Math.max(next, Number(m[1]) + 1);
-  const q = (v: string) => `"${v.replace(/"/g, '\\"')}"`;
+  // Principles reads `\\` and `\"` as escapes and keeps any other backslash: so a backslash
+  // is doubled only before a quote, a backslash or the end, and `\s` stays as a person writes it.
+  const q = (v: string) => `"${v.replace(/\\(?=["\\]|$)/g, "\\\\").replace(/"/g, '\\"')}"`;
   const check = rule.run
     ? `<!-- specgate:principle run=${q(rule.run)}${rule.level ? ` level=${rule.level}` : ""} -->`
     : rule.forbid
