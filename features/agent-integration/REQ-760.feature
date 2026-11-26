@@ -1,4 +1,3 @@
-@change:sealed-acceptance
 Feature: No tool of the agent writes a sealed test
 
   @REQ-760 @SCN-760a

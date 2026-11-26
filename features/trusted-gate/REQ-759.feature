@@ -1,4 +1,3 @@
-@change:sealed-acceptance
 Feature: The gate runs the sealed tests with the project's command
 
   @REQ-759 @SCN-759a

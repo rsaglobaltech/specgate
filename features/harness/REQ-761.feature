@@ -1,4 +1,3 @@
-@change:sealed-acceptance
 Feature: The exam proves sealed acceptance holds
 
   @REQ-761 @SCN-761a

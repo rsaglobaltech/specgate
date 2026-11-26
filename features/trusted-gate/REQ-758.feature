@@ -1,4 +1,3 @@
-@change:sealed-acceptance
 Feature: A changed acceptance test fails the gate
 
   @REQ-758 @SCN-758a
