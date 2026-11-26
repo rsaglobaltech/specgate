@@ -461,6 +461,18 @@ code* to go. `archive` refuses while it is pending:
      fix: specgate apply REQ-006
 ```
 
+`apply` also waits for a person: it refuses a requirement of a change nobody
+approved (`change_not_approved`). Read the delta, then approve the change
+yourself, in your terminal. An agent cannot: approving refuses a session with
+no terminal (`approve_needs_person`).
+
+```bash
+specgate change approve add-reservations
+```
+
+The approval seals each requirement by its hash; edit one afterwards and the
+gate fails (`approved_requirement_changed`) until you approve it again.
+
 So do what Step 5 did — a test that names `REQ-006`, the code — then deliver
 it and close the change:
 

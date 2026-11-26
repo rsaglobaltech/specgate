@@ -197,6 +197,20 @@ one CI will not reopen. It changes exactly one status, and it does not commit:
 commit after it. With `validate --strict` in CI, the matrix stays a true
 record of what is delivered.
 
+`apply` also refuses a requirement of a change no person approved
+(`change_not_approved`); see
+[A person approves the draft](reviewing-changes.md#a-person-approves-the-draft).
+And when code begins, the agent guard records the step-definition files.
+Changed after that, they refuse delivery (`steps_changed_after_code`): the
+steps may have been bent to fit the code. A person who read the new steps
+says so at a terminal:
+
+```bash
+specgate apply REQ-007 --steps-reviewed
+```
+
+From an agent's tool it is refused (`steps_review_needs_person`).
+
 ### With an agent
 
 An agent follows the same loop: `status` or `plan` for the next requirement, a

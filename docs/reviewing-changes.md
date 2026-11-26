@@ -12,7 +12,8 @@ configured (`specgate config set test_cmd "npm test"`).
 The loop is four commands: `propose` opens the change, `apply` delivers each
 requirement, `status` says what is left, and `archive` closes the change once
 every requirement in it is delivered
-([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)). For writing your
+([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)). Between `propose`
+and `apply`, a person approves the change. For writing your
 first requirements on a new project, see [Writing specs](writing-specs.md).
 
 ## 1. Open the change
@@ -136,11 +137,43 @@ specgate change validate add-dynamic-pricing
 You rarely need this by hand: `specgate validate` and `specgate check` validate
 every open change, so a broken delta fails the gate on its own.
 
-## 5. Apply each requirement
+## 5. Approve it, then apply each requirement
 
 The review is the pull request of the change: the delta, the tests that name
-its requirements, and the code, together. Each requirement goes through the
-gate on its own:
+its requirements, and the code, together. It starts before any code: a person
+approves the change, then each requirement goes through the gate on its own.
+
+### A person approves the draft
+
+`specgate change approve <id>` records that a person read and approved it,
+refused while its checklist has an error or a question is open; `specgate
+change note <id> "<what to change>" --req REQ-NNN` asks for a change in your
+words, in the draft's `review.md`. The [studio](studio.md)'s Changes section does
+both, each blocker with the action that clears it, and Build starts only approved drafts.
+
+Each layer is approved by its owner (ADR-0045): `--layer discover` by product,
+`--layer design` by the architect, `--layer tasks` by the developer; without
+`--layer`, the layers you own. `harness.config.yaml` says who holds each role
+and how many people a layer needs — `roles: { product: [ana@acme.eu] }`,
+`approvals: { quorum: { design: 2 }, required: layered }` (`layered` is the
+default; `always`, or `never` for the 0.27 behaviour). A role nobody is named
+for is open to anyone. Each approval goes in the change's `approvals.json`.
+
+- **Approving needs a terminal.** `change approve` refuses when its input is
+  not a terminal (`approve_needs_person`), and an agent's tool has none. A
+  person runs it in a terminal, or approves in the studio's Review.
+  `SPECGATE_ASSUME_TTY=1` exists for scripted tests, not for agents.
+- **Approval seals the requirements.** Each requirement is recorded by its
+  hash. One changed after approval fails the gate
+  (`approved_requirement_changed`) until a person approves it again; editing a
+  layer asks for its approval again too.
+- **The design sets the scope.** A new source file that no approved design
+  names is reported (`file_outside_design`, gate rule `scope`).
+
+`apply` refuses a requirement of a change no person approved
+(`change_not_approved`), and the harness skips an unapproved change.
+
+### Then apply
 
 ```bash
 specgate apply REQ-014
@@ -165,22 +198,38 @@ written while it fails. The status goes into the change's delta
 (`<!-- specgate:trace status=Implemented -->`). Without an id, `apply` takes
 the next requirement `status` names. `apply` does not commit: commit after it.
 
-### A person approves the draft
+### Sealed acceptance tests
 
-`specgate change approve <id>` records that a person read and approved it,
-refused while its checklist has an error or a question is open; `specgate
-change note <id> "<what to change>" --req REQ-NNN` asks for a change in your
-words, in the draft's `review.md`. The [studio](studio.md)'s Changes section does
-both, each blocker with the action that clears it, and Build starts only approved drafts.
+A change can carry acceptance tests written by someone other than the agent
+that implements it, ideally from the spec and the design, never from the
+source. List them in `docs/specs/changes/<id>/acceptance-tests.md`, one line
+per file with the scenarios it proves, in any language:
 
-Each layer is approved by its owner (ADR-0045): `--layer discover` by product,
-`--layer design` by the architect, `--layer tasks` by the developer; without
-`--layer`, the layers you own. `harness.config.yaml` says who holds each role
-and how many people a layer needs — `roles: { product: [ana@acme.eu] }`,
-`approvals: { quorum: { design: 2 }, required: layered }` (`always`, or `never`
-for the 0.27 behaviour). A role nobody is named for is open to anyone. Each
-approval goes in the change's `approvals.json` with a hash of the layer; editing
-it asks for its approval again. The harness skips an unapproved 1.0 change.
+```markdown
+- test/acceptance/pricing.spec.ts — SCN-014, SCN-015
+- src/test/java/PricingIT.java — SCN-014
+```
+
+Once the change is approved, a person seals them, at a terminal:
+
+```bash
+specgate change approve add-dynamic-pricing --layer acceptance
+```
+
+Each file is recorded in `approvals.json` by its sha256. From then on `check`
+has an `acceptance` stage:
+
+- A sealed file changed or gone fails it (`acceptance_not_sealed`). Restore it
+  (`git checkout -- <file>`), or have a person approve the new version with the
+  same command.
+- It runs `acceptance_cmd` from `harness.config.yaml`, `{files}` standing for
+  the sealed paths — `npx playwright test {files}`, `pytest {files}`. A red
+  run fails it (`acceptance_red`); sealed tests and no command fail it too
+  (`acceptance_no_command`). Specgate installs nothing.
+
+The agent guards refuse writes to a sealed test (`acceptance_sealed`). This is
+not `acceptance.md`, the sign-off checklist `specgate acceptance <change>`
+writes.
 
 ## 6. Archive it
 

@@ -94,8 +94,11 @@ Rules you never break:
 - When a value is missing, ask (`specgate ask`) or record an assumption; never invent one.
 ```
 
-The [guards](agents.md#the-guards) enforce the first and the last of these in
-Claude Code and OpenCode, whatever the agent decides.
+The [guards](agents.md#the-guards) enforce the first two, and the "never
+approve" of the fourth, in Claude Code, OpenCode and Codex, whatever the agent
+decides: the code waits for a test that names the requirement, a red gate
+stops the session from ending, and `specgate change approve` is refused from
+the session. Approving needs a person at a terminal.
 
 ## Next
 

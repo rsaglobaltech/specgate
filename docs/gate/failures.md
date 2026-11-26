@@ -36,9 +36,36 @@ each finding with `code`, `file`, `line` and `fix`.
 | `check_validate_failed` | The specification: one of the findings below | Fix the findings above it |
 | `check_arch_failed` | Your `arch_cmd` failed | Move the code where the architecture expects it, or change the rule on purpose |
 | `check_tests_failed` | Your `test_cmd` failed; its output is above | Make the tests pass |
+| `check_scenarios_failed` | With `bdd: required`, a delivered requirement's scenarios failed with `bdd_cmd` | Make the code do what the failing scenarios say; `specgate scenarios <REQ>` runs one requirement's, scenario by scenario |
+| `acceptance_red` | The acceptance tests a person approved did not pass with `acceptance_cmd`; the last lines of its output are above | Make the code do what the approved tests say: the tests are the contract, not the thing to change |
+| `acceptance_no_command` | Acceptance tests are sealed and the project names no command that runs them | `specgate config set acceptance_cmd "<command>"`, `{files}` the sealed paths: `npx playwright test {files}`, `pytest {files}` |
 | `check_quality_failed` | A quality check found something new, or could not run under `--ci` | Each check's own finding is above it: `quality_check_failed` |
 | `baseline_incomplete` | `check --baseline` was asked to record what a baseline cannot hold | Fix what validate reports, then record again — [Adopt it without a red build](baselines.md) |
 | `gate_policy_invalid` | `.specgate/gate.yaml` names a preset, rule, level or date it cannot read | Use what the fix lists — [Configure the gate](policy.md) |
+
+## What a person approved
+
+These say that something a person approved is no longer what they approved.
+The fix is never to edit the record by hand: restore what changed, or have a
+person approve the new version.
+
+| Code | Means | What to do |
+| --- | --- | --- |
+| `approved_requirement_changed` | A requirement of an approved change is not what was approved | Put it back, or have a person approve it again: `specgate change approve <id>` |
+| `approval_not_sealed` | A warning: the change was approved before approvals sealed its requirements, so a change to one would go unseen | `specgate change approve <id>` seals it |
+| `file_outside_design` | A new source file that the approved design of the change does not name (rule `scope`) | Name it in the change's `design.md` and have the design approved again, or open a change for it: `specgate propose <change-id>` |
+| `acceptance_not_sealed` | An acceptance test a person approved has changed or is gone (rule `acceptance`) | `git checkout -- <file>`, or a person approves the new version: `specgate change approve <id> --layer acceptance` |
+| `controls_changed_on_branch` | `check --base`: the branch changes the controls — the guard, `.specgate/gate.yaml`, a change's approvals, evidence, a sealed acceptance test. A warning by default (rule `controls`) | The reviewer reads it as part of the pull request. Make `.specgate/` and `docs/specs/changes/*/approvals.json` code-owned so that review is required |
+
+## Refused before the gate
+
+`apply` and `change approve` refuse these before anything is recorded:
+
+| Code | Means | What to do |
+| --- | --- | --- |
+| `change_not_approved` | `apply`: the requirement's change is not approved yet; a requirement is delivered once a person approved its change | A person runs `specgate change approve <id>`, with the `--layer` the message names — or `approvals: { required: never }` in `harness.config.yaml` |
+| `steps_changed_after_code` | `apply`: step definitions were added or changed after the requirement's code began; steps written to agree with the code prove nothing | A person reads the steps against the scenarios, then runs in a terminal `specgate apply <REQ> --steps-reviewed` — or put the steps back and make the code pass them |
+| `approve_needs_person` | `change approve` was run where there is no terminal — by an agent or a script. Nothing was recorded | A person runs `specgate change approve <id>` in a terminal, or approves it in the studio's Review |
 
 Not failures, said so you know what was not checked: `ids_not_compared` (no
 base branch to compare with), `check_not_run` (a check skipped, with why),

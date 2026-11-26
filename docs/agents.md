@@ -5,12 +5,14 @@ commands for each step, an instruction file it reads on every session, and the
 rules it must not break.
 
 **You need:** a project where `specgate init` has run, and one of the agent
-tools below. `specgate agents init` supports ten: Claude Code, Cursor,
-Copilot, Windsurf, Aider, Gemini, Cline, Codex, Antigravity and OpenCode. In
+tools below. `specgate agents init` offers thirteen `--tool` values: ten
+agent tools — Claude Code, Cursor, Copilot, Windsurf, Aider, Gemini, Cline,
+Codex, Antigravity and OpenCode — and, on request, three [guards](#the-guards):
+`claude-plugin`, `opencode-plugin` and `codex-hooks`. In
 OpenCode the commands are `/specgate-draft`, `/specgate-apply` and so on,
-written to `.opencode/commands/`; it reads `AGENTS.md` itself. It can also
-write a Claude Code plugin, on request
-([Install the Claude Code plugin](automation.md#install-the-claude-code-plugin)).
+written to `.opencode/commands/`; it reads `AGENTS.md` itself. The Claude Code
+plugin is described in
+[Install the Claude Code plugin](automation.md#install-the-claude-code-plugin).
 To run an agent unattended instead, see [The harness](harness.md).
 
 ## Wire it in
@@ -141,14 +143,27 @@ diagnostic code. It is generated from the source, and CI fails when it drifts.
 ## The guards
 
 Instruction files are words an agent may walk past. The Claude Code plugin
-(`--tool claude-plugin`) and the OpenCode plugin (`--tool opencode-plugin`)
-add three hooks that run whatever the agent decides:
+(`--tool claude-plugin`), the OpenCode plugin (`--tool opencode-plugin`) and
+Codex's hooks (`--tool codex-hooks`, which writes `.codex/hooks.json`) add
+three hooks that run whatever the agent decides:
 
 - **Session start** — the session is told the project is spec-driven, the
   open change, the requirements it still owes and the next one.
-- **Test first** — a write to a source file is refused while no change is
-  open, or while no test new or modified in the working tree names one of its
-  requirements. The refusal names the step to take instead:
+- **Every tool call** — the guard judges the whole working tree, shell
+  commands included: a file written with `cat >` is caught on the next call.
+  It refuses:
+  - a write to a source file while no change is open, or while no test new or
+    changed in the working tree — or a sealed acceptance test — names a
+    requirement of the open change;
+  - a person's acts: `specgate change approve`, `config set agent_guard off`
+    or `SPECGATE_GUARD=`, `apply --steps-reviewed`, `SPECGATE_ASSUME_TTY=`;
+  - writes to the control files: `.specgate/config.json`,
+    `.specgate/gate.yaml`, `.specgate/evidence/`, any `approvals.json`, and
+    `approved:` in a `change.yaml`;
+  - writes to a sealed acceptance test (`acceptance_sealed`).
+
+  A refusal names the step to take instead, and never how to turn the guard
+  off:
 
   ```
   specgate: write the test for REQ-311 first — change `module-map`. A test file
@@ -156,11 +171,20 @@ add three hooks that run whatever the agent decides:
   src/core/map/scan.ts is allowed, then `specgate apply REQ-311`.
   ```
 
-  Tests, specs, features, docs, configuration and Markdown are never refused.
-- **The gate** — before the session ends (Claude Code) or when it goes idle
-  (OpenCode), a red gate sends its findings back, once per prompt.
+  Tests that are not sealed, specs, features, docs and Markdown are not
+  refused by the test-first rule. When code begins, the guard records the
+  step-definition files; changing them afterwards fails the gate
+  (`steps_changed_after_code`) until a person runs
+  `specgate apply REQ-NNN --steps-reviewed` at a terminal.
+- **The gate** — before the session ends (Claude Code, Codex) or when it goes
+  idle (OpenCode), a red gate sends its findings back, once per prompt.
 
-Install them once for every project:
+The guards stop a session, not a determined process outside it. The
+[harness](harness.md) and `specgate compat run` add an outside judge: they read
+the controls before the agent starts and compare when it stops
+(`controls_changed_by_session`). Without a harness or CI, that check is absent.
+
+Install the Claude Code and OpenCode guards once for every project:
 
 ```bash
 specgate agents install --global
@@ -168,10 +192,12 @@ specgate agents install --global
 
 OpenCode's plugin goes into its global folder (`~/.config/opencode`, or
 `$XDG_CONFIG_HOME/opencode`); for Claude Code the command prints the two
-`/plugin` lines that install it from this repository's marketplace. A project
-without `spec.md` sees nothing from either. Turn the test-first guard off for
-one project with `specgate config set agent_guard off`, or for one session
-with `SPECGATE_GUARD=off`.
+`/plugin` lines that install it from this repository's marketplace. Codex's
+hooks are per project: `specgate agents init --tool codex-hooks`. A project
+without `spec.md` sees nothing from any of them. A person turns the test-first
+guard off for one project with `specgate config set agent_guard off`, or for
+one session with `SPECGATE_GUARD=off`, from their own terminal; the guard
+refuses both from inside a session.
 
 ## Antigravity
 

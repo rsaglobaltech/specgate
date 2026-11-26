@@ -54,6 +54,18 @@ a major, stops the release (REQ-571). After it, the published package is
 installed from npm under its dist-tag and used — `--version`, `init`,
 `status` (REQ-572).
 
+## Behaviour that changes in 1.6
+
+No command, flag, code or key goes away in 1.6, but two commands now refuse
+what they used to do. A script or an agent that relied on either breaks:
+
+| Command | Until 1.5 | From 1.6 | What to do |
+| --- | --- | --- | --- |
+| `specgate change approve <id>` | Approved the change from anywhere | Without a terminal — an agent's tool, a CI step, a script — it fails with `approve_needs_person` and records nothing (REQ-748) | A person runs it in a terminal, or approves in the studio's Review |
+| `specgate apply <REQ>` | Delivered a requirement whatever its change's approval | Refuses a requirement whose open change nobody approved, with `change_not_approved` (REQ-745) | Approve the change first: `specgate change approve <id>`. A project that never wants approvals sets `approvals: { required: never }` in `harness.config.yaml` |
+
+Every code, with its fix: [Read a gate failure](gate/failures.md#refused-before-the-gate).
+
 ## Deprecation, then removal
 
 Something is removed in two steps, never one (REQ-569):

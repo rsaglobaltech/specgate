@@ -19,15 +19,23 @@ CI part, a repository on GitHub, GitLab, Azure DevOps or Jenkins.
 specgate check
 ```
 
-`check` runs four things, and stops at the first stage that fails:
+`check` runs these stages in order, and stops at the first one that fails:
 
-1. `validate --strict`: specs, scenarios, traceability, links and coverage.
-2. Your architecture check, if you set one with
+1. The ids against the base branch (below), and, with `--base`, what the
+   branch changes in the controls, named for the reviewer.
+2. Every open change's delta, and what a person approved in it: its
+   requirements, the files its design names, its sealed acceptance tests.
+3. `validate --strict`: specs, scenarios, traceability, links and coverage.
+4. Your architecture check, if you set one with
    `specgate config set arch_cmd "<cmd>"` (ArchUnit, dependency-cruiser, …).
    With `arch_sarif:` beside it, only a violation the change adds fails.
-3. Your tests, from `specgate config set test_cmd "npm test"` or `--test-cmd`,
-   side by side with step 2 ([`gate_parallel: false`](fast-gate.md) runs them in turn).
-4. Your [quality checks](quality.md), if `specgate quality init` wrote them:
+5. Your tests, from `specgate config set test_cmd "npm test"` or `--test-cmd`,
+   side by side with step 4 ([`gate_parallel: false`](fast-gate.md) runs them in turn).
+6. The scenarios of every delivered requirement, with `bdd_cmd`, when
+   `.specgate/gate.yaml` says `bdd: required`. `--no-scenarios` skips them.
+7. The acceptance tests a person approved and sealed, with `acceptance_cmd`,
+   when an open change has them.
+8. Your [quality checks](quality.md), if `specgate quality init` wrote them:
    coverage and mutation of what the change adds, SAST, secrets, dependencies,
    Conventional Commits — each in Docker. `--ci` adds the CI-only ones and
    fails a check that cannot run.
@@ -54,7 +62,8 @@ always, run the whole suite. See [A faster gate](fast-gate.md).
 
 With `--json`, every answer — passed or failed — lists the gate's `stages` in
 the order it runs them: `ids`, `changes`, `validate`, `architecture`, `tests`,
-then one `quality` stage per check, with its `name`. Each has its `command`
+`scenarios` (with `bdd: required`), `acceptance` (when an open change sealed
+acceptance tests), then one `quality` stage per check, with its `name`. Each has its `command`
 (`null` when it has none), its `result` (`passed`, `failed`, `skipped` when it
 is not configured or could not run, `not run` when an earlier stage failed),
 its `ms` (`null` when it did not run) and its `findings`, each with `code`,

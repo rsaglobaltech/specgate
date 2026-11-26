@@ -1,4 +1,4 @@
-<!-- translation-of: 2335bde0a5f7 -->
+<!-- translation-of: 7d7f370d3b70 -->
 # Lee un fallo del gate
 
 Cada fallo que reporta el gate dice dónde, qué, su código entre corchetes, y
@@ -38,9 +38,36 @@ muestra cada una como `not run`. En CI el mismo texto está en el log del job;
 | `check_validate_failed` | La especificación: uno de los hallazgos de abajo | Corrige los hallazgos que aparecen encima |
 | `check_arch_failed` | Tu `arch_cmd` falló | Mueve el código adonde lo espera la arquitectura, o cambia la regla a propósito |
 | `check_tests_failed` | Tu `test_cmd` falló; su salida está encima | Haz que los tests pasen |
+| `check_scenarios_failed` | Con `bdd: required`, los escenarios de un requisito entregado fallaron con `bdd_cmd` | Haz que el código haga lo que dicen los escenarios que fallan; `specgate scenarios <REQ>` ejecuta los de un requisito, escenario a escenario |
+| `acceptance_red` | Los tests de aceptación que aprobó una persona no pasaron con `acceptance_cmd`; las últimas líneas de su salida están encima | Haz que el código haga lo que dicen los tests aprobados: los tests son el contrato, no lo que hay que cambiar |
+| `acceptance_no_command` | Hay tests de aceptación sellados y el proyecto no nombra ningún comando que los ejecute | `specgate config set acceptance_cmd "<comando>"`, con `{files}` las rutas selladas: `npx playwright test {files}`, `pytest {files}` |
 | `check_quality_failed` | Un check de calidad encontró algo nuevo, o no pudo ejecutarse con `--ci` | El hallazgo propio de cada check está encima: `quality_check_failed` |
 | `baseline_incomplete` | Se pidió a `check --baseline` registrar lo que un baseline no puede contener | Corrige lo que reporta validate y vuelve a registrar: [Adóptalo sin un build en rojo](baselines.md) |
 | `gate_policy_invalid` | `.specgate/gate.yaml` nombra un preset, una regla, un nivel o una fecha que no puede leer | Usa lo que indica la corrección: [Configurar el gate](policy.md) |
+
+## Lo que aprobó una persona
+
+Estos códigos dicen que algo que aprobó una persona ya no es lo que aprobó. La
+corrección nunca es editar el registro a mano: restaura lo que cambió, o haz
+que una persona apruebe la nueva versión.
+
+| Código | Significa | Qué hacer |
+| --- | --- | --- |
+| `approved_requirement_changed` | Un requisito de un change aprobado no es el que se aprobó | Devuélvelo a como estaba, o que una persona lo apruebe de nuevo: `specgate change approve <id>` |
+| `approval_not_sealed` | Un warning: el change se aprobó antes de que las aprobaciones sellaran sus requisitos, así que un cambio en uno pasaría inadvertido | `specgate change approve <id>` lo sella |
+| `file_outside_design` | Un archivo de código nuevo que el diseño aprobado del change no nombra (regla `scope`) | Nómbralo en el `design.md` del change y haz que se apruebe de nuevo el diseño, o abre un change para él: `specgate propose <change-id>` |
+| `acceptance_not_sealed` | Un test de aceptación que aprobó una persona ha cambiado o ya no está (regla `acceptance`) | `git checkout -- <archivo>`, o que una persona apruebe la nueva versión: `specgate change approve <id> --layer acceptance` |
+| `controls_changed_on_branch` | `check --base`: la rama cambia los controles —el guard, `.specgate/gate.yaml`, las aprobaciones de un change, la evidencia, un test de aceptación sellado—. Un warning por defecto (regla `controls`) | Quien revisa lo lee como parte del pull request. Haz que `.specgate/` y `docs/specs/changes/*/approvals.json` tengan code owners para que esa revisión sea obligatoria |
+
+## Rechazado antes del gate
+
+`apply` y `change approve` rechazan esto antes de registrar nada:
+
+| Código | Significa | Qué hacer |
+| --- | --- | --- |
+| `change_not_approved` | `apply`: el change del requisito aún no está aprobado; un requisito se entrega cuando una persona ha aprobado su change | Una persona ejecuta `specgate change approve <id>`, con el `--layer` que indica el mensaje, o `approvals: { required: never }` en `harness.config.yaml` |
+| `steps_changed_after_code` | `apply`: se añadieron o cambiaron definiciones de pasos después de empezar el código del requisito; unos pasos escritos para coincidir con el código no prueban nada | Una persona lee los pasos frente a los escenarios y ejecuta en un terminal `specgate apply <REQ> --steps-reviewed`, o devuelve los pasos a como estaban y haz que el código los pase |
+| `approve_needs_person` | `change approve` se ejecutó sin terminal: un agente o un script. No se registró nada | Una persona ejecuta `specgate change approve <id>` en un terminal, o lo aprueba en la vista Review del studio |
 
 No son fallos; se informan para que sepas qué no se comprobó:
 `ids_not_compared` (no hay rama base con la que comparar), `check_not_run` (un

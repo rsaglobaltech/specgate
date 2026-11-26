@@ -13,7 +13,7 @@ specification.
 
 | Who | Does what in this phase |
 | --- | --- |
-| **You** | Name the requirement in its test; archive the change |
+| **You** | Name the requirement in its test; approve and archive the change |
 | **The gate** | Refuses until a test names the requirement and the suite passes |
 
 ## 1. Try to close it — and see why it refuses
@@ -63,9 +63,15 @@ each requirement to its scenario, code and test — is generated from the
 specification, the scenario tags and the files that mention each id. Nobody
 edits it by hand, and there is nothing to register.
 
-## 3. Apply it
+## 3. Approve the change, then apply it
+
+`apply` delivers only a requirement of a change a person approved
+(`change_not_approved`). Read the delta, then approve it in your terminal —
+an agent cannot, since approving refuses a session with no terminal
+(`approve_needs_person`):
 
 ```bash
+specgate change approve invoice-rounding
 specgate apply REQ-004
 ```
 

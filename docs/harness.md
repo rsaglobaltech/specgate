@@ -22,8 +22,15 @@ the command line. Which agent, and how to call it, is on
    worktree on a branch called `harness/REQ-NNN`.
 2. The harness installs the project's dependencies in it, then gives the agent
    a prompt built from the requirement and its Gherkin scenario.
-3. The gate runs: `validate --strict`, a check that the agent did not edit the
-   specification, your architecture check, your tests, then your
+3. The gate runs. First the outside judge: the harness read the controls —
+   guard switch, gate policy, approvals, evidence, sealed tests — before the
+   agent started, and any change to them fails the attempt. Then
+   `validate --strict`, with the change's approvals, its sealed acceptance
+   tests and its design scope still as a person approved them; a check that
+   the agent did not edit the specification; your architecture check; your
+   tests; the requirement's scenarios when `bdd: required`; the step record
+   (step definitions changed after the code fail it); the principles that
+   declare a check (`run=` in `docs/specs/principles.md`); then your
    [quality checks](quality.md) — coverage of the lines it added, mutation,
    SAST, secrets, Conventional Commits.
 4. **Green:** `specgate apply` marks the requirement Implemented and the work
@@ -265,6 +272,12 @@ attempt whatever the agent did, and the agent may not change its status. The
 run stops there and lists them: write their tests or move them back to Draft,
 or pass `--skip-baseline` to run anyway. What fails on the requirements being
 run is theirs to fix, and does not stop it.
+
+**When the session touched the controls**, the attempt fails before anything
+else runs (`controls_changed_by_session`): the agent approved, switched the
+guard, reviewed steps or edited the gate policy, the evidence or the sealed
+tests. Those are a person's. Put the controls back and look at what the agent
+was asked to do.
 
 The report prints the tail of the gate output and the command that failed.
 Some failures end the run after one attempt, because retrying cannot help:

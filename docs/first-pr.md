@@ -60,6 +60,17 @@ specgate propose invoices-pdf       # proposal, tasks, a delta, REQ ids reserved
 
 Leave `docs/specs/traceability.md` alone. It is generated.
 
+Then a person approves the change, in a terminal (an agent cannot:
+`approve_needs_person`), or in the studio's Review:
+
+```bash
+specgate change approve invoices-pdf   # --layer discover|design|tasks for one layer
+```
+
+`apply` refuses a change nobody approved (`change_not_approved`), and a
+requirement edited after approval fails the gate
+(`approved_requirement_changed`) until it is approved again.
+
 Then write the test, and **mention the requirement in it**. The mention is the
 link; there is nothing else to declare:
 

@@ -57,7 +57,7 @@ and what to delete to remove it:
 | Ubuntu, macOS, Windows | The same gate on the three, because paths, line endings and shells differ | Delete two entries of `os:` to keep one |
 | `checkout` with `fetch-depth: 0` | The whole history, so the ids can be compared with the base branch | Only with `--base` below |
 | Toolchain and dependencies | Node, or a JDK for Maven and Gradle, and the project's dependencies, for its tests | No |
-| **The gate** | `check --base origin/<base>`: ids, specification, architecture, tests | Never — this is the gate |
+| **The gate** | `check --base origin/<base>`: ids, specification, architecture, tests; and what the branch changes in the controls, as `controls_changed_on_branch` for the reviewer | Never — this is the gate |
 | Quality checks | `quality run --stage ci`, on Ubuntu only, because the checks run in Docker. Not configured: says how, and passes | Delete the step |
 | Pack drift | `validate --against-lock`: the domain packs still match `.specops.lock`. No packs: skipped | Delete the step |
 | Pending-work plan | `plan --format json`, kept as the `spec-plan` artifact of the run | Delete both steps |
@@ -137,6 +137,12 @@ A failing job does not stop a merge on its own:
 | GitLab | Settings → Merge requests | **Pipelines must succeed** |
 | Azure DevOps | Repos → Branches → your branch → Branch policies | **Build validation** with the pipeline, set to **Required** |
 | Jenkins | Your SCM's branch protection | Require the status Jenkins reports for the `Spec gate` stage — the GitHub or Bitbucket Branch Source plugin reports it |
+
+With `--base`, the job's log also names what the branch changes in the
+controls — the guard, `.specgate/gate.yaml`, approvals, evidence — as
+`controls_changed_on_branch`, a warning by default (rule `controls`). It is
+for the reviewer: make `.specgate/` and `docs/specs/changes/*/approvals.json`
+code-owned, so that a change to them needs their review.
 
 Protect `develop` too if you merge features into it.
 [Your team's first pull request](../first-pr.md) covers what the author and

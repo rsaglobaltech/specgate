@@ -109,7 +109,8 @@ scenarios. Until it is fixed, run `specgate init` and then `specgate specops add
 | `specgate change validate [<id>]`                   | Checks the deltas. `specgate validate` runs it too.                         | [Change a shipped requirement](reviewing-changes.md)                            |
 | `specgate change new <id> --modify <REQ>`           | Opens a change with the requirement copied into a MODIFIED delta, Draft.    | [Change a shipped requirement](reviewing-changes.md)                            |
 | `specgate change impact <REQ\|id>`                  | Spec, features, tests, files and requirements a change to it touches.       | [Change a shipped requirement](reviewing-changes.md)                            |
-| `specgate change approve <id> [--layer <layer>]`    | Approve the layers you own; the harness and Build wait for all of them.     | [Change a shipped requirement](reviewing-changes.md)                            |
+| `specgate change approve <id> [--layer <layer>]`    | A person, at a terminal: approves the layers you own (`--layer discover\|design\|tasks`); `apply` and the harness wait for it. | [Change a shipped requirement](reviewing-changes.md#a-person-approves-the-draft) |
+| `specgate change approve <id> --layer acceptance`   | Seals the change's listed acceptance tests by hash, once it is approved.   | [Sealed acceptance tests](reviewing-changes.md#sealed-acceptance-tests)         |
 | `specgate change note <id> "<text>"`                | Asks the draft for a change in your words, kept in review.md (`--req REQ`). | [Change a shipped requirement](reviewing-changes.md)                            |
 | `specgate propose <id> --from-value-drift <REQ:id>` | Opens a change that updates a declared value the code disagrees with.       | [Validating](validating.md#declared-value-drift-a-report-not-a-gate)            |
 
@@ -171,6 +172,9 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate verify`                       | For OpenSpec projects: fails while a done scenario has no test naming it.   | [Already on OpenSpec](openspec.md)             |
 | `specgate report`                       | A spec-coverage dashboard as one HTML file; `--format json`, `--capability`. | `specgate report --help`                       |
 | `specgate doctor`                       | Diagnoses the project and the environment, with a fix per finding.          | [Troubleshooting](troubleshooting.md)          |
+| `specgate check --base <branch>`        | Also names what the branch changes in the controls (`controls_changed_on_branch`, a warning by default). | [Agents](agents.md#the-guards) |
+| `specgate compat run \| report \| check-release` | For Specgate's maintainers: the compatibility exam of each agent tool at each level. | `specgate compat --help` |
+| `specgate compat attack two-function`  | For Specgate's maintainers: replays the recorded attack on a sealed step file, with no model. | `specgate compat --help` |
 
 ## Agents
 
@@ -189,6 +193,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate agents init`                 | Slash commands and instruction files for your agent tools.            | [Agents](agents.md)      |
 | `specgate agents init --format skills` | The same steps as Agent Skills folders, in `.agents/skills/` and each tool's own. | [Agents](agents.md#wire-it-in) |
 | `specgate agents install --global`     | The agent guards for every project: OpenCode's plugin, Claude Code's. | [Agents](agents.md)      |
+| `specgate agents init --tool codex-hooks` | Codex's guards for this project, in `.codex/hooks.json`.          | [Agents](agents.md#the-guards) |
 | `specgate update`                      | Refreshes those generated files after an upgrade, keeping your edits. | [Agents](agents.md)      |
 | `specgate agent ask "<request>"`       | Your agent proposes a spec change as a plan with its diff; nothing is written. `@REQ-NNN`, `@path`. | [Ask your agent](agent-ask.md) |
 | `specgate agent apply <plan-id>`       | Writes the plan if its files did not change since, then runs its checks. Never commits. | [Ask your agent](agent-ask.md) |
@@ -219,6 +224,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate config set test_cmd "<cmd>"` | The tests `check` and `apply` run.                                             | `specgate config set --help`  |
 | `specgate config set arch_cmd "<cmd>"` | Your architecture check, run by the gate beside the tests.                     | [Validating](validating.md)   |
 | `specgate config set test_cmd_affected "<cmd> {files}"` | What `check --affected` and `apply` run, `{files}` the selected tests. | [A faster gate](fast-gate.md) |
+| `specgate config set acceptance_cmd "<cmd> {files}"` | What runs the sealed acceptance tests in `check`, `{files}` their paths. | [Sealed acceptance tests](reviewing-changes.md#sealed-acceptance-tests) |
 | `specgate config set stack "<stack>"` | The stack `AGENTS.md` states to the agent, which may not choose one; `testing` likewise. | [Troubleshooting](troubleshooting.md#agents) |
 | `specgate config set profile full`     | Makes `--help` list every command (`core` lists the loop).                     | `specgate config set --help`  |
 | `specgate config set language es`      | The language of generated prose. Keywords stay in English.                     | `specgate config set --help`  |

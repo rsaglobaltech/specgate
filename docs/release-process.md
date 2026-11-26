@@ -126,13 +126,33 @@ the CLI supports, so getting this backwards fails CI rather than users.
 2. Bump `version` in `package.json`, then `npm run build && npm run plugin:sync`
    so the plugin's three manifests carry it (a test fails until they do).
 3. Re-record the landing page's terminal: `npm run build && npm run docs:terminal`,
-   then update the version in `docs/index.html` and in its Spanish copy,
-   `docs/es/index.html`. The recording carries the
-   version it was made from and a test compares the two, so skipping this fails
-   the build rather than shipping a page that claims the wrong release.
-4. Open a PR to **`develop`** — never straight to `main`, which is protected:
+   which rewrites the `version` of `docs/assets/terminal-*.json`. The recording
+   carries the version it was made from and a test compares the two, so
+   skipping this fails the build rather than shipping a page that claims the
+   wrong release.
+4. Bump every page that pins the version. `grep -rn "<old version>" docs`
+   finds them; today they are:
+
+   | File | What pins it |
+   | --- | --- |
+   | `docs/index.html`, `docs/es/index.html` | The header, the eyebrow, "Recorded from" and the footer |
+   | `docs/gate/ci.md`, `docs/es/gate/ci.md` | `npx @rsaglobaltech/specgate@X.Y.Z` in the CI examples |
+   | `docs/gate/local.md`, `docs/es/gate/local.md` | The Docker image `ghcr.io/rsaglobaltech/specgate:X.Y.Z` |
+   | `docs/automation.md` | The Docker image, in the GitLab, Azure and Jenkins examples |
+   | `docs/validating.md` | `npx --yes @rsaglobaltech/specgate@X.Y.Z` in the CI example |
+   | `docs/existing-project-with-jira.md` | `npx @rsaglobaltech/specgate@X.Y.Z init` |
+   | `docs/tutorial.md` | The output of `specgate --version` |
+   | `docs/release-process.md` | The versions live on npm, GitHub Packages and ghcr.io, under [What gets published](#what-gets-published) |
+
+   Leave the pack schema alone: `schema_version` in this page's
+   [Compatibility windows](#compatibility-windows) and in `packs/*/pack.yaml`
+   moves only with `PACK_SCHEMA_VERSION`, not with a release.
+5. Check the release was examined with the real agent tools:
+   `specgate compat check-release` fails with `compat_not_examined` until the
+   compatibility exam ran this version (`specgate compat run --level L0 --task deliver`).
+6. Open a PR to **`develop`** — never straight to `main`, which is protected:
    the twelve [required checks](../CONTRIBUTING.md#required-checks) must pass.
-5. Merge into `develop`, wait for CI on `develop` itself, then fast-forward
+7. Merge into `develop`, wait for CI on `develop` itself, then fast-forward
    `main` to it. A release is cut from a `main` that has been green the whole
    way, not from one that was red for the twenty minutes it took to notice.
 
@@ -146,12 +166,12 @@ the CLI supports, so getting this backwards fails CI rather than users.
 
    **Quote the refspec: `"${R}:refs/heads/main"`.** In zsh, `$R:refs/…`
    applies the `:r` modifier and no longer names the commit. Read the output.
-6. **Only once `git rev-parse origin/main` is the release commit**, tag it
+8. **Only once `git rev-parse origin/main` is the release commit**, tag it
    `vX.Y.Z` and push the tag. On 0.10.0 the tag went out while the push to
    `main` had failed. `publish-npm.yml` fires, and publishes only after the
    E2E workflow passes on all three platforms.
-7. Write the GitHub release notes from the changelog entry.
-8. Run the E2E against what the registry serves:
+9. Write the GitHub release notes from the changelog entry.
+10. Run the E2E against what the registry serves:
    `curl -sfLO https://registry.npmjs.org/@rsaglobaltech/specgate/-/specgate-X.Y.Z.tgz && npm run e2e -- --tarball specgate-X.Y.Z.tgz`.
    The CDN can answer 404 for a few minutes after `dist-tags` already says the
    new version; wait, do not republish.
@@ -171,8 +191,8 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
    node e2e/run.mjs                        # the E2E the npm workflow gates on
    ```
 
-2. **Changelog, version, recordings** — steps 1–3 of
-   [Cutting a release](#cutting-a-release).
+2. **Changelog, version, recordings, pinned pages, the compatibility exam** —
+   steps 1–5 of [Cutting a release](#cutting-a-release).
 3. **`develop`, then `main`** — merge into `develop`, open the
    `develop → main` pull request, then fast-forward `main` to that exact
    commit with `git push origin "${R}:refs/heads/main"` (an admin bypass: only a commit step 1 ran).

@@ -1,4 +1,4 @@
-<!-- translation-of: 838568570a5c -->
+<!-- translation-of: 663af7d9e120 -->
 # El gate en tu máquina
 
 Ejecuta el gate antes de hacer push y un pull request en rojo será raro. Al
@@ -42,6 +42,12 @@ Sin `--base`, usa `SPECGATE_BASE`, luego `pr.base` en `alm.config.yaml`, y
 luego la rama por defecto de origin. Dos ramas que añaden cada una un
 `REQ-012` con un título distinto fallan aquí, antes del merge, con el
 siguiente id libre en ambos lados.
+
+Frente a la base, el gate también nombra lo que la rama cambia en los
+controles —el guard, `.specgate/gate.yaml`, las aprobaciones de un change, la
+evidencia, un test de aceptación sellado— como `controls_changed_on_branch`.
+Por defecto es un warning (regla `controls`): se dice para quien revisa el pull
+request. [Lee un fallo](failures.md#lo-que-aprobo-una-persona) tiene la corrección.
 
 ## Solo lo que toca el change
 

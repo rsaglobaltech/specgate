@@ -121,14 +121,21 @@ With the server configured, ask in plain words:
 
 1. The client calls `specgate_change_new` (id: *add-invoice-pdf*). The change
    is open, with a delta to write and REQ ids reserved.
-2. It writes the requirement and its scenario in the change's delta, a test
-   that mentions the new `REQ-NNN`, and the code.
-3. It calls `mark_requirement_done` with that id. The gate runs first. If the
-   scenario still has template steps, or no test mentions the requirement, the
-   call comes back with the reason (exactly what the terminal would say) and
-   nothing is written.
-4. Once the requirement is Implemented, it calls `specgate_change_archive`
+2. It writes the requirement and its scenario in the change's delta. Then it
+   stops: a person reads the delta and approves the change, in a terminal
+   (`specgate change approve add-invoice-pdf`) or in the studio's Review.
+3. It writes a test that mentions the new `REQ-NNN`, and the code.
+4. It calls `mark_requirement_done` with that id. It wraps `specgate apply`:
+   the gate runs first. If nobody approved the change (`change_not_approved`),
+   the scenario still has template steps, or no test mentions the requirement,
+   the call comes back with the reason (exactly what the terminal would say)
+   and nothing is written.
+5. Once the requirement is Implemented, it calls `specgate_change_archive`
    (id: *add-invoice-pdf*), and the change merges into the specs.
+
+There is no tool that approves a change, by design: approving is a person's
+act. A client that calls `mark_requirement_done` on an unapproved change is
+refused until a person approves it at a terminal.
 
 You review the branch and open the pull request as usual.
 

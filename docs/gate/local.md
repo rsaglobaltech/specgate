@@ -42,6 +42,12 @@ Without `--base`, it uses `SPECGATE_BASE`, then `pr.base` in
 `REQ-012` with a different title fail here, before the merge, with the next
 id free on both sides.
 
+Against the base, the gate also names what the branch changes in the
+controls — the guard, `.specgate/gate.yaml`, a change's approvals, evidence, a
+sealed acceptance test — as `controls_changed_on_branch`. It is a warning by
+default (rule `controls`): it is said for the person who reviews the pull
+request. [Read a failure](failures.md#what-a-person-approved) has the fix.
+
 ## Only what the change touches
 
 On a large project the whole suite is slow. `--affected` runs the tests the

@@ -1,4 +1,4 @@
-<!-- translation-of: 64272e9faed7 -->
+<!-- translation-of: 988b5b1bb997 -->
 # El gate en CI
 
 Un gate que solo se ejecuta en portátiles es una sugerencia. Al final de esta
@@ -59,7 +59,7 @@ borrar para quitarlo:
 | Ubuntu, macOS, Windows | El mismo gate en los tres, porque las rutas, los finales de línea y los shells difieren | Borra dos entradas de `os:` para quedarte con una |
 | `checkout` con `fetch-depth: 0` | Todo el historial, para poder comparar los ids con la rama base | Solo junto con `--base`, más abajo |
 | Toolchain y dependencias | Node, o un JDK para Maven y Gradle, y las dependencias del proyecto, para sus tests | No |
-| **El gate** | `check --base origin/<base>`: ids, especificación, arquitectura, tests | Nunca: esto es el gate |
+| **El gate** | `check --base origin/<base>`: ids, especificación, arquitectura, tests; y lo que la rama cambia en los controles, como `controls_changed_on_branch` para quien revisa | Nunca: esto es el gate |
 | Checks de calidad | `quality run --stage ci`, solo en Ubuntu, porque los checks se ejecutan en Docker. Sin configurar: dice cómo, y pasa | Borra el paso |
 | Deriva de packs | `validate --against-lock`: los packs de dominio siguen coincidiendo con `.specops.lock`. Sin packs: se omite | Borra el paso |
 | Plan de trabajo pendiente | `plan --format json`, guardado como el artifact `spec-plan` de la ejecución | Borra los dos pasos |
@@ -140,6 +140,13 @@ Un job que falla no detiene un merge por sí solo:
 | GitLab | Settings → Merge requests | **Pipelines must succeed** |
 | Azure DevOps | Repos → Branches → tu rama → Branch policies | **Build validation** con el pipeline, en **Required** |
 | Jenkins | La protección de ramas de tu SCM | Exige el estado que Jenkins reporta para la etapa `Spec gate`: lo reporta el plugin GitHub o Bitbucket Branch Source |
+
+Con `--base`, el log del job también nombra lo que la rama cambia en los
+controles —el guard, `.specgate/gate.yaml`, las aprobaciones, la evidencia—
+como `controls_changed_on_branch`, un warning por defecto (regla `controls`).
+Es para quien revisa: haz que `.specgate/` y
+`docs/specs/changes/*/approvals.json` tengan code owners, para que un cambio
+en ellos necesite su revisión.
 
 Protege también `develop` si haces merge de features en ella.
 [El primer pull request de tu equipo](../first-pr.md) cubre lo que hacen el

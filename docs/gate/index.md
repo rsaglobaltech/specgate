@@ -25,11 +25,13 @@ by side.
 
 | Stage | What it proves | Fails with |
 | --- | --- | --- |
-| Ids | No requirement id here means something else on the base branch | `id_taken_on_base` |
-| Changes | Every open change's delta validates | `check_change_invalid` |
+| Ids | No requirement id here means something else on the base branch; with `--base`, what the branch changes in the controls is named for the reviewer | `id_taken_on_base`, `controls_changed_on_branch` |
+| Changes | Every open change's delta validates; what a person approved — requirements, design, sealed acceptance tests — is as it was approved | `check_change_invalid`, `approved_requirement_changed`, `file_outside_design`, `acceptance_not_sealed` |
 | Specification | `validate --strict`: specs, scenarios, links, coverage of the matrix | `check_validate_failed` |
 | Architecture | Your `arch_cmd` (ArchUnit, dependency-cruiser…) passes | `check_arch_failed` |
 | Tests | Your `test_cmd` passes | `check_tests_failed` |
+| Scenarios | With `bdd: required` in the policy: the scenarios of every delivered requirement pass with `bdd_cmd`. `--no-scenarios` skips them | `check_scenarios_failed` |
+| Acceptance | Where an open change sealed acceptance tests: they pass with `acceptance_cmd` | `acceptance_red`, `acceptance_no_command` |
 | Quality | The `checks:` of `harness.config.yaml` — coverage, mutation, secrets… | `check_quality_failed` |
 
 A stage with nothing to run is said, not failed: without a `test_cmd` the gate
