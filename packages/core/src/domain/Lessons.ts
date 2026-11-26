@@ -124,6 +124,18 @@ export interface LearnedRule {
   from: string[];
 }
 
+/**
+ * A principle comment's value, quoted so that Principles reads back exactly `v` with no
+ * escaping: double quotes when it has none and does not end in a backslash (a regular
+ * expression's `\s` stays as a person writes it), single quotes otherwise; null when it
+ * holds both kinds of quote.
+ */
+export function quoteAttribute(v: string): string | null {
+  if (!v.includes('"') && !v.endsWith("\\")) return `"${v}"`;
+  if (!v.includes("'")) return `'${v}'`;
+  return null;
+}
+
 /** principles.md with the rule appended as the next `P<n>`, created at 1.0.0 when there is none. */
 export function withPrinciple(current: string | null, rule: LearnedRule): string {
   const base =
@@ -132,9 +144,12 @@ export function withPrinciple(current: string | null, rule: LearnedRule): string
       : "---\nprinciples_version: 1.0.0\n---\n\n# Principles\n";
   let next = 1;
   for (const m of base.matchAll(/^#{2,4}\s+P(\d+)\b/gm)) next = Math.max(next, Number(m[1]) + 1);
-  // Principles reads `\\` and `\"` as escapes and keeps any other backslash: so a backslash
-  // is doubled only before a quote, a backslash or the end, and `\s` stays as a person writes it.
-  const q = (v: string) => `"${v.replace(/\\(?=["\\]|$)/g, "\\\\").replace(/"/g, '\\"')}"`;
+  const q = (v: string) => {
+    const quoted = quoteAttribute(v);
+    if (quoted === null)
+      throw new Error(`A principle's value cannot hold both kinds of quote: ${v}`);
+    return quoted;
+  };
   const check = rule.run
     ? `<!-- specgate:principle run=${q(rule.run)}${rule.level ? ` level=${rule.level}` : ""} -->`
     : rule.forbid

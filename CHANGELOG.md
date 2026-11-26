@@ -99,7 +99,7 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - The MCP config tools declare and pass their key and value (REQ-792).
 - A trace comment over several lines survives `apply` and `archive` (REQ-778); a client's answer counts as a source for its requirements' values (REQ-783); a branch that changes no control is reported as changing none (REQ-785).
 - A draft is approved by a person only (REQ-206).
-- A principle `learn` writes reads back exactly as written: inside a quoted value `\\` is one backslash and `\"` a quote; any other backslash, such as a regular expression's `\s`, is kept (REQ-685).
+- A principle `learn` writes reads back exactly as written: a value with a double quote, or ending in a backslash, is written in single quotes, which a principle comment now accepts; `learn promote` refuses a value holding both kinds of quote, with `learn_value_quotes` (REQ-685).
 
 ## [1.5.0] — 2026-11-23
 

@@ -40,15 +40,14 @@ const HEADING = /^#{2,4}\s+(.+?)\s*$/;
 const PRINCIPLE_COMMENT = /<!--\s*specgate:principle\b([\s\S]*?)-->/;
 
 /**
- * `key="value with \" escapes"` or `key=value`, as a principle comment writes them.
- * Inside quotes `\"` is a quote and `\\` a backslash; any other backslash is kept,
- * so a hand-written `forbid="password\s*="` reads as the regular expression it is.
+ * `key="value with \" escapes"`, `key='value'` or `key=value`, as a principle comment
+ * writes them. Single quotes take the value as it is: no escapes, no backslash read.
  */
 function attributes(body: string): Record<string, string> {
   const out: Record<string, string> = {};
-  const re = /([A-Za-z_][\w-]*)=(?:"((?:[^"\\]|\\.)*)"|(\S+))/g;
+  const re = /([A-Za-z_][\w-]*)=(?:"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+))/g;
   for (const m of body.matchAll(re)) {
-    out[m[1].toLowerCase()] = m[2] !== undefined ? m[2].replace(/\\(["\\])/g, "$1") : m[3];
+    out[m[1].toLowerCase()] = m[2] !== undefined ? m[2].replace(/\\"/g, '"') : (m[3] ?? m[4]);
   }
   return out;
 }

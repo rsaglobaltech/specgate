@@ -9,6 +9,7 @@ import { c } from "../../../lib/ui";
 import { parseReviewNotes } from "../../../../packages/core/src/domain/ReviewNotes";
 import {
   learnChangeId,
+  quoteAttribute,
   lessonsOf,
   type GateFailure,
   type LearnedRule,
@@ -152,6 +153,17 @@ export class LearnCommand extends BaseCommand {
       io.fail(NULL_SHAPE, [
         error("learn_one_check", "A rule checks a pattern or runs a command, not both.", {
           fix: "Keep --forbid with --in, or --run.",
+        }),
+      ]);
+      return;
+    }
+    const unquotable = [flags.forbid, flags.in, flags.run].find(
+      (v) => v !== undefined && quoteAttribute(v) === null
+    );
+    if (unquotable !== undefined) {
+      io.fail(NULL_SHAPE, [
+        error("learn_value_quotes", `A rule's value holds both " and ': ${unquotable}`, {
+          fix: 'Write it with one kind of quote, or match the other with a character class (["]).',
         }),
       ]);
       return;
