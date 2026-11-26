@@ -634,6 +634,13 @@ export interface SkippedAgentFile extends WrittenAgentFile {
  * untouched unless `force`. Shared by `agents init` and by `init`/`adopt`,
  * which install for the agents they detect.
  */
+/** Where `--tool claude-plugin` writes inside a Specgate project: hidden, so the guard never reads it as source. */
+export const PLUGIN_IN_PROJECT = path.join(".claude", "specgate-plugin");
+
+function isSpecgateProject(dir: string): boolean {
+  return fs.existsSync(path.join(dir, "spec.md")) || fs.existsSync(path.join(dir, "docs", "specs"));
+}
+
 export function writeAgentFiles(
   projectDir: string,
   tools: string[],
@@ -646,8 +653,13 @@ export function writeAgentFiles(
   // Several tools share a destination — Claude and Codex both read AGENTS.md —
   // so a file is written once and attributed to the tools that asked for it.
   const planned = new Map<string, AgentFile & { tools: string[] }>();
+  // walkthrough-fixes-2: a plugin generated inside a Specgate project goes to a
+  // folder of its own, under `.claude/` — at the root its scripts read as the
+  // project's untested source, and the guard then held back every call.
+  const pluginHome = isSpecgateProject(projectDir) ? PLUGIN_IN_PROJECT : "";
   for (const tool of tools) {
-    for (const file of TOOLS[tool].files()) {
+    for (const raw of TOOLS[tool].files()) {
+      const file = tool === "claude-plugin" && pluginHome ? { ...raw, path: path.join(pluginHome, raw.path) } : raw;
       const entry = planned.get(file.path);
       if (entry) entry.tools.push(tool);
       else planned.set(file.path, { ...file, tools: [tool] });

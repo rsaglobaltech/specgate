@@ -184,8 +184,10 @@ The guards stop a session, not a determined process outside it. The
 the controls before the agent starts and compare when it stops
 (`controls_changed_by_session`). Without a harness or CI, that check is absent.
 
-**`--tool claude-plugin` writes a plugin, not a project's settings.** Its
-folder holds `plugin.json` (and `.claude-plugin/plugin.json`), `commands/`,
+**`--tool claude-plugin` writes a plugin, not a project's settings.** Run in
+a Specgate project, it writes the plugin to `.claude/specgate-plugin/`, where
+the guard never reads it as untested source; given another `--project-dir`,
+there. The folder holds `plugin.json` (and `.claude-plugin/plugin.json`), `commands/`,
 `skills/`, `scripts/`, `hooks/hooks.json` and `.mcp.json`, and its hooks call
 `${CLAUDE_PLUGIN_ROOT}/scripts/…`, a path only Claude Code fills in for an
 installed plugin. Writing the folder activates nothing: no hook runs until the
