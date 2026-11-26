@@ -295,3 +295,23 @@ test("REQ-758, REQ-759: the rule acceptance fails strict and standard gates, war
   assert.equal(PRESET_RULES.minimal.acceptance, "warning");
   assert.match(RULE_MEANING.acceptance, /acceptance_cmd/);
 });
+
+test("REQ-760 SCN-760c: the sealed test came first — a source write is allowed by it", () => {
+  const { dir, scn } = listed();
+  const id = scn.replace(/^SCN-(\d+)\w$/, "REQ-$1");
+  write(dir, TEST, `test("${id} ${scn} — two loans, two lines", () => {});\n`);
+  assert.equal(sealAcceptance(dir).status, 0);
+  spawnSync("git", ["add", "-A"], { cwd: dir });
+  spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@t.invalid", "commit", "-qm", "sealed"], { cwd: dir });
+  const d = decide({ cwd: dir, tool_name: "Write", tool_input: { file_path: "src/export.ts", content: "export {}" } }, {});
+  assert.equal(d.allow, true, d.message);
+  // A sealed test that names nothing of the change does not open the door.
+  const other = listed();
+  assert.equal(sealAcceptance(other.dir).status, 0);
+  spawnSync("git", ["add", "-A"], { cwd: other.dir });
+  spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@t.invalid", "commit", "-qm", "sealed"], { cwd: other.dir });
+  assert.equal(
+    decide({ cwd: other.dir, tool_name: "Write", tool_input: { file_path: "src/export.ts", content: "export {}" } }, {}).allow,
+    false
+  );
+});

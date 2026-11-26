@@ -75,7 +75,11 @@ function real(p) {
     }
     return path.join(fs.realpathSync.native(dir), ...rest);
 }
-/** Does any of these files, read from `root`, name one of the ids? */
+/**
+ * Does any of these files, read from `root`, name one of the ids? The tests
+ * offered are the ones new or changed in the working tree and — sealed-acceptance
+ * REQ-760 — the acceptance tests a person sealed: they came first by design.
+ */
 function namesAny(root, files, ids) {
     // Requirement ids are `REQ-` and digits: nothing in them needs escaping, and
     // anything else is not a requirement id.
@@ -115,7 +119,7 @@ function shellDecision(cwd, env) {
     // REQ-743: the code has begun, whatever wrote it.
     (0, project_state_1.recordSteps)(cwd, next, env);
     const ids = changes.flatMap((c) => c.requirements);
-    if (namesAny(cwd, changed.filter(project_state_1.isTestFile), ids))
+    if (namesAny(cwd, [...changed.filter(project_state_1.isTestFile), ...(0, project_state_1.sealedTests)(cwd)], ids))
         return ALLOW;
     return {
         allow: false,
@@ -251,7 +255,7 @@ function decide(input, env) {
             };
         }
         const ids = changes.flatMap((c) => c.requirements);
-        if (ids.length && namesAny(cwd, changed.filter(project_state_1.isTestFile), ids)) {
+        if (ids.length && namesAny(cwd, [...changed.filter(project_state_1.isTestFile), ...(0, project_state_1.sealedTests)(cwd)], ids)) {
             // REQ-743: the first source write of the delivery — its steps as they are now.
             const first = changes.find((c) => c.pending.length)?.pending[0];
             if (first)

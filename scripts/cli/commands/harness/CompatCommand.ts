@@ -462,7 +462,7 @@ function oneRun(
     git(dir, "init", "-q");
     git(dir, "add", "-A");
     git(dir, "commit", "-qm", "the exam as given");
-    const given = (git(dir, "rev-parse", "HEAD").stdout || "").trim();
+    let given = (git(dir, "rev-parse", "HEAD").stdout || "").trim();
     const wiring = integrate(dir, tool, level, scratch, logDir, box);
     keptDir = wiring.kept;
     git(dir, "add", "-A");
@@ -533,6 +533,8 @@ function oneRun(
         return { ...base, ran: true, invalid: `writer: ${w.reason}`, passed: false };
       }
       base.sealed = w.sealed;
+      // The writer's tests and their seal are part of the exam as given: what the agent then changes is judged from here.
+      given = (git(dir, "rev-parse", "HEAD").stdout || "").trim();
     }
     // outside-judge REQ-747: the controls before the agent starts, kept here — not in its folder.
     const controlsBefore = controlsOf(dir);
