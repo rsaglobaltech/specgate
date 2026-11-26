@@ -234,8 +234,8 @@ $ specgate status
   Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate apply REQ-002
-     bookings, the brief's 1st module of 1 — once a test mentions REQ-002 — that mention is the link; apply checks first
+  ➜  specgate change approve draft-bookings
+     draft-bookings waits for a person to approve it, at their terminal — apply delivers nothing before
 ```
 <!-- specgate:out-scratch-status:end -->
 

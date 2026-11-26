@@ -142,8 +142,8 @@ $ specgate status
      To close it, name REQ-001 in a test that starts the product.
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate apply REQ-004
-     once a test mentions REQ-004 — that mention is the link; apply checks first
+  ➜  specgate change approve invoice-rounding
+     invoice-rounding waits for a person to approve it, at their terminal — apply delivers nothing before
 ```
 <!-- specgate:out-existing-status-change:end -->
 

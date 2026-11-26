@@ -1,4 +1,4 @@
-<!-- translation-of: 02f6a645c4e8 -->
+<!-- translation-of: 7ce153d2b8a5 -->
 # Escribe el brief
 
 > **La versión corta** de ambos caminos, en seis comandos: [Empezar](../start.md). Esta página es el mismo paso en detalle, con la salida grabada.
@@ -228,7 +228,7 @@ specgate propose --from-brief --agent "claude -p"
 $ specgate propose --from-brief --agent "claude -p"
   ◆ specgate · propose --from-brief --agent   docs/brief.md
 
-  ➜  claude -p --permission-mode acceptEdits  is proposing the front matter of docs/brief.md…
+  ➜  claude --strict-mcp-config --permission-mode acceptEdits -p  is proposing the front matter of docs/brief.md…
      edit permission added: claude -p cannot write files otherwise
 
 Added a front matter to docs/brief.md: 2 actors, 4 modules; one line marked to check.
@@ -264,7 +264,7 @@ una sección por módulo, solo a partir de tus notas:
 $ specgate propose --from-brief --agent "claude -p"
   ◆ specgate · propose --from-brief --agent   docs/brief.md
 
-  ➜  claude -p --permission-mode acceptEdits  is proposing the module sections of docs/brief.md…
+  ➜  claude --strict-mcp-config --permission-mode acceptEdits -p  is proposing the module sections of docs/brief.md…
      edit permission added: claude -p cannot write files otherwise
 
 Added 4 module sections from your notes; 3 questions the notes leave open.

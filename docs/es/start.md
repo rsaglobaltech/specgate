@@ -1,4 +1,4 @@
-<!-- translation-of: e2c0dd97844c -->
+<!-- translation-of: f564d683a2b2 -->
 # Empezar
 
 Dos caminos, unos pocos comandos cada uno. Elige el que corresponde a tu carpeta.

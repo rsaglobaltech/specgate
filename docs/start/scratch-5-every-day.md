@@ -178,7 +178,7 @@ $ specgate status
 
   Next ───────────────────────────────────────────────────
   ➜  specgate apply REQ-003
-     bookings, the brief's 1st module of 1 — once a test mentions REQ-003 — that mention is the link; apply checks first
+     free-courts waits for a person to approve it, at their terminal — apply delivers nothing before
 ```
 <!-- specgate:out-scratch-status-daily:end -->
 
