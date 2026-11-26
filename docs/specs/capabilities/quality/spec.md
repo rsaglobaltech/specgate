@@ -457,6 +457,7 @@ The system SHALL write the `sbom` check of a Maven project so that CycloneDX wri
 - THEN the `sbom` check's command carries `-Dcyclonedx.skipNotDeployed=false`
 
 <!-- specgate:trace actor=Developer feature=features/quality/REQ-276.feature kind=functional status=Implemented test=tests/unit/quality-presets.test.ts -->
+
 ### Requirement: REQ-266 — A Docker check sees the repository of a worktree
 
 The system SHALL, when it runs a Docker check in a git worktree — whose `.git` is a file pointing into the main repository — mount the repository's git folder in the container read-only and point `GIT_DIR` and `GIT_WORK_TREE` at the worktree, so a tool that lists files with git, as semgrep does, works in the harness's worktrees as in the main tree.
@@ -480,3 +481,27 @@ The system SHALL treat a gate check that is to write a SARIF report and wrote no
 - THEN it makes one attempt, and says the check could not run, without "Fix what the check found"
 
 <!-- specgate:trace actor=Developer feature=features/quality/REQ-267.feature kind=functional status=Implemented test=tests/unit/quality-worktree.test.ts -->
+
+### Requirement: REQ-501 — The coverage report for one capability
+
+The system SHALL accept `--capability <name>` on `specgate report`, in HTML and JSON alike, and then count and list only the requirements of that capability — as `status --json` assigns them (REQ-500) — naming it as `capability` in the JSON report; and SHALL refuse a capability the project does not have with `capability_unknown`, exit 2, whose fix lists the capabilities it has.
+
+#### Scenario: SCN-501a — The orders capability, then one that does not exist
+
+- GIVEN a project with REQ-001 in spec.md and REQ-002 and REQ-003 in the capability `orders`
+- WHEN a tool runs `specgate report --format json --stdout --capability orders`, then `--capability nothing`
+- THEN the first report has `capability` `orders`, a total of 2 and only REQ-002 and REQ-003; the second exits 2 with `capability_unknown` and a fix that names `orders`
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-501.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-499 — The coverage report gives the project's line coverage
+
+The system SHALL give in `specgate report --format json` and the API's `report(dir)` `coverage.lines`: the share of executable lines the project's tests run, as `percent` with the `covered` and `total` lines, the `tool` whose report it was read from (`lcov`, `istanbul`, `cobertura` or `jacoco`), that report's `file` and when it was written as `measuredAt` — read from the report a quality check names in `report:`, else from the newest of the standard reports (`coverage/lcov.info`, `coverage/coverage-summary.json`, `coverage/cobertura-coverage.xml`, `coverage.xml`, `target/site/jacoco/jacoco.xml`, `build/reports/jacoco/test/jacocoTestReport.xml`); and, when no report exists or it measures no line, `coverage.lines` null with the finding `coverage_not_measured` whose fix says how to have the project's stack write one — never 0 for a coverage nothing measured.
+
+#### Scenario: SCN-499a — An LCOV report, then none
+
+- GIVEN a Node project whose `coverage/lcov.info` has 8 of its 10 executable lines covered
+- WHEN a tool runs `specgate report --format json --stdout` and calls `report(dir)`, then removes the report and runs it again
+- THEN both first answers have `coverage.lines` with `percent` 80, `covered` 8, `total` 10, `tool` `lcov`, `file` `coverage/lcov.info` and `measuredAt`; the last has `coverage.lines` null and `coverage_not_measured` with a fix that names c8
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-499.feature kind=functional status=Implemented -->

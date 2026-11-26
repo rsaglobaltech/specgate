@@ -1,0 +1,18 @@
+# What the gate requires — `specgate check` and `validate --strict` read it.
+# preset: minimal | standard | strict. Each rule: error (fails the gate),
+# warning (reported, passes) or off (not run). Docs: docs/gate (the gate guide).
+preset: standard
+rules:
+  tdd: error             # a delivered requirement has a test that names it (--strict-tdd)
+  scenarios: error       # every scenario can fail: real steps, capitalised keywords (--strict-scenarios)
+  requirements: error    # every requirement states an obligation, not the sentence Specgate wrote (--strict-requirements)
+  links: error           # every path the matrix declares exists (--strict-links)
+  coverage: warning      # every scenario of a declared feature file is named by a test (--strict-coverage)
+  ids: error             # no requirement id means something else on the base branch
+  quality: error         # the quality checks of harness.config.yaml pass
+  use_cases: warning     # every requirement names a use case of docs/specs/use-cases.md, and every use case is delivered (--strict-use-cases)
+  scope: error            # a new source file the approved design does not name fails the gate
+  state_machines: error  # every state machine of docs/specs/state-machines/ starts somewhere, names states and requirements that exist, and takes no forbidden transition
+# enforce_from: 2026-12-31   # until then, every error is reported as a warning
+# The scenarios are feature files a runner checks (bdd_cmd), before any code (REQ-661).
+bdd: required

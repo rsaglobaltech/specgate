@@ -388,6 +388,16 @@ export const NAV: readonly NavSection[] = [
         },
       },
       {
+        slug: "sealed-acceptance",
+        label: "Sealed acceptance tests",
+        blurb: "Tests another hand writes and a person seals, which the agent cannot change.",
+        es: {
+          label: "Tests de aceptación sellados",
+          blurb:
+            "Tests que escribe otra mano y sella una persona, y que el agente no puede cambiar.",
+        },
+      },
+      {
         slug: "writing-specs",
         label: "Writing specs",
         blurb: "Requirements, scenarios and the traceability matrix.",

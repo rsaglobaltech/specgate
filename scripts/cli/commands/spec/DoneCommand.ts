@@ -1,4 +1,17 @@
 import { readGatePolicy } from "../../../lib/gate-policy";
+import { elsewhereFix, failingElsewhere } from "../../../lib/tests-elsewhere";
+import {
+  endStepRecord,
+  keepStepsReview,
+  stepsVerdict,
+  STEPS_FINDING,
+  STEPS_FIX,
+} from "../../../lib/step-seal";
+import { gitIdentity, missingApprovals } from "../../../lib/approvals";
+import { scenariosOf } from "./ScenariosCommand";
+import { keepEvidence, mustReproduce, readRed } from "../../../lib/evidence";
+import type { ScenarioRun } from "../../../lib/evidence";
+import { appendApplied } from "../../../lib/trust";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { archRun } from "../../../lib/quality-run";
 import { error } from "../../../lib/diagnostics";
@@ -75,6 +88,69 @@ export interface DoneOptions {
   /** Overrides `test_cmd:` in harness.config.yaml for this invocation. */
   testCmd?: string;
   json?: boolean;
+  /** `--steps-reviewed`: a person read the steps changed after the code began (REQ-743). */
+  stepsReviewed?: boolean;
+}
+
+/**
+ * outside-judge REQ-745: why nobody's approval stops the delivery, or null. The
+ * question the harness asks (REQ-315), asked of the open change that owns the
+ * requirement; a requirement no change owns is not asked.
+ */
+export function approvalRefusal(
+  projectDir: string,
+  change: string | undefined
+): { code: string; message: string; fix: string } | null {
+  try {
+    if (!change) return null;
+    const missing = missingApprovals(projectDir, change);
+    if (!missing) return null;
+    return {
+      code: "change_not_approved",
+      message: `${missing.message} A requirement is delivered once a person approved its change.`,
+      fix: missing.fix,
+    };
+  } catch {
+    // Approval settings that cannot be read are validate's finding, not this one's.
+    return null;
+  }
+}
+
+/** REQ-743: why the requirement's steps stop its delivery, or null. */
+function stepsRefusal(
+  projectDir: string,
+  id: string,
+  opts: DoneOptions
+): { code: string; message: string; fix: string } | null {
+  const v = stepsVerdict(projectDir, id);
+  if (!v.recorded || v.changed.length === 0) return null;
+  if (!opts.stepsReviewed)
+    return {
+      code: "steps_changed_after_code",
+      message: STEPS_FINDING(id, v.changed),
+      fix: STEPS_FIX(id),
+    };
+  // A person's word is said at a terminal: a tool that runs its own commands has none.
+  if (!process.stdin.isTTY && !process.env.SPECGATE_ASSUME_TTY)
+    return {
+      code: "steps_review_needs_person",
+      message: `--steps-reviewed is a person's word, and this is not a terminal. ${STEPS_FINDING(id, v.changed)}`,
+      fix: `A person runs it in a terminal: specgate apply ${id} --steps-reviewed`,
+    };
+  return null;
+}
+
+/** REQ-743: after the delivery — who reviewed the steps, or that nobody did; the record ends. */
+function stepsDelivered(projectDir: string, id: string, opts: DoneOptions): string {
+  const v = stepsVerdict(projectDir, id);
+  let said = "";
+  if (v.recorded && v.changed.length > 0 && opts.stepsReviewed) {
+    keepStepsReview(projectDir, id, gitIdentity(projectDir), v.changed);
+  } else if (!v.recorded && v.fresh.length > 0) {
+    said = `${id}'s steps (${v.fresh.join(", ")}) were written in the same delivery as the code and were not reviewed: read them against its scenarios.`;
+  }
+  endStepRecord(projectDir, id);
+  return said;
 }
 
 export function parseArgs(argv: string[]): DoneOptions {
@@ -94,6 +170,7 @@ export function parseArgs(argv: string[]): DoneOptions {
     else if (a === "--no-check") opts.noCheck = true;
     else if (a === "--test-cmd" && argv[i + 1]) opts.testCmd = argv[++i];
     else if (a === "--json") opts.json = true;
+    else if (a === "--steps-reviewed") opts.stepsReviewed = true;
     else if (a === "--strict") {
       opts.strict = true;
       opts.check = true;
@@ -138,19 +215,23 @@ export class DoneCommand extends BaseCommand {
           : "Deliver one requirement: its test first, then the gate marks it Implemented.\n\n") +
           "Usage:\n" +
           `  specgate ${verb} [<REQ-id> …] [--status <Status>] [--no-check]\n` +
-          '                       [--test-cmd "<command>"] [--project-dir <path>] [--json]\n\n' +
+          '                       [--test-cmd "<command>"] [--steps-reviewed] [--project-dir <path>] [--json]\n\n' +
           "Without an id, takes the next requirement `specgate status` names. Refused\n" +
           "while no test names the requirement. Marks it delivered when the gate\n" +
           "`specgate check` runs passes for it; nothing is written when it fails. A\n" +
           "requirement of an open change is judged as it will be after archive, and\n" +
           "its status is written in the change's delta. Several ids are checked one by\n" +
           "one and the project's tests run once for all of them.\n\n" +
+          "Refused for a change no person approved (`specgate change approve <id>`,\n" +
+          "at a terminal), and while a sealed acceptance test is not as approved.\n\n" +
           "Options:\n" +
           `  --status <Status>   Target status (default: Implemented).\n` +
           `                      One of: ${ALLOWED_STATUSES.join(", ")}\n` +
           "  --no-check          Write the status without running the gate (Implemented,\n" +
           "                      Verified and Released run it by default).\n" +
           "  --check, --strict   Run the gate for any status, Approved included.\n" +
+          "  --steps-reviewed    A person read the step definitions changed after the code\n" +
+          "                      began (steps_changed_after_code). Only at a terminal.\n" +
           '  --test-cmd "<cmd>"  Also run the project\'s tests and require them to pass.\n' +
           "                      Read from `test_cmd:` in harness.config.yaml when omitted.\n" +
           `                      Without one, \`${verb}\` says it checked the specification\n` +
@@ -341,6 +422,21 @@ export class DoneCommand extends BaseCommand {
       }
 
       const again = `specgate ${verb} ${id}`;
+      // recover-guidance REQ-787: only another requirement's test is red — say so, and that repairing it is in scope.
+      const others =
+        step.stage === "tests"
+          ? failingElsewhere(`${run.stdout || ""}${run.stderr || ""}`, [id])
+          : [];
+      if (others.length) {
+        const e = elsewhereFix(others, [id], again);
+        io.fail(NULL_SHAPE, [
+          ...findings,
+          error("done_tests_failed", `not marked ${opts.status}: ${e.message}.`, {
+            target: id,
+            fix: e.fix,
+          }),
+        ]);
+      }
       io.fail(NULL_SHAPE, [
         ...findings,
         error(
@@ -367,6 +463,20 @@ export class DoneCommand extends BaseCommand {
       ]);
     }
 
+    // REQ-745: nobody approved its change. After the gate — what it finds is
+    // what keeps a change from being approved — and whatever `--no-check`
+    // says: an approval is not one of the gate's checks.
+    const unapproved = DELIVERED_STATUSES.includes(opts.status)
+      ? approvalRefusal(projectDir, owner?.change)
+      : null;
+    if (unapproved)
+      io.fail(NULL_SHAPE, [
+        error(unapproved.code, `${id} not marked ${opts.status}: ${unapproved.message}`, {
+          target: owner!.change,
+          fix: unapproved.fix,
+        }),
+      ]);
+
     // REQ-662: with executable scenarios required, the requirement's own must pass.
     const bdd = gated ? bddRefusal(projectDir, id, !!opts.json) : null;
     if (bdd)
@@ -377,8 +487,19 @@ export class DoneCommand extends BaseCommand {
         }),
       ]);
 
+    // REQ-743: steps changed after the code began wait for a person.
+    const steps = gated ? stepsRefusal(projectDir, id, opts) : null;
+    if (steps)
+      io.fail(NULL_SHAPE, [
+        error(steps.code, `${id} not marked ${opts.status}: ${steps.message}`, {
+          target: id,
+          fix: steps.fix,
+        }),
+      ]);
+
     const result = writeStatus(projectDir, dir, owner, id, opts.status);
-    if (result.ok) warnUntested(opts, dir, id);
+    if (result.ok) applied(opts, projectDir, dir, id);
+    const stepsSaid = result.ok && gated ? stepsDelivered(projectDir, id, opts) : "";
     if (!result.ok) {
       if (result.code === "traceability_not_found") {
         io.usage(NULL_SHAPE, [
@@ -402,15 +523,31 @@ export class DoneCommand extends BaseCommand {
     }
 
     const updated = result.updated;
-    io.emit({ requirement: { id, status: opts.status, rowsUpdated: updated } }, () =>
-      process.stdout.write(
-        "\n" +
-          ui.ok(
-            `${c.bold}${id}${c.reset} ${ui.sym.arrow} ${c.ok}${c.bold}${opts.status}${c.reset} ` +
-              ui.muted(`(${updated} row${updated > 1 ? "s" : ""} updated)`)
-          ) +
-          (plan.testsUnverified ? "" : nextAfter(queue().items, id, owner, view))
-      )
+    io.emit(
+      {
+        requirement: {
+          id,
+          status: opts.status,
+          rowsUpdated: updated,
+          ...(stepsSaid ? { steps: stepsSaid } : {}),
+        },
+      },
+      () =>
+        process.stdout.write(
+          "\n" +
+            ui.ok(
+              `${c.bold}${id}${c.reset} ${ui.sym.arrow} ${c.ok}${c.bold}${opts.status}${c.reset} ` +
+                ui.muted(`(${updated} row${updated > 1 ? "s" : ""} updated)`)
+            ) +
+            // gate-runs-scenarios REQ-735: said plainly, at each delivery, what the gate did not check.
+            (gated &&
+            readGatePolicy(projectDir).bdd !== "required" &&
+            scenariosOf(projectDir, id).length > 0
+              ? `  ${ui.muted(`·  ${id} is delivered on a test that names it: its scenarios were not run. specgate migrate bdd makes the gate run them.`)}\n`
+              : "") +
+            (stepsSaid ? `  ${ui.muted(`·  ${stepsSaid}`)}\n` : "") +
+            (plan.testsUnverified ? "" : nextAfter(queue().items, id, owner, view))
+        )
     );
 
     // Said out loud, after the tick, because this is the command that writes
@@ -553,28 +690,51 @@ export class DoneCommand extends BaseCommand {
         if (run.status !== 0) {
           const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
           if (detail && !opts.json) process.stderr.write(indent(detail) + "\n\n");
+          // recover-guidance REQ-787: only another requirement's test is red.
+          const others = failingElsewhere(detail, passing);
           for (const id of passing) {
             results.set(id, {
               ok: false,
               code: "done_tests_failed",
-              message: "the project's tests failed",
+              message: others.length
+                ? elsewhereFix(others, passing, `specgate ${this.verb} ${passing.join(" ")}`)
+                    .message
+                : "the project's tests failed",
             });
           }
+          if (others.length && !opts.json)
+            process.stderr.write(
+              indent(
+                elsewhereFix(others, passing, `specgate ${this.verb} ${passing.join(" ")}`).fix
+              ) + "\n\n"
+            );
         }
       }
     }
+
+    // REQ-745: a requirement of a change nobody approved is not delivered.
+    if (DELIVERED_STATUSES.includes(opts.status))
+      for (const id of ids.filter((x) => results.get(x)!.ok)) {
+        const change = view ? view.requirements.find((r) => r.id === id)?.change : undefined;
+        const unapproved = approvalRefusal(projectDir, change);
+        if (unapproved)
+          results.set(id, { ok: false, code: unapproved.code, message: unapproved.message });
+      }
 
     // REQ-662: with executable scenarios required, each requirement's own must pass.
     if (opts.check)
       for (const id of ids.filter((x) => results.get(x)!.ok)) {
         const bdd = bddRefusal(projectDir, id, !!opts.json);
         if (bdd) results.set(id, { ok: false, code: bdd.code, message: bdd.message });
+        const steps = bdd ? null : stepsRefusal(projectDir, id, opts);
+        if (steps) results.set(id, { ok: false, code: steps.code, message: steps.message });
       }
 
     for (const id of ids.filter((x) => results.get(x)!.ok)) {
       const owner = view ? view.requirements.find((r) => r.id === id) : undefined;
       const result = writeStatus(projectDir, dir, owner, id, opts.status);
-      if (result.ok) warnUntested(opts, dir, id);
+      if (result.ok) applied(opts, projectDir, dir, id);
+      if (result.ok && opts.check) stepsDelivered(projectDir, id, opts);
       if (!result.ok) {
         results.set(id, {
           ok: false,
@@ -717,6 +877,18 @@ function tickTasksOf(deltaFile: string, id: string): void {
  * when it is in flight (ADR-0035), spec.md or its capability spec otherwise,
  * or the hand-kept matrix of a project that is not derived.
  */
+/** Delivered: say so when no test names it, and keep it as trust evidence when the gate passed (REQ-674). */
+function applied(opts: DoneOptions, projectDir: string, dir: string, id: string): void {
+  warnUntested(opts, dir, id);
+  if (opts.check && opts.status === "Implemented") appendApplied(projectDir, id);
+  // REQ-680: the scenarios that proved it, and what the browser left.
+  const run = scenarioRuns.get(id);
+  if (run && run.exitCode === 0) keepEvidence(projectDir, id, run);
+}
+
+/** Each requirement's scenario run in this apply, for its evidence (REQ-680). */
+const scenarioRuns = new Map<string, ScenarioRun>();
+
 function writeStatus(
   projectDir: string,
   judgedDir: string,
@@ -803,6 +975,13 @@ function bddRefusal(
   id: string,
   json: boolean
 ): { code: string; message: string; fix: string } | null {
+  // REQ-683: a bug is delivered only after it was seen red.
+  if (mustReproduce(projectDir, id) && !readRed(projectDir, id))
+    return {
+      code: "apply_not_reproduced",
+      message: "it is a bug to reproduce first, and its scenarios were never seen failing",
+      fix: `specgate reproduce run ${id}`,
+    };
   if (readGatePolicy(projectDir).bdd !== "required") return null;
   const bddCmd = (readHarnessConfig(projectDir)?.bddCmd || "").trim();
   if (!bddCmd)
@@ -814,7 +993,16 @@ function bddRefusal(
   const cmd = bddCmd.includes("{tags}")
     ? bddCmd.split("{tags}").join(`@${id}`)
     : `${bddCmd} @${id}`;
+  const startedAt = Date.now();
   const run = spawnSync(forShell(cmd), { cwd: projectDir, encoding: "utf8", shell: true });
+  // REQ-680: what ran, kept for the evidence once the requirement is delivered.
+  scenarioRuns.set(id, {
+    command: cmd,
+    exitCode: run.status ?? 1,
+    ms: Date.now() - startedAt,
+    output: `${run.stdout || ""}${run.stderr || ""}`,
+    startedAt,
+  });
   if (run.status === 0) return null;
   const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
   if (detail && !json)

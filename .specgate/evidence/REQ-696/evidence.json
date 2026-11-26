@@ -1,0 +1,13 @@
+{
+  "requirement": "REQ-696",
+  "at": "2026-11-23T19:55:09.848Z",
+  "scenarios": {
+    "command": "node scripts/scenarios.mjs @REQ-696",
+    "exitCode": 0,
+    "ms": 1255,
+    "tags": [
+      "@REQ-696"
+    ]
+  },
+  "artifacts": []
+}

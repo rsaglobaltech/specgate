@@ -1,0 +1,14 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-736 SCN-736a SCN-736c: the agent runs through sbx in the batch's own folder, with named variables, and nothing is left (4484.499209ms)
+✔ REQ-736 SCN-736b: Specgate's tarball goes into the sandbox of L0 and not into the bare one of B (7627.189625ms)
+✔ REQ-736 SCN-736d: --auth-opencode puts the Developer's own session in the sandbox's home, and no key among the agent's variables (4230.761875ms)
+✔ REQ-736: a sandbox that cannot be made is an invalid run — the agent is not started on the machine instead (525.425375ms)
+✔ REQ-736 SCN-736e: a sandbox the Developer made is used as it is, and left there (2436.220125ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19377.928167

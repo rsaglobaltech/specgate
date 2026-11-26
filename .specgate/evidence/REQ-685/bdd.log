@@ -1,0 +1,11 @@
+▶ dist/tests/unit/learn-rules.test.js
+✔ REQ-685 SCN-685a: a barrier, written only once a person approves it (556.795417ms)
+✔ REQ-685 SCN-685b: an instruction, in prose (848.499709ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1483.856125

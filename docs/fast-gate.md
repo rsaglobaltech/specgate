@@ -9,6 +9,8 @@ architecture check beside the tests.
 **You need:** a project in git where `specgate check` already passes
 ([Validating](validating.md)).
 
+<!-- specgate:diagram fast-gate -->
+
 ## Run only what the change touches
 
 `check --affected` runs the tests of what changed since the base
@@ -82,5 +84,7 @@ specgate config set gate_parallel false
 Every `check --json` answer has `selection`: `mode` (`affected` or `full`),
 `reason`, `base`, `changed`, `requirements`, `tests`, `cached` and the
 `command` that ran. Each entry of `stages` has `ms`, the time it took (`null`
-when it did not run), and on a terminal each stage's line shows its time.
+when it did not run). Only on a colour terminal does a stage's line end with
+its time — not in a pipe, a log or CI. The Tests line names the command as
+configured (`npm test`), not what that runs underneath (`node --test`).
 `specgate check --last --json` gives both back.

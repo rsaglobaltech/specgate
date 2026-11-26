@@ -351,8 +351,25 @@ a rule: it is chosen by name through `agent_profile`, and treating an absent
 `match:` as "matches everything" would make the first profile in the file
 swallow every requirement the moment somebody added a rule to another.
 
-Matchable keys are `bounded_context`, `requirement`, `feature` and
-`category`. `*` matches any value; an unknown key matches **nothing** rather
+Matchable keys are `bounded_context`, `requirement`, `feature`,
+`category` and `module` — the requirement's capability (REQ-688): a delicate
+module can have a stronger model, the rest a free one:
+
+```yaml
+profiles:
+  careful:
+    agent: "claude -p --model sonnet < {prompt_file}"
+    match: { module: ausleihe }
+  cheap:
+    agent: "env -u OPENCODE_API_KEY opencode run --auto -m opencode/big-pickle -f {prompt_file}"
+    match: { module: "*" }
+```
+
+The agent that **drafts** a module of the brief is set apart:
+`draft_profile: writer` in harness.config.yaml names the profile `specgate
+draft <module>` and `propose --from-brief <module>` run when neither
+`--agent` nor `--profile` is given; `--no-agent` writes the drafting guide for
+your own agent instead (REQ-689). `*` matches any value; an unknown key matches **nothing** rather
 than being ignored, so `bounded_contex:` — one letter short — cannot quietly
 become a rule that matches everything. A role named by `attempt_profiles`
 still wins for its own step: a step that says which role it is has already
@@ -378,6 +395,52 @@ id:
 they never chose. Same line as B1's `depends=`, because a trace line carries
 keys and a second regular expression would have agreed with the first only
 by luck.
+
+## Every agent checked before it is used
+
+`specgate harness doctor [--json] [--no-probe]` lists each pending
+requirement with its module and the profile and agent it gets, and checks
+each distinct agent once — the drafting one too: its program on the PATH,
+then, unless `--no-probe`, a one-line prompt ("Reply with exactly: OK") in an
+empty folder, passing when it exits 0 within 120 s and says OK. A failure
+keeps the agent's last line — an expired key, a spent free quota — and a
+fix (REQ-690).
+
+`harness run` asks the same of the agents it needs before it creates any
+worktree, and refuses with `harness_agent_unavailable` when one fails;
+`--skip-doctor` starts anyway (REQ-691). It costs one short call per agent.
+
+## The swarm in sandboxes
+
+With Docker Sandboxes (`sbx`) each module of a change gets its own sandbox,
+made once and used for every requirement of the module (REQ-698):
+
+```yaml
+# harness.config.yaml
+sandbox:
+  engine: sbx
+  kit: opencode            # the sbx kit or agent the sandbox is made with
+  allow:                   # hosts this sandbox alone may reach
+    - registry.npmjs.org
+    - opencode.ai
+  setup: "sh scripts/sandbox-setup.sh" # run once in a new sandbox: install Node, say
+```
+
+The sandbox is `sg-<change>-<module>`; that module's worktrees live in its
+folder, and each agent session runs inside it (`sbx exec -w <worktree>`),
+its prompt copied in. The gate stays on the host: it is the judge. The run
+says how many hosts each sandbox may reach — yours, and the kit's own,
+which sbx adds by itself (the opencode kit brings 29) (REQ-699).
+
+Nothing is left behind: `specgate archive <change>` removes that change's
+sandboxes and the rules the harness added (REQ-700), and `specgate harness
+sandboxes [--prune] [--json]` lists every recorded sandbox and any `sg-…`
+nobody recorded; `--prune` removes those of archived changes and the strays
+(REQ-701). The record is `.harness/sandboxes.json`.
+
+The project's principles reach the agent: the prompt lists them, and the
+harness gate runs those with `run=` as its stage `principles` (REQ-692,
+REQ-693).
 
 ## A ceiling on the run
 

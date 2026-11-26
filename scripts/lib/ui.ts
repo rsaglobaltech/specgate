@@ -1,3 +1,11 @@
+// walkthrough-fixes-3: a reader that closes the pipe (`specgate … | head`) is
+// not an error — the output was wanted up to there. Exit quietly, as Unix tools do.
+for (const stream of [process.stdout, process.stderr]) {
+  stream.on("error", (err: NodeJS.ErrnoException) => {
+    if (err && err.code === "EPIPE") process.exit(0);
+    throw err;
+  });
+}
 /**
  * The look of Specgate at a terminal — one palette, one set of symbols, and the
  * few shapes every command is built from.

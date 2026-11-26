@@ -3,6 +3,10 @@
  * agent checks — and the adversarial probe of a green attempt.
  */
 
+import { stepsVerdict, STEPS_FINDING } from "../../lib/step-seal";
+import { listChangeIds } from "../../../packages/core/src/infrastructure/ChangeWorkspace";
+import { scopeDiagnostics, sealDiagnostics } from "../../lib/approvals";
+import { acceptanceSealDiagnostics } from "../../lib/acceptance";
 import { sandboxCommand } from "../../../packages/core/src/domain/Sandbox";
 import { quoteArg } from "../../lib/escape";
 import { HarnessInterrupted, runWithDeadline } from "../../lib/run-with-deadline";
@@ -44,6 +48,20 @@ import {
   substituteGateCommand,
 } from "../../../packages/core/src/domain/HarnessRun";
 import { removeTempFile } from "../../lib/temp-file";
+import { sessionChanged } from "../../lib/controls";
+import {
+  CONTROLS_CODE,
+  controlsFinding,
+  type ControlRecord,
+} from "../../../packages/core/src/domain/ControlRecord";
+import { runPrinciples } from "../../lib/steering";
+import {
+  runRequirementScenarios,
+  scenarioCommand,
+  scenariosRequired,
+} from "../../lib/scenario-runs";
+import { sandboxAround } from "../../lib/sandbox-registry";
+import { sbxExecLine } from "../../lib/sbx";
 import {
   judged,
   promptInFlight,
@@ -71,7 +89,11 @@ export function limitFor(
  * The resolved settings plus `verbose`, which is a run flag rather than a
  * project setting and so only ever travels with the gate's copy.
  */
-export type GateSettings = Partial<HarnessSettings> & { verbose?: boolean };
+export type GateSettings = Partial<HarnessSettings> & {
+  verbose?: boolean;
+  /** outside-judge REQ-747: the controls as they were before the agent started, kept by the harness. */
+  controlsBefore?: ControlRecord;
+};
 
 /** What the gate said: green, or the stage it failed at and why. */
 export interface GateResult {
@@ -191,6 +213,20 @@ export function runGate(
   // requirement this attempt exists to deliver.
   // The agent's tests are new evidence for a generated matrix: refresh it so
   // the gate judges the attempt, not the matrix as it was before it.
+  // REQ-747: before anything the worktree says of itself — what the session did
+  // to the controls, against the reading the harness kept from before it.
+  if (settings.controlsBefore) {
+    const changed = sessionChanged(worktreeDir, settings.controlsBefore);
+    if (changed.length) {
+      report("controls", "fail", { ms: 0 });
+      return {
+        ok: false,
+        stage: "controls",
+        output: `${controlsFinding(changed)}  [${CONTROLS_CODE}]\n`,
+        hint: "Approving, switching the guard and reviewing steps are a person's. Put the controls back as they were and do the work they ask for, or stop and say why you cannot.",
+      };
+    }
+  }
   refreshDerivedMatrix(worktreeDir);
   let passHint = "";
   report("validate --strict", "start");
@@ -206,15 +242,31 @@ export function runGate(
     // The agent is told about its worktree, not about the copy it was judged in.
     return { ...run, stdout: toProject(run.stdout || ""), stderr: toProject(run.stderr || "") };
   });
-  report("validate --strict", validate.status === 0 ? "pass" : "fail", {
+  // REQ-740: the copy the gate judges has its changes archived, approvals and
+  // all; what was approved is read from the worktree itself.
+  const unapproved = [
+    ...listChangeIds(worktreeDir).flatMap((id) => sealDiagnostics(worktreeDir, id).errors),
+    // sealed-acceptance REQ-758.
+    ...listChangeIds(worktreeDir).flatMap(
+      (id) => acceptanceSealDiagnostics(worktreeDir, id).errors
+    ),
+    ...scopeDiagnostics(worktreeDir, listChangeIds(worktreeDir)).errors,
+  ];
+  const validated = validate.status === 0 && unapproved.length === 0;
+  report("validate --strict", validated ? "pass" : "fail", {
     ms: Date.now() - validateStart,
   });
-  if (validate.status !== 0) {
+  if (!validated) {
     return {
       ok: false,
       stage: "validate --strict",
-      output: validate.stdout + validate.stderr,
-      hint: "",
+      output:
+        validate.stdout +
+        validate.stderr +
+        unapproved.map((d) => `${d.message}  [${d.code}]\n`).join(""),
+      hint: unapproved.length
+        ? "What is here is not what a person approved. Do not approve it yourself: put it back as it was approved, or stop and say what must change."
+        : "",
     };
   }
   // REQ-199: a requirement used on a screen needs an end-to-end test that
@@ -366,6 +418,15 @@ export function runGate(
       if (warnings.length > 0) passHint = warnings[0].message;
     }
   }
+  // gate-runs-scenarios REQ-733: with executable scenarios required, the requirement's own, after the tests.
+  const scenarios = scenariosStage(worktreeDir, req.requirement || "", report);
+  if (scenarios) return scenarios;
+  // shortcut-proof REQ-743: and its steps are the ones the code was written against.
+  const steps = stepsStage(worktreeDir, req.requirement || "", report);
+  if (steps) return steps;
+  // lab-fixes REQ-693: the principles that declare a check, after the tests.
+  const principles = principlesStage(worktreeDir, report);
+  if (principles) return principles;
   // REQ-220, REQ-221: the quality checks, after the tests — the attempt ones,
   // then the end ones. A failure goes back to the agent like a failing test.
   const quality = settings.quality;
@@ -518,8 +579,22 @@ export function agentLine(
   settings: Partial<HarnessSettings> | undefined,
   extra: { env?: string[]; mounts?: string[] } = {}
 ): string {
+  // sandbox-swarm REQ-698: in the module's sbx sandbox, its prompt copied where it sees.
+  if (settings?.sandbox?.engine === "sbx") {
+    const box = sandboxAround(worktreeDir);
+    if (box) {
+      const prompts = path.join(box.workspace, ".prompts");
+      fs.mkdirSync(prompts, { recursive: true });
+      const inside = path.join(prompts, path.basename(promptFile));
+      fs.copyFileSync(promptFile, inside);
+      return sbxExecLine(box.name, worktreeDir, substituteAgentCommand(template, inside), [
+        ...(settings.agentEnv || []),
+        ...(extra.env || []),
+      ]);
+    }
+  }
   const line = substituteAgentCommand(template, promptFile);
-  if (!settings?.sandbox) return line;
+  if (!settings?.sandbox || settings.sandbox.engine === "sbx") return line;
   return sandboxCommand(line, settings.sandbox, {
     worktree: worktreeDir,
     mounts: [promptFile, ...(extra.mounts || [])],
@@ -780,4 +855,94 @@ export function runAdversarialProbe(
     // The branch carries the implementer's work and nothing else.
     discardWorktreeChanges(worktreeDir);
   }
+}
+
+/**
+ * gate-runs-scenarios REQ-733: the stage `scenarios` — the requirement's
+ * scenarios through `bdd_cmd`, in a project whose gate requires them. The
+ * harness skips apply's own gate, having run its own, so they are run here: a
+ * requirement built to a test that says something else than its scenario is
+ * not delivered. Null: not required, or green.
+ */
+export function scenariosStage(
+  worktreeDir: string,
+  requirement: string,
+  report: GateReport = () => {}
+): GateResult | null {
+  if (!requirement || !scenariosRequired(worktreeDir)) return null;
+  const bddCmd = scenarioCommand(worktreeDir);
+  if (!bddCmd) {
+    report("scenarios", "fail", { ms: 0 });
+    return {
+      ok: false,
+      stage: "scenarios",
+      output:
+        "The gate requires executable scenarios and no bdd_cmd runs them.\n" +
+        '  fix: specgate config set bdd_cmd "<runs the feature files, with {tags}>"',
+    };
+  }
+  report("scenarios", "start");
+  const v = runRequirementScenarios(worktreeDir, requirement, bddCmd);
+  report("scenarios", v.ok ? "pass" : "fail", { ms: v.ms });
+  if (v.ok) return null;
+  return {
+    ok: false,
+    stage: "scenarios",
+    output:
+      `${requirement}'s scenarios did not pass${v.failed.length ? `: ${v.failed.join(", ")}` : ""}.\n` +
+      `  ran: ${v.command}\n` +
+      (v.output ? `${v.output}\n` : "") +
+      "  fix: make the code do what each scenario says — and its steps check it —, not what a test that disagrees with the scenario says.",
+  };
+}
+
+/**
+ * lab-fixes REQ-693: the stage `principles` — each principle with `run=`, in
+ * the worktree. An error-level failure fails the attempt, named so the next
+ * attempt is told; a warn-level one is reported and passes. Null: green.
+ */
+export function principlesStage(
+  worktreeDir: string,
+  report: GateReport = () => {}
+): GateResult | null {
+  const started = Date.now();
+  const { failed, ran } = runPrinciples(worktreeDir);
+  if (ran === 0) return null;
+  const errors = failed.filter((f) => f.level === "error");
+  report("principles", errors.length > 0 ? "fail" : "pass", { ms: Date.now() - started });
+  if (errors.length === 0) return null;
+  return {
+    ok: false,
+    stage: "principles",
+    output: errors
+      .map(
+        (f) =>
+          `Principle ${f.id} (${f.title}): \`${f.run}\` failed.` +
+          (f.output ? `\n${f.output}` : "") +
+          `\n  fix: make the code follow ${f.id}, as docs/specs/principles.md states it.`
+      )
+      .join("\n\n"),
+  };
+}
+
+/**
+ * shortcut-proof REQ-743: the stage `steps` — where the guard recorded the
+ * requirement's step definitions when its code began, they are still those.
+ * Null: nothing recorded, or unchanged.
+ */
+export function stepsStage(
+  worktreeDir: string,
+  requirement: string,
+  report: GateReport = () => {}
+): GateResult | null {
+  if (!requirement) return null;
+  const v = stepsVerdict(worktreeDir, requirement);
+  if (!v.recorded || v.changed.length === 0) return null;
+  report("steps", "fail", { ms: 0 });
+  return {
+    ok: false,
+    stage: "steps",
+    output: `${STEPS_FINDING(requirement, v.changed)}  [steps_changed_after_code]\n`,
+    hint: "Put the steps back as they were when the code began and make the code do what the scenarios say. If a step was wrong, stop and say which: a person reviews it.",
+  };
 }

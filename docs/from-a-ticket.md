@@ -16,7 +16,7 @@ holds the requirements and scenarios being added, checked against the ticket
 KAN-13 in Jira (To Do)
   → specgate propose --from-ticket KAN-13       branch feature/KAN-13-… pushed   → In Progress
   → the agent drafts the change against the ticket's acceptance criteria
-  → a person reviews the draft
+  → a person reviews the draft and approves it: specgate change approve <change-id>
   → build: by hand with specgate apply, or with specgate harness run --chain
   → specgate archive kan-13-register-vehicle-entry     on the branch, before the PR
   → specgate alm pr kan-13-register-vehicle-entry      one pull request "KAN-13 …"  → In Review

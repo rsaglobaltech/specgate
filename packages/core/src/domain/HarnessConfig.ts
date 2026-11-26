@@ -36,6 +36,8 @@ export interface HarnessSettings {
    * `{tags}` standing for the scenarios to run — `@REQ-031` for one requirement.
    */
   bddCmd?: string;
+  /** agent-routing REQ-689: the profile whose agent drafts, apart from the build agent. */
+  draftProfile?: string;
   /**
    * The SARIF `arch_cmd` writes, when it writes one (REQ-231): its findings
    * are judged against the baseline, so only a violation a change adds fails.
@@ -121,6 +123,8 @@ export interface HarnessSettings {
    * passed twenty screen requirements that had no screen.
    */
   e2eDir?: string;
+  /** Where the running app is reached, e.g. http://localhost:5173: the map's addresses start here (REQ-678). */
+  appUrl?: string;
   /**
    * Behaviour changed without a specification (REQ-333, REQ-334): `report`
    * (the default) warns, `gate` fails `check`, `off` does not look.

@@ -49,7 +49,8 @@ $ specgate ci status
 <!-- specgate:out-scratch-ci:end -->
 
 It checks more than less on purpose: every step says in the YAML what it
-checks and what to delete to remove it. One step only:
+checks and what to delete to remove it. One Ubuntu job running only
+`specgate check`, with no base branch, no pack drift and no plan (GitHub only):
 `specgate ci init --provider github --minimal --force`. Another provider:
 `specgate ci init --provider gitlab`. Commit the file, and make the job a
 required check in your main branch's protection rules: from then on, a pull
@@ -77,16 +78,19 @@ same command without `--check` opens the change and pushes its branch,
 
 1. **Propose** — open the change and write its delta: the requirements and
    scenarios it adds.
-2. **Build** — for each requirement, a test that names it, then the code.
-3. **Apply** — `specgate apply REQ-NNN`; commit.
-4. **Archive** — `specgate archive <change-id>` once every requirement is
+2. **Approve** — you read the delta and run `specgate change approve
+   <change-id>` in your terminal; an agent cannot, and `apply` refuses a
+   requirement of an unapproved change (`change_not_approved`).
+3. **Build** — for each requirement, a test that names it, then the code.
+4. **Apply** — `specgate apply REQ-NNN`; commit.
+5. **Archive** — `specgate archive <change-id>` once every requirement is
    applied, on your branch.
-5. **Pull request** — the specification and the code reach review together.
+6. **Pull request** — the specification and the code reach review together.
    For a ticket's change, the `alm pr` command opens it — see
    [From a Jira ticket](../from-a-ticket.md).
 
 ```
-specgate propose  →  test and code  →  specgate apply  →  specgate archive  →  pull request
+specgate propose  →  change approve  →  test and code  →  specgate apply  →  specgate archive  →  pull request
 ```
 
 <!-- specgate:tip -->
@@ -123,9 +127,14 @@ $ specgate propose free-courts
 
 Replace the template in the change's delta,
 `docs/specs/changes/free-courts/specs/free-courts/spec.md`, with the
-requirement and its scenario:
+requirement and its scenario, under the `## ADDED Requirements` heading the
+template has:
 
 ```markdown
+# Delta — free-courts
+
+## ADDED Requirements
+
 ### Requirement: REQ-012 — A member sees which courts are free on a day
 
 <!-- specgate:trace actor=Member kind=functional -->
@@ -137,6 +146,13 @@ The system SHALL list, for a day, the courts that are free at each hour.
 - GIVEN the centre court is booked on Monday evening
 - WHEN a member sends GET /api/courts/free?day=monday
 - THEN Monday evening lists every court except the centre court
+```
+
+Read the delta, then approve it yourself, at your terminal — `apply` waits
+for it:
+
+```bash
+specgate change approve free-courts
 ```
 
 **Start the day with `status`** — it lists the new requirement with the rest,
@@ -168,9 +184,13 @@ $ specgate status
 
   Next ───────────────────────────────────────────────────
   ➜  specgate apply REQ-003
-     bookings, the brief's 1st module of 1 — once a test mentions REQ-003 — that mention is the link; apply checks first
+     free-courts waits for a person to approve it, at their terminal — apply delivers nothing before
 ```
 <!-- specgate:out-scratch-status-daily:end -->
+
+This recording ran `status` before the approval, so its last line still says
+free-courts waits for a person. Once you have approved it, REQ-012 is
+delivered like the others: its test, its code, `specgate apply REQ-012`.
 
 **A requirement that changes** goes through a change too, under
 `## MODIFIED Requirements` in its delta, so the review sees the before and
@@ -178,10 +198,19 @@ after.
 
 ## 4. When the client answers
 
-Write the answer into the change's `questions.md`, update the requirement and
-its scenario with the real value, remove `status="Needs Clarification"` from
-its `specgate:trace`, and it rejoins the queue: `status` lists it, the harness
-builds it, `apply` marks it done.
+The requirement it blocked rejoins the queue in five steps:
+
+1. In the change's `questions.md`, write the answer in the question's `Answer`
+   cell and set its `Status` to `answered`. `status` now lists the requirement
+   under "Answered — update the spec".
+2. Write the value into the requirement's text and its scenario.
+3. Remove `status="Needs Clarification"` from its `specgate:trace`.
+4. Approve the change again, yourself, at your terminal:
+   `specgate change approve <change>`. The text is no longer what was
+   approved, so `apply` refuses it (`approved_requirement_changed`) until then;
+   the client's answer in `questions.md` is the source of the new value.
+5. Write its test, then `specgate apply REQ-…`. Until step 3 the harness skips
+   it and `apply` refuses it (`done_needs_clarification`).
 
 ## Gato, the cat that keeps the gate
 

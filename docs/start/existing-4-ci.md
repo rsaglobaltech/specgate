@@ -49,7 +49,9 @@ $ specgate ci status
 An older `specgate init` wrote `.github/workflows/specs.yml`, which only
 validated the specification: `specgate ci init --provider github` shows what
 the gate adds, and `--replace` replaces it. Every step of the gate says what
-it checks and what to delete to remove it; `--minimal` writes one step only.
+it checks and what to delete to remove it; `--minimal` (GitHub only) writes
+one Ubuntu job that runs `specgate check` with no base branch — no id
+comparison, no pack drift, no plan.
 
 ## 2. Check locally what CI will run
 
@@ -62,7 +64,7 @@ specgate check
 $ specgate check
   ◆ specgate · check   invoicing
 
-  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning, scope warning, controls warning
   ·  Ids            not compared with a base — no base branch (pass --base <branch>)
   ✔  Specification   validate --strict
   ✔  Tests           node --test
@@ -73,7 +75,8 @@ $ specgate check
 <!-- specgate:out-existing-check-green:end -->
 
 This is what makes the gate safe on old code: requirements still in `Draft`
-— the adoption's proposals, anything not described yet — are **exempt**. The
+are **exempt**, and the areas adoption found sit in `docs/specs/adoption.md`,
+outside the specification, until you describe them. The
 gate holds the code to what you have written down, and only that. Each
 requirement you apply raises the bar by one.
 

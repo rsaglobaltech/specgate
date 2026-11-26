@@ -1,4 +1,4 @@
-<!-- translation-of: 228816b42355 -->
+<!-- translation-of: a813278746c0 -->
 # Del brief de un cliente a una especificación
 
 Un proyecto suele empezar como un brief: una página, un documento, unas
@@ -11,8 +11,9 @@ una tienda a crédito.
 Al final tendrás un **borrador**, un change cuyos requisitos se escribieron a
 partir del brief y se comprobaron contra él, revisado por una persona y listo
 para construir. Los pasos 1 a 3 convierten el brief en ese borrador; el paso 4
-es el mismo ciclo que cualquier otro change: `specgate apply` con cada
-requisito a través del gate, y luego `specgate archive` del borrador
+es el mismo ciclo que cualquier otro change: una persona lo aprueba
+(`specgate change approve`), `specgate apply` entrega cada requisito a través
+del gate, y luego `specgate archive` fusiona el borrador
 ([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)).
 
 **Necesitas:** un proyecto con Specgate configurado
@@ -23,6 +24,8 @@ código es opcional, pero ahorra casi toda la escritura.
 de un brief? Usa el camino del ticket: [Desde un ticket de Jira](from-a-ticket.md).
 
 <!-- specgate:diagram lifecycle -->
+
+<!-- specgate:diagram brief-to-draft -->
 
 ## 1. Guarda el brief en el repositorio
 
@@ -88,7 +91,8 @@ specgate propose --from-brief reservas   # opens draft-reservas, linked to the b
 ```
 
 Abrir un módulo crea el borrador, una carpeta de change que se mantiene aparte
-de la especificación hasta que una persona la revisa, y escribe en ella
+de la especificación hasta que una persona la revisa: `change.yaml`,
+`discover.md`, `design.md`, `tasks.md`, `use-cases.md`, el delta y
 `DRAFTING.md`. Ese archivo contiene la sección del módulo en el brief con sus
 valores y preguntas, los ids reservados, un escenario por escribir por cada
 actor y superficie del front matter, y los formatos de abajo. Es el prompt
@@ -146,7 +150,12 @@ comprobación sobre cualquier change; `--check` solo comprueba el brief en sí.)
 | D8     | el borrador es lo bastante pequeño para revisarlo (25 requisitos por defecto)                                                                  |
 | D9     | cada escenario cumple las reglas que aplicará el gate del harness (títulos, Given/When/Then)                                                   |
 | D10    | ningún id de requisito o escenario que ya sea de otro requisito                                                                                |
+| D11    | reservado: no se comprueba                                                                                                                     |
 | D12    | un actor que actúa sobre un id (`…/{id}/…`) tiene un escenario que lo lista o lo crea, o una suposición dice de dónde viene                     |
+| D13    | una suposición escrita desde una respuesta (`specgate answer`) espera hasta que su autor dice que los requisitos la reflejan (`--reviewed`)     |
+| D14    | cada requisito nombra su caso de uso (`uc=UC-NNN` en su trace), que lista un `use-cases.md`, con el requisito en su fila                       |
+| D15    | cada caso de uso que el borrador añade o modifica tiene su especificación, `use-cases/UC-NNN.md`, cuyos flujos nombran los escenarios (`D15_no_spec`) |
+| D16    | los pasos de un escenario están en el idioma del proyecto; una máquina de estados que el borrador escribe se aplica y se cumple                 |
 
 D6 es la que mantiene honesto un borrador: con un brief vago lista casi todos
 los valores, y esa lista es la conversación que hay que tener con el cliente.
@@ -197,6 +206,9 @@ Después, por cada requisito que la pregunta bloqueaba:
    el requisito.
 3. Ejecuta `specgate propose --from-brief <module>` de nuevo hasta ver
    **Ready to review**.
+4. Si el borrador ya estaba aprobado, el requisito ya no es lo que se aprobó:
+   `apply` lo rechaza (`approved_requirement_changed`) hasta que una persona
+   ejecute de nuevo `specgate change approve draft-<module>`.
 
 Una respuesta que aplaza la decisión ("TBD", "pending", "se decidirá") deja la
 pregunta abierta. Una pregunta de la que nada del borrador depende lo dice con
@@ -208,18 +220,25 @@ leen una respuesta de la misma forma —la celda o la línea `Answer (Qn):`— y
 botón **The spec says it** del studio quita `Needs Clarification` de los
 requisitos que la pregunta retenía en cuanto su texto dice la respuesta.
 
-## 4. Revisa, aplica y archiva
+## 4. Revisa, aprueba, aplica y archiva
 
 Un borrador es un change como cualquier otro, y su revisión es el pull
 request. Cuando la lista de comprobación dice **Ready to review**, una persona
 lee los requisitos y `assumptions.md` con quien conoce el negocio, responde lo
-que puede, y los requisitos se construyen de uno en uno:
+que puede y aprueba el borrador en una terminal; un agente no puede
+(`approve_needs_person`). Después los requisitos se construyen de uno en uno:
 
 ```bash
-specgate status                    # the draft's requirements, listed while it is open
-specgate apply                     # the next one: refused until a test names it, then the gate
-specgate archive draft-reservas    # once every requirement in it is Implemented
+specgate change approve draft-reservas   # a person, once it reads right; apply waits for it
+specgate status                          # the draft's requirements, listed while it is open
+specgate apply                           # the next one: refused until a test names it, then the gate
+specgate archive draft-reservas          # once every requirement in it is Implemented
 ```
+
+La aprobación rechaza un requisito sin `kind=` en su trace (`approve_blocked`)
+y escribe los archivos feature del borrador, uno por requisito, con sus
+escenarios listos para ejecutarse antes de cualquier código. `apply` rechaza un
+borrador que nadie aprobó (`change_not_approved`).
 
 Deja un requisito en Draft hasta que exista su test. Todo estado posterior a
 Draft, incluido Approved, debe un test según TDD-1, así que
@@ -229,19 +248,21 @@ para todo el proyecto.
 
 Mientras el borrador está abierto, sus requisitos ya cuentan: `status` los
 lista, `apply`, `check` y `harness run` juzgan el proyecto tal como quedará
-después de archivar, y `apply` escribe cada estado en el delta del borrador.
-Nada se escribe en `docs/specs/capabilities/` antes de archivar.
+después de archivar, y `apply` escribe cada estado en el comentario trace del
+delta del borrador (la matriz se regenera a partir de él). Nada se escribe en `docs/specs/capabilities/` antes de archivar.
 
 `archive` se niega mientras quede un requisito pendiente
 (`archive_requirements_pending`, con `specgate apply REQ-…` como corrección),
 y `--force` no se salta eso. Un change abierto desde un brief (`brief:` en
 `change.yaml`) también necesita que su lista de comprobación pase; `--force`
-solo se salta la lista de comprobación, y lo dice en la revisión. Un borrador
-no tiene `tasks.md` que marcar.
+solo se salta la lista de comprobación, y lo dice en la revisión. Las casillas
+sin marcar del `tasks.md` del borrador son solo una advertencia
+(`archive_tasks_incomplete`).
 
-Archivar fusiona los requisitos en `docs/specs/capabilities/`, añade sus filas
-a la matriz y escribe un archivo feature por requisito: la especificación y el
-código que describe llegan en el mismo pull request. Un test que refuta el
+Archivar fusiona los requisitos en `docs/specs/capabilities/` y añade sus
+filas a la matriz; los archivos feature ya están desde la aprobación, así que
+informa `0 materialised`: la especificación y el código que describe llegan en
+el mismo pull request. Un test que refuta el
 texto de la especificación se corrige en el mismo borrador, no en un segundo
 change. Después, `specgate propose --from-brief` nombra el siguiente módulo.
 `specgate harness run` puede entregar los requisitos en lugar de una persona,
@@ -250,7 +271,7 @@ uno por worktree.
 ## Escribir en español
 
 Escribe los escenarios con `DADO / CUANDO / ENTONCES / Y`; el cuerpo del
-requisito mantiene `SHALL` (o `DEBE`). Archivar escribe Gherkin en español
+requisito mantiene `SHALL` (o `DEBE`). Aprobar escribe Gherkin en español
 (`# language: es`, `Característica`, `Escenario`), y todas las reglas de
 arriba leen ambos idiomas.
 

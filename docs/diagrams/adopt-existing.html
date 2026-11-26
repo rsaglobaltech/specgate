@@ -1,0 +1,117 @@
+<figure class="dia dia--card dia--adopt">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 600" class="dia__svg" role="img" aria-labelledby="sg-ae-t sg-ae-d">
+    <title id="sg-ae-t">Adopting a repository that already runs, then specifying it module by module</title>
+    <desc id="sg-ae-d">Six steps. One: your repository, code that already runs, with a build
+      file and a test suite that passes. Two: specgate init adopts it in place, the same as
+      specgate adopt: it writes spec.md, AGENTS.md, docs/specs, the baseline scenario
+      features/adoption/baseline.feature, the gate policy .specgate/gate.yaml and the CI
+      job — only files that do not exist yet. Your src and tests folders stay as they are:
+      git diff shows new specification files only. Three: specgate check is green on day one,
+      with your own tests in it; it certifies the skeleton, not the code yet. Four: pick one
+      module, by either of two roads. By hand, open a change for it with specgate propose
+      describe-orders --capability orders. Or let specgate reverse --modules find the
+      candidate modules — folders with their own build manifest, Go packages, code under src or
+      apps — each with its stack; no agent runs. Five: your agent reads that module. On the
+      reverse road, specgate reverse with the module and --agent writes the change
+      reverse-orders; on the other, it writes the describe-orders delta. Every requirement is
+      Draft; reverse also cites in source= the lines each was read from. Behaviour that looks like a bug becomes a question in questions.md, never a
+      requirement, because written as one the bug would become the contract. A person reads
+      each requirement against its lines before moving it past Draft. Six: from then on, one
+      behaviour per bug fix — open a change for the behaviour that broke, write the scenario
+      that reproduces it, name it in a test, and the fix applies it.</desc>
+
+    <defs>
+      <marker id="sg-ae-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+      <marker id="sg-ae-g" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--green)"/>
+      </marker>
+      <marker id="sg-ae-w" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--amber)"/>
+      </marker>
+    </defs>
+
+    <g class="dia__band"><rect x="12" y="206" width="610" height="40"/></g>
+
+    <g class="dia__box">
+      <rect x="12"  y="40" width="200" height="150"/>
+      <rect x="652" y="300" width="296" height="150"/>
+    </g>
+    <g class="dia__box dia__box--strong"><rect x="242" y="40" width="380" height="150"/></g>
+    <g class="dia__box dia__box--gate"><rect x="652" y="40" width="296" height="150"/></g>
+    <g class="dia__box dia__box--ink"><rect x="322" y="300" width="300" height="150"/></g>
+    <g class="dia__box"><rect x="12" y="300" width="236" height="150" style="stroke: var(--amber); stroke-dasharray: 5 4"/></g>
+    <g class="dia__box dia__box--ok"><rect x="12" y="490" width="936" height="96"/></g>
+
+    <g class="dia__ico" transform="translate(28 56)"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></g>
+    <g class="dia__ico" transform="translate(258 56)"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></g>
+    <g class="dia__ico dia__ico--on-gate" transform="translate(668 56)"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></g>
+    <g class="dia__ico" transform="translate(28 214) scale(.84)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g>
+    <g class="dia__ico" transform="translate(668 316)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></g>
+    <g class="dia__ico dia__ico--brand" transform="translate(338 316)"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></g>
+    <g class="dia__ico" style="stroke: var(--amber)" transform="translate(28 316)"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></g>
+    <g class="dia__ico dia__ico--ok" transform="translate(28 506)"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></g>
+
+    <g>
+      <text x="64" y="73" class="dia__h"><tspan class="dia__step">1</tspan>  Your repository</text>
+      <text x="28" y="104" class="dia__s">code that already runs,</text>
+      <text x="28" y="122" class="dia__s">a build file and</text>
+      <text x="28" y="140" class="dia__s">a test suite that passes</text>
+
+      <text x="294" y="73" class="dia__h"><tspan class="dia__step">2</tspan>  <tspan class="dia__mono">specgate init</tspan></text>
+      <text x="258" y="104" class="dia__s">adopts it in place — the same as <tspan class="dia__mono">adopt</tspan>:</text>
+      <text x="258" y="126" class="dia__s dia__mono">+ spec.md  + AGENTS.md  + docs/specs/</text>
+      <text x="258" y="144" class="dia__s dia__mono">+ features/adoption/baseline.feature</text>
+      <text x="258" y="162" class="dia__s dia__mono">+ .specgate/gate.yaml  + the CI job</text>
+      <text x="258" y="180" class="dia__s">only files that do not exist yet</text>
+
+      <text x="704" y="73" class="dia__h dia__on-gate">3  Green on day one</text>
+      <text x="668" y="104" class="dia__s dia__mono dia__on-gate">specgate check</text>
+      <text x="668" y="124" class="dia__s dia__on-gate">Gate passed, with your own</text>
+      <text x="668" y="142" class="dia__s dia__on-gate">tests in it — so far it certifies</text>
+      <text x="668" y="160" class="dia__s dia__on-gate">the skeleton, not the code</text>
+
+      <text x="56" y="231" class="dia__s"><tspan class="dia__mono">src/</tspan> and <tspan class="dia__mono">tests/</tspan> stay as they are — <tspan class="dia__mono">git diff</tspan> shows new specification files only</text>
+
+      <text x="704" y="333" class="dia__h"><tspan class="dia__step">4</tspan>  Pick one module</text>
+      <text x="668" y="364" class="dia__s">by hand, a change for it:</text>
+      <text x="668" y="382" class="dia__s dia__mono">propose describe-orders</text>
+      <text x="668" y="400" class="dia__s dia__mono">  --capability orders</text>
+      <text x="668" y="420" class="dia__s">or let Specgate find them, no agent:</text>
+      <text x="668" y="438" class="dia__s dia__mono">specgate reverse --modules</text>
+
+      <text x="374" y="333" class="dia__h dia__on-ink">5  Your agent reads one</text>
+      <text x="338" y="364" class="dia__s dia__mono dia__on-ink">reverse orders --agent "…"</text>
+      <text x="338" y="384" class="dia__s dia__on-ink">writes reverse-orders — or, by hand,</text>
+      <text x="338" y="402" class="dia__s dia__on-ink">the describe-orders delta. All Draft;</text>
+      <text x="338" y="420" class="dia__s dia__on-ink">reverse cites the lines it read:</text>
+      <text x="338" y="438" class="dia__s dia__mono dia__on-ink">source=…/Cancel.java:12</text>
+
+      <text x="64" y="333" class="dia__h dia__wait-t">Looks like a bug?</text>
+      <text x="28" y="364" class="dia__s">a question in <tspan class="dia__mono">questions.md</tspan>,</text>
+      <text x="28" y="384" class="dia__s">never a requirement:</text>
+      <text x="28" y="402" class="dia__s">written as one, the bug</text>
+      <text x="28" y="420" class="dia__s">would become the contract</text>
+
+      <text x="64" y="523" class="dia__h dia__ok-t">6  From then on, one behaviour per bug fix</text>
+      <text x="28" y="552" class="dia__s">Before a fix, open a change for the behaviour that broke and write the scenario that reproduces it;</text>
+      <text x="28" y="570" class="dia__s">a test names it, and the fix applies it. The specification grows where the risk actually was.</text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="214" y1="110" x2="237" y2="110" marker-end="url(#sg-ae-a)"/>
+      <line x1="624" y1="110" x2="647" y2="110" marker-end="url(#sg-ae-a)"/>
+      <line x1="800" y1="192" x2="800" y2="295" marker-end="url(#sg-ae-a)"/>
+      <text x="790" y="272" text-anchor="end">then, one module at a time</text>
+      <line x1="650" y1="375" x2="627" y2="375" marker-end="url(#sg-ae-a)"/>
+      <line x1="320" y1="375" x2="253" y2="375" stroke-dasharray="5 4" style="stroke: var(--amber)" marker-end="url(#sg-ae-w)"/>
+      <text x="285" y="364" text-anchor="middle" class="dia__wait-t">suspect</text>
+      <line x1="472" y1="452" x2="472" y2="485" class="dia__ok" marker-end="url(#sg-ae-g)"/>
+      <text x="482" y="474" class="dia__ok-t">a person reads each against its lines, then moves it past Draft</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>Adopting writes specification files only and is green on day one; a change per module — by hand with propose --capability, or found by reverse — then turns each into Draft requirements, and a suspected bug stays a question.</figcaption>
+</figure>

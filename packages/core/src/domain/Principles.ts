@@ -26,6 +26,8 @@ export interface Principle {
   in?: string;
   /** `warn`: a failure is advice, not a gate failure. */
   level: "error" | "warn";
+  /** The prose under its heading, comments left out (lab-fixes REQ-692). */
+  statement?: string;
 }
 
 export interface PrinciplesDoc {
@@ -37,12 +39,15 @@ export interface PrinciplesDoc {
 const HEADING = /^#{2,4}\s+(.+?)\s*$/;
 const PRINCIPLE_COMMENT = /<!--\s*specgate:principle\b([\s\S]*?)-->/;
 
-/** `key="value with \" escapes"` or `key=value`, as a principle comment writes them. */
+/**
+ * `key="value with \" escapes"`, `key='value'` or `key=value`, as a principle comment
+ * writes them. Single quotes take the value as it is: no escapes, no backslash read.
+ */
 function attributes(body: string): Record<string, string> {
   const out: Record<string, string> = {};
-  const re = /([A-Za-z_][\w-]*)=(?:"((?:[^"\\]|\\.)*)"|(\S+))/g;
+  const re = /([A-Za-z_][\w-]*)=(?:"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+))/g;
   for (const m of body.matchAll(re)) {
-    out[m[1].toLowerCase()] = m[2] !== undefined ? m[2].replace(/\\"/g, '"') : m[3];
+    out[m[1].toLowerCase()] = m[2] !== undefined ? m[2].replace(/\\"/g, '"') : (m[3] ?? m[4]);
   }
   return out;
 }
@@ -76,6 +81,9 @@ export function parsePrinciples(text: string): PrinciplesDoc {
       continue;
     }
     const c = PRINCIPLE_COMMENT.exec(line);
+    if (current && !c && !/^\s*<!--/.test(line) && line.trim()) {
+      current.statement = current.statement ? `${current.statement} ${line.trim()}` : line.trim();
+    }
     if (c && current) {
       const a = attributes(c[1]);
       if (a.run) current.run = a.run;

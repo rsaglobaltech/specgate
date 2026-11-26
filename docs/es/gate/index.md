@@ -1,4 +1,4 @@
-<!-- translation-of: b9ab3d62f96c -->
+<!-- translation-of: 5264ebf79fd7 -->
 # El gate
 
 El gate es lo que hay entre un change y tu rama principal. Demuestra que cada
@@ -24,13 +24,17 @@ fallo que reporte.
 las siguientes, salvo el check de arquitectura y los tests, que se ejecutan
 en paralelo.
 
+<!-- specgate:diagram gate-stages -->
+
 | Etapa | Qué demuestra | Falla con |
 | --- | --- | --- |
-| Ids | Ningún id de requisito de aquí significa otra cosa en la rama base | `id_taken_on_base` |
-| Changes | El delta de cada change abierto valida | `check_change_invalid` |
+| Ids | Ningún id de requisito de aquí significa otra cosa en la rama base; con `--base`, lo que la rama cambia en los controles se nombra para quien revisa | `id_taken_on_base`, `controls_changed_on_branch` |
+| Changes | El delta de cada change abierto valida; lo que aprobó una persona —requisitos, diseño, tests de aceptación sellados— sigue como se aprobó | `check_change_invalid`, `approved_requirement_changed`, `file_outside_design`, `acceptance_not_sealed` |
 | Especificación | `validate --strict`: specs, escenarios, enlaces, cobertura de la matriz | `check_validate_failed` |
 | Arquitectura | Tu `arch_cmd` (ArchUnit, dependency-cruiser…) pasa | `check_arch_failed` |
 | Tests | Tu `test_cmd` pasa | `check_tests_failed` |
+| Escenarios | Con `bdd: required` en la política: los escenarios de cada requisito entregado pasan con `bdd_cmd`. `--no-scenarios` los omite | `check_scenarios_failed` |
+| Aceptación | Donde un change abierto selló tests de aceptación: pasan con `acceptance_cmd` | `acceptance_red`, `acceptance_no_command` |
 | Calidad | Los `checks:` de `harness.config.yaml`: cobertura, mutación, secretos… | `check_quality_failed` |
 
 Una etapa sin nada que ejecutar se informa, no falla: sin `test_cmd` el gate

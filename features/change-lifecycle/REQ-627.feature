@@ -1,4 +1,3 @@
-@change:use-cases-lifecycle
 Feature: The gate checks every requirement maps to a use case
 
   @REQ-627 @SCN-627a

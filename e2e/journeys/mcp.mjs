@@ -2,8 +2,10 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-/** JSON-RPC responses out of the server's Content-Length-framed stdout. */
+/** JSON-RPC responses out of the server's stdout: a JSON line each, or Content-Length-framed. */
 function responses(stdout) {
+  if (!/Content-Length: \d+\r\n\r\n/.test(stdout))
+    return stdout.split("\n").filter((l) => l.trim().startsWith("{")).map((l) => JSON.parse(l));
   const out = [];
   const re = /Content-Length: (\d+)\r\n\r\n/g;
   let m;

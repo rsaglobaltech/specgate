@@ -9,11 +9,15 @@ Protocol, is how these clients call outside tools.
 on the machine that runs the client. The server ships inside the Specgate
 package; there is nothing else to install.
 
+<!-- specgate:diagram mcp-tools -->
+
 ## Install it
 
 ```bash
-specgate mcp install --client claude    # Claude Desktop
-specgate mcp install --client cursor    # Cursor (~/.cursor/mcp.json)
+specgate mcp install --client claude     # Claude Desktop
+specgate mcp install --client cursor     # Cursor (~/.cursor/mcp.json)
+specgate mcp install --client opencode   # OpenCode: the project's opencode.json
+specgate mcp install --client codex      # Codex: runs `codex mcp add`, your own Codex configuration
 ```
 
 It merges a `spec-driven` entry into the client's config and leaves the rest
@@ -39,6 +43,8 @@ By hand, the entry is:
 | Cursor | `~/.cursor/mcp.json` |
 | Claude Code | the Specgate plugin's `.mcp.json` — see [Install the Claude Code plugin](automation.md#install-the-claude-code-plugin) |
 | Antigravity | `.agents/mcp_config.json` — written by `specgate agents init --tool antigravity` |
+| OpenCode | the project's `opencode.json` |
+| Codex | your own Codex configuration, through `codex mcp add` |
 
 `specgate mcp serve` is what every one of those configs starts: the server,
 over stdio, calling the CLI that serves it. You never run it yourself.
@@ -63,6 +69,16 @@ are better run from a terminal. The ones an agent uses every day:
 | `validate_project` | `validate --strict`, parsed. | `projectDir` |
 | `read_spec` | `spec.md`, and the list of every `docs/specs/*.md`. | `projectDir` |
 | `list_requirements` | Every `REQ-NNN` with its title, file and line. | `projectDir` |
+
+The tools that configure the project take only what their schema declares —
+anything else the client sends is dropped:
+
+| Tool | Does | Arguments |
+|---|---|---|
+| `specgate_config_get` | One setting's value, and the file it lives in. | `projectDir`, `key` |
+| `specgate_config_set` | Sets one setting (`test_cmd`, `arch_cmd`, …). `agent_guard off` is refused with no terminal (`guard_needs_person`). | `projectDir`, `key`, `value` |
+| `specgate_config_list` · `specgate_config_keys` | Every setting, and every key there is. | `projectDir` |
+| `specgate_agents_init` | Installs the `/specgate:*` commands and rules for every agent it knows — there is no argument to pick one; for one tool, run `specgate agents init --tool <name>` in a terminal. | `projectDir` |
 
 Seven short names (`read_spec`, `list_requirements`, `update_traceability`,
 `lint_pack`, `validate_project`, `plan` and `mark_requirement_done`) predate
@@ -121,14 +137,21 @@ With the server configured, ask in plain words:
 
 1. The client calls `specgate_change_new` (id: *add-invoice-pdf*). The change
    is open, with a delta to write and REQ ids reserved.
-2. It writes the requirement and its scenario in the change's delta, a test
-   that mentions the new `REQ-NNN`, and the code.
-3. It calls `mark_requirement_done` with that id. The gate runs first. If the
-   scenario still has template steps, or no test mentions the requirement, the
-   call comes back with the reason (exactly what the terminal would say) and
-   nothing is written.
-4. Once the requirement is Implemented, it calls `specgate_change_archive`
+2. It writes the requirement and its scenario in the change's delta. Then it
+   stops: a person reads the delta and approves the change, in a terminal
+   (`specgate change approve add-invoice-pdf`) or in the studio's Review.
+3. It writes a test that mentions the new `REQ-NNN`, and the code.
+4. It calls `mark_requirement_done` with that id. It wraps `specgate apply`:
+   the gate runs first. If nobody approved the change (`change_not_approved`),
+   the scenario still has template steps, or no test mentions the requirement,
+   the call comes back with the reason (exactly what the terminal would say)
+   and nothing is written.
+5. Once the requirement is Implemented, it calls `specgate_change_archive`
    (id: *add-invoice-pdf*), and the change merges into the specs.
+
+There is no tool that approves a change, by design: approving is a person's
+act. A client that calls `mark_requirement_done` on an unapproved change is
+refused until a person approves it at a terminal.
 
 You review the branch and open the pull request as usual.
 

@@ -79,6 +79,7 @@ test("an unknown key matches nothing rather than being ignored", () => {
     "bounded_context",
     "category",
     "feature",
+    "module",
     "requirement",
   ]);
 });

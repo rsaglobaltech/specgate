@@ -1,0 +1,11 @@
+▶ dist/tests/unit/approve-around-questions.test.js
+✔ REQ-771 SCN-771a: the rest goes ahead — a question on a waiting requirement does not block approving (1770.923666ms)
+✔ REQ-771 SCN-771b: a question on a decided requirement still blocks (1246.801417ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3146.114625

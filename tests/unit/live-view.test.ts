@@ -439,7 +439,7 @@ test("REQ-134 SCN-134a: the tour runs the loop on a copy and leaves the reposito
     const before = snapshot(p.dir);
     const r = cli(p.dir, ["onboard", "--tour"]);
     assert.equal(r.status, 0, out(r));
-    const order = ["propose", "write", "status", "apply", "archive", "check"].map((v) =>
+    const order = ["propose", "write", "status", "approve", "apply", "archive", "check"].map((v) =>
       r.stdout.indexOf(`  ${v}  `)
     );
     assert.ok(

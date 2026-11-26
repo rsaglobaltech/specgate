@@ -1,0 +1,105 @@
+<figure class="dia dia--card dia--stages">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 404" class="dia__svg" role="img" aria-labelledby="sg-gs-t sg-gs-d">
+    <title id="sg-gs-t">The eight stages of specgate check, in order</title>
+    <desc id="sg-gs-d">specgate check runs eight stages in order. One, ids: no requirement id
+      means something else on the base branch. Two, changes: what a person approved is as it
+      was approved, so the seals are intact. Three, validate: validate --strict over the
+      specs, the links and the coverage. Four, architecture: your arch_cmd. Five, tests: your
+      test_cmd; the architecture check and the tests run side by side. Six, scenarios: with
+      bdd required, the scenarios pass with bdd_cmd. Seven, acceptance: the sealed acceptance
+      tests pass with acceptance_cmd. Eight, quality: the checks of harness.config.yaml, such
+      as coverage, mutation and secrets. When all eight pass, apply delivers the requirement,
+      with evidence. The first stage that fails stops the ones after it and names its fix;
+      you fix what it names and run the gate again.</desc>
+
+    <defs>
+      <marker id="sg-gs-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+      <marker id="sg-gs-g" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--green)"/>
+      </marker>
+      <marker id="sg-gs-r" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--red)"/>
+      </marker>
+    </defs>
+
+    <g class="dia__band"><rect x="726" y="44" width="228" height="234"/></g>
+
+    <g class="dia__box">
+      <rect x="16"  y="52" width="208" height="80"/>
+      <rect x="256" y="52" width="208" height="80"/>
+      <rect x="496" y="52" width="208" height="80"/>
+      <rect x="736" y="52" width="208" height="80"/>
+      <rect x="736" y="190" width="208" height="80"/>
+      <rect x="496" y="190" width="208" height="80"/>
+      <rect x="256" y="190" width="208" height="80"/>
+      <rect x="16"  y="190" width="208" height="80"/>
+    </g>
+    <g class="dia__box dia__box--ok"><rect x="16" y="322" width="428" height="72"/></g>
+    <g class="dia__box dia__box--no"><rect x="496" y="322" width="448" height="72"/></g>
+
+    <g class="dia__ico dia__ico--ok" transform="translate(32 346)"><path d="m16 16 2 2 4-4"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="m7.5 4.27 9 5.15"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" x2="12" y1="22" y2="12"/></g>
+    <g class="dia__ico dia__ico--no" transform="translate(512 346)"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></g>
+
+    <g>
+      <text x="32" y="80" class="dia__h"><tspan class="dia__step">01</tspan>  Ids</text>
+      <text x="32" y="102" class="dia__s">no id means something else</text>
+      <text x="32" y="118" class="dia__s">on the base branch</text>
+
+      <text x="272" y="80" class="dia__h"><tspan class="dia__step">02</tspan>  Changes</text>
+      <text x="272" y="102" class="dia__s">what a person approved is</text>
+      <text x="272" y="118" class="dia__s">as approved — seals intact</text>
+
+      <text x="512" y="80" class="dia__h"><tspan class="dia__step">03</tspan>  Validate</text>
+      <text x="512" y="102" class="dia__s dia__mono">validate --strict</text>
+      <text x="512" y="118" class="dia__s">specs, links, coverage</text>
+
+      <text x="752" y="80" class="dia__h"><tspan class="dia__step">04</tspan>  Architecture</text>
+      <text x="752" y="102" class="dia__s">your <tspan class="dia__mono">arch_cmd</tspan></text>
+
+      <text x="752" y="218" class="dia__h"><tspan class="dia__step">05</tspan>  Tests</text>
+      <text x="752" y="240" class="dia__s">your <tspan class="dia__mono">test_cmd</tspan></text>
+
+      <text x="512" y="218" class="dia__h"><tspan class="dia__step">06</tspan>  Scenarios</text>
+      <text x="512" y="240" class="dia__s">with bdd: required,</text>
+      <text x="512" y="256" class="dia__s dia__mono">bdd_cmd</text>
+
+      <text x="272" y="218" class="dia__h"><tspan class="dia__step">07</tspan>  Acceptance</text>
+      <text x="272" y="240" class="dia__s">the sealed tests, with</text>
+      <text x="272" y="256" class="dia__s dia__mono">acceptance_cmd</text>
+
+      <text x="32" y="218" class="dia__h"><tspan class="dia__step">08</tspan>  Quality</text>
+      <text x="32" y="240" class="dia__s">checks: coverage,</text>
+      <text x="32" y="256" class="dia__s">mutation, secrets…</text>
+
+      <text x="68" y="352" class="dia__h dia__ok-t">apply — delivered, with evidence</text>
+      <text x="68" y="374" class="dia__s">all eight green: the requirement is Implemented</text>
+
+      <text x="548" y="352" class="dia__h dia__no-t">The first stage that fails stops the rest</text>
+      <text x="548" y="374" class="dia__s">and names its fix — <tspan class="dia__mono">check_tests_failed</tspan></text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="226" y1="92" x2="251" y2="92" marker-end="url(#sg-gs-a)"/>
+      <line x1="466" y1="92" x2="491" y2="92" marker-end="url(#sg-gs-a)"/>
+      <line x1="706" y1="92" x2="731" y2="92" marker-end="url(#sg-gs-a)"/>
+      <line x1="734" y1="230" x2="709" y2="230" marker-end="url(#sg-gs-a)"/>
+      <line x1="494" y1="230" x2="469" y2="230" marker-end="url(#sg-gs-a)"/>
+      <line x1="254" y1="230" x2="229" y2="230" marker-end="url(#sg-gs-a)"/>
+      <text x="840" y="165" text-anchor="middle">run side by side</text>
+
+      <line x1="120" y1="272" x2="120" y2="317" class="dia__ok" marker-end="url(#sg-gs-g)"/>
+      <text x="130" y="300" class="dia__ok-t">all green</text>
+
+      <line x1="600" y1="272" x2="600" y2="317" class="dia__no" stroke-dasharray="5 4" marker-end="url(#sg-gs-r)"/>
+      <text x="610" y="300" class="dia__no-t">a stage fails</text>
+
+      <path d="M946 358 H956 V22 H120 V48" class="dia__no" marker-end="url(#sg-gs-r)"/>
+      <text x="538" y="16" text-anchor="middle" class="dia__no-t">fix what it names, run specgate check again</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>The gate runs its stages in this order; the first one that fails stops the rest and names what to fix, and only a green gate lets apply deliver.</figcaption>
+</figure>

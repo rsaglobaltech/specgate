@@ -1,0 +1,10 @@
+▶ dist/tests/unit/sandbox-swarm.test.js
+✔ REQ-699 SCN-699a: two hosts opened for that sandbox alone, twenty-nine from the kit, and said (4083.096666ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4155.454292

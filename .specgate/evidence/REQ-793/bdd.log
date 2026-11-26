@@ -1,0 +1,11 @@
+▶ dist/tests/unit/guard-scope-and-seal-run.test.js
+✔ REQ-793 SCN-793a: a new source file the approved design does not name is refused when it is written (1000.943583ms)
+✔ REQ-793: with no approved design, or the rule scope off, the guard does not judge the scope (1933.581833ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3067.120625

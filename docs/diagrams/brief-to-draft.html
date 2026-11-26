@@ -1,0 +1,137 @@
+<figure class="dia dia--card dia--brief">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 570" class="dia__svg" role="img" aria-labelledby="sg-bd-t sg-bd-d">
+    <title id="sg-bd-t">From the client's brief to a reviewed draft, one module at a time</title>
+    <desc id="sg-bd-d">Seven steps. One: the brief is kept as docs/brief.md, with a front
+      matter on top — product, surfaces, actors and modules — and a section per module. Two:
+      specgate propose --from-brief lists the modules, where each stands and which is next.
+      Three: propose --from-brief with a module name opens the change draft-module, with
+      DRAFTING.md as the prompt. Four: your agent drafts it, called with --agent "claude -p",
+      or you write it by hand: the delta and its scenarios. Five: the same command run again
+      is the checklist, D1 to D12, each finding with its fix — D6, every value in a scenario
+      is in the brief or written down as an assumption; D3, a scenario per actor and surface;
+      D12, an actor can reach the ids it acts on. Findings go back to the agent, and the loop
+      runs until the checklist says Ready to review. Six: beside the delta, the ready draft
+      holds assumptions.md, every value the brief does not give with the requirements that
+      use it, and questions.md, what only the client can answer and the requirement each
+      question blocks. A requirement whose value only the client can give is marked
+      status="Needs Clarification" and waits: apply and the harness refuse it until someone
+      answers. Seven: a person approves the draft with specgate change approve draft-module,
+      and the rest is applied one requirement at a time — a test that names it, then the
+      gate, with specgate apply.</desc>
+
+    <defs>
+      <marker id="sg-bd-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+      <marker id="sg-bd-g" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--green)"/>
+      </marker>
+      <marker id="sg-bd-r" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--red)"/>
+      </marker>
+      <marker id="sg-bd-w" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--amber)"/>
+      </marker>
+    </defs>
+
+    <g class="dia__box">
+      <rect x="12"  y="40" width="216" height="128"/>
+      <rect x="252" y="40" width="216" height="128"/>
+      <rect x="492" y="40" width="216" height="128"/>
+      <rect x="12"  y="228" width="480" height="160"/>
+    </g>
+    <g class="dia__box dia__box--ink"><rect x="732" y="40" width="216" height="128"/></g>
+    <g class="dia__box dia__box--gate"><rect x="592" y="228" width="356" height="160"/></g>
+    <g class="dia__box"><rect x="12" y="440" width="440" height="110" style="stroke: var(--amber); stroke-dasharray: 5 4"/></g>
+    <g class="dia__box dia__box--ok"><rect x="492" y="440" width="456" height="110"/></g>
+
+    <g class="dia__ico" transform="translate(28 56)"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></g>
+    <g class="dia__ico" transform="translate(268 56)"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></g>
+    <g class="dia__ico" transform="translate(508 56)"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></g>
+    <g class="dia__ico dia__ico--brand" transform="translate(748 56)"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></g>
+    <g class="dia__ico dia__ico--on-gate" transform="translate(608 244)"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></g>
+    <g class="dia__ico" transform="translate(28 244)"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M9 15h6"/><path d="M12 12v6"/></g>
+    <g class="dia__ico" style="stroke: var(--amber)" transform="translate(28 456)"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></g>
+    <g class="dia__ico dia__ico--ok" transform="translate(508 456)"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></g>
+
+    <g>
+      <text x="64" y="73" class="dia__h"><tspan class="dia__step">1</tspan>  The brief</text>
+      <text x="28" y="104" class="dia__s dia__mono">docs/brief.md</text>
+      <text x="28" y="122" class="dia__s">on top: product, surfaces,</text>
+      <text x="28" y="140" class="dia__s">actors, modules —</text>
+      <text x="28" y="158" class="dia__s">then a section per module</text>
+
+      <text x="304" y="73" class="dia__h"><tspan class="dia__step">2</tspan>  See the modules</text>
+      <text x="268" y="104" class="dia__s dia__mono">propose --from-brief</text>
+      <text x="268" y="122" class="dia__s">lists the modules:</text>
+      <text x="268" y="140" class="dia__s">where each stands,</text>
+      <text x="268" y="158" class="dia__s">and which is next</text>
+
+      <text x="544" y="73" class="dia__h"><tspan class="dia__step">3</tspan>  Open one</text>
+      <text x="508" y="104" class="dia__s dia__mono">--from-brief &lt;module&gt;</text>
+      <text x="508" y="122" class="dia__s">opens the change</text>
+      <text x="508" y="140" class="dia__s dia__mono">draft-&lt;module&gt;</text>
+      <text x="508" y="158" class="dia__s"><tspan class="dia__mono">DRAFTING.md</tspan>: its prompt</text>
+
+      <text x="784" y="73" class="dia__h dia__on-ink">4  Your agent drafts</text>
+      <text x="748" y="104" class="dia__s dia__mono dia__on-ink">--agent "claude -p"</text>
+      <text x="748" y="122" class="dia__s dia__on-ink">or you, by hand:</text>
+      <text x="748" y="140" class="dia__s dia__on-ink">the delta and</text>
+      <text x="748" y="158" class="dia__s dia__on-ink">its scenarios</text>
+
+      <text x="644" y="261" class="dia__h dia__on-gate">5  The checklist</text>
+      <text x="608" y="292" class="dia__s dia__mono dia__on-gate">propose --from-brief &lt;module&gt;</text>
+      <text x="608" y="310" class="dia__s dia__on-gate">again: D1–D12, each with its fix</text>
+      <text x="608" y="334" class="dia__s dia__on-gate">D6 every value in the brief or an assumption</text>
+      <text x="608" y="352" class="dia__s dia__on-gate">D3 a scenario per actor and surface</text>
+      <text x="608" y="370" class="dia__s dia__on-gate">D12 an actor can reach the ids it acts on</text>
+
+      <text x="64" y="261" class="dia__h"><tspan class="dia__step">6</tspan>  Beside the delta</text>
+      <text x="28" y="296" class="dia__h dia__mono">assumptions.md</text>
+      <text x="28" y="318" class="dia__s">every value the brief does</text>
+      <text x="28" y="336" class="dia__s">not give — prices, limits,</text>
+      <text x="28" y="354" class="dia__s">status codes — with the</text>
+      <text x="28" y="372" class="dia__s">requirements that use it</text>
+      <text x="262" y="296" class="dia__h dia__mono">questions.md</text>
+      <text x="262" y="318" class="dia__s">what only the client can</text>
+      <text x="262" y="336" class="dia__s">answer, and the requirement</text>
+      <text x="262" y="354" class="dia__s">each question blocks</text>
+
+      <text x="64" y="473" class="dia__h dia__wait-t">Needs Clarification — it waits</text>
+      <text x="28" y="502" class="dia__s">a value only the client can give, such as a fee:</text>
+      <text x="28" y="520" class="dia__s">apply and the harness refuse the requirement</text>
+      <text x="28" y="538" class="dia__s">until someone answers its question</text>
+
+      <text x="544" y="473" class="dia__h dia__ok-t">7  A person approves the draft</text>
+      <text x="508" y="502" class="dia__s dia__mono">specgate change approve draft-&lt;module&gt;</text>
+      <text x="508" y="520" class="dia__s">then the rest, one requirement at a time:</text>
+      <text x="508" y="538" class="dia__s">a test that names it, the gate — <tspan class="dia__mono">specgate apply</tspan></text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="230" y1="104" x2="247" y2="104" marker-end="url(#sg-bd-a)"/>
+      <line x1="470" y1="104" x2="487" y2="104" marker-end="url(#sg-bd-a)"/>
+      <line x1="710" y1="104" x2="727" y2="104" marker-end="url(#sg-bd-a)"/>
+
+      <line x1="900" y1="170" x2="900" y2="223" marker-end="url(#sg-bd-a)"/>
+      <text x="908" y="202">draft</text>
+
+      <line x1="780" y1="226" x2="780" y2="173" class="dia__no" stroke-dasharray="5 4" marker-end="url(#sg-bd-r)"/>
+      <text x="772" y="196" text-anchor="end" class="dia__no-t">findings: fix,</text>
+      <text x="772" y="212" text-anchor="end" class="dia__no-t">run it again</text>
+
+      <line x1="590" y1="300" x2="497" y2="300" class="dia__ok" marker-end="url(#sg-bd-g)"/>
+      <text x="542" y="276" text-anchor="middle" class="dia__ok-t">✔ Ready</text>
+      <text x="542" y="292" text-anchor="middle" class="dia__ok-t">to review</text>
+
+      <line x1="340" y1="390" x2="340" y2="435" stroke-dasharray="5 4" style="stroke: var(--amber)" marker-end="url(#sg-bd-w)"/>
+      <text x="350" y="418" class="dia__wait-t">blocks</text>
+
+      <line x1="770" y1="390" x2="770" y2="435" class="dia__ok" marker-end="url(#sg-bd-g)"/>
+      <text x="780" y="418" class="dia__ok-t">a person reads it</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>The brief's modules become drafts one at a time; the checklist loops until every value is in the brief or an assumption, and only what the client must answer waits.</figcaption>
+</figure>

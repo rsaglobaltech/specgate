@@ -77,7 +77,7 @@ export default [
       const r = t.sgEnv(dir, env, "agents", "install", "--global");
       t.ok(r, "agents install --global");
       t.expect(
-        fs.existsSync(path.join(home, ".config", "opencode", "plugin", "specgate.js")),
+        fs.existsSync(path.join(home, ".config", "opencode", "plugins", "specgate", "index.js")),
         "the OpenCode plugin in its global folder"
       );
       t.expect(/\/plugin install specgate@specgate/.test(r.stdout), "Claude Code is told how to install the plugin");

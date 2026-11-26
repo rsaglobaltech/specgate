@@ -7,10 +7,12 @@
  *
  *   node scripts/scenarios.mjs @REQ-664
  *
- * Exits 1 when no test names a tag, when one is not compiled yet, or when one fails.
+ * Exits 1 when no test names a tag, when one is not compiled yet, when one fails,
+ * or when the tests found run none: a file that names the tag only in a comment proves nothing.
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const ids = process.argv
@@ -34,12 +36,17 @@ const walk = (d) => {
   }
 };
 walk("tests");
+// The packages keep their own tests (packages/core/test/unit), compiled beside them.
+if (existsSync("packages"))
+  for (const p of readdirSync("packages")) if (existsSync(`packages/${p}/test`)) walk(`packages/${p}/test`);
 if (files.length === 0) {
   console.error(`No test names ${ids.join(", ")}: its scenarios have no test yet.`);
   process.exit(1);
 }
 
 let failed = 0;
+let ran = 0;
+const tapDir = mkdtempSync(join(tmpdir(), "specgate-scenarios-"));
 for (const file of files.sort()) {
   const js = `dist/${file.replace(/\.ts$/, ".js")}`;
   if (!existsSync(js)) {
@@ -50,9 +57,33 @@ for (const file of files.sort()) {
   console.log(`▶ ${js}`);
   const r = spawnSync(
     process.execPath,
-    ["--test", "--test-reporter=spec", `--test-name-pattern=\\b(${ids.join("|")})\\b`, js],
-    { stdio: "inherit", timeout: 600_000 },
+    [
+      "--test",
+      "--test-reporter=spec",
+      "--test-reporter-destination=stdout",
+      "--test-reporter=tap",
+      `--test-reporter-destination=${join(tapDir, "tap")}`,
+      `--test-name-pattern=\\b(${ids.join("|")})\\b`,
+      js,
+    ],
+    // As in run-tests.cjs (REQ-691): the suite's agents are scripts that answer
+    // no prompt, so only the tests of that check ask them first.
+    {
+      stdio: "inherit",
+      timeout: 600_000,
+      env: { ...process.env, SPECGATE_SKIP_DOCTOR: process.env.SPECGATE_SKIP_DOCTOR ?? "1",
+        // REQ-748: the suite approves as the person at the terminal would; a test of the refusal unsets it.
+        SPECGATE_ASSUME_TTY: process.env.SPECGATE_ASSUME_TTY ?? "1" },
+    },
   );
   if (r.status !== 0) failed++;
+  const tap = existsSync(join(tapDir, "tap")) ? readFileSync(join(tapDir, "tap"), "utf8") : "";
+  // The tests that ran. When the name pattern keeps none, node reports the file itself as one passing test.
+  ran += (tap.match(/^\s*(?:ok|not ok) \d+ - .*$/gm) || []).filter((l) => !/\.test\.js$/.test(l.trim())).length;
+}
+rmSync(tapDir, { recursive: true, force: true });
+if (!failed && ran === 0) {
+  console.error(`No test ran for ${ids.join(", ")}: the files that name it have no test whose title does.`);
+  failed++;
 }
 process.exit(failed ? 1 : 0);

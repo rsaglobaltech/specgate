@@ -19,6 +19,12 @@ if [ -z "$PROMPT_FILE" ] || [ ! -f "$PROMPT_FILE" ]; then
   exit 2
 fi
 
+# The harness asks an agent to answer before it starts one (`harness doctor`): a stand-in answers as a model would.
+if grep -q 'Reply with exactly: OK' "$PROMPT_FILE"; then
+  echo "OK"
+  exit 0
+fi
+
 REQ="$(grep -oE 'REQ-[0-9]+' "$PROMPT_FILE" | head -n1 || true)"
 echo "[stub-agent] implementing $REQ from $PROMPT_FILE"
 

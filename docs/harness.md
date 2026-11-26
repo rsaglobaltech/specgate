@@ -9,10 +9,10 @@ several onto a branch, run them in parallel, and read a failure.
 
 **You need:** a project where `specgate init` has run, git, a test command
 (`specgate config set test_cmd "npm test"`) and a coding agent you can run from
-the command line. Which agent, and how to call it, is on
-[Choosing and wiring your agent](agent-setup.md).
+the command line. Which agent, and how to call it, is on [Choosing and wiring your agent](agent-setup.md).
 
 <!-- specgate:diagram lifecycle -->
+<!-- specgate:diagram trust-boundary -->
 
 ## One turn, in sequence
 
@@ -22,10 +22,13 @@ the command line. Which agent, and how to call it, is on
    worktree on a branch called `harness/REQ-NNN`.
 2. The harness installs the project's dependencies in it, then gives the agent
    a prompt built from the requirement and its Gherkin scenario.
-3. The gate runs: `validate --strict`, a check that the agent did not edit the
-   specification, your architecture check, your tests, then your
-   [quality checks](quality.md) — coverage of the lines it added, mutation,
-   SAST, secrets, Conventional Commits.
+3. The gate runs. First the outside judge: any change to the controls the
+   harness read before the agent started (guard, gate policy, approvals,
+   evidence, sealed tests) fails the attempt. Then `validate --strict`, with
+   approvals, sealed tests and design scope as approved; the specification
+   untouched; your architecture check and tests; the scenarios when
+   `bdd: required`; the step record; the principles with a `run=` check; your
+   [quality checks](quality.md).
 4. **Green:** `specgate apply` marks the requirement Implemented and the work
    is committed on its branch as `feat(REQ-NNN): …`.
 5. **Red:** the failures go into the next attempt, up to `max_attempts`
@@ -98,6 +101,9 @@ previous merge. A green one is merged into the branch you are on (a merge
 commit; its prompts stay on its `harness/` branch), and **the gate runs again
 on the merge**. A red result is undone and the chain stops.
 
+With trust levels declared, `--chain` runs only on a branch of your own
+(`git switch -c feature/<module>`); you merge that branch yourself.
+
 ### On a ticket's branch
 
 For work that comes from a Jira ticket, run the chain on the ticket's branch:
@@ -166,24 +172,16 @@ repeats.
 
 ## Parallel branches and capability specs
 
-With one change per ticket, two branches often archive into the same
-capability, `docs/specs/capabilities/<name>/spec.md`. Git would conflict on
-the whole file when the capability is new on both. `specgate harness init`
-also registers a driver for these files that merges **requirement by
-requirement**: requirements with different ids are united and sorted by id,
-and a requirement changed on one side only takes that side.
+Two branches often archive into the same capability spec. `specgate harness
+init` registers a merge driver for those files that merges **requirement by
+requirement**: different ids are united and sorted, and a requirement changed
+on one side only takes that side. It conflicts only when both rewrote the same
+requirement (`change_overlap` warned before): write it as it should read,
+delete the markers, run `specgate check`.
 
-It **conflicts** only when both branches rewrote the same requirement
-differently, the case `change_overlap` warned about before either branch was
-merged. Write the requirement as it should read once both changes hold,
-delete the marker lines, and run `specgate check`.
-
-**In a project without its own `node_modules`**, Maven for one, the drivers
-run this machine's copy of specgate. If that copy goes away (an `npx` cache
-cleared, a global install removed), the drivers say so and git merges these
-files by lines, with its usual conflict markers, and `specgate doctor` warns.
-Run `specgate harness init --merge-drivers` again to point them at the copy you
-have now.
+**Without a local `node_modules`** (Maven, say), the drivers run this
+machine's specgate. If that copy goes away, git falls back to line merges and
+`specgate doctor` warns; run `specgate harness init --merge-drivers` again.
 
 ## Run more than one requirement at a time
 
@@ -263,6 +261,12 @@ run stops there and lists them: write their tests or move them back to Draft,
 or pass `--skip-baseline` to run anyway. What fails on the requirements being
 run is theirs to fix, and does not stop it.
 
+**When the session touched the controls**, the attempt fails before anything
+else runs (`controls_changed_by_session`): the agent approved, switched the
+guard, reviewed steps or edited the gate policy, the evidence or the sealed
+tests. Those are a person's. Put the controls back and look at what the agent
+was asked to do.
+
 The report prints the tail of the gate output and the command that failed.
 Some failures end the run after one attempt, because retrying cannot help:
 see [Troubleshooting](troubleshooting.md#when-another-attempt-cannot-help).
@@ -283,6 +287,10 @@ has it. Check the gate command the report prints.
 
 To see what the harness has cost over time (first-attempt rate, time per
 delivered requirement), see [What the harness has cost](harness-report.md).
+
+## Agents per module, checked first; a swarm in sandboxes
+
+A module can have its own agent (`match: { module: … }`); `harness run` checks every agent answers before it starts (`specgate harness doctor`); with `sandbox: { engine: sbx }` each module works in its own sandbox, removed at archive. [In detail](specs/harness.md#every-agent-checked-before-it-is-used).
 
 ## Next
 

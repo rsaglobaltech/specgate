@@ -42,7 +42,7 @@ The system SHALL give Home the project's counts — requirements built of the to
 
 ### Requirement: REQ-206 — A draft is approved by a person
 
-The system SHALL, with `specgate change approve <id>`, record in the change's change.yaml that a person approved it and when, refusing while the draft checklist has errors or a question it holds is open, and naming them; the record SHALL survive later rewrites of change.yaml; and Review SHALL list each open change not approved with its requirements as statement and Given/When/Then, the checklist as plain checks, and Approve enabled only when nothing blocks it. Each blocker SHALL be listed with the action that clears it — answering a question, confirming that the spec says an answer, opening the requirement the checklist names — and a question SHALL be matched by its exact id.
+The system SHALL, with `specgate change approve <id>`, record in the change's change.yaml that a person approved it and when, refusing while the draft checklist has errors or a question it holds is open — except a question, or a finding, that concerns only requirements marked Needs Clarification (REQ-771) — and naming them; the record SHALL survive later rewrites of change.yaml; and Review SHALL list each open change not approved with its requirements as statement and Given/When/Then, the checklist as plain checks, and Approve enabled only when nothing blocks it. Each blocker SHALL be listed with the action that clears it — answering a question, confirming that the spec says an answer, opening the requirement the checklist names — and a question SHALL be matched by its exact id.
 
 > Amended by studio-unblock: on 2026-11-08 Approve stayed disabled with no way to clear what blocked it, and a blocker naming Q10 hid Q1.
 
@@ -653,3 +653,15 @@ The system SHALL show, in the studio's Changes, each written layer of a change (
 - THEN Ana's approval is refused, Luis's is recorded as luis@acme.eu, and the studio offered Approve on the Discover to Luis only
 
 <!-- specgate:trace actor=Product feature=features/studio/REQ-562.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-474 — The studio's next step during onboarding says adopt, then specify
+
+The system SHALL, in the studio's Home for a folder that is not a specgate project, name the next step "Adopt this folder" when it holds code — leading to Adopt, which previews the files before writing them — and "Create the project" only when it is empty; and, once the project is adopted with no brief, name "Specify a behaviour you rely on" with the number of areas in `docs/specs/adoption.md`, as `status` does, leading to the change that specifies one.
+
+#### Scenario: SCN-474a — An existing project adopted from the studio
+
+- GIVEN a local Node project with code under `src/auth`, `src/catalog`, `src/orders` and `src/payments`, and no specgate files
+- WHEN the developer opens it in the studio, follows the next step to Adopt and adopts it
+- THEN Home first says "Adopt this folder", not "Create the project", and after adoption "Specify a behaviour you rely on" with "4 areas in docs/specs/adoption.md"
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-474.feature kind=functional status=Implemented -->

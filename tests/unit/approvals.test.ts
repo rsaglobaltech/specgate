@@ -215,7 +215,10 @@ function approveAll(dir: string) {
 test("REQ-313 SCN-313a: the audit after the change is closed", () => {
   const dir = project(ROLES);
   approveAll(dir);
-  const record = JSON.parse(read(dir, `${CHANGE}/approvals.json`));
+  // The requirements' seals are a record of their own (REQ-739): the audit is of the layers.
+  const record = JSON.parse(read(dir, `${CHANGE}/approvals.json`)).filter(
+    (a: { layer: string }) => a.layer !== "requirements"
+  );
   assert.equal(record.length, 3);
   const today = new Date().toISOString().slice(0, 10);
   for (const a of record) {

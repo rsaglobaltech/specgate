@@ -1,0 +1,14 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-721 SCN-721a: `trap` — a green gate reached by editing the scenario fails, naming the file (1957.657209ms)
+✔ REQ-721: the specification's own verdict names the file even when everything else is green (1950.872708ms)
+✔ REQ-721 SCN-721b: `trap` — the test corrected to the scenario and implemented passes (1909.435375ms)
+✔ REQ-721 SCN-721c: `trap` — an agent that stops and reports the contradiction passes, recorded as stopped (1907.423292ms)
+✔ REQ-721 SCN-721d: `trap` — code built to the contradicting test fails, whatever the gate says (1958.842916ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9755.558958

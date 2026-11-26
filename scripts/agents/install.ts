@@ -16,7 +16,7 @@ import { error } from "../lib/diagnostics";
 import { agentIo, wantsJson, EXIT } from "../lib/agent";
 import { c } from "../lib/ui";
 import * as ui from "../lib/ui";
-import { opencodePluginFiles } from "./init";
+import { opencodePluginFiles, removeOpencodePluginV1 } from "./init";
 
 /** The tools `install --global` knows. */
 const GLOBAL_TOOLS = ["claude-plugin", "opencode-plugin"];
@@ -75,6 +75,7 @@ function usage(): void {
 export function installOpencode(
   dir: string
 ): { path: string; action: "create" | "update" | "unchanged" }[] {
+  removeOpencodePluginV1(dir);
   return opencodePluginFiles(".").map((f) => {
     const target = path.join(dir, f.path);
     const before = fs.existsSync(target) ? fs.readFileSync(target, "utf8") : null;

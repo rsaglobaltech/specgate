@@ -196,23 +196,24 @@ SHALL name that verb in the first line of each old name's `--help`.
 
 #### Scenario: SCN-115a — A script written for 0.20
 
-- GIVEN a CI script that runs `specgate change new add-dynamic-pricing` and later `specgate done REQ-002`
+- GIVEN a CI script that runs `specgate change new add-dynamic-pricing` and later, the change approved, `specgate done REQ-002`
 - WHEN it runs against this version
 - THEN both commands succeed as `propose` and `apply` would
 - AND `specgate change archive --help` starts with "Same as specgate archive"
 
 <!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-115.feature kind=functional status=Implemented test=tests/unit/compact-use.test.ts -->
 
-### Requirement: REQ-116 — One loop, four verbs
+### Requirement: REQ-116 — One loop: four verbs and an approval
 
 The system SHALL let a developer take a requirement from nothing to archived
 and Implemented using only `init`, `propose`, `apply`, `archive` and `status`,
-editing only the change's delta, a test and the code.
+and the approval of the change, `change approve`, before `apply`, editing only
+the change's delta, a test and the code.
 
 #### Scenario: SCN-116a — The loop end to end
 
 - GIVEN a Node.js repository with code, a `package.json` and a passing `npm test`
-- WHEN the developer runs `specgate init`, `specgate propose add-greeting`, writes one requirement in the change's delta, a test naming it and the code, then runs `specgate status`, `specgate apply` and `specgate archive add-greeting`
+- WHEN the developer runs `specgate init`, `specgate propose add-greeting`, writes one requirement in the change's delta, a test naming it and the code, then runs `specgate status`, `specgate change approve add-greeting`, `specgate apply` and `specgate archive add-greeting`
 - THEN every command exits 0, the requirement is Implemented in its capability spec, and `specgate status` no longer lists it as pending
 - AND no other specgate command was run
 
@@ -487,3 +488,93 @@ The system SHALL add to `specgate status --json` the field `next`: the next comm
 - THEN `next.argv` is `["apply", "REQ-007"]`, `next.placeholder` is false, and `next.command` equals `nextCommand`
 
 <!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-565.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-465 — After apply, Next stays in the change
+
+The system SHALL, after `specgate apply` delivers a requirement of an open change, name as the next step the next requirement of that same change that is still to do and not waiting for an answer; only when that change has none SHALL it name the project's next requirement, and when every requirement of the change is delivered it SHALL name `specgate archive` for it, as before.
+
+#### Scenario: SCN-465a — The change's last requirement before the project's
+
+- GIVEN the open change `draft-specgate-port` with REQ-014 still to do, and the project's REQ-000 still to do outside any change
+- WHEN `specgate apply REQ-016` delivers a requirement of `draft-specgate-port`
+- THEN the next step it prints is `specgate apply REQ-014`, not `specgate apply REQ-000`
+
+#### Scenario: SCN-465b — The rest of the change waits for an answer
+
+- GIVEN the open change `draft-specgate-port` whose only requirement left, REQ-014, waits for the answer to Q2, and the project's REQ-000 still to do
+- WHEN `specgate apply REQ-016` delivers a requirement of `draft-specgate-port`
+- THEN the next step it prints is `specgate apply REQ-000`
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-465.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-498 — The matrix answers one row per scenario
+
+The system SHALL list in `specgate matrix --json` and the API's `matrix(dir)`, as `matrix.scenarios`, one row per scenario of the traceability matrix, derived or kept by hand, with the requirements of the open changes as `status` counts them — a requirement with no scenario as one row whose `scenario` is null — each with `requirement`, `scenario`, `feature`, `tests` (the test files it names), `code` (the code files it names), `status`, `gaps` (which of `feature`, `test` and `code` the row does not link to a file that exists) and `waiting` (the open question that blocks its requirement, with its change, or null); and SHALL keep `matrix.rows` as the number of rows.
+
+#### Scenario: SCN-498a — Two scenarios, one with its test and code, one without
+
+- GIVEN a derived project whose REQ-001 has the scenarios SCN-001a and SCN-001b in `features/orders/REQ-001.feature`, a test that names REQ-001 and code that names REQ-001, and whose REQ-002 has a feature and no test or code
+- WHEN a tool runs `specgate matrix --json --dry-run` and calls `matrix(dir)`
+- THEN both list a row for SCN-001a and one for SCN-001b with the feature, the test and the code and no gap, and a row for REQ-002 whose `gaps` are `test` and `code`
+
+#### Scenario: SCN-498b — Q2 blocks REQ-002
+
+- GIVEN that project with the open change `draft-orders`, whose open question Q2 blocks REQ-002
+- WHEN a tool runs `specgate matrix --json --dry-run`
+- THEN REQ-002's row has `waiting` with `question` Q2 and `change` `draft-orders`, and REQ-001's rows have `waiting` null
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-498.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-500 — status names each requirement's capability
+
+The system SHALL give each requirement of `specgate status --json` and the API's `status(dir)` its `capability`: the folder of the capability spec that states it under `docs/specs/capabilities/`, or of the delta of the open change that adds it, and null for a requirement stated only in `spec.md`.
+
+#### Scenario: SCN-500a — An archived requirement, an open one and one in spec.md
+
+- GIVEN a project whose REQ-001 is in `spec.md`, REQ-002 in `docs/specs/capabilities/orders/spec.md`, and REQ-003 in the delta `specs/billing/spec.md` of an open change
+- WHEN a tool runs `specgate status --json`
+- THEN REQ-001 has `capability` null, REQ-002 has `orders` and REQ-003 has `billing`
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-500.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-612 — The baseline of adopted code is not work to do
+
+The system SHALL, in the text of `status`, show the pending baseline requirement of a project adopted with code apart from the "To do" list, saying the test suite holds it on every check and that a test naming it that starts the product closes it, and leave it out of the count of requirements; SHALL keep `status --json` as it was; and SHALL list the first requirement of a project adopted with no code under "To do" as any other.
+
+#### Scenario: SCN-612a — After adoption
+
+- GIVEN a project with code, just adopted
+- WHEN the developer runs `specgate status` and `specgate status --json`
+- THEN the text says `0 of 0 done` and `REQ-001 Preserve existing behaviour: your test suite holds it on every check`, says `To close it, name REQ-001 in a test that starts the product`, has no "To do" list, and the JSON counts 1 requirement
+
+#### Scenario: SCN-612b — No code
+
+- GIVEN an empty folder, just adopted
+- WHEN the developer runs `specgate status`
+- THEN it says `0 of 1 done` and lists REQ-001 under "To do"
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-612.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-615 — Status counts requirements, not scenarios
+
+The system SHALL, in the text of `status`, count each requirement once in the progress line whatever its number of scenarios, count it as done only when every scenario of it is, and name it once in each list; and SHALL keep one entry per scenario in `status --json`.
+
+#### Scenario: SCN-615a — One requirement, two scenarios, nothing built
+
+- GIVEN an adopted project with one new requirement that has two scenarios
+- WHEN the developer runs `specgate status`
+- THEN it says `0 of 1 done` and names the requirement once under `To do`
+
+#### Scenario: SCN-615b — Half of a requirement
+
+- GIVEN a requirement with one scenario done and one not, and another with both done
+- WHEN its progress is counted
+- THEN one of two requirements is done
+
+#### Scenario: SCN-615c — What programs read
+
+- GIVEN the project of the first scenario
+- WHEN the developer runs `specgate status --json`
+- THEN `requirements` holds one entry for each scenario of the requirement
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-615.feature kind=functional status=Implemented -->

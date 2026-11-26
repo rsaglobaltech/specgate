@@ -80,6 +80,7 @@ export default [
       t.expect(/archive_requirements_pending/.test(t.out(early)), "says what is pending", early);
 
       t.write(dir, "test/coupons.test.js", "// REQ-002\n");
+      t.ok(t.sg(dir, "change", "approve", "add-coupons"), "a person approves the change");
       t.ok(t.sg(dir, "done", "REQ-002", "--strict"), "done --strict while the change is open");
       t.expect(
         /status=Implemented/.test(
@@ -96,15 +97,13 @@ export default [
       );
       const archived = t.sg(dir, "change", "archive", "add-coupons");
       t.ok(archived, "change archive");
+      // An open change's feature file is written before the archive, tagged with it (REQ-660); the archive keeps it, untagged.
+      const feature = t.read(dir, "features/billing/coupons.feature");
       t.expect(
-        /1 materialised/.test(archived.stdout),
-        "the delta's scenario becomes a feature file",
-        archived
+        /@REQ-002/.test(feature),
+        "the delta's scenario is a feature file, tagged with its requirement"
       );
-      t.expect(
-        /@REQ-002/.test(t.read(dir, "features/billing/coupons.feature")),
-        "tagged with its requirement"
-      );
+      t.expect(!/@change:/.test(feature), "the archive leaves it no change tag", archived);
 
       t.expect(
         /\| test\/coupons\.test\.js \| Implemented \|$/.test(t.matrixRow(dir, "REQ-002")),
@@ -200,7 +199,9 @@ export default [
       const agent = path.join(path.dirname(dir), `agent-${path.basename(dir)}.js`);
       fs.writeFileSync(
         agent,
-        `require('fs').mkdirSync('test',{recursive:true});require('fs').writeFileSync('test/totals.test.js','// ${req.id}\\n');\n`
+        // It answers the question `harness run` asks each agent first (REQ-691).
+        `if (/Reply with exactly: OK/.test(require('fs').readFileSync(process.argv[2],'utf8'))) { console.log('OK'); process.exit(0); }\n` +
+          `require('fs').mkdirSync('test',{recursive:true});require('fs').writeFileSync('test/totals.test.js','// ${req.id}\\n');\n`
       );
       const r = t.sg(
         dir,

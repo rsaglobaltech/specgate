@@ -3,17 +3,16 @@
 At the end of this page you can add or change requirements in a live project
 through a **change**, so the specs, the feature files and the traceability
 matrix never drift apart. A change is a folder under
-`docs/specs/changes/<id>/` that holds the requirements being added, modified
-or removed until they are built.
+`docs/specs/changes/<id>/` that holds the requirements being added, modified or removed until they are built.
 
-**You need:** a project where `specgate init` has run, and a test command
-configured (`specgate config set test_cmd "npm test"`).
+**You need:** a project where `specgate init` has run, and a test command configured (`specgate config set test_cmd "npm test"`).
 
 The loop is four commands: `propose` opens the change, `apply` delivers each
-requirement, `status` says what is left, and `archive` closes the change once
-every requirement in it is delivered
-([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)). For writing your
-first requirements on a new project, see [Writing specs](writing-specs.md).
+requirement, `status` says what is left, and `archive` closes the change once every requirement in it is delivered
+([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)). Between `propose`
+and `apply`, a person approves the change. For writing your first requirements on a new project, see [Writing specs](writing-specs.md).
+
+<!-- specgate:diagram approval-loop -->
 
 ## 1. Open the change
 
@@ -82,8 +81,8 @@ configured threshold.
 - WHEN a vehicle enters
 - THEN the peak tariff is applied
 
-<!-- specgate:trace uc=UC-007 cmd=CMD-011 agg=AGG-Pricing evt=EVT-PriceApplied
-     feature=features/pricing/dynamic_pricing.feature -->
+<!-- specgate:trace kind=functional uc=UC-007 cmd=CMD-011 agg=AGG-Pricing
+     evt=EVT-PriceApplied feature=features/pricing/REQ-014.feature -->
 ```
 
 Three sections are valid: `## ADDED Requirements`, `## MODIFIED Requirements`
@@ -97,9 +96,11 @@ The validator is strict about two things:
 - **The body needs an obligation keyword** (`SHALL`, `MUST`, `SHOULD` or
   `MAY`), otherwise you get `no_rfc2119_keyword`.
 
-The `specgate:trace` comment is optional. It fills the use case, command,
-aggregate and event columns of the matrix; without it the requirement still
-archives, with `-` in those columns.
+The `specgate:trace` comment's `kind=` (functional, non-functional or
+business-rule) is required, and the template `propose` writes has none: add it,
+or `change approve` refuses the change (`approve_blocked`; `change validate`
+says `change_not_approvable`). `uc`, `cmd`, `agg` and `evt` are optional matrix
+columns, `-` when missing. `feature=` is one file per requirement.
 
 While the change is open, its requirements already count: `status` lists
 REQ-014 as to do, and `apply`, `check` and `harness run` judge the project as
@@ -109,14 +110,15 @@ yet.
 **`depends=` says what a requirement builds on.** Add it to the same comment:
 
 ```markdown
-<!-- specgate:trace uc=UC-008 feature=features/pricing/refunds.feature
-     depends=REQ-014 -->
+<!-- specgate:trace kind=functional uc=UC-008
+     feature=features/pricing/refunds.feature depends=REQ-014 -->
 ```
 
 Separate several with commas: `depends=REQ-014, REQ-016`. Then:
 
 - **`specgate plan` orders the queue** so a requirement never comes before the
-  work it needs, and marks one whose dependency is pending as `⛔ blocked`.
+  work it needs, and marks one whose dependency is pending as `⛔ blocked` —
+  once the change is archived; while it is open, `status` lists them.
 - **`specgate validate` fails** on a cycle (`requirement_cycle`), on a
   dependency that names no requirement (`unknown_dependency`) and on a
   requirement that depends on itself (`self_dependency`).
@@ -136,34 +138,11 @@ specgate change validate add-dynamic-pricing
 You rarely need this by hand: `specgate validate` and `specgate check` validate
 every open change, so a broken delta fails the gate on its own.
 
-## 5. Apply each requirement
+## 5. Approve it, then apply each requirement
 
 The review is the pull request of the change: the delta, the tests that name
-its requirements, and the code, together. Each requirement goes through the
-gate on its own:
-
-```bash
-specgate apply REQ-014
-```
-
-```
-  ✖  REQ-014  REQ-014 has no test that names it yet (TDD-1).  [apply_no_test]
-     fix: write a test that names REQ-014 (and its scenario SCN-014), then run specgate apply REQ-014
-```
-
-Write the test first and name the requirement in it (that mention is the
-link), then the code, and run it again:
-
-```
-  ✔  Specification   the gate, for REQ-014
-  ✔  REQ-014 → Implemented (1 row updated)
-```
-
-The gate is the same as `check`'s: `validate --strict` for the requirement,
-your architecture check (`arch_cmd`) and your tests (`test_cmd`). Nothing is
-written while it fails. The status goes into the change's delta
-(`<!-- specgate:trace status=Implemented -->`). Without an id, `apply` takes
-the next requirement `status` names. `apply` does not commit: commit after it.
+its requirements, and the code, together. It starts before any code: a person
+approves the change, then each requirement goes through the gate on its own.
 
 ### A person approves the draft
 
@@ -177,10 +156,53 @@ Each layer is approved by its owner (ADR-0045): `--layer discover` by product,
 `--layer design` by the architect, `--layer tasks` by the developer; without
 `--layer`, the layers you own. `harness.config.yaml` says who holds each role
 and how many people a layer needs — `roles: { product: [ana@acme.eu] }`,
-`approvals: { quorum: { design: 2 }, required: layered }` (`always`, or `never`
-for the 0.27 behaviour). A role nobody is named for is open to anyone. Each
-approval goes in the change's `approvals.json` with a hash of the layer; editing
-it asks for its approval again. The harness skips an unapproved 1.0 change.
+`approvals: { quorum: { design: 2 }, required: layered }` (`layered` is the
+default; `always`, or `never` for the 0.27 behaviour). A role nobody is named
+for is open to anyone. Each approval goes in the change's `approvals.json`.
+
+- **Approving needs a terminal.** `change approve` refuses when its input is
+  not a terminal (`approve_needs_person`), and an agent's tool has none. A
+  person runs it in a terminal, or approves in the studio's Review.
+  `SPECGATE_ASSUME_TTY=1` exists for scripted tests, not for agents.
+- **Approval seals the requirements.** Each requirement is recorded by its
+  hash. One changed after approval fails the gate
+  (`approved_requirement_changed`) until a person approves it again; editing a
+  layer asks for its approval again too.
+- **The design sets the scope.** A new source file that no approved design
+  names is reported (`file_outside_design`, gate rule `scope`).
+
+`apply` refuses a requirement of a change no person approved
+(`change_not_approved`), and the harness skips an unapproved change.
+
+### Then apply
+
+```bash
+specgate apply REQ-014
+```
+
+```
+  ✖  REQ-014  REQ-014 has no test that names it yet (TDD-1).  [apply_no_test]
+     fix: write a test that names REQ-014 (and its scenario SCN-014), then run specgate apply REQ-014
+```
+
+Write the test first, naming the requirement (the link), then the code; run it again:
+
+```
+  ✔  Specification   the gate, for REQ-014
+  ✔  REQ-014 → Implemented (1 row updated)
+```
+
+The gate is the same as `check`'s: `validate --strict` for the requirement,
+your architecture check (`arch_cmd`) and your tests (`test_cmd`). Nothing is
+written while it fails. The status goes into the change's delta
+(`<!-- specgate:trace status=Implemented -->`). Without an id, `apply` takes
+the next requirement `status` names. `apply` does not commit: commit after it.
+
+### Sealed acceptance tests
+
+A change can also carry acceptance tests written by someone other than the
+implementing agent, approved by a person and sealed, so the agent cannot change
+them: [Sealed acceptance tests](sealed-acceptance.md).
 
 ## 6. Archive it
 
@@ -202,13 +224,13 @@ specgate archive add-dynamic-pricing --dry-run
 ```
   Archive plan ───────────────────────────────────────────
     ~ docs/specs/capabilities/pricing/spec.md   spec
-    ~ features/pricing/REQ-014.feature   feature
     ~ docs/specs/traceability.md   traceability
     → docs/specs/changes/add-dynamic-pricing moves to docs/specs/changes/archive/2026-10-19-add-dynamic-pricing
 ```
 
-Unticked tasks in `tasks.md` are a warning (`archive_tasks_incomplete`);
-`--force` archives anyway, once every requirement is delivered. Then:
+No feature file in the plan: `change approve` wrote it. Unticked tasks in
+`tasks.md` are a warning (`archive_tasks_incomplete`); `--force` archives
+anyway, once every requirement is delivered. Then:
 
 ```bash
 specgate archive add-dynamic-pricing
@@ -219,26 +241,26 @@ specgate archive add-dynamic-pricing
 
     Specs         1 added · 0 modified · 0 removed
     Traceability  1 row(s) added · 0 updated · 0 removed
-    Features      1 materialised
+    Features      0 materialised
 ```
 
-The delta is merged into `docs/specs/capabilities/pricing/spec.md`, the
-feature file is written, and the matrix row arrives already delivered:
+`Features 0 materialised` is expected, for the same reason. The delta is
+merged into `docs/specs/capabilities/pricing/spec.md`; the row arrives delivered:
 
 ```
 | REQ-014 | SCN-014 | `features/pricing/REQ-014.feature` | UC-007 | CMD-011 | AGG-Pricing | EVT-PriceApplied | - | test/pricing.test.js | Implemented |
 ```
 
-The spec and its code reach review in one pull request, after the gate passed.
-A test that disproves the spec text is fixed in the same change, not in a
-second one.
+The spec and its code reach review in one pull request, after the gate passed;
+a test that disproves the spec text is fixed in the same change.
 
 ### When the change modifies a shipped requirement
 
-A `MODIFIED` requirement is pending again while the change is open: `plan` and
-`status` list it as needing a test for its new scenarios, and `archive` waits
+A `MODIFIED` requirement is pending again while the change is open: `status`
+lists it as needing a test for its new scenarios, and `archive` waits
 for it like any other. When it is delivered, by `apply` or by the harness,
-every one of its scenarios must be named by a test. Two requirements modified
+its test should name every one of its scenarios — a warning under the
+standard preset (rule `coverage`), an error under the strict one. Two requirements modified
 by the same change are delivered one at a time; neither waits for the other.
 Archiving then rewrites the feature file from the delta
 (`archive_feature_regenerated`).
@@ -249,43 +271,27 @@ scenarios it lacks (`archive_feature_stale`).
 
 ### With domain packs
 
-| You want | Command |
-| --- | --- |
-| Review an upstream pack upgrade as a change, not a file diff | `specops diff --as-change --pack-version v0.2.0` |
-| Send a local change back to the pack | `specops contribute --change add-dynamic-pricing` |
-| Fail CI when the project has drifted from the installed pack | `validate --against-lock` |
-
-[Domain packs](domain-packs.md) describes how a pack version upgrade works.
+An upstream pack upgrade can be reviewed as a change (`specops diff --as-change
+--pack-version v0.2.0`), a local change sent back to the pack (`specops
+contribute --change <id>`), and drift from the installed pack fail CI
+(`validate --against-lock`): [Domain packs](domain-packs.md).
 
 ## Have an agent draft a file
 
-`specgate change author` has an agent write one file of a change (the proposal
-or the delta), confined to the change folder:
+`specgate change author` has an agent write one file of a change — the
+proposal or the delta — confined to the change folder:
 
 ```bash
-specgate change author add-dynamic-pricing --artifact proposal --agent "claude -p < {prompt_file}"
-specgate change author add-dynamic-pricing --artifact specs --agent-profile local-claude
+specgate change author add-dynamic-pricing --artifact specs --agent "claude -p < {prompt_file}"
 ```
 
-Specgate writes the prompt to a temporary file and puts its path where
-`{prompt_file}` stands. The prompt is `specgate change instructions` rendered
-for an agent, so the agent gets the same template, rules and reserved ids a
-person does. Profiles such as `local-claude` are described in
-[Choosing and wiring your agent](agent-setup.md).
-
-- **The scope is enforced.** The agent may write only inside
-  `docs/specs/changes/<id>/`. Anything it writes elsewhere is undone before you
-  see it, so it cannot edit the capability spec it is meant to propose a change
-  to.
-- **It refuses to run on a dirty tree.** Undoing the agent's writes must never
-  touch your own work, so commit first.
-- **`--dry-run`** prints the prompt and writes nothing.
-
-This is separate from `specgate harness run`, which delivers requirements that
-already exist, each in its own worktree, against `validate --strict` and your
-tests. A change has no requirements until someone writes them. To draft a
-change from a brief, see [From a client brief](from-a-brief.md); from a Jira
-ticket, see [From a Jira ticket](from-a-ticket.md).
+The prompt is `specgate change instructions` rendered for an agent: the same
+template, rules and reserved ids a person gets (profiles: [Choosing and
+wiring your agent](agent-setup.md)). Anything written outside
+`docs/specs/changes/<id>/` is undone; it refuses a dirty tree, so commit
+first; `--dry-run` prints the prompt and writes nothing. To draft from a brief
+or a ticket: [From a client brief](from-a-brief.md) ·
+[From a Jira ticket](from-a-ticket.md).
 
 ## Next
 

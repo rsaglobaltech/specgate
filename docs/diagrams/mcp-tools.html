@@ -1,0 +1,96 @@
+<figure class="dia dia--card dia--mcp">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 520" class="dia__svg" role="img" aria-labelledby="sg-mt-t sg-mt-d">
+    <title id="sg-mt-t">The MCP server: an agent's tools, grouped by what they do, and what is never a tool</title>
+    <desc id="sg-mt-d">An MCP client — Claude Desktop, Cursor, Claude Code, Antigravity — sends a
+      tool call to the MCP server, specgate mcp serve over stdio, and gets back the command's
+      JSON with its status. The server runs the Specgate CLI in the project's folder,
+      projectDir: spec.md, docs/specs/, features/ and the tests. Its tools fall into three
+      groups. Read the state: specgate_status, plan, read_spec, list_requirements,
+      validate_project, specgate_check, specgate_verify, and specgate_change_show, list,
+      status and instructions. Write the work: specgate_change_new, which is propose and
+      opens a change; specgate_new, the specgate_req_ tools and specgate_fix;
+      mark_requirement_done, which is apply and runs the gate first; and
+      specgate_change_archive, which is archive. Tools that write the specification are
+      refused while no change is open. Configure: specgate_config_get with a key, specgate_config_set with a key and a
+      value, specgate_config_list and keys; specgate_agents_init, which takes only the
+      project and installs every agent's commands; and specgate_harness_init. Never a tool: approving a change, since
+      specgate change approve is a person's act at a terminal; and switching the guard off,
+      since config set agent_guard off with no terminal fails with guard_needs_person.</desc>
+
+    <defs>
+      <marker id="sg-mt-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+    </defs>
+
+    <g class="dia__band dia__band--out"><rect x="446" y="1" width="513" height="398"/></g>
+    <text x="466" y="26" class="dia__band-t">THE TOOLS — EACH RUNS THE CLI IN projectDir</text>
+
+    <g class="dia__box dia__box--ink"><rect x="20" y="60" width="176" height="130"/></g>
+    <g class="dia__box dia__box--gate"><rect x="250" y="60" width="172" height="130"/></g>
+    <g class="dia__box"><rect x="250" y="250" width="172" height="130"/></g>
+    <g class="dia__box">
+      <rect x="466" y="42" width="474" height="104"/>
+      <rect x="466" y="282" width="474" height="104"/>
+    </g>
+    <g class="dia__box dia__box--strong"><rect x="466" y="154" width="474" height="120"/></g>
+    <g class="dia__box dia__box--no"><rect x="20" y="418" width="920" height="94"/></g>
+
+    <g class="dia__ico dia__ico--brand" transform="translate(96 74)"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></g>
+    <g class="dia__ico dia__ico--on-gate" transform="translate(324 74)"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></g>
+    <g class="dia__ico" transform="translate(324 264)"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></g>
+    <g class="dia__ico" transform="translate(482 56)"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></g>
+    <g class="dia__ico" transform="translate(482 168)"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/></g>
+    <g class="dia__ico" transform="translate(482 296)"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></g>
+    <g class="dia__ico dia__ico--no" transform="translate(36 434)"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></g>
+
+    <g text-anchor="middle">
+      <text x="108" y="124" class="dia__h dia__on-ink">MCP client</text>
+      <text x="108" y="146" class="dia__s dia__on-ink">Claude Desktop · Cursor</text>
+      <text x="108" y="164" class="dia__s dia__on-ink">Claude Code · Antigravity</text>
+
+      <text x="336" y="124" class="dia__h dia__on-gate">MCP server</text>
+      <text x="336" y="146" class="dia__s dia__mono dia__on-gate">specgate mcp serve</text>
+      <text x="336" y="164" class="dia__s dia__on-gate">over stdio</text>
+
+      <text x="336" y="314" class="dia__h">Your project</text>
+      <text x="336" y="336" class="dia__s dia__mono">spec.md · docs/specs/</text>
+      <text x="336" y="354" class="dia__s dia__mono">features/ · tests</text>
+    </g>
+
+    <g>
+      <text x="518" y="73" class="dia__h">Read the state</text>
+      <text x="482" y="98" class="dia__s dia__mono">specgate_status · plan · read_spec · list_requirements</text>
+      <text x="482" y="116" class="dia__s dia__mono">validate_project · specgate_check · specgate_verify</text>
+      <text x="482" y="134" class="dia__s dia__mono">specgate_change_show · _list · _status · _instructions</text>
+
+      <text x="518" y="185" class="dia__h">Write the work</text>
+      <text x="640" y="185" class="dia__s dia__small">spec writes refused while no change is open</text>
+      <text x="482" y="210" class="dia__s dia__mono">specgate_change_new <tspan class="dia__faint">— propose: opens a change</tspan></text>
+      <text x="482" y="228" class="dia__s dia__mono">specgate_new · specgate_req_* · specgate_fix</text>
+      <text x="482" y="246" class="dia__s dia__mono">mark_requirement_done <tspan class="dia__faint">— apply: the gate first</tspan></text>
+      <text x="482" y="264" class="dia__s dia__mono">specgate_change_archive <tspan class="dia__faint">— archive</tspan></text>
+
+      <text x="518" y="313" class="dia__h">Configure</text>
+      <text x="482" y="338" class="dia__s dia__mono">specgate_config_get <tspan class="dia__faint">key</tspan> · _set <tspan class="dia__faint">key value</tspan> · _list · _keys</text>
+      <text x="482" y="356" class="dia__s dia__mono">specgate_agents_init <tspan class="dia__faint">— every agent; no tool to pick</tspan></text>
+      <text x="482" y="374" class="dia__s dia__mono">specgate_harness_init</text>
+
+      <text x="70" y="446" class="dia__h dia__no-t">Never a tool</text>
+      <text x="70" y="472" class="dia__s"><tspan class="dia__h">Approving a change</tspan> — <tspan class="dia__mono">specgate change approve</tspan> is a person's act, at a terminal.</text>
+      <text x="70" y="496" class="dia__s"><tspan class="dia__h">Switching the guard off</tspan> — <tspan class="dia__mono">config set agent_guard off</tspan> with no terminal fails: <tspan class="dia__mono">guard_needs_person</tspan>.</text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="201" y1="112" x2="245" y2="112" marker-start="url(#sg-mt-a)" marker-end="url(#sg-mt-a)"/>
+      <text x="223" y="212" text-anchor="middle">tool call ⇄ JSON + status</text>
+      <line x1="336" y1="192" x2="336" y2="245" marker-end="url(#sg-mt-a)"/>
+      <text x="346" y="230">runs the CLI</text>
+      <line x1="422" y1="125" x2="461" y2="125" marker-end="url(#sg-mt-a)"/>
+      <text x="441" y="116" text-anchor="middle">offers</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>Over MCP an agent reads the state, writes its work and configures the project; approving a change and switching the guard off stay a person's acts at a terminal.</figcaption>
+</figure>

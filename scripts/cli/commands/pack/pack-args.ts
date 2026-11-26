@@ -18,6 +18,8 @@ export interface PackArgs {
   projectDir: string;
   dryRun: boolean;
   noExamples: boolean;
+  /** walkthrough-fixes-3 REQ-791: render over a project that already has its own specification. */
+  force: boolean;
   /** `--var KEY=VALUE`, repeatable. */
   vars: Record<string, string>;
   packRepo: string;
@@ -32,6 +34,7 @@ export function parseArgs(argv: string[]): PackArgs {
     projectDir: "",
     dryRun: false,
     noExamples: false,
+    force: false,
     vars: {},
     packRepo: "",
     packVersion: "",
@@ -84,6 +87,11 @@ export function parseArgs(argv: string[]): PackArgs {
 
     if (token === "--no-examples") {
       args.noExamples = true;
+      continue;
+    }
+
+    if (token === "--force") {
+      args.force = true;
       continue;
     }
 

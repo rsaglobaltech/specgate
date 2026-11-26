@@ -1,0 +1,10 @@
+▶ dist/tests/unit/walkthrough-fixes-2.test.js
+✔ REQ-790 SCN-790a: in a project whose package.json says type: module, the plugin's guard still refuses (309.502834ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 364.664708

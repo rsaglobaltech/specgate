@@ -102,7 +102,7 @@ Optionally install the CLI globally so `specgate` works everywhere:
 
 ```bash
 npm install -g @rsaglobaltech/specgate@latest
-specgate --version          # 1.5.0
+specgate --version          # 1.6.0
 specgate --help             # the six you start with: init; propose, apply, status, archive; check
 specgate --help --all       # the whole surface
 ```
@@ -246,10 +246,12 @@ statuses, Gherkin that parses, and no requirement past `Draft` without a test
 that names it — and then **your own test suite**. This is what CI runs, and
 it is the same command you run locally.
 
-Tell it once how to run your tests:
+Tell it once how to run your tests. `init` wrote no build — no `pom.xml`,
+no `mvnw` — so create your Quarkus/Maven project in `smart-parking/` first
+(code.quarkus.io, or your own), then set **your build's** test command:
 
 ```bash
-specgate config set test_cmd "./mvnw -B verify"   # or mvn -B test, npm test, pytest…
+specgate config set test_cmd "./mvnw -B verify"   # your build's: mvn -B test, npm test, pytest…
 ```
 
 ```text
@@ -326,7 +328,9 @@ open are listed too — they count while the change is in flight.
 specgate plan --json
 ```
 
-`plan` is the detailed view behind `status`: per requirement, whether its
+`plan` is the detailed view behind `status` for the requirements already in
+the specification — an open change's requirements are listed by `status`, not
+by `plan`, until the change is archived. Per requirement, whether its
 feature, test and code exist, in a bucket (`NEEDS_FEATURE`,
 `NEEDS_EVERYTHING`, `NEEDS_TEST`, `NEEDS_IMPLEMENTATION`,
 `NEEDS_STATUS_UPDATE`, `DONE`). Its JSON is the task queue the harness
@@ -404,8 +408,8 @@ The pack covers parking operations in general, but **your** project needs
 something extra — say, _"operators can reserve a parking spot in advance."_
 You add it **locally, in your project**. It is yours, not the pack's.
 
-New work arrives as a **change**: a folder under `docs/specs/changes/` with a
-proposal, a task list and a *delta* — the requirements it adds, with their
+New work arrives as a **change**: a folder under `docs/specs/changes/` with
+its discovery notes, a design, a task list and a *delta* — the requirements it adds, with their
 scenarios. The change stays open while you build it, and its requirements
 already count: `status` lists them, `apply` delivers them. When every one is
 `Implemented`, `archive` merges the delta into the specification. **A change
@@ -422,7 +426,8 @@ specgate propose add-reservations --capability reservations
   ✔  Change add-reservations created · lite · REQ ids REQ-006…REQ-008 reserved
 
     + docs/specs/changes/add-reservations/change.yaml
-    + docs/specs/changes/add-reservations/proposal.md
+    + docs/specs/changes/add-reservations/discover.md
+    + docs/specs/changes/add-reservations/design.md
     + docs/specs/changes/add-reservations/tasks.md
     + docs/specs/changes/add-reservations/specs/reservations/spec.md
 
@@ -432,7 +437,8 @@ specgate propose add-reservations --capability reservations
 ```
 
 The reserved range means two changes in flight never hand out the same
-`REQ-NNN`. Write the delta in
+`REQ-NNN`. Any id inside it will do; this one takes `REQ-007`, because the
+pack's next version (Step 7) adds a `REQ-006` of its own. Write the delta in
 `docs/specs/changes/add-reservations/specs/reservations/spec.md` —
 `specgate change instructions specs` prints the template and the rules:
 
@@ -441,7 +447,7 @@ The reserved range means two changes in flight never hand out the same
 
 ## ADDED Requirements
 
-### Requirement: REQ-006 — Reserve a spot in advance
+### Requirement: REQ-007 — Reserve a spot in advance
 
 The system SHALL let an operator reserve a free spot for a future window.
 
@@ -450,27 +456,47 @@ The system SHALL let an operator reserve a free spot for a future window.
 - GIVEN spot "A-12" is free between "09:00" and "11:00"
 - WHEN an operator reserves spot "A-12" for that window
 - THEN spot "A-12" is marked "Reserved" for that window
+
+<!-- specgate:trace kind=functional actor=Operator -->
 ```
 
 Steps are plain `- GIVEN` bullets, and the body needs `SHALL`, `MUST`,
-`SHOULD` or `MAY`. `specgate status` now lists `REQ-006` with *a test and
-code* to go. `archive` refuses while it is pending:
+`SHOULD` or `MAY`. The trace comment's `kind=` (functional, non-functional or
+business-rule) is required: without it `change validate` reports
+`change_not_approvable` and `change approve` refuses the change. `actor=`
+names who uses the requirement; `change instructions specs` asks for it too,
+and the use-case views group requirements by it. `specgate status` now lists
+`REQ-007` with *a test and code* to go. `archive` refuses while it is pending:
 
 ```text
-  ✖  add-reservations  Change 'add-reservations' has 1 requirement(s) not delivered yet: REQ-006.  [archive_requirements_pending]
-     fix: specgate apply REQ-006
+  ✖  add-reservations  Change 'add-reservations' has 1 requirement(s) not delivered yet: REQ-007.  [archive_requirements_pending]
+     fix: specgate apply REQ-007
 ```
 
-So do what Step 5 did — a test that names `REQ-006`, the code — then deliver
+`apply` also waits for a person: it refuses a requirement of a change nobody
+approved (`change_not_approved`). Read the delta, then approve the change
+yourself, in your terminal. An agent cannot: approving refuses a session with
+no terminal (`approve_needs_person`).
+
+```bash
+specgate change approve add-reservations
+```
+
+Approving also writes the scenarios to
+`features/reservations/REQ-007.feature`, so they exist before any code. The
+approval seals each requirement by its hash; edit one afterwards and the
+gate fails (`approved_requirement_changed`) until you approve it again.
+
+So do what Step 5 did — a test that names `REQ-007`, the code — then deliver
 it and close the change:
 
 ```bash
-specgate apply REQ-006
+specgate apply REQ-007
 specgate archive add-reservations
 ```
 
 ```text
-  ✔  REQ-006 → Implemented (1 row updated)
+  ✔  REQ-007 → Implemented (1 row updated)
 
   Next ───────────────────────────────────────────────────
   ➜  specgate archive add-reservations
@@ -480,12 +506,12 @@ specgate archive add-reservations
 
     Specs         1 added · 0 modified · 0 removed
     Traceability  1 row(s) added · 0 updated · 0 removed
-    Features      1 materialised
+    Features      0 materialised
 ```
 
 Archiving writes the requirement into `docs/specs/capabilities/reservations/`,
-its scenario into `features/reservations/REQ-006.feature`, its matrix row, and
-files the change under `docs/specs/changes/archive/<date>-<id>/`. Tick
+its matrix row, and files the change under `docs/specs/changes/archive/<date>-<id>/`;
+the feature file is already there from the approval, so `Features` says 0. Tick
 `tasks.md` as you go; once every requirement passed the gate, an unticked task
 is a warning, not a refusal. `--force` never skips the requirement check.
 
@@ -499,11 +525,14 @@ is a warning, not a refusal. `--force` never skips the requirement check.
 > change, module by module — see [Write the brief](start/write-the-brief.md).
 > A draft follows the same path: reviewed, applied, then archived.
 >
-> **Watch the ids when you upgrade the pack.** Your local requirement took
-> the next free id. If a later pack version adds the same id, `specops diff`
-> shows the new feature file and `check` fails with a duplicate scenario id
-> after the sync. Read the diff before syncing, and renumber your local
-> requirement first if the pack claims its id.
+> **Watch the ids when you upgrade the pack.** `propose` reserves the next
+> free ids, and a later pack version can add the same one. Had this change
+> kept `REQ-006`, Step 7's `sync` would stop: both versions write a
+> `REQ-006` row in `docs/specs/traceability.md`, so sync reports it as the
+> conflicting file (`CONFLICT (markers written)`) and exits non-zero. Keep
+> both rows and `check` fails with `Duplicate Requirement ID in
+> traceability.md: REQ-006`. Read the diff before syncing, and give your local
+> requirement a free id first if the pack claims its id.
 
 ---
 
@@ -643,8 +672,9 @@ specgate pack init --out ./domain-packs --name "Reservations Backend" --type bac
 # flavours: backend · frontend · mobile · contracts
 ```
 
-Writes `./domain-packs/reservations/backend/pack.yaml` plus a `templates/`
-folder.
+Writes `./domain-packs/reservations-backend/backend/pack.yaml` plus a
+`templates/` folder: the pack id is the slug of `--name`, then `--type` —
+`reservations-backend/backend`, the id every `--pack` below uses.
 
 ### 10.2 Lint — `pack lint`
 
@@ -652,7 +682,7 @@ folder.
 cross-reference integrity, and **scenario quality**.
 
 ```bash
-specgate pack lint --pack-root ./domain-packs --pack reservations/backend
+specgate pack lint --pack-root ./domain-packs --pack reservations-backend/backend
 ```
 
 The scenario-quality rules flag vague or thin Gherkin — a `Scenario
@@ -663,7 +693,7 @@ has drifted from its template title.
 
 ```bash
 # In CI — and before a pack feeds the harness — promote those to errors:
-specgate pack lint --pack-root ./domain-packs --pack reservations/backend --strict
+specgate pack lint --pack-root ./domain-packs --pack reservations-backend/backend --strict
 ```
 
 This matters because the pack's scenarios become the **reward signal** for
@@ -678,10 +708,10 @@ The hardest part of authoring a pack is keeping the
 
 ```bash
 # Mermaid (default) — renders natively in GitHub and VS Code
-specgate pack lint --pack-root ./domain-packs --pack reservations/backend --graph
+specgate pack lint --pack-root ./domain-packs --pack reservations-backend/backend --graph
 
 # Graphviz DOT
-specgate pack lint --pack-root ./domain-packs --pack reservations/backend --graph --graph-format dot
+specgate pack lint --pack-root ./domain-packs --pack reservations-backend/backend --graph --graph-format dot
 ```
 
 A reference to an ID/name that does not exist becomes a red **missing**
@@ -695,6 +725,19 @@ the scenarios last has a waterfall smell. `pack infer` flips it: write the
 `.feature` first, get a proposed `pack.yaml` skeleton back.
 
 ```bash
+# still in ~/sandbox — a draft scenario, outside the pack
+mkdir -p drafts
+cat > drafts/reserve_spot.feature <<'EOF'
+@REQ-001
+Feature: Reserve a spot in advance
+
+  Scenario: Reserving an available spot
+    Given spot "A-12" is free between "09:00" and "11:00"
+    When an operator reserves spot "A-12" for that window
+    Then spot "A-12" is marked "Reserved" for that window
+    And a "SpotReserved" event is emitted
+EOF
+
 specgate pack infer --from ./drafts/reserve_spot.feature
 ```
 
@@ -729,9 +772,15 @@ correction you made by hand:
   ```
 
 ```bash
-# Review the proposal, then merge the parts you want:
-specgate pack infer --from ./drafts/reserve_spot.feature >> domain-packs/reservations/backend/pack.yaml
+# Keep the proposal in a file of its own to review:
+specgate pack infer --from ./drafts/reserve_spot.feature > drafts/reserve_spot.inferred.yaml
 ```
+
+Do not append it to `pack.yaml`: the fragment has its own `requirements:`,
+`use_cases:`, `events:` and `scenarios:` keys, and `pack.yaml` already has
+them, so `>>` leaves every key twice. Copy each entry you keep into the list
+of the same name in `pack.yaml`, resolve its `TODO`s and `UC-XXX`, then run
+`pack lint` (10.2).
 
 ---
 
@@ -747,6 +796,7 @@ specgate pack infer --from ./drafts/reserve_spot.feature >> domain-packs/reserva
 
 ```bash
 # inside the pack repo
+mkdir -p drafts
 cat > drafts/waitlist.feature <<'EOF'
 @REQ-006
 Feature: Capacity waitlist
@@ -783,7 +833,7 @@ a reference.
 ### 11.4 Version, tag, publish
 
 ```bash
-# bump metadata.version in pack.yaml (e.g. 0.1.0 → 0.2.0), then:
+# bump metadata.version in pack.yaml — this pack's went 1.1.0 → 1.2.0; the tag is separate:
 git commit -am "feat: add capacity waitlist (REQ-006)"
 git tag v0.2.0
 git push --tags
@@ -815,7 +865,8 @@ That is the full pack-author loop: **draft scenario → `pack infer` → merge
 
 Step 6 added a requirement. This is the other case, the one you hit for the
 rest of the project's life: **a requirement shipped, and now it has to
-change.** It is the same loop — `propose`, `apply`, `archive` — with a delta
+change.** It is the same loop — `propose`, `change approve`, `apply`,
+`archive` — with a delta
 that states only what moves, so the review reads the modification as intent.
 
 This works on the requirements under `docs/specs/capabilities/` — the ones
@@ -837,7 +888,7 @@ specgate propose reservations-need-a-deposit --capability reservations
 
 ## MODIFIED Requirements
 
-### Requirement: REQ-006 — Reserve a spot in advance
+### Requirement: REQ-007 — Reserve a spot in advance
 
 The system SHALL require a deposit before confirming a reservation, and SHALL
 release the spot if the deposit is not paid within 15 minutes.
@@ -847,15 +898,19 @@ release the spot if the deposit is not paid within 15 minutes.
 - GIVEN spot "A-12" is reserved but unpaid
 - WHEN 15 minutes pass
 - THEN the reservation is cancelled and the spot is free again
+
+<!-- specgate:trace kind=functional -->
 ```
 
 `MODIFIED` replaces the whole requirement block; it does not merge scenario
-by scenario. While the change is open, `REQ-006` is judged as it will be after
+by scenario. While the change is open, `REQ-007` is judged as it will be after
 archive: `status` lists it again and `archive` refuses until it is applied.
-Extend its test to cover the deposit, change the code, then:
+A person approves the change again, at a terminal; then extend its test to
+cover the deposit, change the code, and deliver it:
 
 ```bash
-specgate apply REQ-006
+specgate change approve reservations-need-a-deposit   # you, not the agent
+specgate apply REQ-007
 specgate archive reservations-need-a-deposit --dry-run   # the plan, nothing written
 specgate archive reservations-need-a-deposit
 ```
@@ -867,7 +922,7 @@ specgate archive reservations-need-a-deposit
     Traceability  0 row(s) added · 1 updated · 0 removed
     Features      1 materialised
 
-  ▲  features/reservations/REQ-006.feature  features/reservations/REQ-006.feature rewritten from REQ-006's modified scenarios.  [archive_feature_regenerated]
+  ▲  features/reservations/REQ-007.feature  features/reservations/REQ-007.feature rewritten from REQ-007's modified scenarios.  [archive_feature_regenerated]
      fix: Review the diff: the feature file now matches the delta.
 ```
 
@@ -877,9 +932,26 @@ test disproves the delta's wording while you build, fix the delta in the same
 change — nothing was merged yet.
 
 > **It composes with packs.** When the pack itself changes,
-> `specgate specops diff --as-change` derives exactly this kind of proposal
-> from the version bump — so you review an upstream upgrade as intent rather
-> than as a file diff.
+> `specgate specops diff --pack-version v0.2.0 --as-change --var …` writes a
+> change folder, `docs/specs/changes/upgrade-backend-v0.2.0/`, in the older
+> layout: `proposal.md`, `tasks.md` and a delta with one
+> `ADDED`/`MODIFIED`/`REMOVED` requirement per requirement the version moves
+> (here, `REQ-006` added) — no `discover.md` or `design.md`. It writes no
+> generated file — `sync` still does that. As written, it fails `check`: the
+> pack's REQ-006 body has no `SHALL`, an error under the standard preset
+> (`no_rfc2119_keyword`). To make it pass, give each body a `SHALL` and its
+> trace a `kind=` (approval refuses one without), then approve it:
+>
+> ```bash
+> # in specs/backend/spec.md: "The system SHALL let drivers join a waitlist …"
+> #                           <!-- specgate:trace kind=functional uc=UC-006 … -->
+> specgate check                                          # passes
+> specgate change approve upgrade-backend-v0.2.0          # you, at a terminal
+> ```
+>
+> `change validate` still warns `layer_no_design` until it has a `design.md`
+> (`specgate migrate 1.0` adds one from the proposal). You review an upstream
+> upgrade as intent rather than as a file diff.
 
 → [Change a shipped requirement](reviewing-changes.md) for the full reference.
 
@@ -1011,7 +1083,7 @@ throw away.
 ### 13.4 Inspect what the agent will receive (`harness prompt`)
 
 ```bash
-specgate harness prompt REQ-001
+specgate harness prompt REQ-004   # still pending: the run above left it failing (REQ-001 shipped in Step 5)
 ```
 
 Prints the exact prompt the harness _would_ hand the agent for one REQ —
@@ -1128,9 +1200,10 @@ The 📍 / 📦 column is the thing to remember — **where** you run it.
 | `specgate explore ["<question>"]` | 📍 project | A brief of where the project stands, to think with before a change exists |
 | `specgate config set test_cmd "<cmd>"` | 📍 project | Tell `check` and `apply` how to run your tests |
 | `specgate matrix [--check]` | 📍 project | Regenerate the traceability matrix from spec, tags and tests |
-| `specgate plan [--json]` | 📍 project | The detailed per-requirement view behind `status` |
+| `specgate plan [--json]` | 📍 project | The per-requirement detail for the specification's requirements — an open change's are in `status` |
 | `specgate fix [--dry-run]` | 📍 project | Apply the repairs `validate` suggests |
 | `specgate change status \| validate \| show \| list` | 📍 project | What to write next · check the deltas · inspect · enumerate |
+| `specgate change approve <id>` | 📍 project, a person at a terminal | Approve a change before `apply` delivers its requirements; an agent cannot |
 | `specgate specops add --pack-repo … --pack-version … --pack … --var …` | 📍 project | Pull a pack in; writes `.specops.lock` and the `.specops/` baseline |
 | `specgate specops diff [--pack-version …] [--var …]` | 📍 project | Preview what a sync would change — writes nothing |
 | `specgate specops sync [--pack-version …] [--var …]` | 📍 project | Re-render and three-way merge the pack into the project |
@@ -1153,7 +1226,7 @@ The 📍 / 📦 column is the thing to remember — **where** you run it.
 | --- | --- | --- | --- |
 | Where | 📍 your implementation project | 📍 your implementation project | 📦 the pack repo |
 | 1 | `propose <id> --capability <c>` | `specgate new "<title>"` | draft a `.feature`, run `pack infer` |
-| 2 | write the delta under `specs/<cap>/spec.md` | rewrite its section and scenario | merge the inferred skeleton into `pack.yaml` |
+| 2 | write the delta under `specs/<cap>/spec.md`, then a person runs `change approve <id>` | rewrite its section and scenario | merge the inferred skeleton into `pack.yaml` |
 | 3 | a test that names the REQ, the code | a test that names the REQ, the code | add the feature template under `templates/` |
 | 4 | `apply`, then `archive` | `apply` | `pack lint --strict --graph` |
 | 5 | reviewable as intent, archived with a date | — | bump version, tag; consumers `specops diff` + `sync` |

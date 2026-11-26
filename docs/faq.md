@@ -142,14 +142,29 @@ does not test it. → [Your team's first pull request](first-pr.md#the-reviewer-
 None. Every command works by hand. `specgate init` installs the slash commands
 for the agents it finds in your project (`CLAUDE.md`, `.cursor/`, …); `specgate agents init`
 writes them for any other, with slash commands and rules for Claude Code, Cursor, Copilot, Windsurf,
-Aider, Gemini, Cline, Codex or Antigravity. → [Agent tools](agents.md)
+Aider, Gemini, Cline, Codex, OpenCode or Antigravity. → [Agent tools](agents.md)
 
 ### Can an agent rewrite the spec to make its own test pass?
 
-Not quietly. Over MCP, tools that write the specification refuse unless a
-change is open or the team set `mcpAllowContractEdits`. In the harness,
-touching `spec.md`, `features/**` or the rules fails the attempt.
-→ [The MCP server](mcp.md) · [The harness](harness.md)
+Not quietly. Each layer closes a different door:
+
+- **Approval is a person's.** `specgate change approve` refuses a session
+  with no terminal, so an agent cannot approve its own change, and `apply`
+  refuses an unapproved one. Approval seals each requirement by its hash: one
+  changed afterwards fails the gate (`approved_requirement_changed`).
+- **Sealed acceptance tests.** Tests a person approved with
+  `--layer acceptance` are sealed by hash; changed, they fail the gate
+  (`acceptance_not_sealed`).
+- **Guard hooks** in Claude Code, OpenCode and Codex refuse code before a test,
+  writes to sealed tests and control files, and the person's own commands.
+- **Over MCP**, tools that write the specification refuse unless a change is
+  open or the team set `mcpAllowContractEdits`. There is no approve tool.
+- **The outside judge.** In the harness, touching `spec.md`, `features/**` or
+  the rules fails the attempt, and so does any change to the controls
+  (`controls_changed_by_session`). Without a harness or CI, this check is
+  absent.
+
+→ [Agents](agents.md#the-guards) · [The MCP server](mcp.md) · [The harness](harness.md)
 
 ### Will the harness merge its work?
 

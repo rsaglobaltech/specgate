@@ -46,15 +46,23 @@ exports.isSpecDriven = isSpecDriven;
 exports.deltaRequirements = deltaRequirements;
 exports.taskOrder = taskOrder;
 exports.openChanges = openChanges;
+exports.designScope = designScope;
 exports.guardOff = guardOff;
 exports.isTestFile = isTestFile;
 exports.needsTest = needsTest;
 exports.changedFiles = changedFiles;
 exports.specgateCommand = specgateCommand;
 exports.runSpecgate = runSpecgate;
+exports.hookLog = hookLog;
+exports.stepRecordFile = stepRecordFile;
+exports.stepHashes = stepHashes;
+exports.recordSteps = recordSteps;
+exports.patchFiles = patchFiles;
+exports.sealedTests = sealedTests;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
 const node_child_process_1 = require("node:child_process");
+const node_crypto_1 = require("node:crypto");
 /** Statuses that mean a requirement is delivered. */
 const DONE = new Set(["Implemented", "Verified", "Released", "Deprecated"]);
 /** Is this folder a spec-driven project? The same test the gate hook makes. */
@@ -130,10 +138,54 @@ function openChanges(root) {
         };
     });
 }
+/**
+ * guard-scope-and-seal-run REQ-793: the source files the designs of the
+ * approved open changes name — the same reading as the gate's rule `scope`
+ * (packages/core/src/domain/DesignScope.ts; repeated here because the plugin's
+ * scripts stand alone). Empty when no approved design names a file, or the
+ * rule is off.
+ */
+function designScope(root) {
+    try {
+        const gate = fs.readFileSync(path.join(root, ".specgate", "gate.yaml"), "utf8");
+        if (/^\s*scope:\s*off\b/m.test(gate))
+            return [];
+    }
+    catch {
+        /* no policy: the rule's default */
+    }
+    const SOURCE = /\.([cm]?[jt]sx?|java|kt|kts|scala|groovy|py|go|rb|cs|php|rs|swift|c|cc|cpp|h|hpp|vue|svelte)$/;
+    const norm = (p) => p.replace(/\\/g, "/").replace(/^\.\//, "");
+    const dir = path.join(root, "docs", "specs", "changes");
+    const out = [];
+    for (const change of openChanges(root)) {
+        let yaml = "";
+        let design = "";
+        try {
+            yaml = fs.readFileSync(path.join(dir, change.id, "change.yaml"), "utf8");
+            design = fs.readFileSync(path.join(dir, change.id, "design.md"), "utf8");
+        }
+        catch {
+            continue;
+        }
+        if (!/^approved:\s*\S/m.test(yaml))
+            continue;
+        for (const m of design.matchAll(/`([^`\s]+)`/g)) {
+            const f = norm(m[1]);
+            if (SOURCE.test(f) && !/^(docs|features)\//.test(f) && !out.includes(f))
+                out.push(f);
+        }
+    }
+    return out;
+}
 /** Is the guard turned off — by `SPECGATE_GUARD=off`, or `agent_guard: off` in `.specgate/config.json`? */
 function guardOff(root, env) {
-    if ((env.SPECGATE_GUARD ?? "").toLowerCase() === "off")
+    const held = (env.SPECGATE_GUARD ?? "").toLowerCase();
+    if (held === "off")
         return true;
+    // outside-judge REQ-746: a session that started with the guard on keeps it.
+    if (held === "on")
+        return false;
     try {
         const config = JSON.parse(fs.readFileSync(path.join(root, ".specgate", "config.json"), "utf8"));
         return String(config.agent_guard ?? "").toLowerCase() === "off";
@@ -215,5 +267,122 @@ function runSpecgate(args, cwd, opts = {}) {
         timeout: opts.timeout ?? 120_000,
         maxBuffer: 16 * 1024 * 1024,
     });
+}
+/**
+ * compat-evidence REQ-717: with SPECGATE_HOOK_LOG set, one line per decision a
+ * hook takes — what the exam counts as the plugin's work. Never throws.
+ */
+function hookLog(event, env = process.env) {
+    const file = env.SPECGATE_HOOK_LOG;
+    if (!file)
+        return;
+    try {
+        fs.appendFileSync(file, `${JSON.stringify({ t: Date.now() / 1000, ...event })}\n`, "utf8");
+    }
+    catch {
+        /* a log that cannot be written never breaks a session */
+    }
+}
+/** Where a requirement's step definitions are recorded when its code begins (shortcut-proof REQ-743). */
+function stepRecordFile(root, requirement) {
+    return path.join(root, ".specgate", "evidence", requirement, "steps.json");
+}
+/** The step definitions of the project's scenarios: every file under `features/` that is not a feature file, with its hash. */
+function stepHashes(root) {
+    const out = {};
+    const walk = (dir, rel) => {
+        let entries = [];
+        try {
+            entries = fs.readdirSync(dir, { withFileTypes: true });
+        }
+        catch {
+            return;
+        }
+        for (const e of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+            if (e.name === "node_modules" || e.name.startsWith("."))
+                continue;
+            const next = `${rel}/${e.name}`;
+            if (e.isDirectory())
+                walk(path.join(dir, e.name), next);
+            else if (e.isFile() && !e.name.endsWith(".feature")) {
+                const text = fs.readFileSync(path.join(dir, e.name), "utf8").replace(/\r\n/g, "\n");
+                out[next] = `sha256:${(0, node_crypto_1.createHash)("sha256").update(text).digest("hex")}`;
+            }
+        }
+    };
+    walk(path.join(root, "features"), "features");
+    return out;
+}
+/** Record the step definitions as they are now — once: the record is of when the code began. Never throws. */
+function recordSteps(root, requirement, env = process.env) {
+    try {
+        if (!/^REQ-\d+$/.test(requirement))
+            return;
+        const file = stepRecordFile(root, requirement);
+        if (fs.existsSync(file))
+            return;
+        const files = stepHashes(root);
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, `${JSON.stringify({ requirement, at: new Date().toISOString(), files }, null, 2)}\n`, "utf8");
+        // REQ-747: the same record where the run's judge reads it, away from the project.
+        hookLog({ hook: "steps", requirement, files }, env);
+    }
+    catch {
+        // A guard that breaks a session over a file it cannot write is worse than none.
+    }
+}
+/** The files an `apply_patch` adds, updates or moves to: OpenCode's and Codex's patch format alike. */
+function patchFiles(patchText) {
+    const out = [];
+    for (const m of patchText.matchAll(/^\*\*\* (?:Add File|Update File|Move to): (.+)$/gm)) {
+        out.push(m[1].trim());
+    }
+    return out;
+}
+/**
+ * sealed-acceptance REQ-760: the acceptance tests a person approved in the
+ * open changes, relative to the project with `/` — the guard keeps the
+ * agent's tools off them. Read from each change's `approvals.json`, its last
+ * acceptance record.
+ */
+function sealedTests(root) {
+    const dir = path.join(root, "docs", "specs", "changes");
+    let ids = [];
+    try {
+        ids = fs
+            .readdirSync(dir, { withFileTypes: true })
+            .filter((e) => e.isDirectory() && e.name !== "archive")
+            .map((e) => e.name);
+    }
+    catch {
+        return [];
+    }
+    // A test sealed by a change that is now archived stays sealed.
+    try {
+        ids.push(...fs
+            .readdirSync(path.join(dir, "archive"), { withFileTypes: true })
+            .filter((e) => e.isDirectory())
+            .map((e) => path.join("archive", e.name)));
+    }
+    catch {
+        /* no archive yet */
+    }
+    const out = new Set();
+    for (const id of ids) {
+        try {
+            const records = JSON.parse(fs.readFileSync(path.join(dir, id, "approvals.json"), "utf8"));
+            if (!Array.isArray(records))
+                continue;
+            const last = records
+                .filter((r) => r && r.layer === "acceptance" && r.seals && typeof r.seals === "object")
+                .pop();
+            for (const f of Object.keys(last?.seals ?? {}))
+                out.add(f.replace(/\\/g, "/"));
+        }
+        catch {
+            /* no approvals, nothing sealed */
+        }
+    }
+    return [...out].sort();
 }
 //# sourceMappingURL=project-state.js.map

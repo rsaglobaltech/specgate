@@ -14,6 +14,7 @@
  * whoever writes it; every run after that checks it and says what is next.
  */
 
+import { missingApprovals } from "../../../lib/approvals";
 import {
   LAYERED_SCHEMA,
   templateLayeredDesign,
@@ -51,7 +52,10 @@ import {
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { templateDelta } from "../../../../packages/core/src/domain/ChangeTemplates";
 import { highestOnOtherBranches } from "../../../../packages/core/src/infrastructure/IdsAcrossBranches";
-import { resolveProfileAgent } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import {
+  readHarnessConfig,
+  resolveProfileAgent,
+} from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { templateUseCases } from "../../../../packages/core/src/domain/UseCaseDelta";
 import { draftingGuide, draftingPrompt } from "../../../draft/drafting-guide";
@@ -127,6 +131,8 @@ export interface DraftOptions {
   form?: string;
   projectDir: string;
   json: boolean;
+  /** `--no-agent`: the drafting guide for your own agent, even with `draft_profile` (REQ-689). */
+  noAgent?: boolean;
 }
 
 /** Where `specgate draft` looks for the plan when `--brief` is not given. */
@@ -161,6 +167,7 @@ function usage(): string {
     "                   or in a file if the command contains {prompt_file}. Whatever it writes\n" +
     "                   outside the draft is undone.\n" +
     "  --profile <name> The agent of that profile in .harness/profiles.yaml, instead of --agent.\n" +
+    "  --no-agent       Write the drafting guide for your own agent, even when draft_profile is set.\n" +
     "  [--max-requirements <n>] [--project-dir <dir>] [--json]\n\n" +
     "The checklist (ADR-0029):\n" +
     "  D1 every requirement has a scenario          D5 a cited law or standard names its source\n" +
@@ -214,6 +221,7 @@ export function parseArgs(argv: string[]): DraftOptions {
       o.reserveGiven = true;
     } else if (a === "--agent") o.agent = value();
     else if (a === "--profile") o.profile = value();
+    else if (a === "--no-agent") o.noAgent = true;
     else if (a === "--new-brief") o.newBrief = true;
     else if (a === "--form") {
       // `--form` alone reads; `--form <file>` or `--form -` writes, as `--check [<id>]`.
@@ -460,6 +468,8 @@ export interface ModuleStatus {
   findings: number;
   /** The archive directory's name, once archived. */
   archivedAs?: string;
+  /** walkthrough-fixes-2 REQ-784: a ready draft a person approved — delivery comes next, not approval. */
+  approved?: boolean;
 }
 
 /** The placeholder `templateDelta` writes: a draft nobody has written yet. */
@@ -488,13 +498,27 @@ export function moduleStatus(projectDir: string, module: string, brief = ""): Mo
   const result = draftReport(projectDir, change, brief);
   if ("failure" in result) return { ...base, state: "drafting", findings: 1 };
   const findings = errorCount(result.report.status);
-  return { ...base, state: findings === 0 ? "ready" : "drafting", findings };
+  return {
+    ...base,
+    state: findings === 0 ? "ready" : "drafting",
+    findings,
+    approved: findings === 0 && isApprovedChange(projectDir, change),
+  };
 }
 
 /**
  * Where the brief stands, for `status`: its modules, and the first one not
  * yet archived. Null when there is no brief, or it lists no modules.
  */
+/** Whether a person approved the change (REQ-745): what `apply` asks before it delivers. */
+function isApprovedChange(projectDir: string, changeId: string): boolean {
+  try {
+    return missingApprovals(projectDir, changeId) === null;
+  } catch {
+    return false;
+  }
+}
+
 export function briefProgress(
   projectDir: string
 ): { brief: string; modules: ModuleStatus[]; next?: ModuleStatus } | null {
@@ -513,7 +537,10 @@ export function briefProgress(
 
 /** What to run for this module, given where it stands. */
 export function draftNextCommand(s: ModuleStatus): string {
-  return s.state === "ready" ? "specgate apply" : `specgate propose --from-brief ${s.module}`;
+  // walkthrough-fixes-2 REQ-784: a ready draft waits for a person's approval before anything is applied.
+  if (s.state === "ready")
+    return s.approved ? "specgate apply" : `specgate change approve ${s.change}`;
+  return `specgate propose --from-brief ${s.module}`;
 }
 
 /** `➜ claude -p … is drafting catalogo…`, and why a flag was added. */
@@ -944,6 +971,11 @@ export class DraftCommand extends BaseCommand {
       ]);
     }
     const opts = o!;
+    // agent-routing REQ-689: the drafting agent, set apart, when none is named.
+    if (opts.module && !opts.agent && !opts.profile && !opts.noAgent) {
+      const draftProfile = readHarnessConfig(resolveProjectDir(opts.projectDir))?.draftProfile;
+      if (draftProfile) opts.profile = draftProfile;
+    }
     if (opts.profile) {
       try {
         opts.agent = resolveProfileAgent(resolveProjectDir(opts.projectDir), opts.profile);
@@ -1879,7 +1911,11 @@ export class DraftCommand extends BaseCommand {
             fs.existsSync(path.join(projectDir, CHANGES, changeId, "questions.md"))
               ? `Answer what you can in ${dir}/questions.md`
               : `Check ${dir}/assumptions.md, if the agent wrote one`,
-            [next, "its requirements, one at a time; then specgate archive " + changeId]
+            [
+              `specgate change approve ${changeId}`,
+              "you, at your terminal, once it reads right — apply waits for it",
+            ],
+            ["specgate apply", "its requirements, one at a time; then specgate archive " + changeId]
           );
           const after = nextModuleAfter(projectDir, brief, opts.module);
           steps.push(

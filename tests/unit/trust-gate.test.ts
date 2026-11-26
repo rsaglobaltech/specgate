@@ -103,6 +103,9 @@ function openChange(dir: string, id: string, reqs: string[], capability = "comma
     path.join(dir, "docs/specs/changes", id, "specs", capability, "spec.md"),
     `# Delta — ${capability}\n\n## ADDED Requirements\n\n${reqs.join("\n")}`
   );
+  // outside-judge REQ-745: a requirement is delivered once a person approved its change.
+  const approved = cli(dir, "change", "approve", id);
+  if (approved.status !== 0) process.stderr.write(out(approved));
 }
 
 function nameInTest(dir: string, file: string, ...ids: string[]) {
@@ -125,19 +128,32 @@ test("REQ-117 SCN-117a: a command in a code span is not a placeholder", () => {
         "- WHEN the developer generates the guide",
         "- THEN the developer sees `tool verify <module> --level fast` as the quick check, `etc` excluded",
       ]),
-      requirement("REQ-003", "Greet a customer", [
-        "- GIVEN a customer named <name>",
-        "- WHEN the greeting is asked for",
-        "- THEN it reads Hello and the name",
-      ]),
     ]);
-    nameInTest(p.dir, "commands.test.js", "REQ-002", "SCN-002a", "REQ-003", "SCN-003a");
+    nameInTest(p.dir, "commands.test.js", "REQ-002", "SCN-002a");
 
     const literal = cli(p.dir, "apply", "REQ-002");
     assert.equal(literal.status, 0, out(literal));
     assert.doesNotMatch(out(literal), /scenario_placeholder_step|vague_step/);
 
-    const template = cli(p.dir, "apply", "REQ-003");
+    // A change of its own: one with a placeholder is not approved (REQ-745), so nothing of it is delivered.
+    const opened = cli(p.dir, "propose", "greet-template", "--capability", "greeting");
+    assert.equal(opened.status, 0, out(opened));
+    const id = /req_range: \[(REQ-\d+)/.exec(
+      fs.readFileSync(path.join(p.dir, "docs/specs/changes/greet-template/change.yaml"), "utf8")
+    )![1];
+    fs.writeFileSync(
+      path.join(p.dir, "docs/specs/changes/greet-template/specs/greeting/spec.md"),
+      `# Delta — greeting\n\n## ADDED Requirements\n\n${requirement(id, "Greet a customer", [
+        "- GIVEN a customer named <name>",
+        "- WHEN the greeting is asked for",
+        "- THEN it reads Hello and the name",
+      ])}`
+    );
+    nameInTest(p.dir, "greeting.test.js", id, `SCN-${id.slice(4)}a`);
+    const refused = cli(p.dir, "change", "approve", "greet-template");
+    assert.equal(refused.status, 1, out(refused));
+    assert.match(out(refused), /unfilled placeholder/);
+    const template = cli(p.dir, "apply", id);
     assert.equal(template.status, 1, out(template));
     assert.match(out(template), /scenario_placeholder_step/);
   } finally {
@@ -620,6 +636,78 @@ test("REQ-127 SCN-127a: green alone, red together — the merge is undone", () =
       /Merge harness\/REQ-002/,
       "develop ends at the first requirement's merge"
     );
+  } finally {
+    p.done();
+  }
+});
+
+// ── lab-fixes REQ-694 ───────────────────────────────────────────────────────
+function withTrust(p: ChainProject) {
+  const gate = path.join(p.dir, ".specgate", "gate.yaml");
+  fs.mkdirSync(path.dirname(gate), { recursive: true });
+  const before = fs.existsSync(gate) ? fs.readFileSync(gate, "utf8") : "";
+  fs.writeFileSync(gate, `${before.replace(/\n*$/, "\n")}trust: { commands: 4 }\n`);
+  git(p.dir, "add", "-A");
+  git(p.dir, "commit", "-qm", "trust");
+}
+
+test("REQ-694 SCN-694a: under trust, a chain on a branch of your own builds each on the last", () => {
+  const p = chainProject();
+  try {
+    withTrust(p);
+    git(p.dir, "branch", "main");
+    git(p.dir, "switch", "-q", "-c", "feature/pricing");
+    const r = chain(p);
+    assert.equal(r.status, 0, out(r));
+    assert.doesNotMatch(out(r), /harness_trust_chain/);
+    const merges = git(p.dir, "log", "--merges", "--format=%H %s", "feature/pricing")
+      .stdout.trim()
+      .split("\n")
+      .reverse();
+    assert.equal(merges.length, 2, merges.join("\n"));
+    assert.equal(
+      git(p.dir, "merge-base", "--is-ancestor", merges[0].split(" ")[0], "harness/REQ-003").status,
+      0,
+      "REQ-003 is cut from REQ-002's merge"
+    );
+    assert.equal(
+      git(p.dir, "rev-parse", "main").stdout,
+      git(p.dir, "rev-parse", "develop").stdout,
+      "main is unchanged"
+    );
+  } finally {
+    p.done();
+  }
+});
+
+test("REQ-694 SCN-694b: under trust, a chain on main is still refused", () => {
+  const p = chainProject();
+  try {
+    withTrust(p);
+    git(p.dir, "switch", "-q", "-c", "main");
+    const r = chain(p);
+    assert.notEqual(r.status, 0);
+    assert.match(out(r), /harness_trust_chain/);
+    assert.match(out(r), /branch of your own/);
+  } finally {
+    p.done();
+  }
+});
+
+test("REQ-695 SCN-695a: a dry run shows the trust skip instead of the prompt", () => {
+  const p = chainProject();
+  try {
+    const gate = path.join(p.dir, ".specgate", "gate.yaml");
+    fs.mkdirSync(path.dirname(gate), { recursive: true });
+    const before = fs.existsSync(gate) ? fs.readFileSync(gate, "utf8") : "";
+    fs.writeFileSync(gate, `${before.replace(/\n*$/, "\n")}trust: { commands: 2 }\n`);
+    git(p.dir, "add", "-A");
+    git(p.dir, "commit", "-qm", "trust");
+    const r = harness(p, "--dry-run");
+    assert.equal(r.status, 0, out(r));
+    assert.match(r.stdout, /REQ-002 · skipped \(trust_level\)/, r.stdout);
+    assert.match(r.stdout, /needs 3/);
+    assert.doesNotMatch(r.stdout, /Charge a peak surcharge[\s\S]*GIVEN a session started at 18:00/);
   } finally {
     p.done();
   }

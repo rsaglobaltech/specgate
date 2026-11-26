@@ -1,0 +1,11 @@
+▶ dist/tests/unit/learn-rules.test.js
+✔ REQ-684 SCN-684a: the same note in two drafts is a lesson (388.809166ms)
+✔ REQ-684 SCN-684b: the agent keeps failing the architecture check (370.418167ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 841.852042

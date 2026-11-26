@@ -23,6 +23,7 @@
  * gate twice: on its branch and merged (ADR-0036).
  */
 
+import { agentPreflight } from "../../../harness/doctor";
 import { HarnessInterrupted } from "../../../lib/run-with-deadline";
 import * as ui from "../../../lib/ui";
 import { BaseCommand } from "../../../lib/command";
@@ -107,6 +108,14 @@ export class RunCommand extends BaseCommand {
         process.exit(0);
       }
 
+      // agent-routing REQ-691: every agent this run needs answers, before any worktree.
+      if (
+        !args.skipDoctor &&
+        !process.env.SPECGATE_SKIP_DOCTOR?.match(/^(1|true|yes)$/i) &&
+        !process.env.SPECGATE_HARNESS_WORKER
+      ) {
+        agentPreflight(projectDir, settings, pending, args.timeout * 1000);
+      }
       const dirty = preflight(projectDir, args, settings, plan, pending);
       const { ctx, runRecordBase } = startRun(projectDir, args, settings, pending, dirty);
       const results = args.chain

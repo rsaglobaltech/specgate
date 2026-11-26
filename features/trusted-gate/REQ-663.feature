@@ -1,4 +1,3 @@
-@change:bdd-gate
 Feature: New, adopted and migrated projects run their scenarios
 
   @REQ-663 @SCN-663c

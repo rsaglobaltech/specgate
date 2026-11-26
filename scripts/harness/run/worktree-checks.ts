@@ -103,6 +103,27 @@ export function producedNothing(worktreeDir: string): boolean {
 }
 
 /**
+ * REQ-708: the branch already holds work an earlier run committed — files
+ * changed since its base, the prompt archive and the harness's own records left
+ * out as an empty attempt leaves them out.
+ */
+export function branchHoldsWork(worktreeDir: string, projectDir: string, baseRef: string): boolean {
+  // `HEAD` names the project's commit, not the worktree's: resolve it there.
+  const ref = (git(projectDir, ["rev-parse", baseRef]).stdout || "").trim();
+  if (!ref) return false;
+  const base = git(worktreeDir, ["merge-base", ref, "HEAD"]);
+  const sha = (base.stdout || "").trim();
+  if (base.status !== 0 || !sha) return false;
+  const changed = git(worktreeDir, ["diff", "--name-only", sha, "HEAD"]);
+  if (changed.status !== 0) return false;
+  const files = (changed.stdout || "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return !isEmptyAttempt(files);
+}
+
+/**
  * A generated matrix that says exactly what regenerating it says was not
  * edited — it was regenerated. Writing tests that name scenarios changes the
  * derived matrix the moment anything runs `specgate` in the worktree, and the

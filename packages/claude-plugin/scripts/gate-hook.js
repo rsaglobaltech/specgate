@@ -122,7 +122,7 @@ function decide(input, runValidate, blockedAlready) {
     if (gate.ok)
         return { block: false, message: "" };
     const findings = renderFindings(gate.diagnostics);
-    if (blockedAlready(input.prompt_id ?? "")) {
+    if (blockedAlready(input.prompt_id ?? input.turn_id ?? "")) {
         // Told once already. Let the human see the answer rather than looping.
         return { block: false, message: findings };
     }
@@ -159,6 +159,11 @@ function main(raw) {
         return 0;
     }
     const decision = decide(input, runValidate, alreadyBlocked);
+    (0, project_state_1.hookLog)({
+        hook: "gate",
+        decision: decision.block ? "blocked" : decision.message ? "told" : "passed",
+        ...(decision.message ? { reason: decision.message } : {}),
+    });
     if (decision.message)
         process.stderr.write(`${decision.message}\n`);
     return decision.block ? 2 : 0;

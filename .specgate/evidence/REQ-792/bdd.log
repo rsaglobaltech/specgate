@@ -1,0 +1,10 @@
+▶ dist/tests/unit/guard-switch-person.test.js
+✔ REQ-792 SCN-792a: config set over MCP takes its key and value — in that order — and still cannot switch the guard off (331.851167ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 386.499

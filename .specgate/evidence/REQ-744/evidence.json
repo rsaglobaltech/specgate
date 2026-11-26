@@ -1,0 +1,13 @@
+{
+  "requirement": "REQ-744",
+  "at": "2026-11-25T05:59:32.080Z",
+  "scenarios": {
+    "command": "node scripts/scenarios.mjs @REQ-744",
+    "exitCode": 0,
+    "ms": 8674,
+    "tags": [
+      "@REQ-744"
+    ]
+  },
+  "artifacts": []
+}

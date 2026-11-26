@@ -1,0 +1,11 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-723 SCN-723a: `unrequested` — implemented straight away is code without a requirement (764.695084ms)
+✔ REQ-723 SCN-723b: `unrequested` — a change proposed with a requirement for it passes (1139.803833ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1959.857875

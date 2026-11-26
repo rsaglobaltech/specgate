@@ -1,0 +1,14 @@
+▶ dist/tests/unit/compat-evidence.test.js
+specgate: write the test for REQ-002 first — change `draft-fees`, next in its tasks. The link is a test that names any requirement of `draft-fees`, new or changed in the working tree; then src/fees.js is allowed, then `specgate apply` for that requirement.
+✔ REQ-717 SCN-717a: a call Specgate's server received is counted (1772.303416ms)
+✔ REQ-717 SCN-717b: delivered with the CLI alone — no call, and still passed (1559.727292ms)
+✔ REQ-717: the plugin's guard records what it refuses (142.677542ms)
+✔ REQ-717: the server answers a client in the framing it speaks — a JSON line for MCP's stdio transport (136.055792ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3665.7075

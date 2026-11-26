@@ -1,4 +1,3 @@
-@change:use-case-diagrams
 Feature: The use-case diagram and each use case's activity diagram are generated
 
   @REQ-634 @SCN-634a

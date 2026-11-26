@@ -143,7 +143,7 @@ The system SHALL document, in `specgate propose --help` and at the top of `docs/
 
 ### Requirement: REQ-176 — A question that blocks nothing says so
 
-The system SHALL treat an open question of a draft's `questions.md` whose Blocks cell is `none`, `nothing`, `ninguno`, `ninguna`, `nada`, `n/a` or a dash as a warning, `D7_question_blocks_nothing`, that does not keep the draft from Ready to review, and SHALL still refuse an open question whose Blocks cell is empty with `D7_floating_question`, whose fix names `none`.
+The system SHALL treat an open question of a draft's `questions.md` whose Blocks cell is `none`, `nothing`, `ninguno`, `ninguna`, `nada`, `n/a` or a dash as a warning, `D7_question_blocks_nothing`, that does not keep the draft from Ready to review — `specgate propose --from-brief`, `specgate draft` and `draft --check` show it, say Ready to review and end with 0 when it is the draft's only finding, and do not hand it to the agent's fix pass — and SHALL still refuse an open question whose Blocks cell is empty with `D7_floating_question`, whose fix names `none`.
 
 #### Scenario: SCN-176a — "none" is a warning
 
@@ -157,7 +157,13 @@ The system SHALL treat an open question of a draft's `questions.md` whose Blocks
 - WHEN the draft is checked
 - THEN D7_floating_question is an error whose fix names "none"
 
-<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-176.feature kind=functional status=Implemented test=tests/unit/draft-checklist.test.ts -->
+#### Scenario: SCN-176c — The warning alone leaves the draft ready
+
+- GIVEN a complete draft whose only finding is the warning D7_question_blocks_nothing for Q4
+- WHEN the Developer runs `specgate draft bookings`, then `specgate draft --check draft-bookings`
+- THEN both show the warning, say Ready to review and end with 0, and `--json` says the draft is ready
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-176.feature kind=functional status=Implemented test=tests/unit/draft-checklist.test.ts,tests/unit/draft-from-brief.test.ts -->
 
 ### Requirement: REQ-244 — The brief checks read Spanish as written
 
@@ -344,3 +350,225 @@ The system SHALL read, in a scenario step, an ISO date (`2026-10-29`), a time (`
 - THEN they are 45.7640, 4.8357 and 2026-10-29 10:00:00, and none is 29 or 00
 
 <!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-277.feature kind=functional status=Implemented test=tests/unit/draft-checklist.test.ts -->
+
+### Requirement: REQ-658 — The project's domain model, to draw
+
+The system SHALL answer, on `specgate brief model --json`, the project's domain model as its bounded contexts — each with its purpose, classification, integrations with their relationships and messages, terms, rules, flows (actor, command or policy with its trigger, outcomes, systems, views, and how it was placed), stories (numbered activities) and questions — read from the workshop's models in `docs/brief/models` when there are any; and, when there are none, from the specification: each capability or draft's module a context, each requirement a flow whose command is its title, whose actor is its trace's and whose outcomes are its scenarios, and each use case with a specification a story of its main flow's steps; and SHALL say which of the two it was read from.
+
+> The studio draws the brief as DDD diagrams — a context map and each context's flows as an Event Storming — whether the project came from a workshop or not (issue #59, both ways).
+
+#### Scenario: SCN-658a — From the claims workshop
+
+- GIVEN a project where the motor-claims workshop was imported
+- WHEN the Developer runs `specgate brief model --json`
+- THEN it answers `source: workshop` and three contexts, siniestros core with its outbound ACL to Pólizas "Consultar cobertura", its flow "Asegurado · Declarar siniestro · Siniestro declarado", and its story of 26 activities, the first by the Asegurado
+
+#### Scenario: SCN-658b — From the specification, with no workshop
+
+- GIVEN a project with no workshop, a module pedidos whose draft has REQ-031 "Cancel an order" by the Customer with the scenario "Cancelled before shipping", and the use case UC-001 whose main flow has three steps
+- WHEN the Developer runs `specgate brief model --json`
+- THEN it answers `source: spec`, the context pedidos with the flow "Customer · Cancel an order · Cancelled before shipping", and the story of UC-001 with its three steps
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-658.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-659 — The domain model exported to DDD Toolbox
+
+The system SHALL, on `specgate brief export [--out <dir>]`, write the project's domain model as boards DDD Toolbox opens — a Bounded Context Canvas per context, an Event Storming board of every flow along the timeline, and a Domain Storytelling board per story — in its exported file format and none of its code, under `docs/brief/ddd-toolbox` unless `--out` names another folder, and answer with `--json` the files written; boards read back by `brief import` SHALL give the same contexts, flows and stories.
+
+#### Scenario: SCN-659a — The claims workshop, there and back
+
+- GIVEN the claims workshop imported
+- WHEN the Developer runs `specgate brief export` and imports the boards it wrote into an empty project
+- THEN the three canvases, the Event Storming board and the story are written, and read back they give the same three contexts, 26 flows and the 26 activities in order
+
+<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-659.feature artifact='packages/core/src/domain/DddToolboxExport.ts, scripts/brief_export.ts, templates/ddd-toolbox/records.json' actor=Developer kind=functional -->
+
+### Requirement: REQ-655 — A DDD workshop's boards become the brief's modules
+
+The system SHALL, on `specgate brief import <file>…` with boards exported by DDD Toolbox — Domain Storytelling, Event Storming, Bounded Context Canvas, its files only and none of its code — write the workshop's domain model as one readable file per bounded context, `docs/brief/models/<context>.yaml`, with its purpose, classification, integrations, terms, rules, flows, stories and questions; and SHALL add to `docs/brief.md` — writing it when there is none — each context as a module in the front matter, the stories' people and systems as actors (a system on `api`, a person on `web`), and a section "From the DDD workshop" naming each context's purpose, open questions and the file of its model — its rules kept in the model, a workshop giving no example for a module card's rules; it SHALL keep every line the brief already had, leave a module already there as it is, set the project's `language` to the workshop's when none is set, and with `--json` answer the contexts, the files written, the language and the flows it placed by assumption.
+
+> Issue #59 of the studio: enterprise teams model the domain in DDD workshops; their boards become the brief instead of being typed again. The license respected: the exported files only.
+
+#### Scenario: SCN-655a — The claims workshop imported into an empty project
+
+- GIVEN a project with no brief, and the motor-claims workshop exported from dddtoolbox.com: its story, its Event Storming and the canvases Siniestros, Pólizas and Pagos
+- WHEN the Developer runs `specgate brief import` with the five files
+- THEN `docs/brief/models/siniestros.yaml`, `polizas.yaml` and `pagos.yaml` are written, the project's language is set to Spanish, the brief's front matter lists the modules siniestros, polizas and pagos and the actor Tramitador on web and Sistema de pagos on api, and the brief's workshop section names Siniestros with `docs/brief/models/siniestros.yaml`; and `propose --from-brief --check` finds the brief ready
+
+#### Scenario: SCN-655b — An existing brief kept
+
+- GIVEN a project whose brief has the module catalogo and its own text
+- WHEN the Developer imports the claims workshop
+- THEN the brief still has catalogo and every line it had, and also the three modules of the workshop
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-655.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-656 — A module from a workshop is drafted from its model
+
+The system SHALL, when `specgate propose --from-brief <module>` drafts a module that has `docs/brief/models/<module>.yaml`, name that file in the drafting guide as a source beside the brief — its flows, rules, terms and questions to be worded in the brief's language, a flow placed by assumption to be confirmed or questioned — and SHALL say in the guide the language to write in — the project's `language`, its technical words (SHALL, GIVEN/WHEN/THEN, ids) kept in English — and how many flows the model holds against the requirement ids the draft has, the flows left out listed in `discover.md` for a next draft rather than dropped; and SHALL accept, in the draft's check (D6), a value stated in the workshop's models as stated in the brief.
+
+#### Scenario: SCN-656a — The siniestros module drafted
+
+- GIVEN the claims workshop imported
+- WHEN the Developer runs `specgate propose --from-brief siniestros`
+- THEN the draft's DRAFTING.md names `docs/brief/models/siniestros.yaml` as a source, says to write in Spanish and that the model holds 24 flows for 10 requirement ids, the rest listed in discover.md; and a scenario stating "75 %" passes D6 because the model says it
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-656.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-657 — From a workshop to a draft in one command
+
+The system SHALL, on `specgate propose --from-model <file>…`, import the boards as `brief import` does and then draft the first module the import added, as `propose --from-brief <module>` does, saying the other modules to draft next.
+
+#### Scenario: SCN-657a — Imported and drafted
+
+- GIVEN a project with no brief and the claims workshop's five files
+- WHEN the Developer runs `specgate propose --from-model` with them
+- THEN the models and the brief are written, the draft change of siniestros is opened, and the answer names polizas and pagos as next
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-657.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-622 — An actor's name in quotes is read whole
+
+The system SHALL read an actor's name written in double or single quotes in the brief's front matter — `- { name: "Padre, madre o tutor", surfaces: [web] }` — as the whole name without its quotes, a comma inside it included, wherever it reads actors (the brief's checks, its form, its cards, the domain docs); SHALL read a bare name as before; and SHALL write back, in the form, a name that holds a comma, a colon, a brace, a bracket, a hash or a quote in double quotes.
+
+> Studio report (#541): the agent wrote `{ name: "Padre, madre o tutor", surfaces: [web] }` — valid YAML — and specgate refused with `brief_actor_without_surfaces "Padre has no surfaces`.
+
+#### Scenario: SCN-622a — A quoted name with a comma
+
+- GIVEN a brief whose actors include `- { name: "Padre, madre o tutor", surfaces: [web] }`
+- WHEN specgate checks the brief
+- THEN "Padre, madre o tutor" is one actor on web, and no `brief_actor_without_surfaces` is reported
+
+#### Scenario: SCN-622b — The form writes such a name in quotes
+
+- GIVEN the form's actor "Padre, madre o tutor" on web
+- WHEN the form is written back to the brief
+- THEN the line reads `- { name: "Padre, madre o tutor", surfaces: [web] }`, and reading it back gives the same actor
+
+<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-622.feature artifact=packages/core/src/domain/DraftChecklist.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-486 — The brief read as a form, each field with its line
+
+The system SHALL answer `specgate propose --from-brief --form --json`, and the API's `briefForm(dir)`, with the brief as a form — its front matter's product, surfaces, actors and modules, and each module with its key, name, prose, rules, examples and questions — giving the line of each field in the file, or null for one the file does not hold, and the brief's findings under `status`; and SHALL write nothing.
+
+#### Scenario: SCN-486a — A module with its section and one without
+
+- GIVEN docs/brief.md with `modules: [orders, payments]` on line 6, a section `## Module: orders` whose first rule is on line 14, no section for payments, and a paragraph "Notes from the call" outside every module
+- WHEN `specgate propose --from-brief --form --json` runs
+- THEN the form gives `modules` at line 6, orders' first rule with line 14, payments with a null line and no cards, and docs/brief.md is unchanged
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-486.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-487 — The form written back, every other byte kept
+
+The system SHALL, with `specgate propose --from-brief --form <file>` (`-` reads standard input) and the API's `writeBriefForm(dir, form)`, write a form of REQ-486's shape back into the brief, rewriting only the front matter fields and the module sections whose values changed and keeping every other byte as it was — the line endings, CRLF included, the text after the last section, and every section that is not a module's; and the studio's own save of the brief SHALL use the same code.
+
+#### Scenario: SCN-487a — A CRLF brief with notes after its last module
+
+- GIVEN a docs/brief.md written with CRLF, with a `## Context` section, the modules orders and payments, and two blank lines and a note after payments' section
+- WHEN its form is read, a rule is added to orders, and the form is written back
+- THEN the brief has the new rule under orders, every line still ends in CRLF, and every byte outside orders' section is as it was; written back with no change, the file is identical byte for byte
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-487.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-488 — A client's text outside the project proposed as a form
+
+The system SHALL, when `specgate propose --from-brief --brief <file> --agent <cmd> --json` runs on a file outside the project, let the agent write only that file, answer what it proposed under `form` in REQ-486's shape, and write, create or remove nothing inside the project — no `docs/specs/BRIEF-SETUP.md` or `docs/specs/BRIEF-CARDS.md` — even when the proposed front matter has problems.
+
+#### Scenario: SCN-488a — The proposed front matter has a problem
+
+- GIVEN a project in git and the client's text in a file outside it
+- WHEN `specgate propose --from-brief --brief <that file> --agent <cmd> --json` runs and the agent proposes a front matter whose actor uses a surface `surfaces` does not list
+- THEN the answer gives the form with the proposed product and modules and the problem under `status`, and the project's files and `git status` are as before
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-488.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-601 — Quality requirements under ISO/IEC 25010
+
+The system SHALL read a brief's `## Quality` section (also `## Calidad`, `## Quality requirements`, `## Requisitos de calidad`, `## Non-functional requirements` or `## Requisitos no funcionales`), each list item written as `<characteristic> (<module>, …): <statement>` with the parenthesis optional; and SHALL report, on `specgate propose --from-brief --check` and before a draft opens: as the error `B14_quality_unmeasured` an entry whose statement uses a word no test can check or promises a quantity with no number; as the error `B14_quality_module` an entry naming a module that `modules:` does not list; as the warning `B14_quality_shape` an item with no characteristic; and as the warning `B14_quality_characteristic` a characteristic that is not one of ISO/IEC 25010:2023's nine — functional suitability, performance efficiency, compatibility, interaction capability, reliability, security, maintainability, flexibility, safety — nor a recognised alias of one, in English or Spanish, with a fix listing the nine. A brief with no such section SHALL get no finding about it.
+
+#### Scenario: SCN-601a — A quality entry no test can check
+
+- GIVEN a Lingo brief whose `## Quality` section says "- performance efficiency: The course list loads fast."
+- WHEN the developer runs `specgate propose --from-brief --check`
+- THEN it exits 1 with `B14_quality_unmeasured` naming the entry's line, and `specgate propose --from-brief courses` refuses with `brief_not_ready`
+
+#### Scenario: SCN-601b — Measured entries, an alias and an unknown characteristic
+
+- GIVEN a `## Quality` section saying "- performance (courses): The course list loads in under 2 seconds for 500 students at once.", "- disponibilidad: 99.5% each month." and "- beauty: Every screen uses the school's colours."
+- WHEN the developer runs `specgate propose --from-brief --check`
+- THEN it exits 0, reports `B14_quality_characteristic` for beauty with a fix naming the nine characteristics, and reports nothing for the other two
+
+#### Scenario: SCN-601c — An unknown module and no characteristic
+
+- GIVEN a `## Quality` section saying "- security (billing): Card numbers are never stored." and "- Every page meets WCAG 2.2 AA."
+- WHEN the developer runs `specgate propose --from-brief --check`
+- THEN it reports the error `B14_quality_module` for billing and the warning `B14_quality_shape` for the second item
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-601.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-602 — Objectives with a success you can measure
+
+The system SHALL report as the warning `B15_why_unmeasured` a brief whose `## Why` section (also `## Por qué`, `## Goals`, `## Objectives` or `## Objetivos`) says something and states no number, with a fix asking for the problem, the objectives and a success measured with a value and a unit; and SHALL report nothing when the section is absent or holds only comments.
+
+#### Scenario: SCN-602a — A why with no number
+
+- GIVEN a Lingo brief whose `## Why` says "Students lose track of their lessons. We want them to find them easily."
+- WHEN the developer runs `specgate propose --from-brief --check`
+- THEN it exits 0 and reports `B15_why_unmeasured`
+
+#### Scenario: SCN-602b — A measured why, and a brief without one
+
+- GIVEN one Lingo brief whose `## Why` says "A student finds today's lesson in under 10 seconds." and another with no `## Why` section
+- WHEN the developer runs `specgate propose --from-brief --check` on each
+- THEN neither reports a `B15` finding
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-602.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-603 — Quality requirements reach the drafts
+
+The system SHALL hand, in the `DRAFTING.md` of `specgate propose --from-brief <module>`, the `## Quality` entries that name that module, and — when the module is the first of `modules:` — the entries that name none, each to be written as a requirement of kind `non-functional` quoting its entry under `> Brief:`; SHALL hand no entry to any other module's draft; and SHALL write a `## Quality` section with commented examples and a `## Why` asking for a measurable success in the brief of `--new-brief`, ask in the guide an agent follows to propose a brief's sections for a `## Quality` section when the brief's text says how well the product must work, and name quality among what a good brief says when the project has no brief.
+
+#### Scenario: SCN-603a — Scoped and product-wide entries
+
+- GIVEN a Lingo brief with `modules: [courses, lessons]` whose `## Quality` says "- performance (lessons): A lesson opens in under 3 seconds." and "- reliability: Available 99.5% of each month."
+- WHEN the developer runs `specgate propose --from-brief courses`, then `specgate propose --from-brief lessons`
+- THEN courses' `DRAFTING.md` lists the reliability entry and not the performance one, and lessons' lists the performance entry and not the reliability one, each as a non-functional requirement to write
+
+#### Scenario: SCN-603b — The new brief teaches both sections
+
+- GIVEN a project with no brief
+- WHEN the developer runs `specgate propose --from-brief --new-brief`
+- THEN `docs/brief.md` has a `## Quality` section naming ISO/IEC 25010, a `## Why` asking for a success you can measure, and `specgate propose --from-brief --check` reports no `B14` or `B15` finding on it
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-603.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-653 — The agent's front matter is fixed before it is shown
+
+The system SHALL tell the agent that proposes a brief's front matter that a system the brief names — a service the product calls or one that calls it, a provider, a device — uses `api`, which then goes in `surfaces` too, and that an actor's surfaces are never empty; and SHALL, when the front matter the agent wrote has problems and the brief below it is unchanged, run the agent once more with each problem and its fix before it answers, answering what that second pass left.
+
+#### Scenario: SCN-653a — A service left with no surfaces
+
+- GIVEN an agent whose first front matter gives "Servicio de transcripción" no surfaces, and which fixes a problem it is told
+- WHEN the Developer runs `specgate draft --agent <it> --json`
+- THEN the agent ran twice, the second time told brief_actor_without_surfaces, and the brief says `{ name: Servicio de transcripción, surfaces: [api] }` with no problem left and its body unchanged
+
+#### Scenario: SCN-653b — The guide says it
+
+- GIVEN any brief
+- WHEN the agent's guide is written
+- THEN it says a system the brief names uses `api` and an actor's surfaces are never empty
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-653.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-652 — Two modules drafted at once leave each other's draft alone
+
+The system SHALL, while `specgate propose --from-brief <module> --agent` runs its agent, mark that the change's agent runs — and when it ended — inside git's own folder, where no status shows it; and SHALL, when it confines an agent to its change, neither keep nor undo what changed in the folder of another change whose agent ran at any time during this one, while still undoing everything else outside the change.
+
+#### Scenario: SCN-652a — draft-b's agent writes while draft-a's runs
+
+- GIVEN a project where draft-b's agent runs, and draft-a's agent writes its own draft, writes on in draft-b's folder and touches draft-c, which no agent drafts
+- WHEN draft-a's agent ends
+- THEN draft-a's draft is what it wrote, draft-b's files are as last written, draft-c's file is undone, and draft-a's mark says when its agent ran without showing in git's status
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-652.feature kind=functional status=Implemented -->

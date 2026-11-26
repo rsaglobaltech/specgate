@@ -1,0 +1,53 @@
+▶ dist/tests/unit/compact-use.test.js
+✔ dist/tests/unit/compact-use.test.js (60.378583ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.335083
+▶ dist/tests/unit/outside-judge.test.js
+✔ REQ-745 SCN-745a: its own requirement — apply fails with change_not_approved naming the change, and the requirement stays as it was (675.75175ms)
+✔ REQ-745 SCN-745b: an approved change is delivered (904.108541ms)
+✔ REQ-745 SCN-745c: a project that asks for no approvals delivers it (650.578125ms)
+✔ REQ-745 SCN-745d: no change owns it — apply says nothing of approvals (444.721208ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2841.753
+▶ dist/tests/unit/rc2-change.test.js
+✔ dist/tests/unit/rc2-change.test.js (57.561417ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 64.45525
+▶ dist/tests/unit/transition-outputs.test.js
+✔ dist/tests/unit/transition-outputs.test.js (62.463458ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 69.66675
+▶ dist/tests/unit/trust-gate.test.js
+✔ dist/tests/unit/trust-gate.test.js (60.193708ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.194291

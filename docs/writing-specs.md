@@ -1,8 +1,7 @@
 # Writing specs
 
 At the end of this page you can add a requirement with its scenario, link it to
-a test, deliver it and remove it, without ever editing the traceability matrix
-by hand.
+a test, deliver it and remove it, without ever editing the traceability matrix by hand.
 
 **You need:** a project where `specgate init` has run. Three terms come up
 throughout: a **requirement** (`REQ-007`) is one sentence the product must
@@ -10,6 +9,8 @@ honour; a **scenario** (`SCN-007`) is a Gherkin example that makes it
 executable; the **traceability matrix** (`docs/specs/traceability.md`) is the
 table that links each requirement to its scenario, code and test. See
 [the vocabulary](concepts.md#vocabulary) for more.
+
+<!-- specgate:diagram requirement-anatomy -->
 
 ## Add a requirement and its scenario
 
@@ -30,13 +31,11 @@ This opens `docs/specs/changes/add-premium-discount/` with a proposal, a delta
 range of REQ ids. Write the requirement and its scenario in the delta, then
 write a test that names the requirement, then the code. `specgate apply`
 delivers it and `specgate archive` merges the change into the specs.
-[Change a shipped requirement](reviewing-changes.md) walks through every step
-and the delta format.
+[Change a shipped requirement](reviewing-changes.md) walks through every step and the delta format.
 
 ### The shortcut: `specgate new`
 
-On a small project you can add a requirement straight to `spec.md`, without a
-change:
+On a small project you can add a requirement straight to `spec.md`, without a change:
 
 ```bash
 specgate new "Premium customers get 10% off at checkout"
@@ -76,8 +75,7 @@ specgate check     # regenerates the matrix from spec.md, the tags and the tests
 
 Do **not** add a row to `docs/specs/traceability.md`: it is generated, and the
 next `check` replaces it with what the sources say. A feature file with no
-`@REQ-NNN` tag is reported as an orphan; tag its scenario, or create the
-requirement with `specgate new`.
+`@REQ-NNN` tag is reported as an orphan; tag its scenario, or create the requirement with `specgate new`.
 
 ### Writing in Spanish
 
@@ -129,7 +127,7 @@ agent, without reading every `.feature` file.
 
 ```bash
 specgate status          # one line per requirement, and the next command
-specgate plan            # the same queue, with every artifact spelled out
+specgate plan            # every artifact spelled out; an open change's requirements only once archived
 ```
 
 `plan` groups the requirements by what each one still lacks:
@@ -196,6 +194,20 @@ included: `--status Approved` refuses a requirement no test names, since
 one CI will not reopen. It changes exactly one status, and it does not commit:
 commit after it. With `validate --strict` in CI, the matrix stays a true
 record of what is delivered.
+
+`apply` also refuses a requirement of a change no person approved
+(`change_not_approved`); see
+[A person approves the draft](reviewing-changes.md#a-person-approves-the-draft).
+And when code begins, the agent guard records the step-definition files.
+Changed after that, they refuse delivery (`steps_changed_after_code`): the
+steps may have been bent to fit the code. A person who read the new steps
+says so at a terminal:
+
+```bash
+specgate apply REQ-007 --steps-reviewed
+```
+
+From an agent's tool it is refused (`steps_review_needs_person`).
 
 ### With an agent
 

@@ -7,17 +7,16 @@ registry and to this documentation site — and what support it gets.
 **GitHub Actions are on** (since 2026-10-28): the repository is public, so
 standard GitHub-hosted runners cost nothing. CI, E2E and Security run on every
 push to `main` and `develop` and on pull requests; the publish workflows run on
-a `v*` tag. They were off for months to save a quota that public repositories
-do not have.
+a `v*` tag. They were off for months to save a quota that public repositories do not have.
 <!-- specgate:endnote -->
 
 ## What gets published
 
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **1.5.0** is `latest`; `next` is 1.0.0-rc.12 |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **1.5.0** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **1.5.0**, `linux/amd64` and `linux/arm64` |
+| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **1.6.0** is `latest`; `next` is 1.0.0-rc.12 |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **1.6.0** |
+| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **1.6.0**, `linux/amd64` and `linux/arm64` |
 | MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
@@ -31,16 +30,12 @@ purpose. Public npm is the default; routing the scope with
 
 ## The Specgate rename — done, and what it left behind
 
-The package was renamed from `create-spec-driven-app` to
-`@rsaglobaltech/specgate` in
-[ADR-0024](specs/adr/0024-the-tool-is-renamed-the-format-is-not.md); the old
-package is deprecated, not unpublished. The unscoped name `specgate` is
-unavailable: npm compares names without punctuation, so it collides with
-`spec-gate` and answers `403`, which reads like a token problem and is not one.
-Docker images live at `ghcr.io/<owner>/specgate`. Since
-[ADR-0032](specs/adr/0032-one-name-everywhere.md) the format, cache and
-environment variables are all `specgate`; the package installs `specgate`, its
-short alias `sgate` (ADR-0042) and, for old links, `create-spec-driven-app`.
+`create-spec-driven-app` became `@rsaglobaltech/specgate`
+([ADR-0024](specs/adr/0024-the-tool-is-renamed-the-format-is-not.md)); the old
+package is deprecated, not unpublished. The unscoped `specgate` collides with
+`spec-gate` on npm (`403`, not a token problem). Images: `ghcr.io/<owner>/specgate`.
+Format, cache and variables are all `specgate` ([ADR-0032](specs/adr/0032-one-name-everywhere.md));
+the package installs `specgate`, `sgate` (ADR-0042) and `create-spec-driven-app`.
 
 ## Versioning
 
@@ -57,8 +52,7 @@ release commit, `contract:check --release <version>` before the tag — see
 **Which versions get fixes.** Pre-1.0, only the latest minor. Backports to an
 older minor are not promised — the upgrade path is forward, and pretending
 otherwise would be a commitment one maintainer cannot keep. The same table is
-in [SECURITY.md](../SECURITY.md#supported-versions) for vulnerabilities
-specifically.
+in [SECURITY.md](../SECURITY.md#supported-versions) for vulnerabilities specifically.
 
 **From 1.0 on, this is a commitment and not an intention.** One supported line
 at a time, plus the previous minor for **six months** from the day its successor
@@ -97,7 +91,7 @@ written by the CLI and read by nothing.
 
 | Field | Where | This CLI supports | On mismatch |
 | --- | --- | --- | --- |
-| `schema_version` | `pack.yaml` | up to **1.5.0** | A pack declaring a newer schema is rejected with the reason and the upgrade command |
+| `schema_version` | `pack.yaml` | up to **1.6.0** | A pack declaring a newer schema is rejected with the reason and the upgrade command |
 | `specops_version` | `.specops.lock` | **1** | A lockfile from a newer CLI is rejected on read |
 | pack `version` | `.specops.lock` | any | Pinned; a content digest change fails the build — see [supply chain](supply-chain.md) |
 
@@ -126,13 +120,23 @@ the CLI supports, so getting this backwards fails CI rather than users.
 2. Bump `version` in `package.json`, then `npm run build && npm run plugin:sync`
    so the plugin's three manifests carry it (a test fails until they do).
 3. Re-record the landing page's terminal: `npm run build && npm run docs:terminal`,
-   then update the version in `docs/index.html` and in its Spanish copy,
-   `docs/es/index.html`. The recording carries the
-   version it was made from and a test compares the two, so skipping this fails
-   the build rather than shipping a page that claims the wrong release.
-4. Open a PR to **`develop`** — never straight to `main`, which is protected:
+   which rewrites the `version` of `docs/assets/terminal-*.json`. The recording
+   carries the version it was made from and a test compares the two, so
+   skipping this fails the build rather than shipping a page that claims the
+   wrong release.
+4. Bump every page that pins the version — `grep -rn "<old version>" docs`
+   finds them: the landing pages (header, eyebrow, "Recorded from", footer);
+   the `npx …@X.Y.Z` CI examples in `gate/ci.md`, `validating.md` and
+   `existing-project-with-jira.md`; the Docker image in `gate/local.md` and
+   `automation.md`; the Spanish twins; and `specgate --version` in `tutorial.md`.
+   Leave `schema_version` of the pack schema alone: it moves only with
+   `PACK_SCHEMA_VERSION`, not with a release.
+5. Check the release was examined with the real agent tools:
+   `specgate compat check-release` fails with `compat_not_examined` until the
+   compatibility exam ran this version (`specgate compat run --level L0 --task deliver`).
+6. Open a PR to **`develop`** — never straight to `main`, which is protected:
    the twelve [required checks](../CONTRIBUTING.md#required-checks) must pass.
-5. Merge into `develop`, wait for CI on `develop` itself, then fast-forward
+7. Merge into `develop`, wait for CI on `develop` itself, then fast-forward
    `main` to it. A release is cut from a `main` that has been green the whole
    way, not from one that was red for the twenty minutes it took to notice.
 
@@ -146,12 +150,12 @@ the CLI supports, so getting this backwards fails CI rather than users.
 
    **Quote the refspec: `"${R}:refs/heads/main"`.** In zsh, `$R:refs/…`
    applies the `:r` modifier and no longer names the commit. Read the output.
-6. **Only once `git rev-parse origin/main` is the release commit**, tag it
+8. **Only once `git rev-parse origin/main` is the release commit**, tag it
    `vX.Y.Z` and push the tag. On 0.10.0 the tag went out while the push to
    `main` had failed. `publish-npm.yml` fires, and publishes only after the
    E2E workflow passes on all three platforms.
-7. Write the GitHub release notes from the changelog entry.
-8. Run the E2E against what the registry serves:
+9. Write the GitHub release notes from the changelog entry.
+10. Run the E2E against what the registry serves:
    `curl -sfLO https://registry.npmjs.org/@rsaglobaltech/specgate/-/specgate-X.Y.Z.tgz && npm run e2e -- --tarball specgate-X.Y.Z.tgz`.
    The CDN can answer 404 for a few minutes after `dist-tags` already says the
    new version; wait, do not republish.
@@ -171,8 +175,8 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
    node e2e/run.mjs                        # the E2E the npm workflow gates on
    ```
 
-2. **Changelog, version, recordings** — steps 1–3 of
-   [Cutting a release](#cutting-a-release).
+2. **Changelog, version, recordings, pinned pages, the compatibility exam** —
+   steps 1–5 of [Cutting a release](#cutting-a-release).
 3. **`develop`, then `main`** — merge into `develop`, open the
    `develop → main` pull request, then fast-forward `main` to that exact
    commit with `git push origin "${R}:refs/heads/main"` (an admin bypass: only a commit step 1 ran).
@@ -197,11 +201,9 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
 
 ## Pre-releases
 
-A version with a prerelease part (`1.0.0-rc.1`, cut from a candidate line such
-as 1.0's `next/1.0` — retired once 1.0.0 shipped from `main` — never from
-`main` itself) is tagged like any release: the workflows publish it under
-the dist-tag `next` and tag its image with the version only, never `latest`
-(REQ-281). Its GitHub release is created with `--prerelease`.
+A prerelease (`1.0.0-rc.1`, from a candidate line, never from `main`) is tagged
+like any release: published under the dist-tag `next`, its image tagged with
+the version only, never `latest` (REQ-281), its GitHub release `--prerelease`.
 
 ## Trusted publishing
 
@@ -245,8 +247,7 @@ unpublished packages, no coverage output.
 
 ## After the release
 
-Write the GitHub release notes from the changelog entry, leave an empty
-`## [Unreleased]` at the top of `CHANGELOG.md`, and open the next milestone.
+Write the release notes from the changelog, leave an empty `## [Unreleased]` at the top of `CHANGELOG.md`, open the next milestone.
 
 ## Deployment of the site
 

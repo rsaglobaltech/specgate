@@ -67,6 +67,12 @@ not run reports an `error` about itself.
 | `specgate alm move <change> [<phase>] --json` | `move` | no |
 | `specgate check [dir] --json` | `check` | yes |
 | `specgate scenarios <REQ> --json` | `scenarios` | yes |
+| `specgate reproduce <change-id> --capability <c> --title <t> | run <REQ> --json` | `reproduce` | no |
+| `specgate map [<REQ>] [--capability <c>] --json` | `map` | no |
+| `specgate eval <skill> [--runs <n>] --json` | `eval` | no |
+| `specgate compat run|report [--tool <t>] [--level <L>] [--runs <n>] --json` | `compat` | no |
+| `specgate learn [promote <L> --title <rule>] --json` | `learn` | no |
+| `specgate trust [promote <capability>] --json` | `trust` | no |
 | `specgate migrate 1.0 [--dry-run] --json` | `migrate` | no |
 | `specgate workspace <init|status|check|draft|propose|live|harness> --json` | `workspace` | yes |
 | `specgate drift [dir] --json` | `drift` | yes |
@@ -102,6 +108,8 @@ not run reports an `error` about itself.
 | `specgate specops diff --json` | `changes` | no |
 | `specgate harness run --format json` | `results` | no |
 | `specgate harness report --json` | `report` | no |
+| `specgate harness sandboxes --json` | `sandboxes` | no |
+| `specgate harness doctor --json` | `doctor` | no |
 | `specgate harness stop --after-current --json` | `stop` | no |
 | `specgate harness continue --json` | `pause` | no |
 | `specgate release-notes <from>..<to> --json` | `releaseNotes` | no |
@@ -140,6 +148,7 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `traceability_unrecognized` | `scripts/validate_specs.ts` |
 | `unknown_dependency` | `scripts/validate_specs.ts` |
 | `use_cases_header_missing` | `scripts/validate_specs.ts` |
+| `approve_needs_person` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_change_name_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_draft_not_ready` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_requirements_pending` | `scripts/cli/commands/change/ChangeCommand.ts` |

@@ -1,0 +1,9 @@
+specgate_change_version: 1
+schema: layered
+created: 2026-11-25
+rigor: lite
+skip_specs: false
+retire_capabilities: false
+req_range: [REQ-745, REQ-747]
+based_on: [REQ-115@79da85893cb4, REQ-116@40f549fd96c0, REQ-134@0efab2288bbb]
+approved: 2026-11-25

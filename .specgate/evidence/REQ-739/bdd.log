@@ -1,0 +1,22 @@
+▶ dist/tests/unit/approvals.test.js
+✔ dist/tests/unit/approvals.test.js (59.552375ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 66.468625
+▶ dist/tests/unit/approved-delta.test.js
+✔ REQ-739: a seal is of the heading, the statement and the scenarios — not of the trace comment, nor of blank lines (1.697333ms)
+✔ REQ-739 SCN-739a: sealed at lite rigor — approving a change with nothing written in its layers records a seal for REQ-031 (3174.966667ms)
+✔ REQ-739 SCN-739b: delivering is not changing — apply writes the status in the delta, the seal still matches and the gate says nothing of it (1924.6095ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5186.049083

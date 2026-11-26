@@ -104,10 +104,15 @@ class CliInvoker {
     const cmd = CliInvoker.parseCliCommand(cliPath);
     const useShell = process.platform === "win32";
     const quote = (v: string) => (useShell && /\\s/.test(v) ? \`"\${v}"\` : v);
+    // walkthrough-fixes-3 REQ-792: a call over MCP is never a person at a terminal, whatever
+    // the server's environment says — the acts reserved to a person stay refused.
+    const env = { ...process.env };
+    delete env.SPECGATE_ASSUME_TTY;
     return spawnSync(quote(cmd[0]), [...cmd.slice(1), ...args].map(quote), {
       encoding: "utf8",
       shell: useShell,
       timeout: 60000,
+      env,
     });
   }
 }
@@ -150,12 +155,13 @@ export class GenericCliTool implements ITool {
     if (this.dirStyle === "positional") argv.push(dir);
     else argv.push("--project-dir", dir);
     
-    // Pass args safely
-    for (const [k, v] of Object.entries(args)) {
+    // guard-switch-person REQ-769: only the arguments the tool declares reach the CLI —
+    // in the schema's order (walkthrough-fixes-3 REQ-792), whatever order the client sent.
+    const declared = Object.keys(((this.inputSchema as { properties?: Record<string, unknown> }) || {}).properties || {});
+    for (const k of declared) {
       if (k === "projectDir" || k === "cliPath") continue;
-      if (typeof v === "string") {
-        argv.push(v); // Quick hack, we need proper arg mapping
-      }
+      const v = args[k];
+      if (typeof v === "string") argv.push(v);
     }
     
     if (!argv.includes("--json")) {
@@ -217,10 +223,15 @@ for (const command of SURFACE) {
           ? "requirement"
           : positional[1].toLowerCase()
         : null;
-    const argProp = argName
-      ? `,\n      ${argName}: { type: "string", description: ${JSON.stringify(`The <${argName}> argument of \`specgate ${cmdString}\`.`)} }`
-      : "";
-    const required = argName ? `["projectDir", "${argName}"]` : `["projectDir"]`;
+    // walkthrough-fixes-3 REQ-792: several positionals, in order — `config set`'s key and value.
+    const argNames = argName ? argName.split(/\s+/).filter(Boolean) : [];
+    const argProp = argNames
+      .map(
+        (n) =>
+          `,\n      ${n}: { type: "string", description: ${JSON.stringify(`The <${n}> argument of \`specgate ${cmdString}\`.`)} }`
+      )
+      .join("");
+    const required = JSON.stringify(["projectDir", ...argNames]).replace(/,/g, ", ");
     // `change *` is how a specification is edited on purpose; refusing it would
     // leave no way to open the change the guard asks for.
     const editsContract = Boolean(

@@ -1,4 +1,5 @@
 import { detectTestCommand } from "../../../harness/init";
+import { failingElsewhere } from "../../../lib/tests-elsewhere";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -11,10 +12,24 @@ import {
   NO_TEST_COMMAND_WARNING,
 } from "../../../../packages/core/src/domain/DoneVerification";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import {
+  runRequirementScenarios,
+  scenarioCommand,
+  scenariosRequired,
+} from "../../../lib/scenario-runs";
+import { deliveredWithFeature } from "../spec/StatusCommand";
 import type { HarnessSettings } from "../../../../packages/core/src/domain/HarnessConfig";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
+import { listChangeIds } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
+import { scopeDiagnostics, sealDiagnostics } from "../../../lib/approvals";
+import {
+  acceptanceRun,
+  acceptanceSealDiagnostics,
+  sealedAcceptance,
+} from "../../../lib/acceptance";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
+import { branchControls } from "../../../lib/controls";
 import type { BaseIdCheck } from "../../../lib/base-ids";
 import { prBase, ticketKeyFindings } from "../../../lib/ticket-keys";
 import { changeOverlaps } from "../../../lib/change-overlap";
@@ -70,8 +85,15 @@ function usage(): void {
     3. your tests          from --test-cmd, or test_cmd: in harness.config.yaml
                            (2 and 3 run side by side; gate_parallel: false runs
                            them one after the other)
-    4. your quality checks checks: in harness.config.yaml — attempt and end;
+    4. your scenarios      with bdd: required in .specgate/gate.yaml, each delivered
+                           requirement's, through bdd_cmd (--no-scenarios skips)
+    5. sealed acceptance   the tests a person sealed, through acceptance_cmd
+    6. your quality checks checks: in harness.config.yaml — attempt and end;
                            --ci adds the ci ones, and a check that cannot run fails
+
+  Before them, open changes are judged as approved: a sealed requirement or
+  acceptance test that changed fails. With --base, what the branch changes in
+  the controls (guard, gate policy, approvals, evidence) is named.
 
   --affected runs the tests of what changed since the base: the matrix's
   tests of each requirement whose spec, feature, code or test changed, the
@@ -91,7 +113,7 @@ function usage(): void {
   before the merge. Skipped, and said, without git or a base to read.
 
   With --json, every answer lists the gate's stages — ids, changes, validate,
-  architecture, tests, each quality check — with its command, its result
+  architecture, tests, scenarios, acceptance, each quality check — with its command, its result
   (passed, failed, skipped, not run), its ms and its findings, and the
   selection of tests it ran: mode (affected or full), reason, base, changed,
   requirements, tests, cached and command. Each check keeps its result in the
@@ -229,6 +251,7 @@ export class CheckCommand extends BaseCommand {
     let last = false;
     let affected = false;
     let noCache = false;
+    let noScenarios = false;
     let baseline = false;
     const positional: string[] = [];
     for (let i = 0; i < argv.length; i++) {
@@ -243,6 +266,8 @@ export class CheckCommand extends BaseCommand {
         baseline = true;
       } else if (a === "--no-cache") {
         noCache = true;
+      } else if (a === "--no-scenarios") {
+        noScenarios = true;
       } else if (a === "--test-cmd") {
         testCmdFlag = argv[++i];
         if (testCmdFlag === undefined) {
@@ -326,6 +351,8 @@ export class CheckCommand extends BaseCommand {
       archCmd: archCmd || null,
       testCmd: plannedTests || null,
       checks: harness.quality ? checksFor(harness.quality, qualityStages) : [],
+      scenariosCmd: scenariosRequired(projectDir) ? scenarioCommand(projectDir) || null : null,
+      acceptance: sealedAcceptance(projectDir).length > 0,
     });
     /** Fail the gate: keep the result, then answer with every stage. */
     const fail = (payload: { check: unknown }, diags: Diagnostic[]): never => {
@@ -468,6 +495,29 @@ export class CheckCommand extends BaseCommand {
       gate.set("ids", "failed", collisions, { ms: since(idsStarted) });
       fail(NULL_SHAPE, [...ticketKeys, ...collisions]);
     }
+    // branch-controls REQ-754: what the branch changes in the controls, named for the person who reviews it.
+    const controlsLevel = levelOf(policy, "controls");
+    if (ids.state === "checked" && controlsLevel !== "off") {
+      const ctl = branchControls(projectDir, ids.base);
+      if (ctl.state === "checked" && ctl.changed.length) {
+        const say = (d: string) =>
+          `${d} on this branch, against ${ids.base}: a person who reviews the branch reads it before it merges.`;
+        const fix =
+          "Review it as part of the pull request; make .specgate/ and docs/specs/changes/*/approvals.json code-owned so that review is required.";
+        if (controlsLevel === "error") {
+          const errors = ctl.changed.map((d) =>
+            error("controls_changed_on_branch", say(d), { fix })
+          );
+          gate.set("ids", "failed", errors, { ms: since(idsStarted) });
+          fail(NULL_SHAPE, [...ticketKeys, ...errors]);
+        }
+        for (const d of ctl.changed) {
+          const w = warning("controls_changed_on_branch", say(d), { fix });
+          idWarnings.push(w);
+          if (!json) process.stdout.write(ui.warn(`${w.message}  [${w.code}]`));
+        }
+      }
+    }
     gate.set(
       "ids",
       ids.state === "checked" ? "passed" : "skipped",
@@ -497,11 +547,26 @@ export class CheckCommand extends BaseCommand {
     // Open changes are judged as they will be after archive (ADR-0035): what
     // passes here is what passes once they are archived.
     const changesStarted = Date.now();
-    const unwritten = unwrittenNotes(projectDir);
+    // REQ-741: with them, the changes whose approval sealed no requirement.
+    const unwritten = [
+      ...unwrittenNotes(projectDir),
+      ...listChangeIds(projectDir).flatMap((id) => sealDiagnostics(projectDir, id).warnings),
+      ...scopeDiagnostics(projectDir, listChangeIds(projectDir)).warnings,
+      // sealed-acceptance REQ-758: where the rule `acceptance` is a warning.
+      ...listChangeIds(projectDir).flatMap(
+        (id) => acceptanceSealDiagnostics(projectDir, id).warnings
+      ),
+    ];
     if (!json) {
       for (const n of unwritten) {
         process.stdout.write(
-          `  ${ui.muted(`·  Change          ${n.target} — delta not written yet, not judged until it is`)}\n`
+          `  ${ui.muted(
+            n.code === "approval_not_sealed" ||
+              n.code === "file_outside_design" ||
+              n.code === "acceptance_not_sealed"
+              ? `·  Change          ${n.message}`
+              : `·  Change          ${n.target} — delta not written yet, not judged until it is`
+          )}\n`
         );
       }
     }
@@ -512,17 +577,33 @@ export class CheckCommand extends BaseCommand {
       // One fix line per refusal: the findings say what, the last says how.
       const problems = view.problems.map(({ fix: _fix, change: _change, ...d }) => d);
       gate.set("changes", "failed", problems, { ms: since(changesStarted) });
+      // What a person approved changed: the fix is to restore it or approve again, not to fix the delta.
+      const APPROVED = new Set([
+        "acceptance_not_sealed",
+        "approved_requirement_changed",
+        "file_outside_design",
+      ]);
+      const approvedOnly = problems.every((d) => APPROVED.has(d.code));
       fail(NULL_SHAPE, [
         ...ticketKeys,
         ...problems,
-        error(
-          "check_change_invalid",
-          `The gate failed: open change '${first}' does not validate.`,
-          {
-            target: first,
-            fix: `Fix its delta, then run \`specgate check\` again (\`specgate change validate ${first}\` lists every finding).`,
-          }
-        ),
+        approvedOnly
+          ? error(
+              "check_approved_changed",
+              `The gate failed: what a person approved in open change '${first}' is not what is there now.`,
+              {
+                target: first,
+                fix: view.problems.find((d) => d.fix)?.fix || `specgate change approve ${first}`,
+              }
+            )
+          : error(
+              "check_change_invalid",
+              `The gate failed: open change '${first}' does not validate.`,
+              {
+                target: first,
+                fix: `Fix its delta, then run \`specgate check\` again (\`specgate change validate ${first}\` lists every finding).`,
+              }
+            ),
       ]);
     }
     gate.set("changes", view ? "passed" : "skipped", unwritten, { ms: since(changesStarted) });
@@ -584,10 +665,24 @@ export class CheckCommand extends BaseCommand {
       error("check_arch_failed", `The gate failed: the architecture check \`${command}\`.`, {
         fix: `Move the code where the architecture expects it, or change the rule on purpose; then run \`specgate check\` again.`,
       });
-    const testsVerdict = (command: string) =>
-      error("check_tests_failed", `The gate failed: \`${command}\`.`, {
-        fix: `Make \`${command}\` pass, then run \`specgate check\` again.`,
-      });
+    const testsVerdict = (
+      command: string,
+      run?: { stdout?: string | null; stderr?: string | null }
+    ) => {
+      // recover-guidance REQ-787: name the requirements whose tests are red, and that their code is what to repair.
+      const red = run ? failingElsewhere(`${run.stdout || ""}${run.stderr || ""}`, []) : [];
+      return red.length
+        ? error(
+            "check_tests_failed",
+            `The gate failed: \`${command}\` — the failing tests name ${red.join(", ")}.`,
+            {
+              fix: `Repair ${red.join(", ")}'s code so its test passes again — never its test. That is within any change's scope: the design's scope judges new files only. Then run \`specgate check\` again.`,
+            }
+          )
+        : error("check_tests_failed", `The gate failed: \`${command}\`.`, {
+            fix: `Make \`${command}\` pass, then run \`specgate check\` again.`,
+          });
+    };
 
     // 1. validate --strict, alone: it is the fastest, and it fails fast.
     {
@@ -717,7 +812,7 @@ export class CheckCommand extends BaseCommand {
         gate.set("tests", "passed", tests.findings, { ms: testsResult.ms, command: testCommand });
       } else {
         if (!json) showFailure(testsResult);
-        const verdict = testsVerdict(testCommand);
+        const verdict = testsVerdict(testCommand, testsResult);
         gate.set("tests", "failed", [...tests.findings, verdict], {
           ms: testsResult.ms,
           command: testCommand,
@@ -736,6 +831,95 @@ export class CheckCommand extends BaseCommand {
       }
     }
     if (verdicts.length > 0) fail(NULL_SHAPE, [...ticketKeys, ...verdicts]);
+
+    // gate-runs-scenarios REQ-734: with executable scenarios required, those of
+    // every delivered requirement — code changed after its delivery is judged too.
+    const scenariosCmd = scenariosRequired(projectDir) ? scenarioCommand(projectDir) : "";
+    if (scenariosCmd && noScenarios) {
+      gate.set("scenarios", "skipped", [
+        info("check_scenarios_skipped", "The scenarios were not run: --no-scenarios.", {
+          target: "scenarios",
+        }),
+      ]);
+      if (!json)
+        process.stdout.write(`  ${ui.muted("·  Scenarios       not run — --no-scenarios")}\n`);
+    } else if (scenariosCmd) {
+      const delivered = deliveredWithFeature(projectDir);
+      const startedScenarios = Date.now();
+      progress({ stage: "scenarios", state: "running" });
+      const broken: Diagnostic[] = [];
+      for (const id of delivered) {
+        const v = runRequirementScenarios(projectDir, id, scenariosCmd);
+        if (v.ok) continue;
+        broken.push(
+          error(
+            "check_scenarios_failed",
+            `${id}'s scenarios did not pass${v.failed.length ? `: ${v.failed.join(", ")}` : ""} — ran ${v.command}`,
+            {
+              target: id,
+              fix: `make the code do what ${v.failed.length ? v.failed.join(", ") : `${id}'s scenarios`} say${v.failed.length === 1 ? "s" : ""}: specgate scenarios ${id}`,
+            }
+          )
+        );
+      }
+      const ms = Date.now() - startedScenarios;
+      if (broken.length > 0) {
+        const verdict = error(
+          "check_scenarios_failed",
+          `The gate failed: the scenarios of ${broken.length} delivered requirement(s).`,
+          {
+            target: "scenarios",
+            fix: "specgate scenarios <REQ> runs one requirement's, scenario by scenario",
+          }
+        );
+        gate.set("scenarios", "failed", [...broken, verdict], { ms });
+        if (!json)
+          process.stdout.write(
+            ui.fail(
+              `Scenarios       ${delivered.length} delivered requirement(s), ${broken.length} failing`
+            )
+          );
+        fail(NULL_SHAPE, [...ticketKeys, ...broken, verdict]);
+      }
+      gate.set("scenarios", "passed", [], { ms });
+      if (!json && delivered.length > 0)
+        process.stdout.write(
+          ui.ok(`Scenarios       ${ui.muted(`${delivered.length} delivered requirement(s)`)}`)
+        );
+    }
+
+    // sealed-acceptance REQ-759: the acceptance tests a person approved, run
+    // with the project's own command — red is red, and the fix is in the code.
+    const acceptance = acceptanceRun(projectDir);
+    if (acceptance.ran || acceptance.errors.length || acceptance.warnings.length) {
+      const findings = [...acceptance.errors, ...acceptance.warnings];
+      if (acceptance.errors.length > 0) {
+        gate.set("acceptance", "failed", findings, {
+          ms: acceptance.ms,
+          command: acceptance.command || null,
+        });
+        if (!json) process.stdout.write(ui.fail(`Acceptance      ${acceptance.errors[0]!.code}`));
+        const verdict = error(
+          "check_acceptance_failed",
+          "The gate failed: the sealed acceptance tests.",
+          {
+            target: "acceptance",
+            fix: acceptance.errors.find((d) => d.fix)?.fix || "specgate check",
+          }
+        );
+        fail(NULL_SHAPE, [...ticketKeys, ...acceptance.errors, verdict]);
+      }
+      gate.set("acceptance", acceptance.ran ? "passed" : "skipped", findings, {
+        ms: acceptance.ms,
+        command: acceptance.command || null,
+      });
+      if (!json) {
+        if (acceptance.ran)
+          process.stdout.write(ui.ok(`Acceptance      ${ui.muted(acceptance.command)}`));
+        for (const w of acceptance.warnings)
+          process.stdout.write(`  ${ui.muted(`·  Acceptance     ${w.message}`)}\n`);
+      }
+    }
 
     // ADR-0040: the team's quality and security checks, after the tests. The
     // `attempt` and `end` stages always; `ci` with --ci.

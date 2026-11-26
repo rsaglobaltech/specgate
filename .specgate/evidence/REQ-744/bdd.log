@@ -1,0 +1,14 @@
+▶ dist/tests/unit/shortcut-proof.test.js
+✔ REQ-744: a design names the source files it writes in backticks; a new file is outside it when it names others (1.66625ms)
+✔ REQ-744 SCN-744a: a file nobody designed — with scope: error the gate fails naming src/export.js (3466.591625ms)
+✔ REQ-744 SCN-744b: a warning by default — the gate passes, naming src/export.js (1738.74575ms)
+✔ REQ-744 SCN-744c: a design that names no file — the gate says nothing of it (1595.33525ms)
+✔ REQ-744: the designed file itself, new in the working tree, is not reported; scope: off says nothing (1588.935ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8542.628583

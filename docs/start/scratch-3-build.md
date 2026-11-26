@@ -13,9 +13,35 @@ handed to the harness, which builds it unattended on its own branch.
 
 | Who | Does what in this phase |
 | --- | --- |
+| **You** | Approve the draft, at your terminal |
 | **You** or **your agent** | Write the test first, then the code until it passes |
 | **The harness** (optional) | Specgate's runner for unattended work: builds pending requirements one by one, each on its own branch, and merges nothing unless you ask |
 | **The gate** | Not yet — that is phase 4 |
+
+## First: approve the draft
+
+You read the draft in phase 2. Approving it is yours, at your terminal — an
+agent cannot, since approving refuses a session with no terminal
+(`approve_needs_person`), and `apply` delivers nothing of a change nobody
+approved (`change_not_approved`). Approving also seals each requirement as it
+is: a requirement changed afterwards fails the gate until it is approved again.
+
+```bash
+specgate change approve draft-bookings
+```
+
+<!-- specgate:out-scratch-approve:begin — generated; edit the source, not this block -->
+```text
+$ specgate change approve draft-bookings
+  ◆ specgate · change approve   draft-bookings
+
+  ✔  draft-bookings approved on 2026-01-01 — discover.
+
+    + features/bookings/REQ-002.feature   its scenarios, to run before any code
+    + features/bookings/REQ-003.feature   its scenarios, to run before any code
+    + features/bookings/REQ-004.feature   its scenarios, to run before any code
+```
+<!-- specgate:out-scratch-approve:end -->
 
 ## Before the first one: make one scenario run
 
@@ -30,7 +56,11 @@ say so in the prompt: "also wire the test runner so this scenario executes".
 ## Option A — by hand, test first
 
 Read the requirement and its scenarios — in the draft's delta,
-`docs/specs/changes/draft-bookings/specs/bookings/spec.md` — then write the test. **Name the
+`docs/specs/changes/draft-bookings/specs/bookings/spec.md`. In the draft of
+[phase 2](scratch-2-specify.md#3-open-the-module-and-hand-it-to-your-agent),
+REQ-002 has two: SCN-002, booking a free court, and SCN-003, a member sees
+their bookings. Your agent's draft may number them differently: use its ids.
+Then write the test. **Name the
 requirement in it**: that mention is the whole link between the test and the
 requirement. There is no table to edit and nothing to register.
 
@@ -78,7 +108,8 @@ docstring, a Go test name. The gate looks for the id, not for a framework.
 
 The harness takes the next pending requirement, writes a prompt from its
 Gherkin, creates a git worktree on `harness/REQ-NNN`, runs your agent there,
-and then runs the gate. Green: the requirement is marked done on its branch.
+and then runs the gate. Green: the requirement is applied (Implemented) on its
+branch.
 Red: the failures go into the next attempt. Either way it does not merge —
 that stays a person's job, unless you ask for `--chain`, which merges each
 requirement that passed into the current branch.
@@ -112,7 +143,7 @@ The system SHALL refuse a booking for a court and hour that is already booked.
 
 > Brief: "A court cannot be booked twice for the same hour."
 
-… 94 more lines
+… 95 more lines
 ```
 <!-- specgate:out-scratch-harness-prompt:end -->
 
@@ -123,8 +154,8 @@ the prompt above:
 specgate harness run --req REQ-003 --agent "claude -p < {prompt_file}" --max-attempts 3
 ```
 
-Requirements waiting for an answer are skipped on purpose: `harness prompt
-REQ-004` says `REQ-004 is not a pending requirement — skipped.` The landing page
+Requirements waiting for an answer are skipped on purpose: `harness run --req
+REQ-004` says it waits for an answer (Needs Clarification) and starts no agent. The landing page
 has [a recording of a full harness run](../index.html#watch), and
 [the harness guide](../harness.md) covers agents, retries, concurrency and cost.
 

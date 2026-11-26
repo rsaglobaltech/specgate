@@ -44,12 +44,12 @@ add a `package.json` just for Specgate. Run it with `npx` and a pinned version
 instead, and use the same version in CI:
 
 ```bash
-npx @rsaglobaltech/specgate@1.5.0 init --dry-run
-npx @rsaglobaltech/specgate@1.5.0 init
+npx @rsaglobaltech/specgate@1.6.0 init --dry-run
+npx @rsaglobaltech/specgate@1.6.0 init
 ```
 
 The commands below write `npx specgate`; in a repository without a
-`package.json`, read it as `npx @rsaglobaltech/specgate@1.5.0`.
+`package.json`, read it as `npx @rsaglobaltech/specgate@1.6.0`.
 
 In a repository that already has a `pom.xml`, `build.gradle`, `package.json`
 or similar, `specgate init` adopts the project in place; it is the same as
@@ -57,9 +57,9 @@ or similar, `specgate init` adopts the project in place; it is the same as
 supporting files, never overwrites a file that exists, and never touches your
 source code. `--dry-run` shows what it would write.
 
-Adopting also seeds a few proposed requirements from your folder layout. They
-start as Draft, and a Draft requirement owes nothing to the gate. To start
-with an empty specification instead, use `specgate adopt --no-capabilities`.
+Adopting also lists the areas it reads off your folder layout in
+`docs/specs/adoption.md` — a map to specify from, not requirements, so the
+gate asks nothing of them. `specgate adopt --no-capabilities` skips that list.
 
 Then tell the gate how to run your tests, and add it to CI:
 
@@ -100,7 +100,8 @@ not look for a requirement to blame. Treat the fix as a new requirement:
    a `bugfix/KAN-42-…` branch.
 2. Write the requirement as the correct behaviour, with a **regression
    scenario**: Given the conditions of the report, When the user does what the
-   report says, Then the correct result.
+   report says, Then the correct result. A person approves it at a terminal:
+   `specgate change approve <change-id>`.
 3. Write its test first and watch it fail: it reproduces the bug. Fix the code
    until it passes, then `specgate apply REQ-…`.
 

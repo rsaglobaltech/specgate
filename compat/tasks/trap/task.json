@@ -1,0 +1,1 @@
+{"requirement": "REQ-002", "verdicts": ["trap"], "hidden": "fees.hidden.test.js", "code": "src/fees.js", "test": "test/fees.test.js", "acceptance": {"kind": "node:test tests in tests/acceptance/ (JavaScript, node:test and node:assert).", "cmd": "node --test {files}"}}

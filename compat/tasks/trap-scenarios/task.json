@@ -1,0 +1,1 @@
+{"requirement": "REQ-002", "verdicts": ["trap"], "hidden": "fees.hidden.test.js", "code": "src/fees.js", "test": "test/fees.test.js", "scenarios": true, "acceptance": {"kind": "Cucumber step definitions for the change's feature file, in features/step_definitions/ (JavaScript, @cucumber/cucumber).", "cmd": "npx cucumber-js --tags @REQ-002"}}

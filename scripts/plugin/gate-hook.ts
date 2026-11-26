@@ -27,12 +27,14 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { runSpecgate } from "./project-state";
+import { hookLog, runSpecgate } from "./project-state";
 
 /** What the hook is handed on stdin. Only the fields this hook reads. */
 export interface StopHookInput {
   cwd?: string;
   prompt_id?: string;
+  /** Codex names the user's message `turn_id` (codex-guard REQ-751). */
+  turn_id?: string;
   hook_event_name?: string;
 }
 
@@ -106,7 +108,7 @@ export function decide(
   if (gate.ok) return { block: false, message: "" };
 
   const findings = renderFindings(gate.diagnostics);
-  if (blockedAlready(input.prompt_id ?? "")) {
+  if (blockedAlready(input.prompt_id ?? input.turn_id ?? "")) {
     // Told once already. Let the human see the answer rather than looping.
     return { block: false, message: findings };
   }
@@ -146,6 +148,11 @@ export function main(raw: string): number {
   }
 
   const decision = decide(input, runValidate, alreadyBlocked);
+  hookLog({
+    hook: "gate",
+    decision: decision.block ? "blocked" : decision.message ? "told" : "passed",
+    ...(decision.message ? { reason: decision.message } : {}),
+  });
   if (decision.message) process.stderr.write(`${decision.message}\n`);
   return decision.block ? 2 : 0;
 }

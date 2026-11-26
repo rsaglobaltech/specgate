@@ -12,12 +12,34 @@
 export type SandboxNetwork = "none" | "default";
 
 export interface SandboxConfig {
-  /** The image the agent runs in: it must hold the agent's CLI. */
+  /** The image the agent runs in: it must hold the agent's CLI. Empty with `sbx`. */
   image: string;
   /** `none` (default): no network at all; `default`: the engine's own network. */
   network: SandboxNetwork;
-  /** The container engine: `docker` (default) or `podman`. */
-  engine: "docker" | "podman";
+  /**
+   * The container engine: `docker` (default) or `podman`; or `sbx`, Docker
+   * Sandboxes — one sandbox per module of a change (sandbox-swarm REQ-698).
+   */
+  engine: "docker" | "podman" | "sbx";
+  /** `sbx`: the kit or agent the sandbox is made with (`opencode`, `claude`, `shell`…). */
+  kit?: string;
+  /** `sbx`: the hosts the sandbox may reach besides its kit's (REQ-699). */
+  allow?: string[];
+  /** `sbx`: run once in a new sandbox (install Node, say). */
+  setup?: string;
+}
+
+/**
+ * sandbox-swarm REQ-698: the sandbox of a change's module — `sg-<change>-<module>`,
+ * lowercase letters, digits and dashes, at most 63 characters.
+ */
+export function sandboxNameOf(change: string, module: string): string {
+  const clean = (v: string) =>
+    v
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  return `sg-${clean(change)}-${clean(module)}`.slice(0, 63).replace(/-+$/, "");
 }
 
 export interface SandboxInputs {
@@ -63,10 +85,27 @@ export function readSandbox(value: unknown): SandboxConfig {
   const raw = (typeof value === "string" ? { image: value } : value) as Record<string, unknown>;
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new Error(
-      "sandbox is an image name, or a mapping with image, network (none|default) and engine (docker|podman)"
+      "sandbox is an image name, or a mapping with image, network (none|default) and engine (docker|podman), or engine sbx with kit, allow and setup"
     );
   }
   const image = String(raw.image || "").trim();
+  if (String(raw.engine || "") === "sbx") {
+    const kit = String(raw.kit || "").trim();
+    if (!kit) throw new Error("sandbox.kit is required with engine sbx: opencode, claude, shell…");
+    const allow = Array.isArray(raw.allow)
+      ? raw.allow.map((h) => String(h).trim()).filter(Boolean)
+      : String(raw.allow || "")
+          .split(/[\s,]+/)
+          .filter(Boolean);
+    return {
+      image,
+      network: "default",
+      engine: "sbx",
+      kit,
+      allow,
+      ...(raw.setup ? { setup: String(raw.setup) } : {}),
+    };
+  }
   if (!image) throw new Error("sandbox.image is required: the image that holds the agent's CLI");
   const network = String(raw.network || "none");
   if (network !== "none" && network !== "default") {
@@ -74,7 +113,7 @@ export function readSandbox(value: unknown): SandboxConfig {
   }
   const engine = String(raw.engine || "docker");
   if (engine !== "docker" && engine !== "podman") {
-    throw new Error(`sandbox.engine is docker or podman, not ${engine}`);
+    throw new Error(`sandbox.engine is docker, podman or sbx, not ${engine}`);
   }
   return { image, network, engine };
 }

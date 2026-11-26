@@ -1,0 +1,80 @@
+<figure class="dia dia--card dia--sealed">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 1000 392" class="dia__svg" role="img" aria-labelledby="sg-sa-t sg-sa-d">
+    <title id="sg-sa-t">Sealed acceptance tests: who writes, who seals, who cannot change them</title>
+    <desc id="sg-sa-d">Six steps. One: a person approves the design, at a terminal. Two: another
+      hand, a person or another agent, writes the acceptance tests; it sees the specification,
+      never the source. Three: a person seals them; each file is recorded by its sha256 in the
+      change's approvals.json. Four: the agent implements the requirement; its tools cannot
+      write a sealed test. Five: the gate runs the sealed tests with your own test command,
+      acceptance_cmd. Six: the outside judge checks the hashes before and after the run.
+      Changing a sealed test is changing the contract, so it goes back to step three: a
+      person approves and seals it again.</desc>
+
+    <defs>
+      <marker id="sg-sa-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+      <marker id="sg-sa-r" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--red)"/>
+      </marker>
+    </defs>
+
+    <g class="dia__box dia__box--ok"><rect x="14" y="40" width="280" height="90"/></g>
+    <g class="dia__box"><rect x="340" y="40" width="280" height="90"/></g>
+    <g class="dia__box dia__box--ok"><rect x="666" y="40" width="280" height="90"/></g>
+    <g class="dia__box dia__box--ink"><rect x="14" y="196" width="280" height="90"/></g>
+    <g class="dia__box dia__box--gate"><rect x="340" y="196" width="280" height="90"/></g>
+    <g class="dia__box dia__box--ink"><rect x="666" y="196" width="280" height="90"/></g>
+    <g class="dia__box dia__box--no"><rect x="340" y="326" width="606" height="52"/></g>
+
+    <g class="dia__ico dia__ico--ok" transform="translate(30 56)"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></g>
+    <g class="dia__ico" transform="translate(356 56)"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></g>
+    <g class="dia__ico dia__ico--ok" transform="translate(682 56)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g>
+    <g class="dia__ico dia__ico--brand" transform="translate(30 212)"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></g>
+    <g class="dia__ico dia__ico--on-gate" transform="translate(356 212)"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></g>
+    <g class="dia__ico dia__ico--brand" transform="translate(682 212)"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></g>
+    <g class="dia__ico dia__ico--no" transform="translate(356 340)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g>
+
+    <g>
+      <text x="66" y="72" class="dia__h"><tspan class="dia__step">1</tspan>  A person approves</text>
+      <text x="66" y="96" class="dia__s">the design — at a terminal</text>
+
+      <text x="392" y="72" class="dia__h"><tspan class="dia__step">2</tspan>  Another hand writes</text>
+      <text x="392" y="96" class="dia__s">the tests: it sees the spec,</text>
+      <text x="392" y="114" class="dia__s">never the source</text>
+
+      <text x="718" y="72" class="dia__h"><tspan class="dia__step">3</tspan>  A person seals them</text>
+      <text x="718" y="96" class="dia__s">each file by its sha256,</text>
+      <text x="718" y="114" class="dia__s">in <tspan class="dia__mono">approvals.json</tspan></text>
+
+      <text x="66" y="228" class="dia__h dia__on-ink">4  The agent implements</text>
+      <text x="66" y="252" class="dia__s dia__on-ink">its tools cannot write</text>
+      <text x="66" y="270" class="dia__s dia__on-ink">a sealed test</text>
+
+      <text x="392" y="228" class="dia__h dia__on-gate">5  The gate runs them</text>
+      <text x="392" y="252" class="dia__s dia__on-gate">with your own test command,</text>
+      <text x="392" y="270" class="dia__s dia__mono dia__on-gate">acceptance_cmd</text>
+
+      <text x="718" y="228" class="dia__h dia__on-ink">6  The outside judge</text>
+      <text x="718" y="252" class="dia__s dia__on-ink">checks the hashes before</text>
+      <text x="718" y="270" class="dia__s dia__on-ink">and after the run</text>
+
+      <text x="392" y="357" class="dia__s"><tspan class="dia__h dia__no-t">Changing a sealed test = changing the contract</tspan>  — back to step 3</text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="296" y1="85" x2="335" y2="85" marker-end="url(#sg-sa-a)"/>
+      <line x1="622" y1="85" x2="661" y2="85" marker-end="url(#sg-sa-a)"/>
+      <path d="M806 132 V163 H154 V191" marker-end="url(#sg-sa-a)"/>
+      <line x1="296" y1="241" x2="335" y2="241" marker-end="url(#sg-sa-a)"/>
+      <line x1="622" y1="241" x2="661" y2="241" marker-end="url(#sg-sa-a)"/>
+
+      <path d="M948 352 H980 V85 H951" class="dia__no" stroke-dasharray="6 5" marker-end="url(#sg-sa-r)"/>
+      <text x="972" y="150" text-anchor="end" class="dia__no-t">approve</text>
+      <text x="972" y="166" text-anchor="end" class="dia__no-t">again</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>The tests that judge the agent are written by another hand and sealed by a person; the agent cannot change them, and changing one means approving it again.</figcaption>
+</figure>

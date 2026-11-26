@@ -172,6 +172,11 @@ export const RULES: ReadonlyArray<{
     apply: (s) => s.replace(/\b20\d\d-\d\d-\d\d(?=-[a-z])/g, "2026-01-01"),
   },
   {
+    // `change approve` says the day it approved: pinned too, or the start pages would churn every day.
+    id: "approved-on",
+    apply: (s) => s.replace(/\bapproved on 20\d\d-\d\d-\d\d\b/g, "approved on 2026-01-01"),
+  },
+  {
     // Git dates are pinned, but a SHA still depends on tree content, so a
     // template edit would otherwise rewrite every SHA in the file.
     id: "sha",
@@ -293,6 +298,8 @@ export function buildEnv(scratch: string): NodeJS.ProcessEnv {
     TERM: "dumb",
     COLUMNS: String(COLS),
     CI: "1",
+    // The recordings show a person at a terminal: approving is theirs (REQ-748), and this stands for it.
+    SPECGATE_ASSUME_TTY: "1",
     // The same reporter whatever Node records: without a TTY, Node 22 prints
     // TAP and Node 24 the spec reporter, and the page changed with the machine.
     NODE_OPTIONS: "--test-reporter=spec",

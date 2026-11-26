@@ -1,0 +1,11 @@
+▶ dist/tests/unit/skill-evals.test.js
+✔ REQ-704 SCN-704a: a run read while it works — its start and output, no end yet, and its prompt (2113.459125ms)
+✔ REQ-704 SCN-704b: the list names the texts and the last exam's runs (3379.335791ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5592.501875

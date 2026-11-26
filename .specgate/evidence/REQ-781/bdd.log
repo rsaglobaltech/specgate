@@ -1,0 +1,11 @@
+▶ dist/tests/unit/walkthrough-fixes-2.test.js
+✔ REQ-781 SCN-781a: the Claude Code plugin, generated in a project, goes under .claude/ — and the guard lets the next call through (782.554459ms)
+✔ REQ-781: given a folder of its own, the plugin is written there, as before (175.683667ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1072.487375

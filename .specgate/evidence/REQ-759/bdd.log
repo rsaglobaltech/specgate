@@ -1,0 +1,24 @@
+▶ dist/tests/unit/gate-policy.test.js
+✔ dist/tests/unit/gate-policy.test.js (43.953541ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 48.581042
+▶ dist/tests/unit/sealed-acceptance.test.js
+✔ REQ-759 SCN-759a: red is red — acceptance_red with the command's output (557.366375ms)
+✔ REQ-759: green passes, and {files} is the sealed paths (549.587375ms)
+✔ REQ-759 SCN-759b: no command — acceptance_no_command, nothing installed (564.626791ms)
+✔ REQ-759: a project with no sealed tests runs nothing (243.857042ms)
+✔ REQ-758, REQ-759: the rule acceptance fails strict and standard gates, warns in minimal (0.200083ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2000.098041

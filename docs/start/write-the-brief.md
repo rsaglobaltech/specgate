@@ -85,6 +85,19 @@ gets the warning `B15_why_unmeasured`.
 - Good: "A student finds today's lesson in under 10 seconds."
 - Not: "Fast and easy to use." No test can check it.
 
+Lingo's, which goes under the title of the whole example at the end of this
+page, before its first `## Module:`:
+
+```markdown
+## Why
+
+Students lose track of their lessons between classes, and the teacher cannot
+see who is falling behind.
+
+- A student finds today's lesson in under 10 seconds.
+- The teacher sees each student's progress in under 2 seconds.
+```
+
 ## Step 2 — Who and where (3 minutes)
 
 The top of the brief names the product, where people reach it, and who uses
@@ -280,7 +293,8 @@ stand-in for Claude that writes the text shown below.)
 
 ## The whole example
 
-Lingo's brief, reviewed:
+Lingo's brief, reviewed. Its `## Why` is the one in Step 1, under the
+`# Lingo` title; the block below leaves it out:
 
 <!-- specgate:example-brief -->
 ```markdown

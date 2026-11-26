@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "1.5.0",
+    "version": "1.6.0",
     "node": "v24.x",
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-11-23",
+  "recordedAt": "2026-11-26",
   "title": "invoices — an existing repository",
   "cols": 88,
   "streamsMerged": false,
@@ -348,7 +348,7 @@
           "s": "out"
         },
         {
-          "t": "  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning",
+          "t": "  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning, scope warning, controls warning",
           "c": "out",
           "s": "out"
         },

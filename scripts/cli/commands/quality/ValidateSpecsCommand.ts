@@ -1,4 +1,5 @@
 import { bddFindings, inOpenChange } from "../../../lib/bdd";
+import { trustFindings } from "../../../lib/trust";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -10,6 +11,7 @@ import { ValidateChangeUseCase } from "../../../../packages/core/src/application
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
 import { formatDiagnostic, error, info, warning } from "../../../lib/diagnostics";
 import type { Diagnostic } from "../../../lib/diagnostics";
+import { scopeDiagnostics, sealDiagnostics } from "../../../lib/approvals";
 import * as ui from "../../../lib/ui";
 import { leavingRequirements, unwrittenChanges } from "../../../lib/in-flight";
 import { checkAgainstLock } from "../../../specops/against_lock";
@@ -141,6 +143,32 @@ export class ValidateSpecsCommand extends BaseCommand {
    * what it holds that is gone (REQ-531), and cited evidence that is gone (REQ-530).
    */
   private notes: Diagnostic[] = [];
+
+  /**
+   * approved-delta REQ-740, REQ-741: what a person approved is what the gate
+   * judges. A requirement of an approved change that changed, was added or is
+   * gone since its approval fails; an approval that sealed nothing is said so.
+   */
+  private checkApprovedRequirements(targetDir: string, ids: string[]): void {
+    const errors: Diagnostic[] = [];
+    for (const id of ids) {
+      const found = sealDiagnostics(targetDir, id);
+      this.notes.push(...found.warnings);
+      errors.push(...found.errors);
+    }
+    // REQ-744: and the files a delivery adds are the ones its design names.
+    const scope = scopeDiagnostics(targetDir, ids);
+    this.notes.push(...scope.warnings);
+    errors.push(...scope.errors);
+    if (errors.length === 0) return;
+    if (this.agent.json) {
+      this.agent.fail({ validation: null }, [...this.notes, ...errors]);
+      return;
+    }
+    this.logError("What was approved is not what is here:");
+    for (const d of errors) process.stderr.write(`  ${formatDiagnostic(d)}\n`);
+    process.exit(1);
+  }
 
   /** The channel, for the checks — every one of them runs after `execute()` set it. */
   private get agent(): AgentIo {
@@ -1214,6 +1242,9 @@ export class ValidateSpecsCommand extends BaseCommand {
       ...staleDiagramFindings(targetDir),
       // REQ-661: the scenarios executable, before any code, in every project that requires it.
       ...bddFindings(targetDir, bddCmdOf(targetDir)),
+      // REQ-670, REQ-672: each module's trust level, checked; recorded in the
+      // ledger from the working copy, never from a harness worktree.
+      ...trustFindings(targetDir, !isWorktree(targetDir)),
     ];
     const errors = found.filter((d) => d.severity === "error");
     for (const d of found.filter((x) => x.severity !== "error")) {
@@ -1738,6 +1769,7 @@ export class ValidateSpecsCommand extends BaseCommand {
         for (const line of problems) process.stderr.write(`  ${line}\n`);
         process.exit(1);
       }
+      if (strict) this.checkApprovedRequirements(targetDir, ids);
     }
 
     let lockChecked = 0;
@@ -1941,5 +1973,14 @@ function bddCmdOf(projectDir: string): string | undefined {
     return readHarnessConfig(projectDir)?.bddCmd;
   } catch {
     return undefined;
+  }
+}
+
+/** A linked git worktree (the harness's): its `.git` is a file, not a folder. */
+function isWorktree(dir: string): boolean {
+  try {
+    return fs.statSync(path.join(dir, ".git")).isFile();
+  } catch {
+    return false;
   }
 }

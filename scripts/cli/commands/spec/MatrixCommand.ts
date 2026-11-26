@@ -7,6 +7,7 @@ import { BaseCommand } from "../../../lib/command";
 import {
   deriveRows,
   diffRows,
+  diffRowsKept,
   fieldsToReproduce,
   isDerivedMatrix,
   renderDerivedMatrix,
@@ -21,7 +22,9 @@ import {
   scenarioRows,
   type MatrixScenarioRow,
 } from "../../../../packages/core/src/domain/MatrixScenarios";
-import { inFlightView } from "../../../lib/in-flight";
+import { inFlightRequirements, inFlightView } from "../../../lib/in-flight";
+import type { InFlightView } from "../../../lib/in-flight";
+import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { allQuestions } from "../../../lib/clarification";
 
 import { c } from "../../../lib/ui";
@@ -130,7 +133,56 @@ function planMigration(projectDir: string, original: RawMatrixRow[]) {
     byReq.set(id, [...(byReq.get(id) || []), row]);
   }
 
+  // REQ-676: a capability spec states its requirements, and the derivation
+  // reads them there; an open change owns the ones it adds until its archive.
+  // Neither gets a section in spec.md.
+  const inSpec = new Set(requirementsIn(specBefore).map((r) => r.id));
+  const inCapabilities = new Set(
+    readCapabilityRequirements(projectDir)
+      .map((r) => r.req.id)
+      .filter(Boolean)
+  );
+  const inChanges = new Map<string, string>();
+  // One an open change modifies waits too: the hand-kept row may already say
+  // what the change will, and the capability spec says it only once archived.
+  for (const r of inFlightRequirements(projectDir)) {
+    if (byReq.has(r.id) && !inSpec.has(r.id)) inChanges.set(r.id, r.change);
+  }
+  for (const id of inChanges.keys()) byReq.delete(id);
+
+  // REQ-677: a capability spec's requirement keeps, pinned in its own trace,
+  // the code and tests of its hand-kept row the derivation would not find.
+  const capabilities = (sources.capabilities || []).map((f) => ({ ...f }));
+  const found = deriveRows(sources);
+  const list = (v: unknown) =>
+    String(v ?? "-")
+      .replace(/`/g, "")
+      .split(",")
+      .map((x) => x.trim())
+      .filter((x) => x && x !== "-" && x.toUpperCase() !== "TBD");
+  const pin = (id: string, rows: RawMatrixRow[]) => {
+    const heading = new RegExp(`^#{2,4}\\s+(?:Requirement:\\s*)?${id}\\b`, "m");
+    const file = capabilities.find((f) => heading.test(f.source));
+    if (!file) return;
+    const derivedRows = found.filter((r) => r.requirement === id);
+    const fields: Record<string, string> = {};
+    for (const [key, column] of [
+      ["artifact", "technicalArtifact"],
+      ["test", "testArtifact"],
+    ] as const) {
+      const want = [...new Set(rows.flatMap((r) => list(r[column])))];
+      const have = new Set(derivedRows.flatMap((r) => list(r[column])));
+      if (want.some((f) => !have.has(f))) fields[key] = want.join(", ");
+    }
+    if (Object.keys(fields).length)
+      file.source = setTraceFields(file.source, id, fields) ?? file.source;
+  };
+
   for (const [id, rows] of byReq) {
+    if (inCapabilities.has(id) && !inSpec.has(id)) {
+      pin(id, rows);
+      continue;
+    }
     const titleCell = String(rows[0].useCase || "")
       .replace(/^UC-\d+\s*/, "")
       .trim();
@@ -154,13 +206,18 @@ function planMigration(projectDir: string, original: RawMatrixRow[]) {
     spec = setTraceFields(spec, id, plan.fields) ?? spec;
   }
 
-  const derived = deriveRows({ ...sources, spec });
-  const d = diffRows(
-    original.filter((r) => /^REQ-/.test(r.requirement || "")),
-    derived
+  const derived = deriveRows({ ...sources, spec, capabilities });
+  const capabilityWrites = capabilities.filter(
+    (f, i) => f.source !== (sources.capabilities || [])[i].source
+  );
+  // REQ-677: a row the generated matrix only fills in further is kept, not lost.
+  const waiting = (r: RawMatrixRow) => inChanges.has(String(r.requirement || "").trim());
+  const d = diffRowsKept(
+    original.filter((r) => /^REQ-/.test(r.requirement || "") && !waiting(r)),
+    derived.filter((r) => !waiting(r as RawMatrixRow))
   );
 
-  return { spec, specFile, derived, blocked, d, byReq };
+  return { spec, specFile, derived, blocked, d, byReq, inChanges, capabilityWrites };
 }
 
 /**
@@ -179,9 +236,14 @@ export function migrateToDerived(projectDir: string): boolean {
   }
   const original = rowsOf(existing);
   if (original.length === 0) return false;
-  const { spec, specFile, derived, blocked, d } = planMigration(projectDir, original);
+  const { spec, specFile, derived, blocked, d, capabilityWrites } = planMigration(
+    projectDir,
+    original
+  );
   if (blocked.length > 0 || d.missing.length > 0 || d.extra.length > 0) return false;
   fs.writeFileSync(specFile, spec, "utf8");
+  for (const f of capabilityWrites)
+    fs.writeFileSync(path.join(projectDir, f.path), f.source, "utf8");
   fs.writeFileSync(file, renderDerivedMatrix(derived, projectNameOf(existing)), "utf8");
   ensureUnionMerge(projectDir);
   return true;
@@ -199,8 +261,13 @@ const handKept = () =>
  * (ADR-0035). Nothing of the project is written; links are checked against
  * the project itself.
  */
-export function matrixScenarios(projectDir: string): MatrixScenarioRow[] {
-  const view = inFlightView(projectDir);
+export function matrixScenarios(
+  projectDir: string,
+  /** A view the caller already holds, and cleans up itself; else one is made here. */
+  given?: InFlightView | null
+): MatrixScenarioRow[] {
+  const own = given === undefined;
+  const view = own ? inFlightView(projectDir) : given;
   try {
     const dir = view ? view.dir : projectDir;
     const file = path.join(dir, MATRIX);
@@ -222,7 +289,7 @@ export function matrixScenarios(projectDir: string): MatrixScenarioRow[] {
     };
     return scenarioRows(rows, exists, waiting);
   } finally {
-    if (view) view.cleanup();
+    if (view && own) view.cleanup();
   }
 }
 
@@ -373,7 +440,8 @@ export class MatrixCommand extends BaseCommand {
       ]);
     }
 
-    const { spec, specFile, derived, blocked, d, byReq } = planMigration(projectDir, original);
+    const { spec, specFile, derived, blocked, d, byReq, inChanges, capabilityWrites } =
+      planMigration(projectDir, original);
 
     if (blocked.length > 0 || d.missing.length > 0 || d.extra.length > 0) {
       if (!io.json) {
@@ -398,10 +466,35 @@ export class MatrixCommand extends BaseCommand {
     const next = renderDerivedMatrix(derived, projectNameOf(existing));
     if (!dryRun) {
       fs.writeFileSync(specFile, spec, "utf8");
+      for (const f of capabilityWrites)
+        fs.writeFileSync(path.join(projectDir, f.path), f.source, "utf8");
       fs.writeFileSync(path.join(projectDir, MATRIX), next, "utf8");
       ensureUnionMerge(projectDir);
     }
+    const owners = new Map<string, string[]>();
+    for (const [id, change] of inChanges) owners.set(change, [...(owners.get(change) || []), id]);
     const notes = [
+      ...(d.richer.length
+        ? [
+            info(
+              "matrix_rows_richer",
+              `${d.richer.length} row(s) name more code or tests than the hand-kept matrix did: ` +
+                "every file a test or a source file mentions the requirement in.",
+              { fix: "Review them in the diff of docs/specs/traceability.md before committing." }
+            ),
+          ]
+        : []),
+      ...(inChanges.size
+        ? [
+            info(
+              "matrix_rows_in_changes",
+              `${inChanges.size} requirement(s) still in open changes join the matrix when archived: ` +
+                [...owners].map(([ch, ids]) => `${ch} (${ids.join(", ")})`).join("; ") +
+                ".",
+              { fix: "specgate archive <change-id> once every requirement in it is applied." }
+            ),
+          ]
+        : []),
       warning(
         "matrix_now_generated",
         "docs/specs/traceability.md is now generated. Edit spec.md, features and tests instead.",

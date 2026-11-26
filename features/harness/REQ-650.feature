@@ -1,4 +1,3 @@
-@change:verified-build
 Feature: The agent runs without the person's MCP servers, and may run the gate's checks
 
   @REQ-650 @SCN-650a

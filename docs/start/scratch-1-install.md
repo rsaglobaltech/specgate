@@ -27,7 +27,8 @@ way your stack starts one — `npm init`, Spring Initializr, `cargo new`,
 ```bash
 mkdir court-bookings && cd court-bookings
 git init
-npm init -y          # here: a package.json whose test script is `node --test`
+npm init -y
+npm pkg set scripts.test="node --test"   # npm init writes a "no test specified" stub
 ```
 
 ## 2. Set Specgate up — `specgate init`
@@ -85,6 +86,12 @@ $ specgate init
 ```
 <!-- specgate:out-scratch-init:end -->
 
+The lines the block cuts off set the agent: with Claude Code installed, `init`
+writes `agent: claude … --permission-mode acceptEdits …` to
+`harness.config.yaml`. At a terminal it asks first; with no terminal — run by
+an agent or a script — it sets it without asking. `specgate config set agent
+"<command>"` changes it.
+
 Two words in that output are written for existing code, because to `init` a
 folder with a `package.json` *is* existing code: "adopting", and `REQ-001 —
 Existing behaviour is preserved`. On a brand-new project that requirement holds
@@ -92,11 +99,12 @@ trivially. Leave it as it is; once the app exists, a test that it starts —
 naming `REQ-001` — closes it like any other.
 
 <!-- specgate:note -->
-**Did it create a sub-folder instead?** In a folder with no build file at all,
-`init` scaffolds a separate project (`<slug>/` with `spec.md`, `docs/`, CI and
-container files) from a short wizard. Create your project first, as above, and
-run `init` inside it — or use `init --new` on purpose when you want the full
-scaffold.
+**Did it create a sub-folder instead?** At a terminal, in a folder with no
+build file at all, `init` scaffolds a separate project (`<slug>/` with
+`spec.md`, `docs/`, CI and container files) from a short wizard; with no
+terminal it sets the folder up in place instead. Create your project first, as
+above, and run `init` inside it — or use `init --new` on purpose when you want
+the full scaffold.
 <!-- specgate:endnote -->
 
 ## 3. Tell it how to run your tests — once
@@ -128,7 +136,7 @@ specgate check
 $ specgate check
   ◆ specgate · check   court-bookings
 
-  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning, scope warning, controls warning
   ·  Ids            not compared with a base — no base branch (pass --base <branch>)
   ✔  Specification   validate --strict
   ✔  Tests           node --test

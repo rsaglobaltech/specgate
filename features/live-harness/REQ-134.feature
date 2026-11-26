@@ -4,5 +4,5 @@ Feature: A guided tour of the loop that leaves the repository untouched
   Scenario: The tour on a Node repository
     Given an adopted Node repository
     When the developer runs `specgate onboard --tour`
-    Then the output shows the four verbs and `check` in order, each passing, and ends naming `specgate propose`
+    Then the output shows the four verbs, the approval before `apply`, and `check` in order, each passing, and ends naming `specgate propose`
     And the repository's files are unchanged

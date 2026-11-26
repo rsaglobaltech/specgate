@@ -53,6 +53,7 @@ for the policy on when and how to write an ADR.
 | [0043](0043-the-workspace.md) | A workspace of repositories: one file names them, members stay whole, ids are qualified across them, a story is split into a change per repository | Accepted | 2026-10-29 |
 | [0044](0044-the-three-layers-of-a-change.md) | The three layers of a change: Discover (product), Design (architect), Tasks (developer), each checked; a 0.27 proposal is read as the Discover | Accepted | 2026-10-29 |
 | [0045](0045-roles-approvals-and-role-packages.md) | Roles in the config, an approval per layer by its owner with a quorum and a hash of what was approved, the harness waits for them, and role packages composed into the prompt | Accepted | 2026-10-29 |
+| [0046](0046-trust-levels-per-module.md) | Trust levels per module: declared in the gate policy, obeyed by the harness, raised only by an approved change, lowered at once by a bug; merging alone waits | Proposed | 2026-11-23 |
 
 ## Template
 

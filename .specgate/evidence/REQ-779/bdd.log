@@ -1,0 +1,10 @@
+▶ dist/tests/unit/sealed-acceptance.test.js
+✔ REQ-779 SCN-779a: the seal outlives the change — an archived change's sealed test is still checked and guarded (5738.238291ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6238.338125

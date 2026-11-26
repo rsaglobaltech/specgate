@@ -171,3 +171,66 @@ export function steering(projectDir: string): SteeringResult {
   }
   return { principles: { version: doc.version, source: doc.source, checked }, findings };
 }
+
+/**
+ * lab-fixes REQ-693: the principles that declare `run=`, run in `dir` — the
+ * harness gate's stage `principles`. Each failure: its principle, command and
+ * output; a warn-level one is advice and does not fail.
+ */
+export function runPrinciples(dir: string): {
+  failed: Array<{
+    id: string;
+    title: string;
+    run: string;
+    output: string;
+    level: "error" | "warn";
+  }>;
+  ran: number;
+} {
+  const file = path.join(dir, PRINCIPLES_FILE);
+  if (!fs.existsSync(file)) return { failed: [], ran: 0 };
+  const doc = parsePrinciples(fs.readFileSync(file, "utf8"));
+  const failed: Array<{
+    id: string;
+    title: string;
+    run: string;
+    output: string;
+    level: "error" | "warn";
+  }> = [];
+  let ran = 0;
+  for (const p of doc.principles) {
+    if (!p.run) continue;
+    ran++;
+    const r = spawnSync(forShell(p.run), { cwd: dir, shell: true, encoding: "utf8" });
+    if (r.status !== 0) {
+      failed.push({
+        id: p.id,
+        title: p.title,
+        run: p.run,
+        output: `${r.stdout || ""}${r.stderr || ""}`.trim(),
+        level: p.level,
+      });
+    }
+  }
+  return { failed, ran };
+}
+
+/** lab-fixes REQ-692: the principles as the agent reads them, or "" without any. */
+export function principlesPromptSection(dir: string): string {
+  const file = path.join(dir, PRINCIPLES_FILE);
+  if (!fs.existsSync(file)) return "";
+  const doc = parsePrinciples(fs.readFileSync(file, "utf8"));
+  if (doc.principles.length === 0) return "";
+  const lines = [
+    "## Principles",
+    "",
+    `The project's principles (${PRINCIPLES_FILE}). The gate checks the ones that declare a check; follow all of them.`,
+    "",
+  ];
+  for (const p of doc.principles) {
+    lines.push(
+      `- **${p.id} — ${p.title}**${p.statement ? `: ${p.statement}` : ""}${p.run ? ` (checked: \`${p.run}\`)` : ""}`
+    );
+  }
+  return lines.join("\n") + "\n";
+}

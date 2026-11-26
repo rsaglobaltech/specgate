@@ -1,0 +1,24 @@
+▶ dist/tests/unit/outside-judge.test.js
+✔ REQ-747 SCN-747a: the guard switched off — the run fails with controls_changed_by_session, naming the guard (110.408625ms)
+✔ REQ-747 SCN-747b: approved by the session — named (106.072584ms)
+✔ REQ-747 SCN-747c: the record removed — the steps are read against the hook log (112.737375ms)
+✔ REQ-747: steps said to be reviewed in the session, evidence removed, policy changed — each named (0.162541ms)
+✔ REQ-747 SCN-747d: a run that kept to the controls — the judge says nothing (106.360291ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 603.62125
+▶ dist/tests/unit/shortcut-proof.test.js
+✔ dist/tests/unit/shortcut-proof.test.js (73.904541ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 81.116167

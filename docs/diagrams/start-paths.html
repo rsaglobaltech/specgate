@@ -1,0 +1,105 @@
+<figure class="dia dia--card dia--start">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 684" class="dia__svg" role="img" aria-labelledby="sg-sp-t sg-sp-d">
+    <title id="sg-sp-t">Two ways to start: existing code, or a new project — both end at the gate in CI</title>
+    <desc id="sg-sp-d">Two lanes side by side, six steps each. Existing code: one, install
+      Specgate in the project with npm i -D @rsaglobaltech/specgate. Two, adopt it, touching no
+      code: npx specgate adopt. Three, set up your agent: npx specgate agents init --tool claude.
+      Four, write down one behaviour you rely on: npx specgate new with that behaviour. Five,
+      name its id, REQ-002, in a test that proves it, then deliver it: npx specgate apply
+      REQ-002. Six, before each pull request: npx specgate check. A new project: one, create
+      it with npx @rsaglobaltech/specgate@latest init, then set up your agent with npx specgate
+      agents init --tool claude. Two, save the plan as docs/brief.md and turn one module into a
+      draft: npx specgate propose --from-brief. Three, a person reads the draft and approves it
+      at a terminal, which an agent cannot do: npx specgate change approve with the change id.
+      Four, write a test that names REQ-002, then the code, and deliver it: npx specgate apply
+      REQ-002. Five, once every requirement of the change is applied, archive it: npx specgate
+      archive with the change id. Six, before each pull request: npx specgate check. Both lanes
+      end at the same place: the gate in CI on every pull request, the same specgate check you
+      run on your machine.</desc>
+
+    <defs>
+      <marker id="sg-sp-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+    </defs>
+
+    <g class="dia__band"><rect x="1" y="1" width="464" height="560"/></g>
+    <g class="dia__band dia__band--out"><rect x="495" y="1" width="464" height="560"/></g>
+    <g class="dia__ico" transform="translate(18 10) scale(.75)"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></g>
+    <g class="dia__ico" transform="translate(512 10) scale(.75)"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></g>
+    <text x="44" y="26" class="dia__band-t">EXISTING CODE — CODE THAT ALREADY WORKS</text>
+    <text x="538" y="26" class="dia__band-t">A NEW PROJECT — AN EMPTY FOLDER</text>
+
+    <g class="dia__box">
+      <rect x="20" y="44"  width="426" height="70"/>
+      <rect x="20" y="128" width="426" height="70"/>
+      <rect x="20" y="212" width="426" height="70"/>
+      <rect x="20" y="296" width="426" height="70"/>
+      <rect x="20" y="380" width="426" height="70"/>
+      <rect x="20" y="464" width="426" height="70"/>
+
+      <rect x="514" y="44"  width="426" height="70"/>
+      <rect x="514" y="128" width="426" height="70"/>
+      <rect x="514" y="296" width="426" height="70"/>
+      <rect x="514" y="380" width="426" height="70"/>
+      <rect x="514" y="464" width="426" height="70"/>
+    </g>
+    <g class="dia__box dia__box--ok"><rect x="514" y="212" width="426" height="70"/></g>
+    <g class="dia__box dia__box--gate"><rect x="240" y="604" width="480" height="72"/></g>
+
+    <g class="dia__ico dia__ico--ok" transform="translate(898 223)"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></g>
+    <text x="910" y="268" text-anchor="middle" class="dia__who dia__who--ok">PERSON</text>
+    <g class="dia__ico dia__ico--on-gate" transform="translate(260 628)"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></g>
+
+    <g>
+      <text x="38" y="72" class="dia__h"><tspan class="dia__step">1</tspan><tspan x="62">Install it in the project</tspan></text>
+      <text x="62" y="96" class="dia__s dia__mono">npm i -D @rsaglobaltech/specgate</text>
+      <text x="38" y="156" class="dia__h"><tspan class="dia__step">2</tspan><tspan x="62">Adopt it, touching no code</tspan></text>
+      <text x="62" y="180" class="dia__s dia__mono">npx specgate adopt</text>
+      <text x="38" y="240" class="dia__h"><tspan class="dia__step">3</tspan><tspan x="62">Set up your agent</tspan></text>
+      <text x="62" y="264" class="dia__s dia__mono">npx specgate agents init --tool claude</text>
+      <text x="38" y="324" class="dia__h"><tspan class="dia__step">4</tspan><tspan x="62">Write down one behaviour you rely on</tspan></text>
+      <text x="62" y="348" class="dia__s dia__mono">npx specgate new "&lt;a behaviour you rely on&gt;"</text>
+      <text x="38" y="408" class="dia__h"><tspan class="dia__step">5</tspan><tspan x="62">Name REQ-002 in a test, then deliver it</tspan></text>
+      <text x="62" y="432" class="dia__s dia__mono">npx specgate apply REQ-002</text>
+      <text x="38" y="492" class="dia__h"><tspan class="dia__step">6</tspan><tspan x="62">Before each pull request</tspan></text>
+      <text x="62" y="516" class="dia__s dia__mono">npx specgate check</text>
+
+      <text x="532" y="66" class="dia__h"><tspan class="dia__step">1</tspan><tspan x="556">Create it, then set up your agent</tspan></text>
+      <text x="556" y="87" class="dia__s dia__mono">npx @rsaglobaltech/specgate@latest init</text>
+      <text x="556" y="105" class="dia__s dia__mono">npx specgate agents init --tool claude</text>
+      <text x="532" y="156" class="dia__h"><tspan class="dia__step">2</tspan><tspan x="556">Save docs/brief.md, draft one module</tspan></text>
+      <text x="556" y="180" class="dia__s dia__mono">npx specgate propose --from-brief</text>
+      <text x="532" y="240" class="dia__h"><tspan class="dia__step">3</tspan><tspan x="556" class="dia__ok-t">Read the draft, approve it yourself</tspan></text>
+      <text x="556" y="264" class="dia__s dia__mono">npx specgate change approve &lt;change-id&gt;</text>
+      <text x="532" y="324" class="dia__h"><tspan class="dia__step">4</tspan><tspan x="556">A test names REQ-002, then the code</tspan></text>
+      <text x="556" y="348" class="dia__s dia__mono">npx specgate apply REQ-002</text>
+      <text x="532" y="408" class="dia__h"><tspan class="dia__step">5</tspan><tspan x="556">Every requirement applied: archive</tspan></text>
+      <text x="556" y="432" class="dia__s dia__mono">npx specgate archive &lt;change-id&gt;</text>
+      <text x="532" y="492" class="dia__h"><tspan class="dia__step">6</tspan><tspan x="556">Before each pull request</tspan></text>
+      <text x="556" y="516" class="dia__s dia__mono">npx specgate check</text>
+
+      <text x="300" y="636" class="dia__h dia__on-gate">The gate in CI on every pull request</text>
+      <text x="300" y="658" class="dia__s dia__on-gate">the same <tspan class="dia__mono">specgate check</tspan> you run on your machine</text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="233" y1="116" x2="233" y2="125" marker-end="url(#sg-sp-a)"/>
+      <line x1="233" y1="200" x2="233" y2="209" marker-end="url(#sg-sp-a)"/>
+      <line x1="233" y1="284" x2="233" y2="293" marker-end="url(#sg-sp-a)"/>
+      <line x1="233" y1="368" x2="233" y2="377" marker-end="url(#sg-sp-a)"/>
+      <line x1="233" y1="452" x2="233" y2="461" marker-end="url(#sg-sp-a)"/>
+      <line x1="727" y1="116" x2="727" y2="125" marker-end="url(#sg-sp-a)"/>
+      <line x1="727" y1="200" x2="727" y2="209" marker-end="url(#sg-sp-a)"/>
+      <line x1="727" y1="284" x2="727" y2="293" marker-end="url(#sg-sp-a)"/>
+      <line x1="727" y1="368" x2="727" y2="377" marker-end="url(#sg-sp-a)"/>
+      <line x1="727" y1="452" x2="727" y2="461" marker-end="url(#sg-sp-a)"/>
+
+      <path d="M233 536 V582 H400 V599" marker-end="url(#sg-sp-a)"/>
+      <path d="M727 536 V582 H560 V599" marker-end="url(#sg-sp-a)"/>
+    </g>
+  </svg>
+  </div>
+  <figcaption>Existing code and a new project start differently, and both end at the same gate on every pull request.</figcaption>
+</figure>

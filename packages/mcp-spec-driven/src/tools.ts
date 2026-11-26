@@ -71,10 +71,15 @@ class CliInvoker {
     const cmd = CliInvoker.parseCliCommand(cliPath);
     const useShell = process.platform === "win32";
     const quote = (v: string) => (useShell && /\s/.test(v) ? `"${v}"` : v);
+    // walkthrough-fixes-3 REQ-792: a call over MCP is never a person at a terminal, whatever
+    // the server's environment says — the acts reserved to a person stay refused.
+    const env = { ...process.env };
+    delete env.SPECGATE_ASSUME_TTY;
     return spawnSync(quote(cmd[0]), [...cmd.slice(1), ...args].map(quote), {
       encoding: "utf8",
       shell: useShell,
       timeout: 60000,
+      env,
     });
   }
 }
@@ -117,12 +122,15 @@ export class GenericCliTool implements ITool {
     if (this.dirStyle === "positional") argv.push(dir);
     else argv.push("--project-dir", dir);
 
-    // Pass args safely
-    for (const [k, v] of Object.entries(args)) {
+    // guard-switch-person REQ-769: only the arguments the tool declares reach the CLI —
+    // in the schema's order (walkthrough-fixes-3 REQ-792), whatever order the client sent.
+    const declared = Object.keys(
+      ((this.inputSchema as { properties?: Record<string, unknown> }) || {}).properties || {}
+    );
+    for (const k of declared) {
       if (k === "projectDir" || k === "cliPath") continue;
-      if (typeof v === "string") {
-        argv.push(v); // Quick hack, we need proper arg mapping
-      }
+      const v = args[k];
+      if (typeof v === "string") argv.push(v);
     }
 
     if (!argv.includes("--json")) {
@@ -929,8 +937,26 @@ TOOLS["specgate_config_set"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      key: { type: "string", description: "The <key> argument of `specgate config set`." },
+      value: { type: "string", description: "The <value> argument of `specgate config set`." },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "key", "value"],
+  },
+  "flag",
+  false
+);
+TOOLS["specgate_config_unset"] = new GenericCliTool(
+  "specgate_config_unset",
+  "Run specgate config unset",
+  "config unset",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+      key: { type: "string", description: "The <key> argument of `specgate config unset`." },
+    },
+    required: ["projectDir", "key"],
   },
   "flag",
   false
@@ -944,8 +970,9 @@ TOOLS["specgate_config_get"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      key: { type: "string", description: "The <key> argument of `specgate config get`." },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "key"],
   },
   "flag",
   false

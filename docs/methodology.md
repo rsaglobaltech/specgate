@@ -84,8 +84,11 @@ A change has three layers, each owned by a role (ADR-0044):
 Before building, `specgate review <change>` gives the people who decide one page
 to read, and each layer is approved by someone who holds its role —
 `specgate change approve <id> --layer discover|design|tasks`, or Approve in the
-studio. The harness builds a change only once its layers are approved; editing
-a layer asks for its approval again.
+studio. Approving is a person's act: the command refuses a session with no
+terminal, as an agent's tool is. `specgate apply` refuses a requirement of a
+change no person approved (`change_not_approved`), and the harness builds a
+change only once its layers are approved. Approval seals each requirement by
+its hash; editing one, or a layer, asks for its approval again.
 
 ### Build
 

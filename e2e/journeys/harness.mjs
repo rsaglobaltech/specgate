@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 /** Unattended delivery: the harness drives an agent through the gate. */
 import * as path from "node:path";
 
@@ -23,6 +24,8 @@ export default [
         path.basename(agent),
         [
           "const fs = require('node:fs');",
+          // `harness run` asks each agent first (REQ-691): it answers.
+          "if (/Reply with exactly: OK/.test(fs.readFileSync(process.argv[2], 'utf8'))) { console.log('OK'); process.exit(0); }",
           "fs.mkdirSync('test', { recursive: true });",
           `fs.writeFileSync('test/totals.test.js', '// ${req.id} ${req.scenarioId}\\n');`,
           "fs.appendFileSync('src/orders/index.js', '// rounding\\n');",
@@ -93,6 +96,48 @@ export default [
         "the answer says no run is paused",
         r
       );
+    },
+  },
+  {
+    name: "harness doctor: the agent that answers, and the one that is not installed (REQ-690)",
+    covers: ["harness doctor"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      const agent = path.join(path.dirname(dir), `ok-${path.basename(dir)}.js`);
+      t.write(path.dirname(agent), path.basename(agent), "console.log('OK');\n");
+      t.write(dir, "harness.config.yaml", `agent: 'node "${agent}" {prompt_file}'\n`);
+      const ok = t.sg(dir, "harness", "doctor", "--json");
+      t.ok(ok, "doctor with an agent that answers");
+      t.expect(t.json(ok).doctor.agents.every((a) => a.answered === true), "it answers", ok);
+      t.write(dir, "harness.config.yaml", "agent: 'nosuchagent -p'\n");
+      const missing = t.sg(dir, "harness", "doctor", "--no-probe", "--json");
+      t.expect(missing.status === 1, "exits 1 when an agent is missing", missing);
+      t.expect(/nosuchagent is not installed/.test(missing.stdout), "names the program", missing);
+    },
+  },
+  {
+    name: "harness sandboxes: a sandbox nobody recorded is listed, and --prune removes it (REQ-701)",
+    covers: ["harness sandboxes"],
+    run(dir, t) {
+      // sbx is stood in for by a shell script; Docker Sandboxes on Windows are not proven yet.
+      if (process.platform === "win32") t.skip("the sbx stand-in is a POSIX shell script");
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      // sbx stands in: one sandbox sg-stray until it is removed.
+      const fake = path.join(path.dirname(dir), `sbx-${path.basename(dir)}`);
+      const gone = `${fake}.gone`;
+      t.write(
+        path.dirname(fake),
+        path.basename(fake),
+        `#!/bin/sh\nif [ "$1" = ls ]; then if [ -f "${gone}" ]; then echo '[]'; else echo '[{"name":"sg-stray"}]'; fi; fi\nif [ "$1" = rm ]; then touch "${gone}"; fi\n`
+      );
+      spawnSync("chmod", ["+x", fake]);
+      const list = t.sgEnv(dir, { SPECGATE_SBX: fake }, "harness", "sandboxes", "--json");
+      t.ok(list, "harness sandboxes --json");
+      t.expect(t.json(list).sandboxes.strays[0]?.name === "sg-stray", "the stray is listed", list);
+      const pruned = t.sgEnv(dir, { SPECGATE_SBX: fake }, "harness", "sandboxes", "--prune", "--json");
+      t.expect(t.json(pruned).sandboxes.removed.includes("sg-stray"), "--prune removes it", pruned);
     },
   },
 ];

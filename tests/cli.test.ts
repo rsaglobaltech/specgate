@@ -13,6 +13,8 @@ const ROOT_DIR = require("node:path").resolve(
 );
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 const PKG = require(path.join(ROOT_DIR, "package.json"));
+// REQ-691: the agents here are scripts; `harness run` asks them no question first.
+process.env.SPECGATE_SKIP_DOCTOR ??= "1";
 
 function runCli(args: string[], options: CliOptions = {}): CliResult {
   return spawnSync(process.execPath, [CLI_PATH, ...args], {

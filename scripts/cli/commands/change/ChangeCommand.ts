@@ -10,6 +10,7 @@
  * what lets an agent drive this without screen-scraping.
  */
 
+import { removeChangeSandboxes } from "../../../lib/sandbox-registry";
 import { dropChangeTag, syncChangeFeatures, syncIfApproved } from "../../../lib/bdd";
 import { addGlossaryTerms, refreshDomainDiagrams } from "../../../lib/domain-docs";
 import * as fs from "node:fs";
@@ -83,6 +84,7 @@ import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { impactOf } from "../../../lib/change-impact";
 import { parseUseCaseDelta } from "../../../../packages/core/src/domain/UseCaseDelta";
 import { approvalBlockers, approveChange, noteChange, reviewOf } from "../../../lib/change-review";
+import { sealAcceptance, firstAcceptanceRun } from "../../../lib/acceptance";
 import type { LayerId } from "../../../../packages/core/src/domain/ChangeLayers";
 import {
   declaredSpecValues,
@@ -112,6 +114,7 @@ import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { removeTempFile } from "../../../lib/temp-file";
 import { changeApprovals } from "../../../lib/approvals";
+import { lowerOnLeak } from "../../../lib/trust";
 
 // The artefact graph. Dependencies are enablers, not gates: `requires` says
 // what makes an artefact *possible*, never what the author must do next.
@@ -195,7 +198,7 @@ function usage() {
       `    ${c.green}author <id>${c.reset}    ${c.dim}Have an agent write one artefact, confined to the change.${c.reset}\n` +
       `    ${c.green}validate [id]${c.reset}  ${c.dim}Check the deltas against the capability specs.${c.reset}\n` +
       `    ${c.green}impact <REQ|id>${c.reset} ${c.dim}Spec, features, tests, files and requirements a change to it touches.${c.reset}\n` +
-      `    ${c.green}approve <id>${c.reset}   ${c.dim}Approve the layers you own (--layer discover|design|tasks): Build waits for all.${c.reset}\n` +
+      `    ${c.green}approve <id>${c.reset}   ${c.dim}Approve the layers you own (--layer discover|design|tasks), or seal its acceptance tests (--layer acceptance).${c.reset}\n` +
       `    ${c.green}note <id> "<text>"${c.reset} ${c.dim}Ask the draft for a change in your words (--req REQ).${c.reset}\n` +
       `    ${c.green}archive <id>${c.reset}   ${c.dim}Once its requirements are Implemented: merge, sync traceability, archive.${c.reset}\n\n` +
       `  ${c.bold}OPTIONS${c.reset}\n` +
@@ -462,6 +465,7 @@ function cmdNew(opts: ChangeOptions) {
 
   // `propose` always leaves a delta to write: named after the change unless
   // the person names the capability (ADR-0035).
+  const namedCapability = opts.capability;
   if (VERB === "propose" && !opts.capability && !opts.fromValueDrift) opts.capability = changeId;
 
   if (opts.capability && opts.fromValueDrift) {
@@ -556,6 +560,12 @@ function cmdNew(opts: ChangeOptions) {
     );
   }
 
+  // REQ-673: a bug in a module lowers its trust level at once.
+  const leak =
+    opts.kind === "bug" && namedCapability
+      ? lowerOnLeak(projectDir, namedCapability, changeId)
+      : null;
+
   emit(
     opts,
     {
@@ -568,6 +578,7 @@ function cmdNew(opts: ChangeOptions) {
         kind: opts.kind || null,
         created,
       },
+      ...(leak ? { trust: leak } : {}),
     },
     () => {
       process.stdout.write(
@@ -591,6 +602,13 @@ function cmdNew(opts: ChangeOptions) {
                   : "after you write the proposal, then the delta"
               ))
       );
+      if (leak) {
+        process.stdout.write(
+          ui.warn(
+            `${leak.capability} went down to trust level ${leak.to} (from ${leak.from}): a bug escaped from it.`
+          )
+        );
+      }
     }
   );
 }
@@ -661,6 +679,58 @@ function cmdApprove(opts: ChangeOptions) {
   const id = opts.positional[0];
   const nullShape = { approve: null };
   const layer = opts.layer as LayerId | undefined;
+  // person-approves REQ-748: approving is a person's word, said at a terminal — a tool that runs its own commands has none.
+  // The studio's Review approves through approveChange, not here.
+  if (id && !process.stdin.isTTY && !process.env.SPECGATE_ASSUME_TTY) {
+    return fail(opts, nullShape, [
+      error(
+        "approve_needs_person",
+        `Approving ${id} is a person's act, and this is not a terminal. Nothing was recorded.`,
+        {
+          target: id,
+          fix: `A person runs it in a terminal: specgate change approve ${id}${opts.layer ? ` --layer ${opts.layer}` : ""} — or approves it in the studio's Review.`,
+        }
+      ),
+    ]);
+  }
+  // sealed-acceptance REQ-757: the acceptance tests are approved as they are, and sealed.
+  if (id && (layer as string) === "acceptance") {
+    const a = sealAcceptance(projectDir, id, new Date().toISOString().slice(0, 10));
+    if (!a.ok)
+      return fail(opts, nullShape, [
+        error(a.code, a.message, { target: id, ...(a.fix ? { fix: a.fix } : {}) }),
+      ]);
+    // guard-scope-and-seal-run REQ-794: run once, so the person sees why they fail before the code exists.
+    const first = firstAcceptanceRun(projectDir, a.sealed);
+    return emit(
+      opts,
+      {
+        approve: {
+          ok: true,
+          change: id,
+          layers: ["acceptance"],
+          sealed: a.sealed,
+          firstRun: first,
+        },
+      },
+      () =>
+        process.stdout.write(
+          ui.header("change approve", id) +
+            ui.ok(`Acceptance of ${id} approved and sealed — ${a.sealed.length} test(s).`) +
+            "\n" +
+            a.sealed.map((f) => `    🔒 ${f}\n`).join("") +
+            (first
+              ? `\n  Ran once — ${first.command}: ${first.passed ? "they pass already." : "they fail, as they should before the code exists. Read why: a test that fails for a file outside this change will never pass — if so, fix it and seal it again."}\n` +
+                (first.passed
+                  ? ""
+                  : first.output
+                      .split("\n")
+                      .map((l) => `    ${l}\n`)
+                      .join(""))
+              : "")
+        )
+    );
+  }
   const r = id
     ? approveChange(projectDir, id, new Date().toISOString().slice(0, 10), layer)
     : { ok: false as const, code: "change_not_found", message: "approve needs a change id." };
@@ -1547,8 +1617,10 @@ function cmdArchive(opts: ChangeOptions) {
   const regenerated = refreshDomainDiagrams(projectDir);
   // REQ-595: the names this change brought in, as glossary rows to define.
   const newTerms = addGlossaryTerms(projectDir);
+  // sandbox-swarm REQ-700: the change is done — its sandboxes go, with their rules.
+  const sandboxesRemoved = removeChangeSandboxes(projectDir, changeId);
 
-  emit(opts, { archive: { ...summary, glossaryAdded: newTerms } }, () => {
+  emit(opts, { archive: { ...summary, glossaryAdded: newTerms, sandboxesRemoved } }, () => {
     const t = plan.totals;
     // Set on every plan that gets this far: only a failed plan returns early.
     const trace = t.traceability!;
@@ -1560,6 +1632,9 @@ function cmdArchive(opts: ChangeOptions) {
         (newTerms.length > 0
           ? `  ${ui.muted(`+  docs/specs/glossary.md: ${newTerms.join(", ")} — write their definitions`)}\n`
           : "") +
+        sandboxesRemoved
+          .map((n) => `  ${ui.muted(`−  sandbox ${n} removed, with its rules`)}\n`)
+          .join("") +
         ui
           .kv("Specs", `${t.added} added · ${t.modified} modified · ${t.removed} removed`, 14)
           .replace(/^ {2}/, "    ") +

@@ -1,5 +1,7 @@
 import * as fs from "node:fs";
 import { undecidedFacts } from "../../../agents/contract-file";
+import { missingApprovals } from "../../../lib/approvals";
+import { listChangeIds } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { inBuildOrder, modulePlaces, whyNext } from "../../../lib/build-order";
 import { agentPrompt, type PromptKind } from "../../../../packages/core/src/domain/AgentKickoff";
 import * as path from "node:path";
@@ -38,6 +40,7 @@ import { petFor } from "./PetCommand";
 import { projectJourneys } from "../../../lib/journeys";
 import { projectStateMachines, projectUseCases } from "../../../lib/domain-docs";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import { requirementsWithScenarios, scenariosRequired } from "../../../lib/scenario-runs";
 import { changesToMigrate, lanesToMigrate } from "../../../lib/migrate";
 import { readConfig } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 
@@ -117,6 +120,24 @@ export interface QueueSummary {
   briefToFill?: string;
   /** A brief at the root that `briefToFill` does not hold yet (REQ-251). */
   rootBrief?: string;
+  /** The open changes `apply` would refuse until a person approves them (REQ-745). */
+  unapproved?: string[];
+}
+
+/**
+ * gate-runs-scenarios REQ-734, REQ-735: the delivered requirements that have a
+ * feature file — those whose scenarios a gate can run, or did not.
+ */
+export function deliveredWithFeature(projectDir: string): string[] {
+  return withQueue(projectDir, (summary, dir) => {
+    const withScenarios = requirementsWithScenarios(dir);
+    const out = new Set<string>();
+    for (const it of summary.items) {
+      if (!["Implemented", "Verified", "Released"].includes(String(it.status || ""))) continue;
+      if (withScenarios.has(it.requirement)) out.add(it.requirement);
+    }
+    return [...out].sort();
+  });
 }
 
 /** What `nextCommandPlain` and `nextReason` read from a summary. */
@@ -131,6 +152,7 @@ type NextInput = Pick<
   | "tickets"
   | "briefToFill"
   | "rootBrief"
+  | "unapproved"
 >;
 
 export interface StatusOptions {
@@ -293,6 +315,14 @@ export function withQueue<T>(
         if (owner) it.change = owner.change;
       }
     }
+    // REQ-745: a requirement of a change nobody approved is not delivered yet — approving comes next.
+    summary.unapproved = listChangeIds(projectDir).filter((id) => {
+      try {
+        return missingApprovals(projectDir, id) !== null;
+      } catch {
+        return false;
+      }
+    });
     return read(summary, dir, view);
   } finally {
     if (view) view.cleanup();
@@ -485,10 +515,14 @@ export function nextCommandPlain({
   brief,
   forja,
   briefToFill,
+  unapproved,
 }: NextInput): string {
   const first = (cats: string[]) => (items || []).find((it) => cats.includes(it.category));
   if (orphans.length > 0) return "specgate fix";
+  const waiting = (it: QueueItem | undefined) =>
+    Boolean(it && it.change && (unapproved || []).includes(it.change));
   const ready = first(["NEEDS_STATUS_UPDATE"]);
+  if (ready && waiting(ready)) return `specgate change approve ${ready.change}`;
   if (ready) return `specgate apply ${ready.requirement}`;
   const module = briefFirst({ items, brief });
   if (module) return draftNextCommand(module);
@@ -499,6 +533,7 @@ export function nextCommandPlain({
     if (onlyBaseline(items) && briefToFill) return "specgate draft";
     if (onlyBaseline(items))
       return tickets ? FROM_TICKET : 'specgate new "<a behaviour you rely on>"';
+    if (waiting(todo)) return `specgate change approve ${todo.change}`;
     if (forja && needsCode(todo)) return forjaAddCommand(todo);
     // On a generated matrix a test that names its requirement is the link;
     // `apply` is what you run once it exists, and it checks first.
@@ -528,8 +563,17 @@ function nextReasonOf({
   tickets,
   briefToFill,
   rootBrief,
+  unapproved,
 }: NextInput): string {
   if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
+  const pendingChange = (items || []).find(
+    (it) =>
+      it.change &&
+      (unapproved || []).includes(it.change) &&
+      TODO_CATEGORIES.concat(["NEEDS_STATUS_UPDATE"]).includes(it.category)
+  )?.change;
+  if (pendingChange)
+    return `${pendingChange} waits for a person to approve it, at their terminal — apply delivers nothing before`;
   if ((items || []).some((it) => it.category === "NEEDS_STATUS_UPDATE"))
     return "its test exists; close it through the gate";
   const module = briefFirst({ items, brief });
@@ -762,6 +806,19 @@ function statusDocument(
     // REQ-639: each entity's state machine, for the studio to draw.
     stateMachines: projectStateMachines(projectDir),
     packs: lock && lock.packs ? lock.packs : [],
+    // gate-runs-scenarios REQ-735: delivered on a test alone — their scenarios nobody ran.
+    deliveredWithoutScenarios: scenariosRequired(projectDir)
+      ? 0
+      : ((have) =>
+          new Set(
+            summary.items
+              .filter(
+                (it) =>
+                  ["Implemented", "Verified", "Released"].includes(String(it.status || "")) &&
+                  have.has(it.requirement)
+              )
+              .map((it) => it.requirement)
+          ).size)(requirementsWithScenarios(projectDir)),
     requirements: summary.items.map((it) => ({
       id: it.requirement,
       title: titleOf(it) || null,

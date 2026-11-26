@@ -39,7 +39,11 @@ function cli(dir: string, ...args: string[]) {
   return spawnSync(
     process.execPath,
     [path.join(findCliRoot(__dirname), "bin", "specgate.js"), ...args],
-    { cwd: dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1", SPECGATE_PET: "0" } }
+    {
+      cwd: dir,
+      encoding: "utf8",
+      env: { ...process.env, NO_COLOR: "1", SPECGATE_PET: "0", SPECGATE_ASSUME_TTY: "1" },
+    }
   );
 }
 
@@ -112,6 +116,16 @@ function loop(dir: string): TourStep[] {
   if (
     step("status", ["status"], () => `${id} is listed while its change is open — in flight`) ===
     null
+  ) {
+    return steps;
+  }
+  // outside-judge REQ-745: nothing is delivered that a person did not approve.
+  if (
+    step(
+      "approve",
+      ["change", "approve", CHANGE],
+      () => "a person read the change and approved it — only then is a requirement of it delivered"
+    ) === null
   ) {
     return steps;
   }

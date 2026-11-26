@@ -1,0 +1,11 @@
+▶ dist/tests/unit/agent-guards.test.js
+✔ REQ-727 SCN-727a: the plugin is the definition OpenCode 2 loads (1.962375ms)
+✔ REQ-727 SCN-727b: the plugin an earlier Specgate generated is taken away, one written by hand is left (121.496125ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 216.757

@@ -1,0 +1,12 @@
+▶ dist/tests/unit/bdd-gate.test.js
+✔ REQ-734 SCN-734a: code changed after delivery — check fails at scenarios naming the requirement and the scenario (1695.721875ms)
+✔ REQ-734: the delivered requirements' scenarios pass — check passes with the stage scenarios (1608.014ms)
+✔ REQ-734 SCN-734b: --no-scenarios leaves the stage out at the Developer's word, and says so (1545.331ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4931.436791

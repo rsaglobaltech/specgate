@@ -1,4 +1,3 @@
-@change:brief-form-why
 Feature: Why and Quality in the brief's form
 
   @REQ-669 @SCN-669a

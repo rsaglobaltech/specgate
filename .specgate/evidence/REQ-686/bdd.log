@@ -1,0 +1,11 @@
+▶ dist/tests/unit/skill-evals.test.js
+✔ REQ-686 SCN-686a: two tasks, three runs each — correct by the gate, good with the reviewer (5980.378958ms)
+✔ REQ-686 SCN-686b: no exam, refused with the file to write (928.587708ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7001.117666

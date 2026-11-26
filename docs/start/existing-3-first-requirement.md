@@ -13,8 +13,31 @@ specification.
 
 | Who | Does what in this phase |
 | --- | --- |
-| **You** | Name the requirement in its test; archive the change |
+| **You** | Name the requirement in its test; approve and archive the change |
 | **The gate** | Refuses until a test names the requirement and the suite passes |
+
+## First: approve the change
+
+You read the delta in phase 2. Approving it is yours, at your terminal — an
+agent cannot, since approving refuses a session with no terminal
+(`approve_needs_person`), and `apply` delivers nothing of a change nobody
+approved (`change_not_approved`).
+
+```bash
+specgate change approve invoice-rounding
+```
+
+<!-- specgate:out-existing-approve:begin — generated; edit the source, not this block -->
+```text
+$ specgate change approve invoice-rounding
+  ◆ specgate · change approve   invoice-rounding
+
+  ✔  invoice-rounding approved on 2026-01-01.
+
+    + features/invoice-rounding/REQ-004.feature   its scenarios, to run before any code
+```
+<!-- specgate:out-existing-approve:end -->
+
 
 ## 1. Try to close it — and see why it refuses
 
@@ -78,6 +101,7 @@ $ specgate apply REQ-004
   ✔  Tests           node --test
 
   ✔  REQ-004 → Implemented (1 row updated)
+  ·  REQ-004 is delivered on a test that names it: its scenarios were not run. specgate migrate bdd makes the gate run them.
 
   Next ───────────────────────────────────────────────────
   ➜  specgate archive invoice-rounding
@@ -107,7 +131,7 @@ $ specgate archive invoice-rounding
 
     Specs         1 added · 0 modified · 0 removed
     Traceability  1 row(s) added · 0 updated · 0 removed
-    Features      1 materialised
+    Features      0 materialised
 
   Next ───────────────────────────────────────────────────
   ➜  specgate status
@@ -116,9 +140,9 @@ $ specgate archive invoice-rounding
 <!-- specgate:out-existing-archive:end -->
 
 `archive` merges the delta into the capability's specification under
-`docs/specs/capabilities/`, adds REQ-004 to the traceability matrix, writes
-its scenario to `features/`, and moves the change folder to
-`docs/specs/changes/archive/`. It refuses while any requirement of the change
+`docs/specs/capabilities/`, adds REQ-004 to the traceability matrix, and moves
+the change folder to `docs/specs/changes/archive/`. Its scenario is already in
+`features/`: `change approve` wrote it, so `Features` says `0 materialised`. It refuses while any requirement of the change
 is not yet applied, and no flag skips that.
 
 Archive on your branch, before the pull request: the specification and the
@@ -149,7 +173,7 @@ and a screen nobody could reach.
 | --- | --- | --- |
 | `[TDD-1] Test artifact is TBD but status is 'Implemented'` | No file names `REQ-004` | Put the id in the test's name or a comment |
 | `not marked Implemented: the project's tests failed. [done_tests_failed]` | The suite is red | Fix the code or the example — decide which is right |
-| `once a test names one of its scenarios (SCN-NNN), each scenario needs a test that names it` | You named one scenario, not all | Name the others too, or name only the requirement |
+| `1 coverage finding(s) reported, not failed` | A test names one scenario of the requirement, not all | Under the standard preset this is a warning (`coverage` in `.specgate/gate.yaml`); name the others too, or name only the requirement |
 | `has 1 requirement(s) not delivered yet … [archive_requirements_pending]` | A requirement of the change is not applied | Run the `apply` the fix line names, then archive again |
 
 ## Next

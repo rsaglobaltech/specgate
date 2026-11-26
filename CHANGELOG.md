@@ -9,6 +9,98 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-11-26
+
+### Added
+
+- Approving a change seals each of its requirements — statement and scenarios — at every rigor; the gate fails with `approved_requirement_changed` when one differs, was added or was removed, until a person approves again. Delivering a requirement is not a change to it. A change approved before seals existed is reported as `approval_not_sealed`, with the way to seal it (REQ-739, REQ-740, REQ-741).
+- Sealed acceptance tests: listed in `docs/specs/changes/<id>/acceptance-tests.md`, each naming the scenarios it proves, and approved by a person with `specgate change approve <id> --layer acceptance`, which records each file as it is (REQ-757).
+- A sealed acceptance test that changed or is gone fails the gate with `acceptance_not_sealed`, until it is restored or a person approves it again; new gate rule `acceptance` (REQ-758).
+- `specgate check` runs the sealed acceptance tests with `acceptance_cmd` of `harness.config.yaml` (`{files}` the sealed paths), in a new `acceptance` stage; red fails with `acceptance_red`, a project with sealed tests and no command gets `acceptance_no_command`. Specgate installs nothing (REQ-759).
+- The guard of Claude Code, Codex and OpenCode refuses with `acceptance_sealed` a write, edit, patch or shell command that changes a sealed acceptance test; a change made where no hook runs is seen by the outside judge (REQ-760).
+- With `bdd: required`, `specgate check` runs the scenarios of every delivered requirement with `bdd_cmd`, in a new `scenarios` stage, and fails with `check_scenarios_failed` naming the requirement and the scenario; `check --no-scenarios` skips them (REQ-734).
+- The harness gate runs the requirement's scenarios, and a failure goes back to the agent (REQ-733).
+- Where scenarios are not executed, `apply` says the requirement was delivered on a test that names it, with `specgate migrate bdd` as the way; `status` counts the requirements that stand so (REQ-735).
+- `specgate check --base <branch>` names what the branch changes in the controls — the guard, the gate's policy, an open change's approvals, evidence, a sealed acceptance test — as `controls_changed_on_branch`, for the reviewer; new gate rule `controls`, a warning by default. An approval that left with its change into the archive is not named (REQ-754).
+- Where Specgate's hooks run, the agent's next tool call — its shell included — is refused while a source file is new or changed and no test names a requirement of the open change (REQ-742).
+- Step definitions added or changed after a requirement's code began fail `apply` and the harness gate with `steps_changed_after_code`; a person reviews them and runs `specgate apply <REQ> --steps-reviewed` (REQ-743).
+- A new source file that the approved design of a change does not name is reported as `file_outside_design`; new gate rule `scope`, an error in `strict`, a warning in `standard` and `minimal` (REQ-744).
+- Where Specgate's hooks run, an agent's session is refused the acts that are a person's — approving a change, switching the guard, saying steps were reviewed, writing the files the controls keep — and is no longer told how to switch the guard off (REQ-746).
+- `harness run` and `compat run` read the controls before the agent starts, keep that reading where the agent does not write, and fail with `controls_changed_by_session` naming each control the agent changed (REQ-747).
+- `specgate agents init --tool codex-hooks` writes `.codex/hooks.json`: Codex runs Specgate's session, guard and gate hooks, the guard on `Bash` and `apply_patch`; a `.codex/hooks.json` Specgate did not write is left alone, saying so. A patch is judged as a write to each file it adds, updates or moves to (REQ-751).
+- The compatibility exam (`specgate compat run`, `compat report`): each run records what Specgate's MCP server and plugin saw, and keeps the tool's own session — its calls, tokens and cost (REQ-717, REQ-718); a baseline level `B` with no Specgate (REQ-719); the tasks `deliver`, `change`, `trap`, `recover` and `unrequested`, each with a hidden verdict (REQ-720–REQ-723); delivery and use apart per tool, model and task (REQ-724); `--ladder` climbs to the next model only where a cell is not green, and the report names the cheapest green model and the cost per delivered requirement (REQ-725); level `M`, the MCP server with no shell (REQ-726).
+- Each exam level gives the tool exactly its integration; at L3, Codex runs with its project hooks (REQ-712).
+- `specgate compat check-release` passes only when this version has valid runs of Claude Code, Codex and OpenCode at L0 on `deliver`, all passed; otherwise it fails with `compat_not_examined` (REQ-732).
+- The trap task with the gate requiring executable scenarios, `trap-scenarios` (REQ-731).
+- `compat run --sandbox sbx`: each agent runs in a Docker sandbox that holds its run and nothing else of the machine (REQ-736); its network is the tool's provider and the package registry, every other host of its kit denied (REQ-737).
+- `specgate compat attack two-function` replays the recorded attack on a sealed step file with no model; level `L3a` runs L3 with acceptance tests written first, and sealed, by another agent that sees no source (REQ-761).
+
+- Trust levels per module (ADR-0046): `trust:` in `.specgate/gate.yaml` gives each capability a level from 1 (observed) to 5 (triage), checked by the gate (REQ-670).
+- `harness run` skips what a module's level does not allow and says why (`trust_level`); `--chain` into the main branch is refused while trust levels are declared (REQ-671, REQ-694).
+- `specgate trust promote <capability>` opens the change that raises a level; approving it writes the level and `.specgate/trust-ledger.jsonl` records it. A level raised by hand fails the gate (REQ-672).
+- `propose --kind bug --capability <c>` lowers that module's level by one at once (REQ-673).
+- `specgate map [<REQ>] [--json]`: where each requirement lives — use case, actor, the route and the address (`app_url`) where it is reached, feature, code and tests (REQ-678).
+- The harness tells the agent where the requirement lives in the app and to open it before and after the change (REQ-679).
+- `apply` keeps the evidence of each delivery in `.specgate/evidence/<REQ>/`: the scenarios' command, result and output, and the screenshots and traces the browser tests left (REQ-680).
+- `specgate reproduce <change-id> --capability <c> --title <t>` opens a bug change whose requirement must be reproduced, and lowers the module's trust; `specgate reproduce run <REQ>` keeps its red run as evidence and refuses a green one (`repro_not_red`) (REQ-681, REQ-682).
+- `apply` refuses a bug never seen red (`apply_not_reproduced`), and keeps the red run beside the green one (REQ-683).
+- `specgate learn [--json]` lists the lessons that keep coming back: review notes alike in two changes or more, and gate stages the agent keeps failing (REQ-684).
+- `specgate learn promote <L> --title <rule> [--forbid … --in … | --run …]` opens a change; once approved, the rule is a principle in `docs/specs/principles.md`, an instruction or a barrier the gate checks (REQ-685).
+- `specgate eval <skill>` examines a skill: each task of `evals/<skill>/eval.yaml` run several times in parallel on clean copies, the skill handed to the agent; correct when `specgate check` passes, good by the architecture and quality stages and an optional reviewer (REQ-686).
+- The harness prompt lists the project's principles, and the harness gate runs those with `run=` as the stage `principles` (REQ-692, REQ-693).
+- With trust levels declared, `harness run --chain` works on a branch of your own; it stays refused on the main branch (REQ-694).
+- `harness run --dry-run` shows a requirement the trust level would skip as `skipped (trust_level)`, not its prompt (REQ-695).
+- An exam task can hold a `check:` and its `check_files:`, run after the agent and never shown to it (REQ-697).
+- A profile rule can match `module:`: a module's requirements go to that profile's agent (REQ-688).
+- `draft_profile` names the agent that drafts a module of the brief, apart from the agent that builds; `--no-agent` keeps the drafting guide for your own agent (REQ-689).
+- `specgate harness doctor [--json] [--no-probe]`: which agent each pending requirement gets, and whether each agent — the drafting one too — is installed and answers a one-line prompt (REQ-690).
+- `harness run` checks the agents it needs before any worktree and refuses with `harness_agent_unavailable` when one does not answer; `--skip-doctor` starts anyway (REQ-691).
+- `sandbox: { engine: sbx, kit, allow, setup }`: each module of a change gets its own Docker sandbox, `sg-<change>-<module>`, made and set up once; the agents work inside it, the gate stays on the host (REQ-698).
+- Each host of `sandbox.allow` is opened for that sandbox alone; the hosts the kit brings are recorded too, and the run says how many each sandbox may reach (REQ-699).
+- `specgate archive <change>` removes the change's sandboxes with their rules (REQ-700).
+- `specgate harness sandboxes [--prune] [--json]`: every sandbox the harness made, the hosts it may reach, and the `sg-…` ones nobody recorded; `--prune` removes the leftovers (REQ-701).
+- `specgate eval --list [--json]`: every exam with its skill's and its own whole text, its tasks (the hidden checks marked), its history, each version against the one before, the exam in progress and the last exam's runs (REQ-702, REQ-703, REQ-704).
+- While an exam runs, `evals/<skill>/running.json` says how far it got (REQ-703).
+- Each exam run keeps its prompt and a log written as it happens in `evals/<skill>/runs/<stamp>/<task>-<n>/`; the last 5 exams are kept (REQ-704).
+- `config set profiles.<name>.match.module <module>` / `.match.requirement <REQ>` gives a module or a requirement its own agent; a module the project lacks is refused, naming those it has (REQ-705).
+- `config set sandbox.engine|kit|allow|setup|image|network` writes where the agents work, checked as the harness reads it; `draft_profile` and `sandbox.*` are read back by `config list` and `get` (REQ-706).
+- `specgate config unset <key>` removes a setting, `config unset profiles.<name>` a whole profile, `config unset sandbox` the whole block (REQ-707).
+- Each exam is kept in `evals/<skill>/history.jsonl` per version of the skill, and compared with the previous version: better, worse or the same (REQ-687).
+- `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
+- The guard refuses a new source file that the approved design of the open change does not name, with `file_outside_design`: the work is proposed, not written (REQ-793).
+- Sealing acceptance tests runs them once with `acceptance_cmd` and shows why they fail, so a test that loads a file from a wrong path is caught before the code exists (REQ-794).
+- `specgate apply` and `check`, when the red tests name only other requirements, say which requirements are red and that their code — not their test — is repaired in the change; AGENTS.md says the same (REQ-787).
+- `specgate status` names the approval a change waits for (REQ-777); the verdict names the fix for what a person approved (REQ-780).
+- The landing page shows the measured exam — 16 of 36 jobs by the agent on its own, 33 of 36 with Specgate — how it was measured, where each control runs and the nine controls (REQ-762, REQ-763, REQ-764).
+- The documentation in Spanish covers every page.
+
+### Changed
+
+- **Breaking for scripts: `specgate change approve` needs a person at a terminal** (REQ-748). Run with no terminal — by an agent's tool, a CI step or a script — it fails with `approve_needs_person` and records nothing. At a terminal, and in the studio's Review, approving is as before.
+- **Breaking for scripts: `specgate apply` refuses a requirement of a change nobody approved** (REQ-745), with `change_not_approved` and the approval it waits for. Approve the change first, or set `approvals: { required: never }` in `harness.config.yaml`.
+- `compat run` does not start OpenCode, which approves its own commands, outside a sandbox: it asks for `--sandbox sbx`, and runs on the machine only with `--no-sandbox`, saying the agent can read what the Developer can (REQ-738).
+- On the Developer's machine, an exam run starts only when the agent's login shell and `npx` reach the `specgate` its level gives — the one under exam, or none at the baseline; otherwise it is invalid and says what they reached (REQ-749).
+- A run in which the tool never worked — a provider error before any call, or the tool not installed — is invalid, not failed, left out of every cell; after two in a row the tool is not asked again in that batch (REQ-730).
+- **Switching the guard off takes a person at a terminal** (REQ-768); an MCP tool passes only the arguments it declares (REQ-769), and never the terminal stand-in (REQ-792).
+- A question on a requirement that waits no longer blocks approving the rest of the change (REQ-771); a requirement waiting for an answer is never handed to an agent (REQ-782), and a ready draft names the approval next (REQ-784).
+- A change's acceptance tests are listed in `acceptance-tests.md` (REQ-757); a sealed test of an archived change is still checked and guarded (REQ-779).
+- `agents init` writes the Claude Code plugin under `.claude/` (REQ-781).
+
+### Fixed
+
+- The OpenCode plugin loads in OpenCode 2: `agents init --tool opencode-plugin` writes `.opencode/plugins/specgate/index.js` and removes the `.opencode/plugin/specgate.js` an earlier Specgate generated (REQ-727); it adds the open change to the session, refuses a source write before its test, and runs the gate when the agent stops, once per message (REQ-728).
+- An exam run of OpenCode starts with a configuration folder of its own: the Developer's servers, keys, plugins and commands are not there for the model under exam (REQ-729).
+- The map and the derived matrix no longer take the gate's own commands (`bdd_cmd`, `arch_cmd`, `test_cmd`) for code, nor the exam fixtures under `evals/` for tests (REQ-696).
+- The generated matrix reads code under a folder named `spec` deeper than the root as code, not tests (REQ-675).
+- `matrix --migrate` no longer writes into `spec.md` requirements an open change adds or modifies, or a capability spec states; their rows wait for the archive (`matrix_rows_in_changes`) (REQ-676).
+- `matrix --migrate` keeps a row the generated matrix only fills in with more code or tests (`matrix_rows_richer`), and pins in the trace only what it would miss (REQ-677).
+- Upgrading a pack keeps what the team wrote in `spec.md` (REQ-774); a first pack is not rendered over a project's own specification without `--force` (REQ-791); `diff` fails on a pack it cannot render and `sync` on an id clash (REQ-786).
+- The plugin's hooks run as CommonJS in a project whose `package.json` says `"type": "module"` (REQ-790).
+- The MCP config tools declare and pass their key and value (REQ-792).
+- A trace comment over several lines survives `apply` and `archive` (REQ-778); a client's answer counts as a source for its requirements' values (REQ-783); a branch that changes no control is reported as changing none (REQ-785).
+- A draft is approved by a person only (REQ-206).
+- A principle `learn` writes reads back exactly as written: a value with a double quote, or ending in a backslash, is written in single quotes, which a principle comment now accepts; `learn promote` refuses a value holding both kinds of quote, with `learn_value_quotes` (REQ-685).
+
 ## [1.5.0] — 2026-11-23
 
 Use cases, executable scenarios, and a DDD workshop as the brief.

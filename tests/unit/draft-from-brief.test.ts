@@ -736,10 +736,12 @@ test("after the agent, the next steps are numbered and the brief's progress is s
   );
   assert.match(r.stdout, /What now ─+\n\s+1\s+Read docs\/specs\/changes\/draft-bookings\/specs\//);
   // Reviewed, applied, then archived (ADR-0035).
-  assert.match(r.stdout, /3\s+➜ specgate apply\s+.*then specgate archive draft-bookings/);
+  // walkthrough-fixes-2 REQ-784: a person approves the draft (step 3) before anything is applied.
+  assert.match(r.stdout, /3\s+➜ specgate change approve draft-bookings/);
+  assert.match(r.stdout, /4\s+➜ specgate apply\s+.*then specgate archive draft-bookings/);
   assert.match(
     r.stdout,
-    /4\s+➜ specgate propose --from-brief coupons\s+the next module of the brief/
+    /5\s+➜ specgate propose --from-brief coupons\s+the next module of the brief/
   );
 });
 

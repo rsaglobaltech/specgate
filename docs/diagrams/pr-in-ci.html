@@ -1,0 +1,126 @@
+<figure class="dia dia--card dia--ci">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 520" class="dia__svg" role="img" aria-labelledby="sg-ci-t sg-ci-d">
+    <title id="sg-ci-t">A pull request through the gate in CI</title>
+    <desc id="sg-ci-d">You push a branch and open its pull request against the base branch.
+      The CI job checks the repository out with its whole history, fetch-depth 0, so the
+      requirement ids can be compared with the base, and runs the gate: specgate check with
+      --base origin/base, on Ubuntu, macOS and Windows; then quality run --stage ci, the
+      ci-stage quality checks, on Ubuntu. The gate's stages run in order: ids, changes,
+      validate, architecture, tests, scenarios, acceptance and quality. If a stage fails, the
+      job is red and the merge is blocked: the first failing stage names its code and its
+      fix, for example id_taken_on_base — REQ-012 means something else on origin/main — with
+      the fix to renumber it to the next id free on both sides; you fix it and push again. If
+      every stage passes, a person reviews: the delta in docs/specs/changes, and what the
+      branch changes in the controls — the guard, gate.yaml, approvals and evidence —
+      reported as controls_changed_on_branch, a warning for the reviewer, not a block. Then
+      the branch merges. A red job blocks the merge only once spec-gate is a required check
+      of the branch.</desc>
+
+    <defs>
+      <marker id="sg-ci-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+      <marker id="sg-ci-g" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--green)"/>
+      </marker>
+      <marker id="sg-ci-r" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--red)"/>
+      </marker>
+    </defs>
+
+    <g class="dia__band"><rect x="578" y="40" width="370" height="170"/></g>
+    <text x="594" y="62" class="dia__band-t">THE GATE'S STAGES, IN ORDER</text>
+
+    <g class="dia__box">
+      <rect x="12" y="40" width="190" height="170"/>
+      <rect x="590" y="74" width="84" height="46"/>
+      <rect x="680" y="74" width="84" height="46"/>
+      <rect x="770" y="74" width="84" height="46"/>
+      <rect x="860" y="74" width="80" height="46"/>
+      <rect x="590" y="128" width="84" height="46"/>
+      <rect x="680" y="128" width="84" height="46"/>
+      <rect x="770" y="128" width="84" height="46"/>
+      <rect x="860" y="128" width="80" height="46"/>
+    </g>
+    <g class="dia__box dia__box--ink"><rect x="230" y="40" width="320" height="170"/></g>
+    <g class="dia__box dia__box--no"><rect x="12" y="260" width="440" height="160"/></g>
+    <g class="dia__box dia__box--ok">
+      <rect x="492" y="260" width="456" height="160"/>
+      <rect x="492" y="456" width="456" height="56"/>
+    </g>
+
+    <g class="dia__ico" transform="translate(28 56)"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" x2="6" y1="9" y2="21"/></g>
+    <g class="dia__ico dia__ico--brand" transform="translate(246 56)"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></g>
+    <g class="dia__ico dia__ico--no" transform="translate(28 276)"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></g>
+    <g class="dia__ico dia__ico--ok" transform="translate(508 276)"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></g>
+    <g class="dia__ico dia__ico--ok" transform="translate(508 472)"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></g>
+
+    <g>
+      <text x="64" y="73" class="dia__h"><tspan class="dia__step">1</tspan>  Push</text>
+      <text x="28" y="104" class="dia__s">a branch, and open</text>
+      <text x="28" y="122" class="dia__s">its pull request</text>
+      <text x="28" y="140" class="dia__s">against the base:</text>
+      <text x="28" y="158" class="dia__s dia__mono">main, develop…</text>
+
+      <text x="282" y="73" class="dia__h dia__on-ink">2  The CI job runs the gate</text>
+      <text x="246" y="104" class="dia__s dia__on-ink">checkout with <tspan class="dia__mono">fetch-depth: 0</tspan>,</text>
+      <text x="246" y="122" class="dia__s dia__on-ink">so the ids meet the base; then</text>
+      <text x="246" y="144" class="dia__s dia__mono dia__on-ink">check . --base origin/&lt;base&gt;</text>
+      <text x="246" y="162" class="dia__s dia__on-ink">on Ubuntu, macOS and Windows</text>
+      <text x="246" y="184" class="dia__s dia__mono dia__on-ink">quality run --stage ci</text>
+      <text x="246" y="202" class="dia__s dia__on-ink">the ci-stage checks, on Ubuntu</text>
+    </g>
+    <g text-anchor="middle" class="dia__s">
+      <text x="632" y="93"><tspan class="dia__step">01</tspan></text><text x="632" y="111">ids</text>
+      <text x="722" y="93"><tspan class="dia__step">02</tspan></text><text x="722" y="111">changes</text>
+      <text x="812" y="93"><tspan class="dia__step">03</tspan></text><text x="812" y="111">validate</text>
+      <text x="900" y="93"><tspan class="dia__step">04</tspan></text><text x="900" y="111" class="dia__small">architecture</text>
+      <text x="632" y="147"><tspan class="dia__step">05</tspan></text><text x="632" y="165">tests</text>
+      <text x="722" y="147"><tspan class="dia__step">06</tspan></text><text x="722" y="165">scenarios</text>
+      <text x="812" y="147"><tspan class="dia__step">07</tspan></text><text x="812" y="165">acceptance</text>
+      <text x="900" y="147"><tspan class="dia__step">08</tspan></text><text x="900" y="165">quality</text>
+    </g>
+    <text x="594" y="196" class="dia__s">08: <tspan class="dia__mono">harness.config.yaml</tspan>; in CI, the ci ones too</text>
+
+    <g>
+      <text x="64" y="293" class="dia__h dia__no-t">Red — the merge is blocked</text>
+      <text x="28" y="324" class="dia__s">the first stage that fails names its code and its fix:</text>
+      <text x="28" y="348" class="dia__s dia__mono">id_taken_on_base</text>
+      <text x="28" y="368" class="dia__s">REQ-012 means something else on origin/main</text>
+      <text x="28" y="390" class="dia__s">fix: renumber REQ-012 on this branch to</text>
+      <text x="28" y="408" class="dia__s">the next id free on both sides</text>
+
+      <text x="544" y="293" class="dia__h dia__ok-t">Green — a person reviews</text>
+      <text x="508" y="324" class="dia__s">the delta, in <tspan class="dia__mono">docs/specs/changes/&lt;id&gt;/</tspan>, and</text>
+      <text x="508" y="342" class="dia__s">what the branch changes in the controls:</text>
+      <text x="508" y="366" class="dia__s dia__mono">controls_changed_on_branch</text>
+      <text x="508" y="388" class="dia__s">the guard, gate.yaml, approvals, evidence —</text>
+      <text x="508" y="406" class="dia__s">a warning for the reviewer, not a block</text>
+
+      <text x="544" y="481" class="dia__h dia__ok-t">Merge</text>
+      <text x="544" y="500" class="dia__s">once the reviewer is satisfied and spec-gate is green</text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="204" y1="110" x2="225" y2="110" marker-end="url(#sg-ci-a)"/>
+      <line x1="552" y1="110" x2="573" y2="110" marker-end="url(#sg-ci-a)"/>
+
+      <path d="M640 212 V240 H232 V255" class="dia__no" stroke-dasharray="5 4" marker-end="url(#sg-ci-r)"/>
+      <text x="436" y="231" text-anchor="middle" class="dia__no-t">a stage fails</text>
+
+      <line x1="800" y1="212" x2="800" y2="255" class="dia__ok" marker-end="url(#sg-ci-g)"/>
+      <text x="810" y="240" class="dia__ok-t">all green</text>
+
+      <line x1="107" y1="258" x2="107" y2="215" class="dia__no" marker-end="url(#sg-ci-r)"/>
+      <text x="117" y="244" class="dia__no-t">fix, push again</text>
+
+      <line x1="720" y1="422" x2="720" y2="451" class="dia__ok" marker-end="url(#sg-ci-g)"/>
+    </g>
+
+    <text x="12" y="478" class="dia__note">A red job blocks the merge only once spec-gate</text>
+    <text x="12" y="494" class="dia__note">is a required check of the branch.</text>
+  </svg>
+  </div>
+  <figcaption>On every pull request the CI job runs the gate against the base branch: red blocks the merge with the code and its fix, green hands the delta and any change to the controls to a reviewer.</figcaption>
+</figure>

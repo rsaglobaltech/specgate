@@ -1,0 +1,2 @@
+test_cmd: "npm test --silent"
+bdd_cmd: 'npx cucumber-js --tags "{tags}"'

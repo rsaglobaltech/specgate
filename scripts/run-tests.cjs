@@ -43,8 +43,13 @@ function main() {
     process.exit(1);
   }
 
+  // REQ-691: `harness run` asks each agent first; the suite's agents are
+  // scripts that answer no prompt, so only the tests of that check run it.
   const result = spawnSync(process.execPath, ["--test", ...files], {
     stdio: "inherit",
+    env: { ...process.env, SPECGATE_SKIP_DOCTOR: process.env.SPECGATE_SKIP_DOCTOR ?? "1",
+        // REQ-748: the suite approves as the person at the terminal would; a test of the refusal unsets it.
+        SPECGATE_ASSUME_TTY: process.env.SPECGATE_ASSUME_TTY ?? "1" },
   });
   process.exit(result.status === null ? 1 : result.status);
 }

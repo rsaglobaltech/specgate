@@ -2284,7 +2284,9 @@ test(
     const script = path.join(parent, "hang.js");
     fs.writeFileSync(
       script,
-      `process.on("SIGTERM", () => {}); setInterval(() => {}, 1000); // ${marker}\n`
+      // It ignores SIGTERM, as the hung agent did; it still ends by itself after
+      // five minutes, so a test killed before its cleanup leaves no orphan behind.
+      `process.on("SIGTERM", () => {}); setInterval(() => {}, 1000); setTimeout(() => process.exit(0), 300000); // ${marker}\n`
     );
     try {
       const t0 = Date.now();
@@ -2306,7 +2308,8 @@ test(
           "--format",
           "json",
         ],
-        { encoding: "utf8", timeout: 120000 }
+        // The run's own deadline is under test, not the doctor's question before it.
+        { encoding: "utf8", timeout: 120000, env: { ...process.env, SPECGATE_SKIP_DOCTOR: "1" } }
       );
       assert.ok((Date.now() - t0) / 1000 < 60, "cut at the deadline");
       assert.match(r.stdout + r.stderr, /timed out/);
@@ -2317,7 +2320,8 @@ test(
         "the agent is still running after the harness gave up on it"
       );
     } finally {
-      spawnSync("pkill", ["-f", marker]);
+      // SIGKILL: the agent ignores SIGTERM on purpose.
+      spawnSync("pkill", ["-9", "-f", marker]);
       fs.rmSync(parent, { recursive: true, force: true });
     }
   }
@@ -2389,6 +2393,69 @@ test("REQ-417 SCN-417a: the agent writes nothing for one requirement of the run"
     assert.ok(fs.existsSync(marker), out);
     assert.match(out, /REQ-001\s+the agent produced no files — retrying once/, out);
     assert.match(out, /3 passed/, out);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+/** REQ-000's branch, left by an earlier run: one commit adding `files`. */
+function leftBranch(projectDir: string, files: Array<[string, string]>) {
+  const git = (...args: string[]) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+  assert.equal(git("branch", "harness/REQ-000").status, 0);
+  const wt = fs.mkdtempSync(path.join(os.tmpdir(), "left-branch-"));
+  fs.rmSync(wt, { recursive: true, force: true });
+  assert.equal(git("worktree", "add", wt, "harness/REQ-000").status, 0);
+  for (const [rel, content] of files) {
+    fs.mkdirSync(path.dirname(path.join(wt, rel)), { recursive: true });
+    fs.writeFileSync(path.join(wt, rel), content, "utf8");
+  }
+  const run = (...args: string[]) => spawnSync("git", args, { cwd: wt, encoding: "utf8" });
+  run("add", "-A");
+  assert.equal(
+    run("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "feat(REQ-000): earlier run")
+      .status,
+    0
+  );
+  git("worktree", "remove", "--force", wt);
+}
+
+test("REQ-708 SCN-708a: a continued branch that holds the work is judged by the gate when the agent adds nothing", () => {
+  const { parent, projectDir } = greenableProject();
+  try {
+    leftBranch(projectDir, [
+      ["src/earlier-work.ts", "export const doneByAnEarlierRun = true;\n"],
+      [
+        ".specops/harness-prompts/REQ-000-2026-11-22T10-00-00-000Z-attempt-1-agent.md",
+        "# Implement REQ-000\n",
+      ],
+    ]);
+    const r = runHarness(projectDir, scriptedAgent(parent, []), ["--resume", "--skip-doctor"]);
+    const said = r.stdout + r.stderr;
+    assert.match(said, /1 passed/, said);
+    assert.doesNotMatch(said, /produced no files/, said);
+    const files = spawnSync("git", ["show", "--stat", "--format=", "harness/REQ-000~1"], {
+      cwd: projectDir,
+      encoding: "utf8",
+    }).stdout;
+    assert.match(files, /earlier-work\.ts/, "the earlier work is what passed");
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("REQ-708 SCN-708b: a continued branch with nothing but the prompt archive still stops as no-op", () => {
+  const { parent, projectDir } = greenableProject();
+  try {
+    leftBranch(projectDir, [
+      [
+        ".specops/harness-prompts/REQ-000-2026-11-22T10-00-00-000Z-attempt-1-agent.md",
+        "# Implement REQ-000\n",
+      ],
+    ]);
+    const r = runHarness(projectDir, scriptedAgent(parent, []), ["--resume", "--skip-doctor"]);
+    const said = r.stdout + r.stderr;
+    assert.match(said, /0 passed/, said);
+    assert.match(said, /produced no files/, said);
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }

@@ -40,6 +40,8 @@ export interface RequirementFacts {
   readonly boundedContext?: string;
   readonly featureFile?: string;
   readonly category?: string;
+  /** The requirement's capability: its module (agent-routing REQ-688). */
+  readonly module?: string;
 }
 
 /** What a `match:` key is asking about. Unknown keys never match, and say so. */
@@ -48,6 +50,7 @@ const FACT_BY_KEY: Readonly<Record<string, keyof RequirementFacts>> = Object.fre
   requirement: "requirement",
   feature: "featureFile",
   category: "category",
+  module: "module",
 });
 
 export const MATCHABLE_KEYS = Object.freeze(Object.keys(FACT_BY_KEY));

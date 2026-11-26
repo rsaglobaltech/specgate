@@ -171,7 +171,15 @@ export const SCRATCH: Journey = {
       surface: "status",
       maxLines: 20,
     },
-    // 3 — Build
+    // 3 — Build: a person approves the draft first (REQ-745, REQ-748).
+    {
+      id: "scratch-approve",
+      page: "start/scratch-3-build",
+      cwd: S,
+      argv: sg("change", "approve", "draft-bookings"),
+      surface: "change",
+      maxLines: 14,
+    },
     {
       id: "scratch-node-test",
       page: "start/scratch-3-build",
@@ -333,7 +341,15 @@ export const EXISTING: Journey = {
       surface: "status",
       maxLines: 20,
     },
-    // 3 — Close the first
+    // 3 — Close the first: a person approves the change first (REQ-745, REQ-748).
+    {
+      id: "existing-approve",
+      page: "start/existing-3-first-requirement",
+      cwd: E,
+      argv: sg("change", "approve", "invoice-rounding"),
+      surface: "change",
+      maxLines: 14,
+    },
     {
       id: "existing-apply-refused",
       page: "start/existing-3-first-requirement",

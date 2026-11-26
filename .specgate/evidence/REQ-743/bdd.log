@@ -1,0 +1,16 @@
+▶ dist/tests/unit/shortcut-proof.test.js
+✔ REQ-743: the steps are recorded when the first source file is written — by the write tool or found written by the shell — and once (1706.181583ms)
+✔ REQ-743 SCN-743a: steps bent to the code — changed after the code began, apply fails naming the file (1291.7765ms)
+✔ REQ-743 SCN-743a: steps written only after the code began fail the same way (1294.774ms)
+✔ REQ-743 SCN-743b: steps first — written before any source file and not changed since, the gate says nothing of them (1301.619ms)
+✔ REQ-743 SCN-743c: a person looked — --steps-reviewed delivers it, and its evidence says who (1859.217041ms)
+✔ REQ-743 SCN-743d: nothing recorded them — apply passes, saying the steps were written in the same delivery and not reviewed (1339.441209ms)
+✔ REQ-743: the harness gate fails at the stage steps when they changed after the code began (901.391583ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9917.831125

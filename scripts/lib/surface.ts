@@ -318,6 +318,91 @@ export const SURFACE: Command[] = [
     json: { key: "scenarios", gate: true, args: "<REQ>" },
   },
   {
+    name: "reproduce",
+    // REQ-681..683: a bug is fixed only once it has been seen failing.
+    mcp: false,
+    script: ["reproduce.js"],
+    help: {
+      group: "core",
+      icon: "🐞",
+      summary:
+        "Open a bug that must be seen red first; run it red, kept as evidence, before the fix.",
+    },
+    json: {
+      key: "reproduce",
+      gate: false,
+      args: "<change-id> --capability <c> --title <t> | run <REQ>",
+    },
+  },
+  {
+    name: "map",
+    // REQ-678: where each requirement lives, for a person and for an agent.
+    mcp: false,
+    script: ["map.js"],
+    help: {
+      group: "core",
+      icon: "🗺️",
+      summary:
+        "Where each requirement lives: use case, route and address, feature, code and tests.",
+    },
+    json: { key: "map", gate: false, args: "[<REQ>] [--capability <c>]" },
+  },
+  {
+    name: "eval",
+    // REQ-686, REQ-687: a skill examined — the gate judges correct, the review good.
+    mcp: false,
+    script: ["eval.js"],
+    help: {
+      group: "core",
+      icon: "🧪",
+      summary:
+        "Examine a skill: fixed tasks, runs in parallel, correct by the gate, good by the review.",
+    },
+    json: { key: "eval", gate: false, args: "<skill> [--runs <n>]" },
+  },
+  {
+    name: "compat",
+    // harness-compat REQ-711…REQ-716: the same exam for Claude Code, Codex and OpenCode, per level.
+    mcp: false,
+    script: ["compat.js"],
+    help: {
+      group: "core",
+      icon: "🧩",
+      summary:
+        "The compatibility exam: each agent tool at each level of integration, judged by the gate.",
+    },
+    json: {
+      key: "compat",
+      gate: false,
+      args: "run|report [--tool <t>] [--level <L>] [--runs <n>]",
+    },
+  },
+  {
+    name: "learn",
+    // REQ-684, REQ-685: what keeps coming back, proposed as a rule a person approves.
+    mcp: false,
+    script: ["learn.js"],
+    help: {
+      group: "core",
+      icon: "🧭",
+      summary:
+        "The lessons that keep coming back — review notes, failed gate stages — proposed as rules.",
+    },
+    json: { key: "learn", gate: false, args: "[promote <L> --title <rule>]" },
+  },
+  {
+    name: "trust",
+    // ADR-0046: each module's trust level and its evidence; a person's decision, not an MCP tool yet.
+    mcp: false,
+    script: ["trust.js"],
+    help: {
+      group: "core",
+      icon: "🪜",
+      summary: "How far an agent may go in each module, what it has earned, and its promotion.",
+    },
+    json: { key: "trust", gate: false, args: "[promote <capability>]" },
+  },
+  {
     name: "migrate",
     // REQ-325: a one-time move to 1.0 a person runs and reviews; not an MCP tool.
     mcp: false,
@@ -550,12 +635,14 @@ export const SURFACE: Command[] = [
       { name: "archive", editsContract: true, json: { key: "archive", gate: true, args: "<id>" } },
       { name: "instructions", json: { key: "instructions", gate: false, args: "<artifact>" } },
       { name: "author", editsContract: true, json: { key: "change", gate: true, args: "<id>" } },
+      // person-approves REQ-748: a person's act, at a terminal — never a tool an agent's MCP client is offered.
+      { name: "approve", editsContract: true, mcp: false },
     ],
     help: {
       group: "core",
       icon: "🔄",
       summary:
-        "Propose, review and archive a change (new · list · show · status · validate · archive).",
+        "Propose, approve, review and archive a change (new · list · show · status · approve · validate · archive).",
     },
     // Out of the short help: `propose` and `archive` are its daily verbs
     // (ADR-0035); `--help --all` lists the rest.
@@ -877,6 +964,32 @@ export const SURFACE: Command[] = [
         json: { key: "report", gate: false },
       },
       {
+        // sandbox-swarm REQ-701: no sandbox left behind unseen.
+        name: "sandboxes",
+        mcp: false,
+        script: ["harness", "sandboxes.js"],
+        help: {
+          group: "harness",
+          icon: "📦",
+          summary:
+            "Each sandbox the harness made, the hosts it may reach; --prune removes the leftovers.",
+        },
+        json: { key: "sandboxes", gate: false },
+      },
+      {
+        // agent-routing REQ-690: every agent checked before it is used.
+        name: "doctor",
+        mcp: false,
+        script: ["harness", "doctor.js"],
+        help: {
+          group: "harness",
+          icon: "🩺",
+          summary:
+            "Which agent each requirement gets, and whether each one is installed and answers.",
+        },
+        json: { key: "doctor", gate: false },
+      },
+      {
         // REQ-491: what the studio's Stop button and a person at a terminal both use.
         name: "stop",
         mcp: false,
@@ -1005,8 +1118,10 @@ export const SURFACE: Command[] = [
     name: "config",
     subcommands: [
       { name: "init", script: ["config_init.js"] },
-      { name: "set", script: ["config_set.js"], argsFrom: 1 },
-      { name: "get", script: ["config_set.js"], argsFrom: 1 },
+      // walkthrough-fixes-3 REQ-792: the MCP tools pass only what they declare (REQ-769) — so they declare it.
+      { name: "set", script: ["config_set.js"], argsFrom: 1, mcpArg: "key value" },
+      { name: "unset", script: ["config_set.js"], argsFrom: 1, mcpArg: "key" },
+      { name: "get", script: ["config_set.js"], argsFrom: 1, mcpArg: "key" },
       { name: "list", script: ["config_set.js"], argsFrom: 1 },
       { name: "keys", script: ["config_set.js"], argsFrom: 1 },
     ],

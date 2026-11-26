@@ -1,0 +1,12 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-726 SCN-726a: at level M Claude Code has the server and the rules, and no shell (1448.388417ms)
+✔ REQ-726: Codex at M has its shell tool off and the server approved; OpenCode's shell is denied (2907.197542ms)
+✔ REQ-726 SCN-726b: delivered through the server — the run passes with its call counted (1538.805875ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5947.426

@@ -1,4 +1,3 @@
-@change:show-use-cases
 Feature: `change show --json` carries the change's use cases
 
   @REQ-628 @SCN-628a

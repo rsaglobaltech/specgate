@@ -80,9 +80,13 @@ import {
   checkWriteScopeInWorktree,
   contractNotMet,
   laneGuard,
+  branchHoldsWork,
   producedNothing,
   roleInstruction,
 } from "./worktree-checks";
+
+import { controlsOf } from "../../lib/controls";
+import type { ControlRecord } from "../../../packages/core/src/domain/ControlRecord";
 
 /** Where a resumed requirement picks up, and what the gate said last time. */
 export interface ResumeAt {
@@ -188,6 +192,8 @@ interface AttemptEnv {
   ctx: AttemptContext;
   /** The live view's file (ADR-0037), in the project, not the worktree. */
   eventsFile: string;
+  /** outside-judge REQ-747: the controls before any agent of this requirement started — held here, not in the worktree. */
+  controlsBefore: ControlRecord;
 }
 
 /** What lasts from one attempt of a requirement to the next. */
@@ -519,7 +525,17 @@ function checksBeforeGate(env: AttemptEnv, state: RequirementState, attempt: num
   // gate would approve it. See `producedNothing` (H19).
   // REQ-264: the same command writes nothing the next time either — three
   // attempts and 7 min 40 s said so in truck-flote (S50) — so it ends here.
-  if (producedNothing(worktreeDir)) {
+  // REQ-708: a continued branch that already holds the work has nothing left
+  // to write; the gate judges it as it stands.
+  const judgedAsItStands =
+    Boolean(ctx.resumeAt) &&
+    producedNothing(worktreeDir) &&
+    branchHoldsWork(worktreeDir, ctx.projectDir || worktreeDir, ctx.baseRef);
+  if (judgedAsItStands) {
+    info(
+      `${req.requirement}: the agent added nothing — the branch already holds the work; the gate judges it as it stands`
+    );
+  } else if (producedNothing(worktreeDir)) {
     // REQ-417: the agent wrote for another requirement of this run, so it
     // can write; one more attempt, told so, before giving up.
     if (runStateOf(ctx).agentWrote() && !state.retriedEmpty && attempt < settings.maxAttempts) {
@@ -592,7 +608,7 @@ function judgeAtGate(env: AttemptEnv, attempt: number): { decision: Decision; ga
     settings.testCmd,
     timeoutMs,
     req,
-    { ...settings, verbose: ctx.verbose },
+    { ...settings, verbose: ctx.verbose, controlsBefore: env.controlsBefore },
     gateReporter(eventsFile, req.requirement, attempt)
   );
   if (gate.ok) return { decision: PROCEED, gate };
@@ -817,7 +833,7 @@ export function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext)
   let stopRetrying = false;
 
   const eventsFile = eventsFileFor(ctx.projectDir || worktreeDir, req.requirement);
-  const env: AttemptEnv = { req, ctx, eventsFile };
+  const env: AttemptEnv = { req, ctx, eventsFile, controlsBefore: controlsOf(worktreeDir) };
   for (let attempt = firstAttempt; attempt <= settings.maxAttempts; attempt += 1) {
     // REQ-535: a retry is more sessions, and the budget is spent.
     if (state.budget.over()) {
@@ -841,7 +857,8 @@ export function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext)
       usageUsed: [],
       event: (e) => appendEvent(eventsFile, e, req.requirement, attempt),
     };
-    tally.event({ type: "attempt", state: "start" });
+    // How many attempts it has: a run the studio did not start says so only here.
+    tally.event({ type: "attempt", state: "start", max: settings.maxAttempts });
     const record = (stage: AttemptRecord["endedAt"], gateStage?: string) => {
       tally.event({
         type: "attempt",

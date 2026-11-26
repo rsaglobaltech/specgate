@@ -1,0 +1,12 @@
+▶ dist/tests/unit/harness-compat.test.js
+✔ REQ-713 SCN-713a: mcp install --client opencode adds the server and keeps the file's keys (116.009458ms)
+✔ REQ-713: mcp install --client codex runs codex mcp add and says it is the Developer's own configuration (318.791666ms)
+✔ REQ-713 SCN-713b: Codex at L2 gets the server on its command line, and CODEX_HOME stays empty (2367.427209ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2885.330541

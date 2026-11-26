@@ -204,6 +204,8 @@ test("REQ-543 SCN-543a: signed only when every item is checked", () => {
       `#### Scenario: SCN-${id.slice(4)}b — An unpaid invoice\n\n- GIVEN an unpaid invoice\n- WHEN its owner downloads it\n- THEN the PDF says unpaid\n\n` +
       "<!-- specgate:trace status=Implemented actor=Developer kind=functional -->\n"
   );
+  // What is accepted was approved first: nothing is delivered otherwise (REQ-745).
+  assert.equal(sg(dir, "change", "approve", "pdf-invoices").status, 0);
   const file = path.join(dir, "docs/specs/changes/pdf-invoices/acceptance.md");
   const w = sg(dir, "acceptance", "pdf-invoices", "--json");
   assert.equal(w.status, 0, w.out);

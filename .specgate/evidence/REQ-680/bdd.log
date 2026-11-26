@@ -1,0 +1,10 @@
+▶ dist/tests/unit/feature-map.test.js
+✔ REQ-680 SCN-680a: apply keeps the evidence of a delivery, its screenshot out of git (669.759666ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 777.024208

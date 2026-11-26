@@ -22,7 +22,13 @@ rules:
   coverage: warning
   ids: error
   quality: error
+  use_cases: warning
+  state_machines: error
+  scope: warning
+  controls: warning
+  acceptance: error
 # enforce_from: 2026-12-31
+# bdd: required
 ```
 
 Each rule is one of three levels:
@@ -33,9 +39,10 @@ Each rule is one of three levels:
 | `warning` | reports them, with `gate_rule_reported`, and passes |
 | `off` | does not run the rule |
 
-**No file is the strict gate**: every rule `error`, which is what
-`validate --strict` always meant. A project that never writes a policy keeps
-the gate it had.
+**No file is the `strict` preset**, which is what `validate --strict` always
+meant: every rule `error` except `use_cases` and `controls`, which are
+warnings in `strict` too. A project that never writes a policy keeps the gate
+it had.
 
 ## The rules
 
@@ -48,6 +55,11 @@ the gate it had.
 | `coverage` | A scenario of a declared feature file that no test names | `--strict-coverage` |
 | `ids` | A requirement id that means something else on the base branch | — |
 | `quality` | The quality checks of `harness.config.yaml` | — |
+| `use_cases` | A requirement that names no use case of `docs/specs/use-cases.md`, or a use case nothing delivers | `--strict-use-cases` |
+| `state_machines` | A state machine of `docs/specs/state-machines/` with no start, a state or requirement that does not exist, or a forbidden transition | — |
+| `scope` | A new source file that the design of an approved change does not name, where a design names files | — |
+| `controls` | What the branch changes in the controls — the guard, the gate's policy, approvals, evidence — named for the person who reviews it (`check --base`) | — |
+| `acceptance` | An acceptance test a person approved that is not as it was approved, or does not pass with `acceptance_cmd` | — |
 
 An individual flag always fails on its rule, whatever the policy says: a CI
 file that runs `validate --strict-tdd` keeps meaning what it meant.
@@ -63,10 +75,42 @@ file that runs `validate --strict-tdd` keeps meaning what it meant.
 | `coverage` | off | warning | error |
 | `ids` | warning | error | error |
 | `quality` | warning | error | error |
+| `use_cases` | off | warning | warning |
+| `state_machines` | warning | error | error |
+| `scope` | warning | warning | error |
+| `controls` | warning | warning | warning |
+| `acceptance` | warning | error | error |
 
 `minimal` fails on what leaves a requirement unproven and reports the rest:
 a team adopting the gate. `standard` reports coverage, which is a name match
-rather than a run of the suite. `rules:` overrides any rule of the preset.
+rather than a run of the suite, and new files outside the design (`scope`).
+`use_cases` stays a warning until a project's catalog is written. `controls`
+is a warning in every preset: who approved cannot be told from a branch, so
+the gate names the change for the reviewer. `state_machines`, `scope` and
+`acceptance` say nothing in a project with no state machines, no approved
+design that names files, or no sealed acceptance tests. `scope` judges only the
+files git sees as new — untracked, or added and not yet committed: once a file
+is committed, `scope` no longer names it, so run `check` before you commit.
+`rules:` overrides any rule of the preset.
+
+**Changing `preset:` alone relaxes nothing that `init` wrote.** `specgate init`
+writes every rule out in full under `rules:`, and a rule written there wins
+over the preset. To move to `minimal`, delete the `rules:` lines you want the
+preset to decide, or set each rule to the level you want.
+
+## The other keys
+
+| Key | What it does |
+| --- | --- |
+| `preset` | `minimal`, `standard` or `strict`; `strict` when it is missing |
+| `rules` | One level per rule, over the preset's |
+| `enforce_from` | A date, `YYYY-MM-DD`: until then every `error` is a warning (below) |
+| `bdd: required` | The scenarios are executable: the gate runs them with `bdd_cmd` of `harness.config.yaml` (the Scenarios stage). `specgate init` writes it when the project has a runner for its feature files; otherwise `specgate migrate bdd` |
+| `trust` | Each module's trust level, 1 to 5, for the harness: `trust: { payments: 2, catalog: 4 }`. Each key must be a capability under `docs/specs/capabilities/`; any other fails the gate (`payments is not a capability of this project`). `specgate trust` shows what each module has earned. A project with no `trust:` is untouched |
+
+Any other key fails the gate: on the terminal `check` names the key
+(`` `foo` is not a key of the gate policy ``) and fails with
+`check_validate_failed`; with `--json`, the finding is `gate_policy_invalid`.
 
 ## Tighten it on a date
 

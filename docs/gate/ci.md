@@ -7,6 +7,8 @@ you know what each line of the generated job does and how to keep it current.
 **You need:** the gate passing on your machine ([On your machine](local.md))
 and a repository on GitHub, GitLab, Azure DevOps or Jenkins.
 
+<!-- specgate:diagram pr-in-ci -->
+
 ## Write the job
 
 `specgate init` and `specgate adopt` already wrote it, for the CI the
@@ -57,7 +59,7 @@ and what to delete to remove it:
 | Ubuntu, macOS, Windows | The same gate on the three, because paths, line endings and shells differ | Delete two entries of `os:` to keep one |
 | `checkout` with `fetch-depth: 0` | The whole history, so the ids can be compared with the base branch | Only with `--base` below |
 | Toolchain and dependencies | Node, or a JDK for Maven and Gradle, and the project's dependencies, for its tests | No |
-| **The gate** | `check --base origin/<base>`: ids, specification, architecture, tests | Never — this is the gate |
+| **The gate** | `check --base origin/<base>`: ids, specification, architecture, tests; and what the branch changes in the controls, as `controls_changed_on_branch` for the reviewer | Never — this is the gate |
 | Quality checks | `quality run --stage ci`, on Ubuntu only, because the checks run in Docker. Not configured: says how, and passes | Delete the step |
 | Pack drift | `validate --against-lock`: the domain packs still match `.specops.lock`. No packs: skipped | Delete the step |
 | Pending-work plan | `plan --format json`, kept as the `spec-plan` artifact of the run | Delete both steps |
@@ -66,7 +68,9 @@ A step whose tool is not configured yet — no `test_cmd`, no quality checks,
 no packs — says so in the log and passes, so the job is green on day one and
 checks more as you configure more.
 
-One job on Ubuntu running only the gate, if that is all you want:
+One job on Ubuntu running only the gate, if that is all you want — GitHub
+only, and with no `--base`, so no id comparison and no controls report, no
+pack drift and no plan:
 
 ```bash
 specgate ci init --provider github --minimal --force
@@ -85,16 +89,16 @@ spec-gate:
     - npm install
     # The gate: the specification and the project's tests.
     - |
-      npx @rsaglobaltech/specgate@1.5.0 check .
+      npx @rsaglobaltech/specgate@1.6.0 check .
     # Supply-chain gate: fails when rendered pack content no longer matches the
     # digest pinned in .specops.lock. Skipped when no packs are installed.
     - >
       if [ -f .specops.lock ]; then
-        npx @rsaglobaltech/specgate@1.5.0 validate . --against-lock;
+        npx @rsaglobaltech/specgate@1.6.0 validate . --against-lock;
       else
         echo "No .specops.lock — no packs installed, nothing to check.";
       fi
-    - npx @rsaglobaltech/specgate@1.5.0 plan --project-dir . --format json > spec-plan.json
+    - npx @rsaglobaltech/specgate@1.6.0 plan --project-dir . --format json > spec-plan.json
   artifacts:
     when: always
     paths:
@@ -117,8 +121,8 @@ spec-gate:
   script:
     - npm install
     - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-    - npx @rsaglobaltech/specgate@1.5.0 check . --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-    - npx @rsaglobaltech/specgate@1.5.0 quality run --stage ci --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - npx @rsaglobaltech/specgate@1.6.0 check . --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - npx @rsaglobaltech/specgate@1.6.0 quality run --stage ci --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
 ```
 
 The target branch is `$(System.PullRequest.TargetBranchName)` in Azure
@@ -133,10 +137,16 @@ A failing job does not stop a merge on its own:
 
 | Provider | Where | What to turn on |
 | --- | --- | --- |
-| GitHub | Settings → Rules → Rulesets (or Branches) | **Require status checks to pass** and select `spec-gate`. Push a branch once first, so GitHub has seen the job. |
+| GitHub | Settings → Rules → Rulesets (or Branches) | **Require status checks to pass** and select `spec-gate (ubuntu-latest)`, `spec-gate (macos-latest)` and `spec-gate (windows-latest)` — the job runs on three systems (`--minimal`: plain `spec-gate`). Push a branch once first, so GitHub has seen the job. |
 | GitLab | Settings → Merge requests | **Pipelines must succeed** |
 | Azure DevOps | Repos → Branches → your branch → Branch policies | **Build validation** with the pipeline, set to **Required** |
 | Jenkins | Your SCM's branch protection | Require the status Jenkins reports for the `Spec gate` stage — the GitHub or Bitbucket Branch Source plugin reports it |
+
+With `--base`, the job's log also names what the branch changes in the
+controls — the guard, `.specgate/gate.yaml`, approvals, evidence — as
+`controls_changed_on_branch`, a warning by default (rule `controls`). It is
+for the reviewer: make `.specgate/` and `docs/specs/changes/*/approvals.json`
+code-owned, so that a change to them needs their review.
 
 Protect `develop` too if you merge features into it.
 [Your team's first pull request](../first-pr.md) covers what the author and
@@ -184,7 +194,7 @@ and a `fix`. Branch on `code`, never on the message. Exit codes are `0`,
 `1` and `2`. The full contract: [The JSON contract](../agents.md#the-json-contract).
 
 ```bash
-npx @rsaglobaltech/specgate@1.5.0 check . --ci --json > gate.json
+npx @rsaglobaltech/specgate@1.6.0 check . --ci --json > gate.json
 ```
 
 ## Next

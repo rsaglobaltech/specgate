@@ -2,8 +2,7 @@
 
 At the end of this page the gate runs on your machine before every pull
 request, and in CI as a required check that blocks a merge when it fails. The
-**gate** is the set of checks that decides whether the specification and the
-code still agree.
+**gate** is the set of checks that decides whether the specification and the code still agree.
 
 **You need:** a project where `specgate init` has run, Specgate installed as a
 dev dependency (`npm install --save-dev @rsaglobaltech/specgate`), and, for the
@@ -19,21 +18,25 @@ CI part, a repository on GitHub, GitLab, Azure DevOps or Jenkins.
 specgate check
 ```
 
-`check` runs four things, and stops at the first stage that fails:
+`check` runs these stages in order, and stops at the first one that fails:
 
-1. `validate --strict`: specs, scenarios, traceability, links and coverage.
-2. Your architecture check, if you set one with
-   `specgate config set arch_cmd "<cmd>"` (ArchUnit, dependency-cruiser, …).
-   With `arch_sarif:` beside it, only a violation the change adds fails.
-3. Your tests, from `specgate config set test_cmd "npm test"` or `--test-cmd`,
-   side by side with step 2 ([`gate_parallel: false`](fast-gate.md) runs them in turn).
-4. Your [quality checks](quality.md), if `specgate quality init` wrote them:
+1. The ids against the base branch (below); with `--base`, what the branch
+   changes in the controls, named for the reviewer.
+2. Every open change, as a person approved it: requirements, design scope, sealed acceptance tests.
+3. `validate --strict`: specs, scenarios, traceability, links and coverage.
+4. Your architecture check (`specgate config set arch_cmd "<cmd>"`: ArchUnit,
+   dependency-cruiser…); with `arch_sarif:`, only a violation the change adds fails.
+5. Your tests (`test_cmd`, or `--test-cmd`), beside step 4
+   ([`gate_parallel: false`](fast-gate.md) runs them in turn).
+6. With `bdd: required`, each delivered requirement's scenarios (`bdd_cmd`;
+   `--no-scenarios` skips them).
+7. The sealed acceptance tests, with `acceptance_cmd`.
+8. Your [quality checks](quality.md), if `specgate quality init` wrote them:
    coverage and mutation of what the change adds, SAST, secrets, dependencies,
    Conventional Commits — each in Docker. `--ci` adds the CI-only ones and
    fails a check that cannot run.
 
-Without a test command, `check` still passes and says it checked the
-specification, not the code. Set one.
+Without a test command, `check` still passes and says it checked the specification, not the code. Set one.
 
 `check` also compares requirement ids with the base branch (`--base <branch>`,
 or origin's default branch). The same id with a different title there fails
@@ -54,7 +57,8 @@ always, run the whole suite. See [A faster gate](fast-gate.md).
 
 With `--json`, every answer — passed or failed — lists the gate's `stages` in
 the order it runs them: `ids`, `changes`, `validate`, `architecture`, `tests`,
-then one `quality` stage per check, with its `name`. Each has its `command`
+`scenarios` (with `bdd: required`), `acceptance` (when an open change sealed
+acceptance tests), then one `quality` stage per check, with its `name`. Each has its `command`
 (`null` when it has none), its `result` (`passed`, `failed`, `skipped` when it
 is not configured or could not run, `not run` when an earlier stage failed),
 its `ms` (`null` when it did not run) and its `findings`, each with `code`,
@@ -97,7 +101,7 @@ than less: every step says in the YAML what it checks and what to delete to
 remove it, and a step whose tool is not configured yet says so and passes.
 
 - `specgate ci init --provider gitlab` (or `azure`, `jenkins`) writes it for
-  another CI; `--force` writes it again, `--minimal` writes one step only.
+  another CI; `--force` writes it again; `--minimal` (GitHub only): one Ubuntu job, `check` alone.
 - An older `specgate init` wrote `.github/workflows/specs.yml`, which only
   validated the specification: `specgate ci init --provider github` shows what
   the gate adds, `--replace` replaces it.
@@ -120,7 +124,7 @@ jobs:
         with: { node-version: '24' }
       # --strict is the whole specification gate, pinned so a release
       # cannot change it under you. It does not run your tests.
-      - run: npx --yes @rsaglobaltech/specgate@1.5.0 validate . --strict
+      - run: npx --yes @rsaglobaltech/specgate@1.6.0 validate . --strict
 ```
 
 `validate --strict` checks the specification only. To fail the job when the

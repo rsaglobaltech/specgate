@@ -1,0 +1,10 @@
+▶ dist/tests/unit/agent-routing.test.js
+✔ REQ-689 SCN-689a: drafted by its own agent — writer runs with the drafting guide, not the harness's agent (790.578459ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 854.892

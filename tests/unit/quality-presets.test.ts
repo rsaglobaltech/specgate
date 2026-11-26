@@ -281,6 +281,23 @@ test("REQ-237 SCN-237a: a Spring Boot parent manages the versions", () => {
   );
 });
 
+test("REQ-276 SCN-276a: a Quarkus application that skips deploy still gets its bill of materials", () => {
+  const dir = tmp();
+  w(
+    dir,
+    "pom.xml",
+    "<project><properties><maven.deploy.skip>true</maven.deploy.skip></properties><dependencies><dependency><groupId>io.quarkus</groupId><artifactId>quarkus-rest</artifactId></dependency></dependencies></project>"
+  );
+  const r = sg(dir, "quality", "init", "--json");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const { readHarnessConfig } = require("../../packages/core/src/infrastructure/HarnessConfigFile");
+  const sbom = readHarnessConfig(dir).quality.checks.find(
+    (c: { name: string }) => c.name === "sbom"
+  ) as { run: string };
+  assert.ok(sbom, "no sbom check");
+  assert.match(sbom.run, /-Dcyclonedx\.skipNotDeployed=false/);
+});
+
 test("REQ-238 SCN-238a: the preset gives Testcontainers its Docker", () => {
   const dir = tmp();
   w(

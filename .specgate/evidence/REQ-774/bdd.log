@@ -1,0 +1,10 @@
+▶ dist/tests/unit/sync-keeps-local.test.js
+✔ REQ-774 SCN-774a: a delivered requirement stays delivered across a pack upgrade (16614.684208ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17498.887458

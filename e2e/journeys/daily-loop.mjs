@@ -91,6 +91,7 @@ export default [
         "test/totals.test.js",
         `// ${first} SCN-${first.slice(4)}a\nrequire("node:test");\n`
       );
+      t.ok(t.sg(dir, "change", "approve", "round-totals"), "a person approves the change");
       t.ok(t.sg(dir, "apply"), "apply takes the next requirement through the gate");
       t.ok(t.sg(dir, "archive", "round-totals"), "archive once it is delivered");
       t.expect(

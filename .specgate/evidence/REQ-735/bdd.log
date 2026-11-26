@@ -1,0 +1,11 @@
+▶ dist/tests/unit/bdd-gate.test.js
+✔ REQ-735 SCN-735a SCN-735b: delivered on a test alone — apply says its scenarios were not run, and status counts it (1126.230416ms)
+✔ REQ-735: where the scenarios are run, apply does not say they were not (1110.435208ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2303.847834

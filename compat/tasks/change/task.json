@@ -1,0 +1,1 @@
+{ "requirement": "REQ-003", "verdicts": ["gate", "hidden", "specUnchanged"], "hidden": "cap.hidden.test.js" }

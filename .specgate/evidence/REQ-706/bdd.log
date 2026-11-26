@@ -1,0 +1,10 @@
+▶ dist/tests/unit/config-agents.test.js
+✔ REQ-706 SCN-706a: a swarm in sbx set from the command line; an engine it does not know refused (3250.282375ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3328.94675

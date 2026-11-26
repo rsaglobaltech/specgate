@@ -16,8 +16,15 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
+import { readSandbox } from "../../packages/core/src/domain/Sandbox";
 import { readQuality } from "../../packages/core/src/domain/QualityChecks";
-import { setYamlListItem, setYamlValue, yamlScalar } from "../../packages/core/src/domain/YamlEdit";
+import {
+  removeYamlValue,
+  setYamlListItem,
+  setYamlValue,
+  yamlScalar,
+} from "../../packages/core/src/domain/YamlEdit";
+import { capabilityNames, requirementCapabilities } from "./capabilities";
 import {
   CONTRACT_FIELDS,
   type ContractKey,
@@ -161,6 +168,26 @@ const BASE: KeySpec[] = [
     kind: "string",
   },
   {
+    key: "acceptance_cmd",
+    description:
+      "The command that runs the acceptance tests a person approved and sealed (mvn verify, pytest, playwright…), {files} their paths: run by the gate (REQ-759).",
+    values: null,
+    pattern: null,
+    default: null,
+    file: HARNESS_FILE,
+    kind: "string",
+  },
+  {
+    key: "app_url",
+    description:
+      "Where the running app is reached (http://localhost:5173): `specgate map` and the agent's prompt give each requirement's address from it (REQ-678).",
+    values: null,
+    pattern: "^https?://",
+    default: null,
+    file: HARNESS_FILE,
+    kind: "string",
+  },
+  {
     key: "agent",
     description:
       "The agent `harness run` and the studio's Build hand each requirement to, with {prompt_file}.",
@@ -174,6 +201,72 @@ const BASE: KeySpec[] = [
 
 /** The keys this catalog writes itself, into their YAML file. */
 const YAML: KeySpec[] = [
+  {
+    key: "draft_profile",
+    description:
+      "The profile in .harness/profiles.yaml whose agent drafts a module of the brief, apart from the agent that builds (REQ-689).",
+    values: null,
+    pattern: null,
+    default: null,
+    file: HARNESS_FILE,
+    kind: "string",
+  },
+  // config-agents REQ-706: where the agents work (sandbox-swarm REQ-698).
+  {
+    key: "sandbox.engine",
+    description:
+      "Where the agents work: docker or podman (one container), or sbx (a Docker sandbox per module).",
+    values: ["docker", "podman", "sbx"],
+    pattern: null,
+    default: null,
+    file: HARNESS_FILE,
+    kind: "string",
+  },
+  {
+    key: "sandbox.kit",
+    description: "sbx: the kit or agent each sandbox is made with (opencode, claude, shell…).",
+    values: null,
+    pattern: null,
+    default: null,
+    file: HARNESS_FILE,
+    kind: "string",
+  },
+  {
+    key: "sandbox.allow",
+    description: "sbx: the hosts a sandbox may reach besides its kit's, comma-separated.",
+    values: null,
+    pattern: null,
+    default: null,
+    file: HARNESS_FILE,
+    kind: "names",
+  },
+  {
+    key: "sandbox.setup",
+    description: "sbx: run once in a new sandbox, in its first worktree — install Node, say.",
+    values: null,
+    pattern: null,
+    default: null,
+    file: HARNESS_FILE,
+    kind: "string",
+  },
+  {
+    key: "sandbox.image",
+    description: "docker or podman: the image that holds the agent's CLI.",
+    values: null,
+    pattern: null,
+    default: null,
+    file: HARNESS_FILE,
+    kind: "string",
+  },
+  {
+    key: "sandbox.network",
+    description: "docker or podman: none (no network) or default.",
+    values: ["none", "default"],
+    pattern: null,
+    default: "none",
+    file: HARNESS_FILE,
+    kind: "string",
+  },
   {
     key: "agent_profile",
     description: "The profile of .harness/profiles.yaml whose agent `harness run` uses by default.",
@@ -384,6 +477,33 @@ const YAML: KeySpec[] = [
       v.includes("{prompt_file}")
         ? null
         : 'The agent command needs {prompt_file}: the prompt goes there, e.g. "claude -p < {prompt_file}".',
+  },
+  // config-agents REQ-705: which module or requirement the profile builds.
+  {
+    key: "profiles.<name>.match.module",
+    description: "The module (capability) whose requirements this profile's agent builds.",
+    values: null,
+    pattern: null,
+    default: null,
+    file: PROFILES_FILE,
+    kind: "string",
+    check: (v, dir) => {
+      const known = capabilityNames(requirementCapabilities(dir));
+      return v === "*" || known.includes(v)
+        ? null
+        : `This project has no module ${v}: ${known.length ? known.join(", ") : "none yet"}.`;
+    },
+  },
+  {
+    key: "profiles.<name>.match.requirement",
+    description: "The requirement this profile's agent builds, e.g. REQ-008.",
+    values: null,
+    pattern: "^REQ-\\d+$",
+    default: null,
+    file: PROFILES_FILE,
+    kind: "string",
+    check: (v) =>
+      /^REQ-\d+$/.test(v) ? null : "A requirement id: REQ- and its number, e.g. REQ-008.",
   },
   {
     key: "profiles.<name>.advisory",
@@ -608,7 +728,7 @@ export interface ResolvedKey {
 export function resolveKey(key: string): ResolvedKey | null {
   const exact = CATALOG.find((k) => k.key === key);
   if (exact) return { spec: exact, name: null, yaml: YAML.includes(exact) };
-  const m = /^(profiles|checks)\.([^.]+)\.([a-z_]+)$/.exec(key || "");
+  const m = /^(profiles|checks)\.([^.]+)\.([a-z_]+(?:\.[a-z_]+)?)$/.exec(key || "");
   if (!m) return null;
   const spec = YAML.find((k) => k.key === `${m[1]}.<name>.${m[3]}`);
   return spec ? { spec, name: m[2], yaml: true } : null;
@@ -658,7 +778,18 @@ export function currentValue(projectDir: string, key: string): Value | null {
   const field = key.split(".").pop() as string;
   if (r.spec.file === AGENTS_FILE) return contractFact(projectDir, key as ContractKey);
   let v: unknown;
-  if (r.spec.file === PROFILES_FILE) v = (profilesOf(projectDir)[r.name as string] || {})[field];
+  const dig = (o: unknown, parts: string[]): unknown =>
+    parts.reduce<unknown>(
+      (at, k) =>
+        at && typeof at === "object" && !Array.isArray(at)
+          ? (at as Record<string, unknown>)[k]
+          : undefined,
+      o
+    );
+  if (r.spec.file === PROFILES_FILE) {
+    v = dig(profilesOf(projectDir)[r.name as string] || {}, key.split(".").slice(2));
+  } else if (key.startsWith("sandbox."))
+    v = dig(readYaml(projectDir, HARNESS_FILE), key.split("."));
   else if (key.startsWith("checks.")) {
     v = (checksOf(projectDir).find((c) => String(c.name) === r.name) || {})[field];
   } else if (key.startsWith("alm.pr.")) {
@@ -816,7 +947,13 @@ export function setYamlKey(
   const field = key.split(".").pop() as string;
   let after: string;
   if (spec.file === PROFILES_FILE) {
-    after = setYamlValue(before ?? "", ["profiles", name as string, field], scalar);
+    after = setYamlValue(
+      before ?? "",
+      ["profiles", name as string, ...key.split(".").slice(2)],
+      scalar
+    );
+  } else if (key.startsWith("sandbox.")) {
+    after = setYamlValue(before ?? "harness_version: 1\n", key.split("."), scalar);
   } else if (key.startsWith("checks.")) {
     const exists = checksOf(projectDir).some((c) => String(c.name) === name);
     if (!exists && field !== "run") {
@@ -854,6 +991,16 @@ export function setYamlKey(
   if (spec.file === HARNESS_FILE) {
     const quality = readQuality(parsed);
     if (quality.errors.length > 0) return refuse(quality.errors[0]);
+    // REQ-706: a block the harness can read once it is whole; a half-set one waits.
+    const box = parsed.sandbox as Record<string, unknown> | undefined;
+    const whole = box && ((box.engine === "sbx" && box.kit) || (box.engine !== "sbx" && box.image));
+    if (whole) {
+      try {
+        readSandbox(box);
+      } catch (e) {
+        return refuse((e as Error).message, `harness.config.yaml's sandbox would not read.`);
+      }
+    }
   }
   if (spec.file === GATE_FILE) {
     const policy = parseGatePolicy(after);
@@ -867,4 +1014,55 @@ export function setYamlKey(
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, after, "utf8");
   return { ok: true, file: spec.file, value };
+}
+
+/**
+ * `config unset <key>` (config-agents REQ-707): the key out of its file, with
+ * its block; `profiles.<name>` the whole profile; `sandbox` the whole block.
+ * A key that is not set changes nothing and is not an error.
+ */
+export function unsetYamlKey(
+  projectDir: string,
+  key: string
+): { ok: true; file: string; removed: boolean } | ({ ok: false } & Refusal) {
+  let rel: string;
+  let at: string[];
+  const whole = /^profiles\.([^.]+)$/.exec(key);
+  if (whole) {
+    rel = PROFILES_FILE;
+    at = ["profiles", whole[1]];
+  } else if (key === "sandbox") {
+    rel = HARNESS_FILE;
+    at = ["sandbox"];
+  } else {
+    const r = resolveKey(key);
+    if (!r || !r.yaml || r.spec.file === AGENTS_FILE) {
+      return {
+        ok: false,
+        message: `config unset does not know ${key}.`,
+        fix: "`specgate config keys` lists the keys it writes.",
+      };
+    }
+    rel = r.spec.file;
+    if (r.spec.file === PROFILES_FILE)
+      at = ["profiles", r.name as string, ...key.split(".").slice(2)];
+    else if (key.startsWith("sandbox.") || key.startsWith("gate."))
+      at = key.startsWith("gate.") ? key.split(".").slice(1) : key.split(".");
+    else if (key.startsWith("alm.pr.")) at = ["pr", key.split(".").pop() as string];
+    else if (key.startsWith("alm.")) at = [key.split(".").pop() as string];
+    else if (key.startsWith("checks.")) {
+      return {
+        ok: false,
+        message: "config unset does not remove a check's field.",
+        fix: "Edit harness.config.yaml's checks: by hand.",
+      };
+    } else at = [key];
+  }
+  const file = path.join(projectDir, ...rel.split("/"));
+  if (!fs.existsSync(file)) return { ok: true, file: rel, removed: false };
+  const before = fs.readFileSync(file, "utf8");
+  const after = removeYamlValue(before, at);
+  if (after === before) return { ok: true, file: rel, removed: false };
+  fs.writeFileSync(file, after, "utf8");
+  return { ok: true, file: rel, removed: true };
 }

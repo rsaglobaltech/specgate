@@ -99,6 +99,14 @@ const SERVER_INFO = {
 
 export class McpServer implements IServer {
   private buffer: string = "";
+  /**
+   * How the client frames its messages, and so how it is answered. MCP's stdio
+   * transport is one JSON document a line; Content-Length headers are the
+   * language servers' way, and a client of MCP reads them as a broken server —
+   * Claude Code reported this one "failed" (found by the compatibility exam,
+   * 2026-11-24). A client that does send headers is still answered with them.
+   */
+  private framing: "line" | "header" = "line";
 
   public start(): void {
     process.stdin.setEncoding("utf8");
@@ -140,6 +148,7 @@ export class McpServer implements IServer {
       if (this.buffer.length < messageStart + length) break;
       const body = this.buffer.slice(messageStart, messageStart + length);
       this.buffer = this.buffer.slice(messageStart + length);
+      this.framing = "header";
       try {
         messages.push(JSON.parse(body));
       } catch (err: unknown) {
@@ -168,8 +177,11 @@ export class McpServer implements IServer {
 
   public writeMessage(message: JsonRpcMessage): void {
     const body = JSON.stringify(message);
-    const out = `Content-Length: ${Buffer.byteLength(body, "utf8")}\r\n\r\n${body}`;
-    process.stdout.write(out);
+    process.stdout.write(
+      this.framing === "header"
+        ? `Content-Length: ${Buffer.byteLength(body, "utf8")}\r\n\r\n${body}`
+        : `${body}\n`
+    );
   }
 
   private writeError(
@@ -229,6 +241,18 @@ export class McpServer implements IServer {
           const toolName = call && call.name;
           const args = (call && call.arguments) || {};
           const tool = TOOLS[toolName as keyof typeof TOOLS];
+          // compat-evidence REQ-717: what this server was asked, for whoever measures its use.
+          if (process.env.SPECGATE_MCP_LOG) {
+            try {
+              fs.appendFileSync(
+                process.env.SPECGATE_MCP_LOG,
+                `${JSON.stringify({ t: Date.now() / 1000, tool: String(toolName), known: Boolean(tool) })}\n`,
+                "utf8"
+              );
+            } catch {
+              /* a log that cannot be written never fails a call */
+            }
+          }
           if (!tool) {
             this.writeError(id, -32601, `Unknown tool: ${toolName}`);
             break;

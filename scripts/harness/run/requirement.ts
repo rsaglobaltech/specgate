@@ -46,6 +46,7 @@ import { inFlightRequirements } from "../../lib/in-flight";
 import { isDerivedProject } from "../../lib/derived-writes";
 import { maskCommand } from "../../../packages/core/src/domain/HarnessEvents";
 import { missingApprovals } from "../../lib/approvals";
+import { harnessTrustRefusal, runIntent } from "../../lib/trust";
 import { parseMatrixContexts } from "../../../packages/core/src/domain/TraceabilityFormat";
 import {
   previousFailureFromPrompt,
@@ -55,6 +56,8 @@ import { quoteArg } from "../../lib/escape";
 import { requirementReadiness } from "../../../packages/core/src/domain/RequirementReadiness";
 import { runWithDeadline, wasInterrupted } from "../../lib/run-with-deadline";
 import { selectProfile } from "../../../packages/core/src/domain/ProfileMatch";
+import { requirementCapabilities } from "../../lib/capabilities";
+import { ensureSandbox, sandboxFor, setUpSandbox } from "../../lib/sandbox-registry";
 import { withWorktreeLock } from "../worktree-lock";
 /**
  * Where a resumed run picks up, and what the gate last said.
@@ -262,9 +265,18 @@ function refusedBeforeStarting(
     );
   }
 
+  // REQ-671: only what the module's trust level allows.
+  const untrusted = harnessTrustRefusal(projectDir, req.requirement, owning?.change, runIntent());
+  if (untrusted) {
+    warn(`${req.requirement}: ${untrusted}`);
+    return unattempted(req.requirement, req.category, "skipped", branch, untrusted);
+  }
+
   const readiness = readinessOf(projectDir, req);
   const unrunnable = readiness.blockers.find((b) => b.code === "requirement_scenario_unrunnable");
-  const hardStop = unrunnable || (ctx.skipNotReady && !readiness.ready);
+  // walkthrough-fixes-2 REQ-782: a requirement waiting for an answer is never handed to an agent.
+  const waits = readiness.blockers.find((b) => b.code === "requirement_needs_clarification");
+  const hardStop = unrunnable || waits || (ctx.skipNotReady && !readiness.ready);
 
   for (const b of readiness.blockers) {
     const line = `${req.requirement}: ${b.message} [${b.code}]`;
@@ -288,14 +300,16 @@ function refusedBeforeStarting(
       req.category,
       "skipped",
       branch,
-      unrunnable
-        ? `Its scenario would pass without testing anything, so the gate could not ` +
+      waits
+        ? `It waits for an answer (Needs Clarification): answer its question, then run it.`
+        : unrunnable
+          ? `Its scenario would pass without testing anything, so the gate could not ` +
             `tell success from failure. Run \`specgate validate <dir> --strict-scenarios\` ` +
             `to see every one.`
-        : `Not ready for an agent: ${readiness.blockers
-            .filter((b) => b.severity === "error")
-            .map((b) => b.code)
-            .join(", ")}. Fix the blockers above, or drop --skip-not-ready to run it anyway.`
+          : `Not ready for an agent: ${readiness.blockers
+              .filter((b) => b.severity === "error")
+              .map((b) => b.code)
+              .join(", ")}. Fix the blockers above, or drop --skip-not-ready to run it anyway.`
     );
   }
 
@@ -374,8 +388,18 @@ function openWorktree(
   const { projectDir, baseRef } = ctx;
   const survivor = resuming ? existingWorktreeFor(projectDir, branch) : null;
   if (survivor) return { dir: survivor, survivor: true };
+  // sandbox-swarm REQ-698: inside the folder of its module's sandbox, made the first time.
+  let base: string | null;
+  try {
+    base = sandboxBase(req, ctx);
+  } catch (e) {
+    // Said in the report, as the reason: a worker that throws reports nothing.
+    const why = `sandbox: ${(e as Error).message}`;
+    error(`${req.requirement}: ${why}`);
+    return { refused: unattempted(req.requirement, req.category, "fail", branch, why) };
+  }
   const dir = path.join(
-    os.tmpdir(),
+    base || os.tmpdir(),
     `specgate-harness-${req.requirement}-${crypto.randomBytes(4).toString("hex")}`
   );
   const args = resuming
@@ -396,6 +420,18 @@ function openWorktree(
         `git worktree add failed:\n${add.stderr || add.stdout}`
       ),
     };
+  }
+  // REQ-698: the sandbox's setup, once, in the first worktree inside it.
+  const sandbox = settingsOf(ctx).sandbox;
+  const box = base && sandbox?.engine === "sbx" ? sandboxFor(projectDir, dir) : null;
+  if (box && sandbox) {
+    try {
+      setUpSandbox(projectDir, sandbox, box, dir);
+    } catch (e) {
+      const why = `sandbox: ${(e as Error).message}`;
+      error(`${req.requirement}: ${why}`);
+      return { refused: unattempted(req.requirement, req.category, "fail", branch, why) };
+    }
   }
   return { dir, survivor: false };
 }
@@ -462,6 +498,8 @@ export function processOneRequirement(req: HarnessRequirement, ctx: RunContext):
     boundedContext: contextOfRequirement(projectDir, req.requirement),
     featureFile: featureFilePath(req),
     category: req.category,
+    // agent-routing REQ-688: a module's own agent.
+    module: requirementCapabilities(projectDir).get(req.requirement),
   });
   if (matchedProfile) info(`${req.requirement}: profile '${matchedProfile}' matched`);
 
@@ -587,4 +625,19 @@ export function publishBranch(
     }
   }
   return published;
+}
+
+/**
+ * sandbox-swarm REQ-698: with `sandbox: { engine: sbx }`, the folder of the
+ * sandbox of the requirement's change and module — made, opened and set up
+ * the first time; else null.
+ */
+function sandboxBase(req: HarnessRequirement, ctx: RunContext): string | null {
+  const sandbox = settingsOf(ctx).sandbox;
+  if (!sandbox || sandbox.engine !== "sbx") return null;
+  const id = String(req.requirement || "");
+  const owning = inFlightRequirements(ctx.projectDir).find((r) => r.id === id);
+  const change = owning?.change || path.basename(ctx.projectDir);
+  const module = requirementCapabilities(ctx.projectDir).get(id) || "project";
+  return ensureSandbox(ctx.projectDir, sandbox, change, module, (line) => info(line)).workspace;
 }

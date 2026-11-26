@@ -1,0 +1,11 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-720 SCN-720a: `change` — the new cap implemented and the old case broken does not pass (1525.573417ms)
+✔ REQ-720 SCN-720b: an unknown task is refused naming those that exist, and no agent starts (69.652166ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1652.532459

@@ -162,10 +162,13 @@ The delta format is deliberately the same, so the specs come across as-is.
 4. `specgate change validate` — the `ADDED`/`MODIFIED`/`REMOVED` grammar is
    compatible; what it will flag is missing RFC-2119 keywords and scenario
    steps that are prose rather than `- GIVEN` bullets.
-5. Optionally add `<!-- specgate:trace uc=… cmd=… -->` comments where you want
-   requirements to reach the traceability matrix. Without them a requirement
-   still archives, with `-` in those columns.
-6. For each open change: a test that names each of its requirements,
+5. Add a `<!-- specgate:trace kind=functional -->` comment to each
+   requirement (`functional`, `non-functional` or `business-rule`):
+   `change approve` refuses a requirement without `kind=`. `uc=… cmd=…` in the
+   same comment are optional; without them a requirement still archives, with
+   `-` in those matrix columns.
+6. For each open change: a person approves it (`specgate change approve
+   <id>`, at a terminal), then a test that names each of its requirements,
    `specgate apply` until each is Implemented, then `specgate archive <id>`.
    An open change OpenSpec would archive with unticked tasks stays open here
    until its tests pass.

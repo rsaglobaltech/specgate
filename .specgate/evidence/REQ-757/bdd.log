@@ -1,0 +1,16 @@
+▶ dist/tests/unit/sealed-acceptance.test.js
+✔ REQ-757 SCN-757a: sealed as they are — the approval holds the file's sha256 (2190.281875ms)
+✔ REQ-757 SCN-757b: a test that proves no scenario — refused, nothing recorded (1244.225417ms)
+✔ REQ-757: a listed file that is not there, or a change not approved — refused (3535.610458ms)
+✔ REQ-757: sealing is approving — no terminal, no seal (REQ-748) (2213.607333ms)
+✔ REQ-757 SCN-757c: any language — a Maven integration test is sealed the same way (1326.731417ms)
+✔ REQ-757: a line of acceptance-tests.md without its bullet is read; prose is not (1604.1605ms)
+✔ REQ-757 SCN-757d: the sign-off checklist is not a list of tests — acceptance.md stays specgate acceptance's (2067.824292ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14372.23975

@@ -159,3 +159,52 @@ export function setYamlListItem(
   lines.splice(insertAt(lines, item.at, item.end), 0, `${fieldPad}${field}: ${value}`);
   return join(doc);
 }
+
+/**
+ * `text` without `path` (mapping keys, outermost first) and its block; `text`
+ * itself when the key is not there (config-agents REQ-707). A parent left
+ * with nothing in it goes too.
+ */
+export function removeYamlValue(text: string, path: string[]): string {
+  const doc = split(text);
+  const lines = doc.lines;
+  let from = 0;
+  let to = lines.length;
+  let parentIndent = -1;
+  const parents: Array<{ at: number; indent: number }> = [];
+  for (let d = 0; d < path.length; d += 1) {
+    const first = lines.slice(from, to).find((l) => content(l) && indentOf(l) > parentIndent);
+    if (!first) return text;
+    const indent = indentOf(first);
+    let at = -1;
+    for (let i = from; i < to; i += 1) {
+      if (
+        content(lines[i]) &&
+        indentOf(lines[i]) === indent &&
+        keyRe(path[d]).test(lines[i].trim())
+      ) {
+        at = i;
+        break;
+      }
+    }
+    if (at < 0) return text;
+    const end = blockEnd(lines, at, indent, to);
+    if (d === path.length - 1) {
+      lines.splice(at, end - at);
+      // Parents emptied by it go as well, innermost first.
+      for (let k = parents.length - 1; k >= 0; k -= 1) {
+        const pAt = parents[k].at;
+        const pEnd = blockEnd(lines, pAt, parents[k].indent, lines.length);
+        const left = lines.slice(pAt + 1, pEnd).some((l) => content(l));
+        if (left) break;
+        lines.splice(pAt, pEnd - pAt);
+      }
+      return join(doc);
+    }
+    parents.push({ at, indent });
+    from = at + 1;
+    to = end;
+    parentIndent = indent;
+  }
+  return text;
+}

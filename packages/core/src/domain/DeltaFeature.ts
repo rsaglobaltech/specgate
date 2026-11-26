@@ -55,7 +55,8 @@ export function renderDeltaFeature(
 }
 
 const REQUIREMENT = /^###\s+Requirement:\s*(REQ-[A-Za-z0-9.]+)/;
-const TRACE = /^<!--\s*specgate:trace\b(.*?)-->\s*$/;
+// The start of a trace comment: it may close on a later line.
+const TRACE = /^<!--\s*specgate:trace\b/;
 
 /**
  * Give every requirement that has scenarios but names no feature file the
@@ -66,6 +67,16 @@ const TRACE = /^<!--\s*specgate:trace\b(.*?)-->\s*$/;
  * archived with "0 materialised", and the gate then asked every requirement
  * for a scenario it already had (reservas_app, defect #46: 34 scenarios).
  */
+/** A trace comment that starts on line `at`, whole: it may run over several lines. */
+function traceComment(lines: string[], at: number): string {
+  const out: string[] = [];
+  for (let i = at; i < lines.length; i++) {
+    out.push(lines[i]!);
+    if (lines[i]!.includes("-->")) break;
+  }
+  return out.join("\n");
+}
+
 export function withDefaultFeaturePaths(source: string, capability: string): string {
   const lines = source.split("\n");
   type Block = { id: string; heading: number; trace: number; scenarios: boolean };
@@ -89,7 +100,7 @@ export function withDefaultFeaturePaths(source: string, capability: string): str
     const feature = `feature=features/${capability}/${b.id}.feature`;
     if (b.trace === -1) {
       inserts.push({ at: b.heading + 1, line: `\n<!-- specgate:trace ${feature} -->` });
-    } else if (!/\bfeature=/.test(lines[b.trace])) {
+    } else if (!/\bfeature=/.test(traceComment(lines, b.trace))) {
       lines[b.trace] = lines[b.trace].replace(/specgate:trace\s*/, `specgate:trace ${feature} `);
     }
   }

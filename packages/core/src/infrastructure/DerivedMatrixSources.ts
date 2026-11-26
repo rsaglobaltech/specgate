@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { DerivationSources, SourceFile } from "../domain/DerivedMatrix";
+import { readHarnessConfig } from "./HarnessConfigFile";
 
 /**
  * Reading what a derived matrix is computed from: `spec.md`, every
@@ -38,12 +39,16 @@ const SKIP_DIRS = new Set([
   "obj",
 ]);
 
-const TEST_DIR = /^(test|tests|__tests__|spec|specs|testing|integration-tests|e2e)$/i;
+const TEST_DIR = /^(test|tests|__tests__|testing|integration-tests|e2e)$/i;
+/** RSpec's `spec/`: a test folder only at the root — deeper, `spec` names code (REQ-675). */
+const ROOT_TEST_DIR = /^(spec|specs)$/i;
 const TEST_NAME =
   /([._-](test|spec|it)\.[a-z0-9]+$)|(^test_.*\.py$)|(_test\.(go|py|rb|exs|rs|cc|cpp)$)|((Test|Tests|IT|Spec)\.(java|kt|kts|scala|groovy|cs|swift)$)/;
 const CODE_EXT =
   /\.(js|jsx|mjs|cjs|ts|tsx|mts|cts|py|go|rb|java|kt|kts|scala|groovy|cs|fs|swift|rs|php|ex|exs|c|cc|cpp|h|hpp|feature|sh)$/i;
 const MAX_BYTES = 1_000_000;
+/** `specgate eval`'s exams (REQ-686): fixtures copied for an agent, not code or tests. */
+const EVALS_DIR = "evals";
 const MAX_FILES = 20_000;
 
 /**
@@ -62,7 +67,8 @@ export function isTestFile(rel: string): boolean {
   if (!CODE_EXT.test(name)) return false;
   if (TEST_NAME.test(name)) return true;
   // `src/test/java/...` (Maven/Gradle) and plain `test/` or `tests/` trees.
-  return parts.slice(0, -1).some((p) => TEST_DIR.test(p));
+  const dirs = parts.slice(0, -1);
+  return dirs.some((p) => TEST_DIR.test(p)) || (dirs.length > 0 && ROOT_TEST_DIR.test(dirs[0]));
 }
 
 function walk(root: string, rel: string, pick: (rel: string) => boolean, out: string[]) {
@@ -76,6 +82,8 @@ function walk(root: string, rel: string, pick: (rel: string) => boolean, out: st
   for (const e of entries) {
     const childRel = rel ? `${rel}/${e.name}` : e.name;
     if (e.isDirectory()) {
+      // lab-fixes REQ-696: a skill exam's fixtures, at the root, are not the project.
+      if (!rel && e.name === EVALS_DIR) continue;
       if (!SKIP_DIRS.has(e.name) && !e.name.startsWith(".")) walk(root, childRel, pick, out);
     } else if (e.isFile() && pick(childRel)) {
       out.push(childRel);
@@ -109,7 +117,9 @@ export function readDerivationSources(projectDir: string): DerivationSources {
   walk(projectDir, "", (r) => CODE_EXT.test(r) && !r.endsWith(".feature"), sourcePaths);
   const tests: SourceFile[] = [];
   const code: SourceFile[] = [];
+  const tooling = gateTooling(projectDir);
   for (const rel of sourcePaths) {
+    if (tooling.has(rel)) continue;
     const f = read(projectDir, rel);
     if (f) (isTestFile(rel) ? tests : code).push(f);
   }
@@ -127,4 +137,37 @@ export function readDerivationSources(projectDir: string): DerivationSources {
   }
 
   return { spec, features, tests, capabilities, code };
+}
+
+/**
+ * lab-fixes REQ-696: the files the gate's own commands run — `bdd_cmd`,
+ * `arch_cmd`, `test_cmd` — are tooling. An example id in a runner's comment
+ * made the scenario runner the only code of a requirement.
+ */
+export function gateTooling(projectDir: string): Set<string> {
+  const out = new Set<string>();
+  let config: Record<string, unknown> | null = null;
+  try {
+    config = readHarnessConfig(projectDir) as Record<string, unknown> | null;
+  } catch {
+    return out;
+  }
+  for (const key of ["bddCmd", "archCmd", "testCmd"]) {
+    const cmd = config && typeof config[key] === "string" ? (config[key] as string) : "";
+    for (const word of cmd.split(/\s+/)) {
+      const bare = word.replace(/^["']|["']$/g, "");
+      if (!bare || bare.startsWith("-") || /[*?{]/.test(bare)) continue;
+      const rel = path
+        .relative(projectDir, path.resolve(projectDir, bare))
+        .split(path.sep)
+        .join("/");
+      if (rel.startsWith("..")) continue;
+      try {
+        if (fs.statSync(path.join(projectDir, rel)).isFile()) out.add(rel);
+      } catch {
+        /* not a file of the project */
+      }
+    }
+  }
+  return out;
 }

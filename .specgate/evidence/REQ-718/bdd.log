@@ -1,0 +1,12 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-718 SCN-718a: the test written before the code (1467.713334ms)
+✔ REQ-718 SCN-718b: the code written before its test (0.545083ms)
+✔ REQ-718: Codex's and OpenCode's sessions read into the same shape (0.637417ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1522.836791

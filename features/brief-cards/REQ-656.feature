@@ -1,4 +1,3 @@
-@change:brief-from-workshop
 Feature: A module from a workshop is drafted from its model
 
   @REQ-656 @SCN-656a

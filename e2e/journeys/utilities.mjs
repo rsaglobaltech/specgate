@@ -35,6 +35,7 @@ export default [
           "- GIVEN a paid invoice\n- WHEN its owner downloads it\n- THEN a PDF arrives\n\n" +
           "<!-- specgate:trace status=Implemented actor=Customer kind=functional -->\n"
       );
+      t.ok(t.sg(dir, "change", "approve", "pdf"), "a person approves the change");
       t.ok(t.sg(dir, "acceptance", "pdf"), "acceptance");
       const file = path.join(dir, "docs/specs/changes/pdf/acceptance.md");
       fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace("- [ ]", "- [x]"));
@@ -222,7 +223,14 @@ export default [
   },
   {
     name: "config remembers a preference and the help follows it",
-    covers: ["config init", "config set", "config get", "config list", "config keys"],
+    covers: [
+      "config init",
+      "config set",
+      "config unset",
+      "config get",
+      "config list",
+      "config keys",
+    ],
     run(dir, t) {
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
@@ -243,6 +251,15 @@ export default [
         "config keys lists the preference with its value",
         keys
       );
+      // config-agents REQ-706, REQ-707: where the agents work, set and removed.
+      t.ok(t.sg(dir, "config", "set", "sandbox.engine", "sbx"), "config set sandbox.engine sbx");
+      t.expect(
+        /engine: "sbx"/.test(t.read(dir, "harness.config.yaml")),
+        "the sandbox is written",
+        null
+      );
+      t.ok(t.sg(dir, "config", "unset", "sandbox"), "config unset sandbox");
+      t.expect(!/sandbox/.test(t.read(dir, "harness.config.yaml")), "and removed whole", null);
       const help = t.sg(dir, "--help");
       t.expect(
         /specops add/.test(help.stdout),

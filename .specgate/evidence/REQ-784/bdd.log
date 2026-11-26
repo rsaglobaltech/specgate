@@ -1,0 +1,20 @@
+▶ dist/tests/unit/draft-from-brief.test.js
+✔ dist/tests/unit/draft-from-brief.test.js (108.868541ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 119.194208
+▶ dist/tests/unit/walkthrough-fixes-2.test.js
+✔ REQ-784 SCN-784a: a ready draft names the approval next, then apply (70.422917ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 159.910334

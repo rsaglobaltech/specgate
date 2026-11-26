@@ -1,4 +1,4 @@
-<!-- translation-of: 02f6a645c4e8 -->
+<!-- translation-of: cb0d202103c0 -->
 # Escribe el brief
 
 > **La versión corta** de ambos caminos, en seis comandos: [Empezar](../start.md). Esta página es el mismo paso en detalle, con la salida grabada.
@@ -85,6 +85,19 @@ advertencia `B15_why_unmeasured`.
 
 - Bien: "A student finds today's lesson in under 10 seconds."
 - Mal: "Fast and easy to use." Ningún test puede comprobarlo.
+
+El de Lingo, que va bajo el título del ejemplo completo del final de esta
+página, antes de su primer `## Module:`:
+
+```markdown
+## Why
+
+Students lose track of their lessons between classes, and the teacher cannot
+see who is falling behind.
+
+- A student finds today's lesson in under 10 seconds.
+- The teacher sees each student's progress in under 2 seconds.
+```
 
 ## Paso 2 — Quién y dónde (3 minutos)
 
@@ -228,7 +241,7 @@ specgate propose --from-brief --agent "claude -p"
 $ specgate propose --from-brief --agent "claude -p"
   ◆ specgate · propose --from-brief --agent   docs/brief.md
 
-  ➜  claude -p --permission-mode acceptEdits  is proposing the front matter of docs/brief.md…
+  ➜  claude --strict-mcp-config --permission-mode acceptEdits -p  is proposing the front matter of docs/brief.md…
      edit permission added: claude -p cannot write files otherwise
 
 Added a front matter to docs/brief.md: 2 actors, 4 modules; one line marked to check.
@@ -264,7 +277,7 @@ una sección por módulo, solo a partir de tus notas:
 $ specgate propose --from-brief --agent "claude -p"
   ◆ specgate · propose --from-brief --agent   docs/brief.md
 
-  ➜  claude -p --permission-mode acceptEdits  is proposing the module sections of docs/brief.md…
+  ➜  claude --strict-mcp-config --permission-mode acceptEdits -p  is proposing the module sections of docs/brief.md…
      edit permission added: claude -p cannot write files otherwise
 
 Added 4 module sections from your notes; 3 questions the notes leave open.
@@ -288,7 +301,8 @@ abajo.)
 
 ## El ejemplo completo
 
-El brief de Lingo, revisado:
+El brief de Lingo, revisado. Su `## Why` es el del paso 1, bajo el título
+`# Lingo`; el bloque de abajo lo omite:
 
 <!-- specgate:example-brief -->
 ```markdown

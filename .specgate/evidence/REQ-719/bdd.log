@@ -1,0 +1,11 @@
+▶ dist/tests/unit/compat-evidence.test.js
+✔ REQ-719 SCN-719a: at level B the agent has nothing of Specgate's to read, and the gate still judges (1966.446958ms)
+✔ REQ-719 SCN-719b: at level B nothing of Specgate's is above the copy, and `specgate` is not found (2034.351084ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4068.443083
