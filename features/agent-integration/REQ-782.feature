@@ -1,4 +1,3 @@
-@change:walkthrough-fixes-2
 Feature: A requirement waiting for an answer is never handed to an agent
 
   @REQ-782 @SCN-782a

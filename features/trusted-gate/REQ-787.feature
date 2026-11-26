@@ -1,4 +1,3 @@
-@change:recover-guidance
 Feature: A red suite caused by another requirement says so, and how to repair it
 
   @REQ-787 @SCN-787a

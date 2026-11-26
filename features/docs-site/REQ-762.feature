@@ -1,4 +1,3 @@
-@change:landing-evidence
 Feature: The landing page shows the agent without and with the gate
 
   @REQ-762 @SCN-762a

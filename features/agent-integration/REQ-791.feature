@@ -1,4 +1,3 @@
-@change:walkthrough-fixes-3
 Feature: A first pack is not rendered over a project's own specification
 
   @REQ-791 @SCN-791a

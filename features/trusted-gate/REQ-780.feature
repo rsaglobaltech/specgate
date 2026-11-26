@@ -1,4 +1,3 @@
-@change:walkthrough-fixes
 Feature: The verdict names the fix for what a person approved
 
   @REQ-780 @SCN-780a

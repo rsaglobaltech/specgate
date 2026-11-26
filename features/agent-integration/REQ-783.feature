@@ -1,4 +1,3 @@
-@change:walkthrough-fixes-2
 Feature: A client's answer is a source for its requirements' values
 
   @REQ-783 @SCN-783a

@@ -1,4 +1,3 @@
-@change:approve-around-questions
 Feature: A question on a requirement that waits does not block approving the rest
 
   @REQ-771 @SCN-771a

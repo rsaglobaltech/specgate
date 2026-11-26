@@ -1,4 +1,3 @@
-@change:walkthrough-fixes-2
 Feature: The Claude Code plugin, generated in a project, goes under .claude/
 
   @REQ-781 @SCN-781a

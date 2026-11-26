@@ -1,4 +1,3 @@
-@change:walkthrough-fixes-2
 Feature: Diff fails on a pack it cannot render; sync fails on an id clash
 
   @REQ-786 @SCN-786a

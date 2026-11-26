@@ -1,4 +1,3 @@
-@change:walkthrough-fixes-3
 Feature: The MCP config tools declare and pass their key and value
 
   @REQ-792 @SCN-792a

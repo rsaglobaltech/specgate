@@ -1,4 +1,3 @@
-@change:acceptance-tests-file
 Feature: A person approves a change's acceptance tests
 
   @REQ-757 @SCN-757a

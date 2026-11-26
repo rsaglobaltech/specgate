@@ -1,4 +1,3 @@
-@change:landing-evidence
 Feature: The landing page shows where each control runs
 
   @REQ-763 @SCN-763a

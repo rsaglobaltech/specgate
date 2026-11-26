@@ -1267,27 +1267,33 @@ The system SHALL, when `specgate check` compares the project with a base, name w
 
 ### Requirement: REQ-757 — A person approves a change's acceptance tests
 
-The system SHALL, on `specgate change approve <id> --layer acceptance`, read the change's `acceptance.md`, whose lines each name a test file and the scenarios of the change it proves, and record in the change's approvals the layer `acceptance` with a sha256 of each file; and SHALL refuse, recording nothing, when the design is not approved, when a listed file does not exist, or when a line names no scenario of the change's delta.
+The system SHALL, on `specgate change approve <id> --layer acceptance`, read the change's `acceptance-tests.md`, whose lines each name a test file and the scenarios of the change it proves, and record in the change's approvals the layer `acceptance` with a sha256 of each file; SHALL refuse, recording nothing, when the design is not approved, when a listed file does not exist, or when a line names no scenario of the change's delta; and SHALL NOT read the change's `acceptance.md`, which is the sign-off checklist of `specgate acceptance`.
 
 > Measured on 2026-11-25: on the trap tasks, agents with Specgate did no better than without it — the agent that wrote the code also wrote, or followed, the wrong test.
 
 #### Scenario: SCN-757a — Sealed as they are
 
-- GIVEN export-csv with its design approved and an `acceptance.md` listing `tests/acceptance/export.spec.ts — SCN-120a`
+- GIVEN export-csv with its design approved and an `acceptance-tests.md` listing `tests/acceptance/export.spec.ts — SCN-120a`
 - WHEN a person runs `specgate change approve export-csv --layer acceptance` at a terminal
 - THEN the change's approvals hold the layer `acceptance` with the sha256 of `tests/acceptance/export.spec.ts`
 
 #### Scenario: SCN-757b — A test that proves no scenario
 
-- GIVEN the same change, and a line of `acceptance.md` naming `SCN-999z`, which its delta does not have
+- GIVEN the same change, and a line of `acceptance-tests.md` naming `SCN-999z`, which its delta does not have
 - WHEN a person approves its acceptance
 - THEN it fails naming the line and `SCN-999z`, and no acceptance approval is recorded
 
 #### Scenario: SCN-757c — Any language
 
-- GIVEN a Maven project whose `acceptance.md` lists `src/test/java/shop/FeesAcceptanceIT.java — SCN-130a`
+- GIVEN a Maven project whose `acceptance-tests.md` lists `src/test/java/shop/FeesAcceptanceIT.java — SCN-130a`
 - WHEN a person approves its acceptance
 - THEN the file is sealed the same way
+
+#### Scenario: SCN-757d — The sign-off checklist is not a list of tests
+
+- GIVEN export-csv with the sign-off checklist `specgate acceptance export-csv` wrote, and no `acceptance-tests.md`
+- WHEN a person approves its acceptance
+- THEN it fails with `acceptance_not_listed`, naming `acceptance-tests.md`, and `acceptance.md` is as `specgate acceptance` wrote it
 
 <!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-757.feature kind=functional status=Implemented -->
 
@@ -1326,3 +1332,97 @@ The system SHALL, for each open change with sealed acceptance tests, run the pro
 - THEN the gate fails with `acceptance_no_command`, and the project's files and dependencies are as they were
 
 <!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-759.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-768 — Switching the guard off takes a person at a terminal
+
+The system SHALL refuse `specgate config set agent_guard off` when its input is not a terminal and `SPECGATE_ASSUME_TTY` is not set, with `guard_needs_person`, saying switching the guard off is a person's act and writing nothing; and SHALL switch it as before at a terminal, and switch it on from anywhere.
+
+> Found on 2026-11-26: the MCP tool that sets a setting passed `agent_guard off` to the CLI, a road the guard hook does not see.
+
+#### Scenario: SCN-768a — An agent's call
+
+- GIVEN a project with the guard on
+- WHEN `specgate config set agent_guard off` runs with no terminal
+- THEN it fails with `guard_needs_person`, and the guard is still on
+
+#### Scenario: SCN-768b — A person at a terminal
+
+- GIVEN the same project
+- WHEN a person runs `specgate config set agent_guard off` at a terminal
+- THEN the guard is off
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-768.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-769 — An MCP tool passes only the arguments it declares
+
+The system SHALL, in the MCP server's tools that run the CLI, pass to the CLI only the arguments the tool's input schema declares, besides the project folder.
+
+#### Scenario: SCN-769a — An undeclared argument
+
+- GIVEN the MCP tool `specgate_config_set`, whose schema declares only the project folder
+- WHEN it is called with `{ "projectDir": <dir>, "a": "agent_guard", "b": "off" }`
+- THEN the CLI it runs is not given `agent_guard` or `off`, and the guard is still on
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-769.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-787 — A red suite caused by another requirement says so, and how to repair it
+
+The system SHALL, when the project's tests fail during `specgate apply` and the failing tests name only requirements other than the ones being delivered, say in `done_tests_failed` which requirements are red and, as its fix, to repair their code — never their test — as part of the change, the design's scope judging new files only; SHALL name, in `specgate check`'s `check_tests_failed`, the requirements the failing tests name, with the same fix; and the instructions `specgate agents init` writes into AGENTS.md SHALL say the same.
+
+> Measured on 2026-11-25: four of six Claude Code runs of the `recover` task stopped with their requirement done and REQ-001's test red, saying its repair was out of their scope.
+
+#### Scenario: SCN-787a — REQ-001 is red while REQ-002 is delivered
+
+- GIVEN REQ-002 with its test passing, and REQ-001's test failing
+- WHEN the developer runs `specgate apply REQ-002`
+- THEN it is refused with `done_tests_failed`, naming REQ-001, and its fix says to repair REQ-001's code, not its test
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-787.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-777 — Status names the approval a change waits for
+
+The system SHALL, in `specgate status`, name `specgate change approve <id>` as the next command when the next requirement belongs to an open change nobody approved, with the reason that it waits for a person; and SHALL name the requirement's own next command once the change is approved.
+
+#### Scenario: SCN-777a — A change nobody approved
+
+- GIVEN export-csv open, its delta written, not approved
+- WHEN the developer runs `specgate status`
+- THEN the next command is `specgate change approve export-csv`, and once a person approved it, it is not
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-777.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-778 — A trace comment over several lines survives apply and archive
+
+The system SHALL read a `specgate:trace` comment from its opening to its closing `-->` wherever it writes a field into it or gives a requirement a default feature file, so that a comment written over several lines keeps every field it holds through `apply` and `archive`.
+
+#### Scenario: SCN-778a — The feature file it names stays its feature file
+
+- GIVEN a requirement whose trace comment names `feature=features/pricing/dynamic_pricing.feature` on its second line
+- WHEN it is applied and its change archived
+- THEN its trace still names `features/pricing/dynamic_pricing.feature`, no other feature file is written for it, and `specgate check` passes
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-778.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-779 — A sealed test of an archived change is still checked and guarded
+
+The system SHALL keep checking, in the gate's acceptance stage, and guarding, in the agent guards and the outside judge, an acceptance test sealed by a change that is now archived; a change that seals the same file later replaces its seal; and the fix for one that changed SHALL say to restore it or open a change that lists it and have a person approve it.
+
+#### Scenario: SCN-779a — After the archive
+
+- GIVEN export-csv's acceptance test sealed, and export-csv archived
+- WHEN the test is changed and `specgate check` runs, or an agent's tool asks to write it
+- THEN the gate fails with `acceptance_not_sealed`, and the write is refused with `acceptance_sealed`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-779.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-780 — The verdict names the fix for what a person approved
+
+The system SHALL end `specgate check` with `check_approved_changed`, and the fix that clears it, when what fails the open changes is only something a person approved — a sealed requirement, a sealed acceptance test, the design's scope; SHALL end a failing acceptance stage with `check_acceptance_failed`; and SHALL name, in the fix of `approve_needs_person`, the `--layer` the refused command asked for.
+
+#### Scenario: SCN-780a — A sealed test changed
+
+- GIVEN export-csv's acceptance test sealed and then changed
+- WHEN the developer runs `specgate check`
+- THEN it fails with `acceptance_not_sealed` and `check_approved_changed`, and not with `check_change_invalid`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-780.feature kind=functional status=Implemented -->

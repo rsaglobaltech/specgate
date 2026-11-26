@@ -1,4 +1,3 @@
-@change:guard-scope-and-seal-run
 Feature: The guard refuses a new file the approved design does not name
 
   @REQ-793 @SCN-793a

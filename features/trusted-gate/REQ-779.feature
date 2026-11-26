@@ -1,4 +1,3 @@
-@change:walkthrough-fixes
 Feature: A sealed test of an archived change is still checked and guarded
 
   @REQ-779 @SCN-779a

@@ -1,4 +1,3 @@
-@change:guard-switch-person
 Feature: An MCP tool passes only the arguments it declares
 
   @REQ-769 @SCN-769a

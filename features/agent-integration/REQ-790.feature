@@ -1,4 +1,3 @@
-@change:walkthrough-fixes-3
 Feature: The plugin's hooks run as CommonJS in any project
 
   @REQ-790 @SCN-790a

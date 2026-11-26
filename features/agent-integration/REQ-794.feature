@@ -1,4 +1,3 @@
-@change:guard-scope-and-seal-run
 Feature: Sealing acceptance tests runs them once for the person
 
   @REQ-794 @SCN-794a

@@ -1,4 +1,3 @@
-@change:guard-switch-person
 Feature: Switching the guard off takes a person at a terminal
 
   @REQ-768 @SCN-768a

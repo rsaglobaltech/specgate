@@ -1,4 +1,3 @@
-@change:landing-evidence
 Feature: The landing page lists the nine controls and what agents tried
 
   @REQ-764 @SCN-764a

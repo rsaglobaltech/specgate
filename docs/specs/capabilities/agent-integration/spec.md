@@ -987,3 +987,143 @@ The system SHALL refuse, in the guard of Claude Code, Codex and OpenCode, with `
 - THEN the write is allowed: the sealed test is the test that names the requirement
 
 <!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-760.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-793 — The guard refuses a new file the approved design does not name
+
+The system SHALL refuse, in the agent guards, a write that creates a source file when an open change's approved design names source files and not that one, unless the gate's rule `scope` is off — with `file_outside_design`, the files the design names, and that the work waits for a person: a change of its own, or the design named and approved again; and SHALL leave alone a file that already exists and one the design names.
+
+> Measured on 2026-11-26: a Codex run linked its unrequested `src/export.js` to an unrelated requirement's test, so the guard let it write the file; the gate refused it only at the end.
+
+#### Scenario: SCN-793a — A file nobody designed
+
+- GIVEN draft-fees approved, its design naming `src/fees.js`, and a test naming REQ-031
+- WHEN an agent's tool asks to write the new `src/export.js`
+- THEN it is refused with `file_outside_design`, naming `src/export.js` and `specgate propose`; writing `src/fees.js` is allowed
+
+<!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-793.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-794 — Sealing acceptance tests runs them once for the person
+
+The system SHALL, once `specgate change approve <id> --layer acceptance` has sealed the tests and when `acceptance_cmd` is set, run the sealed tests once and show the person whether they pass and, when they fail, the lines that say why — so a test that can never pass, such as one that loads a file by a wrong path, is seen before an agent is given it.
+
+> Measured on 2026-11-26: in two Codex runs the writer sealed step definitions that load the module by a path outside the project; no agent could make them pass.
+
+#### Scenario: SCN-794a — A wrong path
+
+- GIVEN `acceptance_cmd` set, and an acceptance test that loads `../../../src/fees.js` from two folders deep
+- WHEN a person runs `specgate change approve draft-fees --layer acceptance`
+- THEN the tests are sealed, the output says they ran once, and shows `Cannot find module '../../../src/fees.js'`
+
+<!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-794.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-781 — The Claude Code plugin, generated in a project, goes under .claude/
+
+The system SHALL, on `specgate agents init --tool claude-plugin` in a Specgate project, write the plugin under `.claude/specgate-plugin/`, where the guard never judges a file as source, and SHALL write it at the given `--project-dir` when that is not a Specgate project.
+
+#### Scenario: SCN-781a — The next call goes through
+
+- GIVEN a Specgate project where `agents init --tool claude-plugin` ran, and a change open with no test yet
+- WHEN an agent's tool asks to run `ls`
+- THEN the plugin is under `.claude/specgate-plugin/`, nothing of it is at the root, and the call is allowed
+
+<!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-781.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-782 — A requirement waiting for an answer is never handed to an agent
+
+The system SHALL, in `specgate harness run`, skip a requirement marked Needs Clarification before it makes a worktree or a branch or starts an agent, saying it waits for an answer.
+
+#### Scenario: SCN-782a — Asked for by name
+
+- GIVEN REQ-004 marked Needs Clarification in an approved change
+- WHEN the developer runs `specgate harness run --req REQ-004`
+- THEN no agent runs, no branch `harness/REQ-004` exists, and the output says it waits for an answer
+
+<!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-782.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-783 — A client's answer is a source for its requirements' values
+
+The system SHALL accept, in the draft checklist's rule D6, a value a scenario states when the Answer of an answered question that blocks the scenario's requirement states it, as it accepts a value the brief states.
+
+#### Scenario: SCN-783a — The fee the client gave
+
+- GIVEN REQ-004's scenario charging "5 euros", the brief silent on the fee, and Q1, blocking REQ-004, answered "5 euros"
+- WHEN the draft is checked
+- THEN no `D6_unlisted_value` names "5 euros"; with Q1 unanswered, one does
+
+<!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-783.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-784 — A ready draft names the approval next
+
+The system SHALL name `specgate change approve <change>` as the next step of a draft that is ready to review and not approved — in `propose --from-brief`'s numbered steps, before `specgate apply`, and wherever a module's next command is given — and `specgate apply` once a person approved it.
+
+#### Scenario: SCN-784a — Ready to review
+
+- GIVEN the bookings draft passes its checklist and nobody approved it
+- WHEN the developer runs `specgate propose --from-brief bookings`
+- THEN its steps name `specgate change approve draft-bookings`, then `specgate apply`
+
+<!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-784.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-785 — A branch that changes no control is reported as changing none
+
+The system SHALL compare, in `specgate check --base`, the sealed acceptance tests as they are at the base with the branch's, so that a branch that changes no control names none.
+
+#### Scenario: SCN-785a — Identical to main
+
+- GIVEN main with a sealed acceptance test, and a branch from it with no change
+- WHEN the developer runs `specgate check --base main`
+- THEN no `controls_changed_on_branch` is reported
+
+<!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-785.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-786 — Diff fails on a pack it cannot render; sync fails on an id clash
+
+The system SHALL exit non-zero from `specgate specops diff` when a pack's expansion fails, and from `specgate specops sync` when, after the merge, a requirement id is defined twice across `spec.md` and the capability specs, naming the ids and saying to give the project's requirement a free id.
+
+#### Scenario: SCN-786a — The pack's REQ-006 and the project's
+
+- GIVEN a project with its own REQ-006, and a pack version that adds a REQ-006
+- WHEN the developer runs `specgate specops sync --pack-version <new>`
+- THEN it fails naming REQ-006, and does not say there was no conflict
+
+<!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-786.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-790 — The plugin's hooks run as CommonJS in any project
+
+The system SHALL write, with the Claude Code plugin's hook scripts, a `scripts/package.json` that declares them CommonJS, so that the guard refuses as it should in a project whose package.json says `"type": "module"`.
+
+> Found on 2026-11-26: in such a project every hook failed to load, exited 1, and Claude Code took that as "do not block".
+
+#### Scenario: SCN-790a — A module project
+
+- GIVEN a project whose package.json says `"type": "module"`, and `agents init --tool claude-plugin`
+- WHEN the plugin's guard is asked to write `src/x.js` with no change open
+- THEN it refuses, exit 2, saying no change is open
+
+<!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-790.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-791 — A first pack is not rendered over a project's own specification
+
+The system SHALL refuse `specgate specops add` (and `expand`), writing nothing, when the project has no `.specops.lock` and already has capability specs with requirements or archived changes, naming what it found and offering `--force`.
+
+> Found on 2026-11-26: a walkthrough's `specops add` replaced a real repository's spec.md, catalogs and 27 capability specs, and the gate stayed green.
+
+#### Scenario: SCN-791a — A project with its own specification
+
+- GIVEN a project with a capability spec holding REQ-012 and no `.specops.lock`
+- WHEN the developer runs `specgate specops add` for a pack
+- THEN it fails saying the project already has its own specification, and spec.md is as it was
+
+<!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-791.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-792 — The MCP config tools declare and pass their key and value
+
+The system SHALL declare, in the MCP tools for `config set`, `config get` and `config unset`, their `key` (and `value`), and pass the declared arguments to the CLI in the schema's order whatever order the client sent them in; switching the guard off SHALL stay refused.
+
+#### Scenario: SCN-792a — Key and value
+
+- GIVEN a project
+- WHEN an MCP client calls `specgate_config_set` with `value: "on"` then `key: "pet"`, and with `agent_guard` `off`
+- THEN `pet` is on, and the guard is still on
+
+<!-- specgate:trace actor=Developer feature=features/agent-integration/REQ-792.feature kind=functional status=Implemented -->

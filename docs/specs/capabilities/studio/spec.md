@@ -42,7 +42,7 @@ The system SHALL give Home the project's counts — requirements built of the to
 
 ### Requirement: REQ-206 — A draft is approved by a person
 
-The system SHALL, with `specgate change approve <id>`, record in the change's change.yaml that a person approved it and when, refusing while the draft checklist has errors or a question it holds is open, and naming them; the record SHALL survive later rewrites of change.yaml; and Review SHALL list each open change not approved with its requirements as statement and Given/When/Then, the checklist as plain checks, and Approve enabled only when nothing blocks it. Each blocker SHALL be listed with the action that clears it — answering a question, confirming that the spec says an answer, opening the requirement the checklist names — and a question SHALL be matched by its exact id.
+The system SHALL, with `specgate change approve <id>`, record in the change's change.yaml that a person approved it and when, refusing while the draft checklist has errors or a question it holds is open — except a question, or a finding, that concerns only requirements marked Needs Clarification (REQ-771) — and naming them; the record SHALL survive later rewrites of change.yaml; and Review SHALL list each open change not approved with its requirements as statement and Given/When/Then, the checklist as plain checks, and Approve enabled only when nothing blocks it. Each blocker SHALL be listed with the action that clears it — answering a question, confirming that the spec says an answer, opening the requirement the checklist names — and a question SHALL be matched by its exact id.
 
 > Amended by studio-unblock: on 2026-11-08 Approve stayed disabled with no way to clear what blocked it, and a blocker naming Q10 hid Q1.
 

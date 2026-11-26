@@ -1,4 +1,3 @@
-@change:walkthrough-fixes
 Feature: A trace comment over several lines survives apply and archive
 
   @REQ-778 @SCN-778a

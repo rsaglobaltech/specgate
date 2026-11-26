@@ -1,4 +1,3 @@
-@change:walkthrough-fixes-2
 Feature: A ready draft names the approval next
 
   @REQ-784 @SCN-784a

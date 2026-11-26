@@ -1,4 +1,3 @@
-@change:walkthrough-fixes-2
 Feature: A branch that changes no control is reported as changing none
 
   @REQ-785 @SCN-785a

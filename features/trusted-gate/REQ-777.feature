@@ -1,4 +1,3 @@
-@change:walkthrough-fixes
 Feature: Status names the approval a change waits for
 
   @REQ-777 @SCN-777a

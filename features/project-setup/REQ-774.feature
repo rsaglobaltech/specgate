@@ -1,4 +1,3 @@
-@change:sync-keeps-local
 Feature: Upgrading a pack keeps what the team wrote in spec.md
 
   @REQ-774 @SCN-774a
