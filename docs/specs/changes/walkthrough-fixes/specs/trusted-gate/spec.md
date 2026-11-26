@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-777 — Status names the approval a change waits for
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL, in `specgate status`, name `specgate change approve <id>` as the next command when the next requirement belongs to an open change nobody approved, with the reason that it waits for a person; and SHALL name the requirement's own next command once the change is approved.
 
@@ -16,7 +16,7 @@ The system SHALL, in `specgate status`, name `specgate change approve <id>` as t
 
 ### Requirement: REQ-778 — A trace comment over several lines survives apply and archive
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL read a `specgate:trace` comment from its opening to its closing `-->` wherever it writes a field into it or gives a requirement a default feature file, so that a comment written over several lines keeps every field it holds through `apply` and `archive`.
 
@@ -28,7 +28,7 @@ The system SHALL read a `specgate:trace` comment from its opening to its closing
 
 ### Requirement: REQ-779 — A sealed test of an archived change is still checked and guarded
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL keep checking, in the gate's acceptance stage, and guarding, in the agent guards and the outside judge, an acceptance test sealed by a change that is now archived; a change that seals the same file later replaces its seal; and the fix for one that changed SHALL say to restore it or open a change that lists it and have a person approve it.
 
@@ -40,7 +40,7 @@ The system SHALL keep checking, in the gate's acceptance stage, and guarding, in
 
 ### Requirement: REQ-780 — The verdict names the fix for what a person approved
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL end `specgate check` with `check_approved_changed`, and the fix that clears it, when what fails the open changes is only something a person approved — a sealed requirement, a sealed acceptance test, the design's scope; SHALL end a failing acceptance stage with `check_acceptance_failed`; and SHALL name, in the fix of `approve_needs_person`, the `--layer` the refused command asked for.
 

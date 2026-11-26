@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-774 — Upgrading a pack keeps what the team wrote in spec.md
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL, on `specgate specops sync --pack-version <new>`, merge each file it seeds the render with — `spec.md` of a derived project and the shared catalogs — against what the pack's recorded version renders over the same copy, so that a local edit the new version does not touch is kept, a change the new version makes is applied, and an edit both made to the same line is reported as a conflict.
 

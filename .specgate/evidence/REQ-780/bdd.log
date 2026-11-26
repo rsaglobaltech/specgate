@@ -1,0 +1,10 @@
+▶ dist/tests/unit/sealed-acceptance.test.js
+✔ REQ-758 SCN-758a, REQ-780 SCN-780a: one byte changed — the gate fails with acceptance_not_sealed and says what to do (6388.125625ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6765.050167

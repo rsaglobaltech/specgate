@@ -1,0 +1,20 @@
+▶ dist/tests/unit/multi-stack-cli.test.js
+✔ dist/tests/unit/multi-stack-cli.test.js (339.157125ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 368.862958
+▶ dist/tests/unit/walkthrough-fixes.test.js
+✔ REQ-777 SCN-777a: a change nobody approved — status names the approval, not apply (5822.853ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6160.580416

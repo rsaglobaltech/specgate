@@ -26,4 +26,4 @@ The system SHALL, with `specgate change approve <id>`, record in the change's ch
 - WHEN Review is read
 - THEN Approve is disabled, Q1 is listed with "answer" and Q10 with "it is in the spec", each once
 
-<!-- specgate:trace actor=Developer feature=features/studio/REQ-206.feature kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/studio/REQ-206.feature actor=Developer kind=functional -->

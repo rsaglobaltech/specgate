@@ -1,0 +1,44 @@
+▶ dist/tests/unit/draft-checklist.test.js
+✔ dist/tests/unit/draft-checklist.test.js (276.780458ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 367.458125
+▶ dist/tests/unit/studio-app.test.js
+✔ REQ-206 SCN-206b: a draft with an open question is not approved (631.151916ms)
+✔ REQ-206 SCN-206a: approving a ready draft records it, and the record survives a rewrite (2111.876166ms)
+✔ REQ-206 SCN-206a: Review shows the draft as a person reads it, and what blocks it (469.041875ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3579.578583
+▶ dist/tests/unit/studio-redesign.test.js
+✔ REQ-206 SCN-206c: the new Changes — every blocker with its action, approval said why it waits (16.248584ms)
+✔ REQ-206 SCN-206a: the new Changes — a draft with nothing missing can be approved (1.913875ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 759.663375
+▶ dist/tests/unit/studio-unblock.test.js
+✔ REQ-206 SCN-206c: every blocker with its action, each question once and by its exact id (157.6865ms)
+✔ REQ-206: an answer's assumption to review is confirmed from Review; a requirement at the end of a sentence is named whole (39.871125ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 875.216958

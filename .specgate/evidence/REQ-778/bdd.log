@@ -1,0 +1,11 @@
+▶ dist/tests/unit/walkthrough-fixes.test.js
+✔ REQ-778 SCN-778a: a trace comment over two lines keeps its feature file through archive (48.644417ms)
+✔ REQ-778 SCN-778a: writing a status into a trace comment over two lines keeps all of it (12.053833ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 501.064417

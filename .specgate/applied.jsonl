@@ -152,3 +152,9 @@
 {"req":"REQ-768","capability":"trusted-gate","at":"2026-11-26T10:22:14.061Z"}
 {"req":"REQ-769","capability":"trusted-gate","at":"2026-11-26T10:22:22.673Z"}
 {"req":"REQ-771","capability":"change-lifecycle","at":"2026-11-26T10:22:36.799Z"}
+{"req":"REQ-774","capability":"project-setup","at":"2026-11-26T11:01:27.947Z"}
+{"req":"REQ-777","capability":"trusted-gate","at":"2026-11-26T11:02:12.160Z"}
+{"req":"REQ-778","capability":"trusted-gate","at":"2026-11-26T11:02:42.544Z"}
+{"req":"REQ-779","capability":"trusted-gate","at":"2026-11-26T11:03:17.276Z"}
+{"req":"REQ-780","capability":"trusted-gate","at":"2026-11-26T11:03:57.665Z"}
+{"req":"REQ-206","capability":"studio","at":"2026-11-26T11:04:27.104Z"}
