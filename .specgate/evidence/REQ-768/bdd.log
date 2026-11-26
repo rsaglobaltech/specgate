@@ -1,0 +1,11 @@
+▶ dist/tests/unit/guard-switch-person.test.js
+✔ REQ-768 SCN-768a: an agent's call — no terminal, the guard stays on (567.6285ms)
+✔ REQ-768 SCN-768b: a person at a terminal switches it off; on is open to anyone (692.477916ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1386.597583

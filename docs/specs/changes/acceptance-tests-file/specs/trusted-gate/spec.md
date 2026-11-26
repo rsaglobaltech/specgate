@@ -32,4 +32,4 @@ The system SHALL, on `specgate change approve <id> --layer acceptance`, read the
 - WHEN a person approves its acceptance
 - THEN it fails with `acceptance_not_listed`, naming `acceptance-tests.md`, and `acceptance.md` is as `specgate acceptance` wrote it
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

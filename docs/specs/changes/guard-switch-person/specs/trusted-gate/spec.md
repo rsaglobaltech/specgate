@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-768 — Switching the guard off takes a person at a terminal
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL refuse `specgate config set agent_guard off` when its input is not a terminal and `SPECGATE_ASSUME_TTY` is not set, with `guard_needs_person`, saying switching the guard off is a person's act and writing nothing; and SHALL switch it as before at a terminal, and switch it on from anywhere.
 
@@ -24,7 +24,7 @@ The system SHALL refuse `specgate config set agent_guard off` when its input is 
 
 ### Requirement: REQ-769 — An MCP tool passes only the arguments it declares
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL, in the MCP server's tools that run the CLI, pass to the CLI only the arguments the tool's input schema declares, besides the project folder.
 

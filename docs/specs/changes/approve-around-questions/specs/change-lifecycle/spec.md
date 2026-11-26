@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-771 — A question on a requirement that waits does not block approving the rest
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL NOT refuse `specgate change approve <id>` for an open question whose `Blocks` names only requirements of the change marked Needs Clarification, nor for a draft finding that names only such requirements; and SHALL refuse it, as before, for an open question that blocks any requirement not so marked.
 

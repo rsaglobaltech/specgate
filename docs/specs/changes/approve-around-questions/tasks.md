@@ -10,4 +10,4 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-771 — a question on a requirement that waits does not block approving the rest
+- [x] 2.1 REQ-771 — a question on a requirement that waits does not block approving the rest
