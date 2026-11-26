@@ -5,3 +5,4 @@ rigor: lite
 skip_specs: false
 retire_capabilities: false
 req_range: [REQ-757, REQ-761]
+approved: 2026-11-26
