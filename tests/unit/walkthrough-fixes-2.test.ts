@@ -147,4 +147,8 @@ test("REQ-786 SCN-786a: an id the pack brings and the project already uses is fo
   assert.deepEqual(duplicateRequirementIds(dir), ["REQ-006"]);
   fs.writeFileSync(path.join(dir, "spec.md"), "# Spec\n\n## REQ-005 — Receipt\n\n## REQ-006 — Join a waitlist\n");
   assert.deepEqual(duplicateRequirementIds(dir), []);
+  // The project's REQ-006 delivered into a capability, the pack's in spec.md.
+  fs.mkdirSync(path.join(dir, "docs/specs/capabilities/reservations"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "docs/specs/capabilities/reservations/spec.md"), "# Reservations\n\n## Requirements\n\n### Requirement: REQ-006 — Reserve a spot\n");
+  assert.deepEqual(duplicateRequirementIds(dir), ["REQ-006"]);
 });

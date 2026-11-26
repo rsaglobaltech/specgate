@@ -299,16 +299,29 @@ export function previousRender(entry: PackEntry, args: SyncArgs, projectDir: str
   }
 }
 
-/** walkthrough-fixes-2 REQ-786: the requirement ids `spec.md` holds more than once. */
+/**
+ * walkthrough-fixes-2 REQ-786: the requirement ids defined more than once
+ * across `spec.md` and the capability specs — a pack's new requirement over
+ * an id the project already delivered in a capability is a clash too.
+ */
 export function duplicateRequirementIds(projectDir: string): string[] {
-  let text = "";
+  const files = [path.join(projectDir, "spec.md")];
+  const caps = path.join(projectDir, "docs", "specs", "capabilities");
   try {
-    text = fs.readFileSync(path.join(projectDir, "spec.md"), "utf8");
+    for (const d of fs.readdirSync(caps, { withFileTypes: true })) if (d.isDirectory()) files.push(path.join(caps, d.name, "spec.md"));
   } catch {
-    return [];
+    /* no capabilities */
   }
   const seen = new Map<string, number>();
-  for (const m of text.matchAll(/^#{2,4}\s+(?:Requirement:\s*)?(REQ-\d+)\b/gm)) seen.set(m[1]!, (seen.get(m[1]!) || 0) + 1);
+  for (const f of files) {
+    let text = "";
+    try {
+      text = fs.readFileSync(f, "utf8");
+    } catch {
+      continue;
+    }
+    for (const m of text.matchAll(/^#{2,4}\s+(?:Requirement:\s*)?(REQ-\d+)\b/gm)) seen.set(m[1]!, (seen.get(m[1]!) || 0) + 1);
+  }
   return [...seen].filter(([, n]) => n > 1).map(([id]) => id).sort();
 }
 
@@ -559,7 +572,7 @@ export class SyncCommand extends BaseCommand {
       const clashes = duplicateRequirementIds(projectDir);
       if (clashes.length > 0) {
         error(
-          `Sync wrote ${clashes.join(", ")} twice into spec.md: the pack's new requirement and one of yours share the id. ` +
+          `After the sync, ${clashes.join(", ")} is defined twice: the pack's new requirement and one of yours share the id. ` +
             `Give yours a free id (and rename it in its tests and features), then run 'specgate check'.`
         );
         process.exit(1);

@@ -527,10 +527,9 @@ is a warning, not a refusal. `--force` never skips the requirement check.
 >
 > **Watch the ids when you upgrade the pack.** `propose` reserves the next
 > free ids, and a later pack version can add the same one. Had this change
-> kept `REQ-006`, Step 7's `sync` would go through and `check` would then fail
-> with `Duplicate Requirement ID in traceability.md: REQ-006`. Read the diff
-> before syncing, and renumber your local requirement first if the pack
-> claims its id.
+> kept `REQ-006`, Step 7's `sync` would stop, naming `REQ-006` as defined
+> twice. Read the diff before syncing, and give your local requirement a free
+> id first if the pack claims its id.
 
 ---
 
