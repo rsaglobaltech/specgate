@@ -250,7 +250,10 @@ test("REQ-759 SCN-759a: red is red — acceptance_red with the command's output"
   const v = acceptanceRun(dir);
   assert.equal(v.ran, true);
   assert.equal(v.errors[0]?.code, "acceptance_red");
-  assert.match(v.errors[0].message, new RegExp(`ran ${TEST.replace(/\./g, "\\.")}`));
+  assert.match(
+    v.errors[0].message,
+    new RegExp(`ran ${TEST.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`)
+  );
 });
 
 test("REQ-759: green passes, and {files} is the sealed paths", () => {

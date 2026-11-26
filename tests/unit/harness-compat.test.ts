@@ -2,7 +2,7 @@
  * harness-compat REQ-711…REQ-716: the compatibility exam, with fake tools on
  * the PATH standing in for Claude Code, Codex and OpenCode.
  */
-import { test } from "node:test";
+import { posixTest as test } from "../helpers/posix";
 import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as os from "node:os";

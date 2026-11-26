@@ -78,7 +78,12 @@ test("REQ-769 SCN-769a: an undeclared argument does not reach the CLI", () => {
   const prev = process.env.SPECGATE_ASSUME_TTY;
   process.env.SPECGATE_ASSUME_TTY = "1"; // even where a terminal is assumed, the words never arrive
   try {
-    tool.handler({ projectDir: dir, cliPath: CLI, a: "agent_guard", b: "off" });
+    tool.handler({
+      projectDir: dir,
+      cliPath: `"${process.execPath}" "${CLI}"`,
+      a: "agent_guard",
+      b: "off",
+    });
   } finally {
     if (prev === undefined) delete process.env.SPECGATE_ASSUME_TTY;
     else process.env.SPECGATE_ASSUME_TTY = prev;
@@ -91,9 +96,19 @@ test("REQ-792 SCN-792a: config set over MCP takes its key and value — in that 
   const { TOOLS } = require("../../packages/mcp-spec-driven/src/tools");
   const tool = TOOLS["specgate_config_set"];
   // Sent value first: the schema's order is what reaches the CLI.
-  tool.handler({ projectDir: dir, cliPath: CLI, value: "on", key: "pet" });
+  tool.handler({
+    projectDir: dir,
+    cliPath: `"${process.execPath}" "${CLI}"`,
+    value: "on",
+    key: "pet",
+  });
   const config = JSON.parse(fs.readFileSync(path.join(dir, ".specgate", "config.json"), "utf8"));
   assert.equal(config.pet, "on");
-  tool.handler({ projectDir: dir, cliPath: CLI, key: "agent_guard", value: "off" });
+  tool.handler({
+    projectDir: dir,
+    cliPath: `"${process.execPath}" "${CLI}"`,
+    key: "agent_guard",
+    value: "off",
+  });
   assert.equal(guard(dir), "on");
 });

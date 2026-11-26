@@ -103,7 +103,8 @@ export function context({ bin, sandbox, tarball, flags }) {
       cwd,
       encoding: "utf8",
       maxBuffer: 64 * 1024 * 1024,
-      env: { ...process.env, NO_COLOR: "1" },
+      // A journey is a person at their own terminal: their approvals are theirs (REQ-748).
+      env: { ...process.env, NO_COLOR: "1", SPECGATE_ASSUME_TTY: "1" },
     });
 
   /**
@@ -115,7 +116,7 @@ export function context({ bin, sandbox, tarball, flags }) {
       cwd,
       encoding: "utf8",
       maxBuffer: 64 * 1024 * 1024,
-      env: { ...process.env, NO_COLOR: "1", ...env },
+      env: { ...process.env, NO_COLOR: "1", SPECGATE_ASSUME_TTY: "1", ...env },
       input: __stdin,
     });
 

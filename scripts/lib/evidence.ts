@@ -8,6 +8,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { escapeRegExp } from "./escape";
 
 export const EVIDENCE_DIR = ".specgate/evidence";
 /** Where Playwright, and most browser runners, leave screenshots and traces. */
@@ -136,7 +137,7 @@ export function keepRed(projectDir: string, id: string, run: ScenarioRun, at = n
 
 /** Whether a requirement's trace says it must be reproduced first (REQ-683). */
 export function mustReproduce(projectDir: string, id: string): boolean {
-  const heading = new RegExp(`^#{2,4}\\s+(?:Requirement:\\s*)?${id}\\b`);
+  const heading = new RegExp(`^#{2,4}\\s+(?:Requirement:\\s*)?${escapeRegExp(id)}\\b`);
   const files: string[] = [path.join(projectDir, "spec.md")];
   const walk = (d: string) => {
     let entries: fs.Dirent[] = [];

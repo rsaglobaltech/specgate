@@ -17,7 +17,8 @@ test.beforeAll(async () => {
   const port = 47000 + Math.floor(Math.random() * 2000);
   studio = spawn(process.execPath, [CLI, "studio", "--port", String(port)], {
     cwd: dir,
-    env: { ...process.env, NO_COLOR: "1", STUB_AGENT_MS: "30000" },
+    // The stub agent is a script of the project; the doctor probes agents in an empty folder.
+    env: { ...process.env, NO_COLOR: "1", STUB_AGENT_MS: "30000", SPECGATE_SKIP_DOCTOR: "1" },
     detached: process.platform !== "win32",
     stdio: ["ignore", "pipe", "pipe"],
   });

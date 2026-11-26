@@ -7,6 +7,7 @@
  * (REQ-697).
  */
 import test from "node:test";
+import { posixTest } from "../helpers/posix";
 import assert from "node:assert/strict";
 const fs = require("node:fs");
 const os = require("node:os");
@@ -86,7 +87,7 @@ test("REQ-692 SCN-692a: P1 in the prompt", () => {
   assert.match(out, /P1 — Code names its requirement\*\*: Every source file names the requirement/);
 });
 
-test("REQ-693 SCN-693a: code without its requirement's id fails the stage principles", () => {
+posixTest("REQ-693 SCN-693a: code without its requirement's id fails the stage principles", () => {
   const dir = tmp();
   w(dir, "docs/specs/principles.md", P1);
   w(dir, "src/x.js", "export const x = 1;\n");

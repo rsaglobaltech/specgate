@@ -3,7 +3,7 @@
  * sandbox may reach (REQ-699), archive removing a change's sandboxes
  * (REQ-700), and no sandbox left behind unseen (REQ-701). `sbx` is a fake.
  */
-import test from "node:test";
+import { posixTest as test } from "../helpers/posix";
 import assert from "node:assert/strict";
 import { fakeSbx } from "../helpers/fake-sbx";
 const fs = require("node:fs");

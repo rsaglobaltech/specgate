@@ -120,5 +120,5 @@ test("REQ-778 SCN-778a: writing a status into a trace comment over two lines kee
   assert.equal(traces.length, 1, out);
   assert.match(traces[0], /status=Implemented/);
   assert.match(traces[0], /feature=features\/pricing\/dynamic_pricing\.feature/);
-  assert.match(traces[0], /-->\s*$/);
+  assert.ok(traces[0].trimEnd().endsWith("-->"), traces[0]);
 });

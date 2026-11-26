@@ -34,6 +34,9 @@ function project(): string {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "specgate-wt2-")));
   made.push(dir);
   spawnSync("git", ["init", "-q"], { cwd: dir });
+  // A CI runner has no git identity; the harness asks for one before it runs an agent.
+  spawnSync("git", ["config", "user.email", "t@t"], { cwd: dir });
+  spawnSync("git", ["config", "user.name", "t"], { cwd: dir });
   assert.equal(cli(dir, ["adopt", "--no-ci"]).status, 0);
   return dir;
 }

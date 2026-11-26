@@ -3,7 +3,7 @@
  * tool's own session, the control without Specgate, the tasks and their
  * verdicts, delivery and use apart, and the model ladder — with fake tools.
  */
-import { test } from "node:test";
+import { posixTest as test } from "../helpers/posix";
 import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as os from "node:os";
@@ -1207,7 +1207,12 @@ test("REQ-736 SCN-736e: a sandbox the Developer made is used as it is, and left 
   const sbx = fakeSbx();
   const mine = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "compat-mine-")));
   try {
-    // The stand-in runs a sandbox's commands on this machine, which has specgate: a sandbox with Specgate inside.
+    // The stand-in runs a sandbox's commands on this machine: a specgate on its PATH is Specgate inside.
+    fs.writeFileSync(
+      path.join(f.parent, "bin", "specgate"),
+      `#!/bin/sh\nexec "${process.execPath}" "${CLI}" "$@"\n`,
+      { mode: 0o755 }
+    );
     const env = {
       ...process.env,
       NO_COLOR: "1",

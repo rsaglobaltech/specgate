@@ -134,7 +134,9 @@ test("REQ-745 SCN-745b: an approved change is delivered", () => {
 
 test("REQ-745 SCN-745c: a project that asks for no approvals delivers it", () => {
   const p = loansProject();
-  const config = read(p.dir, "harness.config.yaml").replace(
+  // `adopt` writes harness.config.yaml only where it finds an agent; a CI runner has none.
+  const file = path.join(p.dir, "harness.config.yaml");
+  const config = (fs.existsSync(file) ? read(p.dir, "harness.config.yaml") : "").replace(
     /^approvals:[\s\S]*?(?=^\S|(?![\s\S]))/m,
     ""
   );
