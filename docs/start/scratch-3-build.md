@@ -13,9 +13,35 @@ handed to the harness, which builds it unattended on its own branch.
 
 | Who | Does what in this phase |
 | --- | --- |
+| **You** | Approve the draft, at your terminal |
 | **You** or **your agent** | Write the test first, then the code until it passes |
 | **The harness** (optional) | Specgate's runner for unattended work: builds pending requirements one by one, each on its own branch, and merges nothing unless you ask |
 | **The gate** | Not yet — that is phase 4 |
+
+## First: approve the draft
+
+You read the draft in phase 2. Approving it is yours, at your terminal — an
+agent cannot, since approving refuses a session with no terminal
+(`approve_needs_person`), and `apply` delivers nothing of a change nobody
+approved (`change_not_approved`). Approving also seals each requirement as it
+is: a requirement changed afterwards fails the gate until it is approved again.
+
+```bash
+specgate change approve draft-bookings
+```
+
+<!-- specgate:out-scratch-approve:begin — generated; edit the source, not this block -->
+```text
+$ specgate change approve draft-bookings
+  ◆ specgate · change approve   draft-bookings
+
+  ✔  draft-bookings approved on 2026-01-01 — discover.
+
+    + features/bookings/REQ-002.feature   its scenarios, to run before any code
+    + features/bookings/REQ-003.feature   its scenarios, to run before any code
+    + features/bookings/REQ-004.feature   its scenarios, to run before any code
+```
+<!-- specgate:out-scratch-approve:end -->
 
 ## Before the first one: make one scenario run
 
@@ -112,7 +138,7 @@ The system SHALL refuse a booking for a court and hour that is already booked.
 
 > Brief: "A court cannot be booked twice for the same hour."
 
-… 94 more lines
+… 95 more lines
 ```
 <!-- specgate:out-scratch-harness-prompt:end -->
 

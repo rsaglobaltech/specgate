@@ -32,6 +32,7 @@ $ specgate apply REQ-002
   ✔  Tests           node --test
 
   ✔  REQ-002 → Implemented (1 row updated)
+  ·  REQ-002 is delivered on a test that names it: its scenarios were not run. specgate migrate bdd makes the gate run them.
 
   Next ───────────────────────────────────────────────────
   ➜  specgate apply REQ-003
@@ -98,7 +99,7 @@ specgate check
 $ specgate check
   ◆ specgate · check   court-bookings
 
-  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning, scope warning, controls warning
   ↻  docs/specs/actors.md regenerated from its sources
   ·  docs/specs/glossary.md does not define Member — archive adds them as rows to fill
   ·  Ids            not compared with a base — no base branch (pass --base <branch>)

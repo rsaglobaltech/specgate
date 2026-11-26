@@ -622,6 +622,8 @@ export const SURFACE: Command[] = [
       { name: "archive", editsContract: true, json: { key: "archive", gate: true, args: "<id>" } },
       { name: "instructions", json: { key: "instructions", gate: false, args: "<artifact>" } },
       { name: "author", editsContract: true, json: { key: "change", gate: true, args: "<id>" } },
+      // person-approves REQ-748: a person's act, at a terminal — never a tool an agent's MCP client is offered.
+      { name: "approve", editsContract: true, mcp: false },
     ],
     help: {
       group: "core",

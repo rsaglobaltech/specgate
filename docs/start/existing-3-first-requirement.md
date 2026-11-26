@@ -16,6 +16,29 @@ specification.
 | **You** | Name the requirement in its test; approve and archive the change |
 | **The gate** | Refuses until a test names the requirement and the suite passes |
 
+## First: approve the change
+
+You read the delta in phase 2. Approving it is yours, at your terminal — an
+agent cannot, since approving refuses a session with no terminal
+(`approve_needs_person`), and `apply` delivers nothing of a change nobody
+approved (`change_not_approved`).
+
+```bash
+specgate change approve invoice-rounding
+```
+
+<!-- specgate:out-existing-approve:begin — generated; edit the source, not this block -->
+```text
+$ specgate change approve invoice-rounding
+  ◆ specgate · change approve   invoice-rounding
+
+  ✔  invoice-rounding approved on 2026-01-01.
+
+    + features/invoice-rounding/REQ-004.feature   its scenarios, to run before any code
+```
+<!-- specgate:out-existing-approve:end -->
+
+
 ## 1. Try to close it — and see why it refuses
 
 ```bash
@@ -63,15 +86,9 @@ each requirement to its scenario, code and test — is generated from the
 specification, the scenario tags and the files that mention each id. Nobody
 edits it by hand, and there is nothing to register.
 
-## 3. Approve the change, then apply it
-
-`apply` delivers only a requirement of a change a person approved
-(`change_not_approved`). Read the delta, then approve it in your terminal —
-an agent cannot, since approving refuses a session with no terminal
-(`approve_needs_person`):
+## 3. Apply it
 
 ```bash
-specgate change approve invoice-rounding
 specgate apply REQ-004
 ```
 
@@ -84,6 +101,7 @@ $ specgate apply REQ-004
   ✔  Tests           node --test
 
   ✔  REQ-004 → Implemented (1 row updated)
+  ·  REQ-004 is delivered on a test that names it: its scenarios were not run. specgate migrate bdd makes the gate run them.
 
   Next ───────────────────────────────────────────────────
   ➜  specgate archive invoice-rounding
@@ -113,7 +131,7 @@ $ specgate archive invoice-rounding
 
     Specs         1 added · 0 modified · 0 removed
     Traceability  1 row(s) added · 0 updated · 0 removed
-    Features      1 materialised
+    Features      0 materialised
 
   Next ───────────────────────────────────────────────────
   ➜  specgate status

@@ -6,11 +6,60 @@
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-11-23",
+  "recordedAt": "2026-11-26",
   "title": "courts — the gate",
   "cols": 88,
   "streamsMerged": false,
   "steps": [
+    {
+      "id": "approve",
+      "caption": "A person approves the draft, at their own terminal. Nothing is delivered before this.",
+      "cwd": "~/courts",
+      "command": "specgate change approve draft-bookings",
+      "surface": "change",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1330,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "  ◆ specgate · change approve   draft-bookings",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✔  draft-bookings approved on 2026-01-01 — discover.",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    + features/bookings/REQ-002.feature   its scenarios, to run before any code",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    + features/bookings/REQ-003.feature   its scenarios, to run before any code",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    + features/bookings/REQ-004.feature   its scenarios, to run before any code",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
     {
       "id": "apply-no-test",
       "caption": "Applying it before a test exists. The gate says no and writes nothing.",
@@ -129,7 +178,7 @@
       "typeMs": 26,
       "holdMs": 1240,
       "truncated": true,
-      "omitted": 4,
+      "omitted": 5,
       "lines": [
         {
           "t": "  ◆ specgate · apply REQ-002   Implemented",
@@ -249,7 +298,7 @@
           "s": "out"
         },
         {
-          "t": "  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning",
+          "t": "  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning, scope warning, controls warning",
           "c": "out",
           "s": "out"
         },

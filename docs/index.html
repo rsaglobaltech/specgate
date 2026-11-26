@@ -468,7 +468,16 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
           <div class="term__screen" aria-hidden="true"></div>
           <p class="term__caption" aria-hidden="true"></p>
 <!-- specgate:terminal-gate:begin — generated; edit the source, not this block -->
-<pre class="term__transcript"><code>~/courts $ specgate apply REQ-002
+<pre class="term__transcript"><code>~/courts $ specgate change approve draft-bookings
+  ◆ specgate · change approve   draft-bookings
+
+  ✔  draft-bookings approved on 2026-01-01 — discover.
+
+    + features/bookings/REQ-002.feature   its scenarios, to run before any code
+    + features/bookings/REQ-003.feature   its scenarios, to run before any code
+    + features/bookings/REQ-004.feature   its scenarios, to run before any code
+
+~/courts $ specgate apply REQ-002
   ◆ specgate · apply REQ-002   Implemented
 
 
@@ -495,7 +504,7 @@ test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
   ✔  Tests           node --test
 
   ✔  REQ-002 → Implemented (1 row updated)
-… 4 more lines
+… 5 more lines
 
 ~/courts $ specgate apply REQ-004
   ◆ specgate · apply REQ-004   Implemented
@@ -511,7 +520,7 @@ test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
 ~/courts $ specgate check
   ◆ specgate · check   courts
 
-  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning, scope warning, controls warning
   ↻  docs/specs/actors.md regenerated from its sources
   ·  docs/specs/glossary.md does not define Member — archive adds them as rows to fill
   ·  Ids            not compared with a base — no base branch (pass --base &lt;branch&gt;)
@@ -604,7 +613,7 @@ c5da000 invoices 1.4: refunds
 ~/invoices $ specgate check
   ◆ specgate · check   invoices
 
-  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning, use_cases warning, scope warning, controls warning
   ·  Ids            not compared with a base — no base branch (pass --base &lt;branch&gt;)
   ✔  Specification   validate --strict
   ✔  Tests           npm test

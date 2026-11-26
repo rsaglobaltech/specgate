@@ -76,6 +76,26 @@ function skipsSpecs(projectDir: string, id: string): boolean {
   return /^skip_specs:\s*true\s*$/m.test(yaml);
 }
 
+/** approve-around-questions REQ-771: the change's requirements marked Needs Clarification, quoted or not. */
+function waitingRequirements(projectDir: string, id: string): Set<string> {
+  const out = new Set<string>();
+  const specs = path.join(changeDir(projectDir, id), "specs");
+  let caps: string[] = [];
+  try {
+    caps = fs.readdirSync(specs);
+  } catch {
+    return out;
+  }
+  for (const cap of caps) {
+    const text = read(path.join(specs, cap, "spec.md")) || "";
+    for (const block of text.split(/^(?=#{3,4} Requirement: )/m)) {
+      const req = /^#{3,4} Requirement: (REQ-\d+)/.exec(block)?.[1];
+      if (req && /specgate:trace[^>]*\bstatus="?Needs Clarification"?/.test(block)) out.add(req);
+    }
+  }
+  return out;
+}
+
 export function approvalBlockers(projectDir: string, id: string): Blocker[] {
   const out: Blocker[] = [];
   const questionsMd = read(path.join(changeDir(projectDir, id), "questions.md"));
@@ -89,6 +109,18 @@ export function approvalBlockers(projectDir: string, id: string): Blocker[] {
     const req = (/REQ-[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*/.exec(message) || [])[0];
     return req ? { kind: "open", requirement: req } : undefined;
   };
+  // approve-around-questions REQ-771: a requirement that waits for an answer
+  // (Needs Clarification) is refused by `apply` on its own; what concerns only
+  // such requirements does not hold back approving the rest of the change.
+  const waiting = waitingRequirements(projectDir, id);
+  const onlyWaiting = (ids: string[]) => ids.length > 0 && ids.every((r) => waiting.has(r));
+  const reqsIn = (message: string) => [...new Set(message.match(/REQ-\d+/g) || [])];
+  const questionWaits = (q: { blocks: string[] }) => onlyWaiting(q.blocks.flatMap((b) => b.match(/REQ-\d+/g) || []));
+  const concernsOnlyWaiting = (message: string) => {
+    const q = questions.find((x) => names(message, x.id));
+    if (q && !q.answered) return questionWaits(q);
+    return onlyWaiting(reqsIn(message));
+  };
   const r = draftReport(projectDir, id);
   // A change that alters no behaviour (`skip_specs`), as the use cases of REQ-636: no delta to check.
   const noSpecs =
@@ -98,6 +130,7 @@ export function approvalBlockers(projectDir: string, id: string): Blocker[] {
   } else {
     for (const d of r.report.status) {
       if (d.severity !== "error") continue;
+      if (concernsOnlyWaiting(d.message)) continue;
       out.push({
         code: d.code,
         message: d.message,
@@ -119,7 +152,7 @@ export function approvalBlockers(projectDir: string, id: string): Blocker[] {
     });
   }
   for (const q of questions) {
-    if (!q.answered && !out.some((b) => names(b.message, q.id))) {
+    if (!q.answered && !questionWaits(q) && !out.some((b) => names(b.message, q.id))) {
       out.push({
         code: "approve_question_open",
         message: `${q.id} is open: ${q.text}`,

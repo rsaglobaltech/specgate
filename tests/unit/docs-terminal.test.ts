@@ -367,6 +367,7 @@ test("the normalisation rules are all still there, in order", () => {
       "home",
       "iso",
       "date",
+      "approved-on",
       "sha",
       "duration",
       "nodever",
