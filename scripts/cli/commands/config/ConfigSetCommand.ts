@@ -300,6 +300,17 @@ export class ConfigSetCommand extends BaseCommand {
       ]);
     }
 
+    // guard-switch-person REQ-768: switching the guard off is a person's act, said at a terminal.
+    if (key === "agent_guard" && value === "off" && !process.stdin.isTTY && !process.env.SPECGATE_ASSUME_TTY) {
+      io.fail(NULL_SHAPE, [
+        error("guard_needs_person", "Switching the guard off is a person's act, and this is not a terminal. Nothing was written.", {
+          target: key,
+          fix: "A person runs it in a terminal: specgate config set agent_guard off",
+        }),
+      ]);
+      return;
+    }
+
     if (HARNESS_KEYS.has(key)) {
       if (value.trim() === "") {
         io.usage(NULL_SHAPE, [

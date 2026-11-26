@@ -118,11 +118,11 @@ export class GenericCliTool implements ITool {
     else argv.push("--project-dir", dir);
 
     // Pass args safely
+    // guard-switch-person REQ-769: only the arguments the tool declares reach the CLI.
+    const declared = new Set(Object.keys(((this.inputSchema as { properties?: Record<string, unknown> }) || {}).properties || {}));
     for (const [k, v] of Object.entries(args)) {
-      if (k === "projectDir" || k === "cliPath") continue;
-      if (typeof v === "string") {
-        argv.push(v); // Quick hack, we need proper arg mapping
-      }
+      if (k === "projectDir" || k === "cliPath" || !declared.has(k)) continue;
+      if (typeof v === "string") argv.push(v);
     }
 
     if (!argv.includes("--json")) {

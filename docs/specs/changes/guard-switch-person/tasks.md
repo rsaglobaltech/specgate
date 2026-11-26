@@ -10,5 +10,5 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-768 — switching the guard off takes a person at a terminal
-- [ ] 2.2 REQ-769 — an MCP tool passes only the arguments it declares
+- [x] 2.1 REQ-768 — switching the guard off takes a person at a terminal
+- [x] 2.2 REQ-769 — an MCP tool passes only the arguments it declares
