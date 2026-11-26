@@ -245,7 +245,7 @@ export function decide(input: GuardInput, env: Record<string, string | undefined
         file: relPosix,
         message:
           `specgate: file_outside_design — ${relPosix} is new, and the approved design of \`${id}\` names ${scope.map((f) => `\`${f}\``).join(", ")}, not it. ` +
-          "Work nobody approved waits for a person: open a change for it (`specgate propose <change-id>`) and stop there, or ask the person to name it in the design and approve it again. " +
+          "Work no requirement covers is proposed, not written: run `specgate propose <change-id>`, write its delta — the requirement and its scenario for this work — and stop there; a person approves it before any code. " +
           "Do not link it to a requirement it does not deliver.",
       };
     }
