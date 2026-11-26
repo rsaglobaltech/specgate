@@ -7,6 +7,8 @@ you know what each line of the generated job does and how to keep it current.
 **You need:** the gate passing on your machine ([On your machine](local.md))
 and a repository on GitHub, GitLab, Azure DevOps or Jenkins.
 
+<!-- specgate:diagram pr-in-ci -->
+
 ## Write the job
 
 `specgate init` and `specgate adopt` already wrote it, for the CI the

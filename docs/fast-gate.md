@@ -9,6 +9,8 @@ architecture check beside the tests.
 **You need:** a project in git where `specgate check` already passes
 ([Validating](validating.md)).
 
+<!-- specgate:diagram fast-gate -->
+
 ## Run only what the change touches
 
 `check --affected` runs the tests of what changed since the base

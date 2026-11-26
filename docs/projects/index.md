@@ -23,6 +23,8 @@ that fixed it. Most of the tool's rules exist because a pilot needed them.
 - [HealthTech](healthtech.md) — Clinical cases on Quarkus: 23 of 24; drug interactions wait for an answer instead of a guess.
 <!-- specgate:endcards -->
 
+<!-- specgate:diagram pilots-chart -->
+
 ## Side by side
 
 | Project | Brief | Stack | Requirements | Tests | Waiting | Specgate defects found |

@@ -4,6 +4,8 @@ Two paths, a few commands each. Pick the one that matches your folder.
 
 **You need:** Node.js 22 or later, git, and the test runner your project already uses.
 
+<!-- specgate:diagram start-paths -->
+
 ## An existing project
 
 A local repository whose code already works.

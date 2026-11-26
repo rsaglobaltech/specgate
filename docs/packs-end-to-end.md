@@ -11,6 +11,8 @@ For what a pack is and which ones exist, read [Domain packs](domain-packs.md).
 If you are starting from your own plan rather than a pack, start with
 [Getting started](getting-started.md) instead.
 
+<!-- specgate:diagram pack-upgrade -->
+
 ## 1. Scaffold a project for the pack
 
 A pack brings its own requirements, so the project should start without any.

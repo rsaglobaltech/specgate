@@ -1,4 +1,4 @@
-<!-- translation-of: 988b5b1bb997 -->
+<!-- translation-of: ea16a8048e05 -->
 # El gate en CI
 
 Un gate que solo se ejecuta en portátiles es una sugerencia. Al final de esta
@@ -8,6 +8,8 @@ mantenerlo al día.
 
 **Necesitas:** el gate pasando en tu máquina ([En tu máquina](local.md)) y un
 repositorio en GitHub, GitLab, Azure DevOps o Jenkins.
+
+<!-- specgate:diagram pr-in-ci -->
 
 ## Escribe el job
 

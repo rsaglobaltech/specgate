@@ -5,6 +5,8 @@ error and flag has a reason you can predict.
 
 <!-- specgate:diagram with-without -->
 
+<!-- specgate:diagram exam-chart -->
+
 ## 1. A requirement is a sentence that can be wrong
 
 A requirement lives in `spec.md` (or in a capability spec under

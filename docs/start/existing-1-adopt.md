@@ -35,6 +35,8 @@ requirement yet: phase 3 adds the name.
 | **Specgate** | Reads the build file and the layout; writes specification files only |
 | **The gate** | Runs your existing suite, to prove the wiring |
 
+<!-- specgate:diagram adopt-existing -->
+
 ## 1. Install Specgate in the project
 
 ```bash

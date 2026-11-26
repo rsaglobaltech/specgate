@@ -9,6 +9,8 @@ Protocol, is how these clients call outside tools.
 on the machine that runs the client. The server ships inside the Specgate
 package; there is nothing else to install.
 
+<!-- specgate:diagram mcp-tools -->
+
 ## Install it
 
 ```bash

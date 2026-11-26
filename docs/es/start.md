@@ -1,9 +1,11 @@
-<!-- translation-of: f564d683a2b2 -->
+<!-- translation-of: 73cc5d7ee894 -->
 # Empezar
 
 Dos caminos, unos pocos comandos cada uno. Elige el que corresponde a tu carpeta.
 
 **Necesitas:** Node.js 22 o posterior, git y el test runner que tu proyecto ya usa.
+
+<!-- specgate:diagram start-paths -->
 
 ## Un proyecto existente
 

@@ -1,10 +1,12 @@
-<!-- translation-of: db2314b9e605 -->
+<!-- translation-of: 0d7483cf3392 -->
 # Lee un fallo del gate
 
 Cada fallo que reporta el gate dice dónde, qué, su código entre corchetes, y
 la corrección en la línea siguiente. Al final de esta página sabes leer
 cualquiera de ellos y qué cambiar: en el código, el test, el escenario o
 `spec.md`.
+
+<!-- specgate:diagram gate-triage -->
 
 ## La forma de un fallo
 

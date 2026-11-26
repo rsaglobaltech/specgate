@@ -10,6 +10,8 @@ executable; the **traceability matrix** (`docs/specs/traceability.md`) is the
 table that links each requirement to its scenario, code and test. See
 [the vocabulary](concepts.md#vocabulary) for more.
 
+<!-- specgate:diagram requirement-anatomy -->
+
 ## Add a requirement and its scenario
 
 **Goal:** a new requirement with an executable scenario, linked to a test, with
@@ -29,13 +31,11 @@ This opens `docs/specs/changes/add-premium-discount/` with a proposal, a delta
 range of REQ ids. Write the requirement and its scenario in the delta, then
 write a test that names the requirement, then the code. `specgate apply`
 delivers it and `specgate archive` merges the change into the specs.
-[Change a shipped requirement](reviewing-changes.md) walks through every step
-and the delta format.
+[Change a shipped requirement](reviewing-changes.md) walks through every step and the delta format.
 
 ### The shortcut: `specgate new`
 
-On a small project you can add a requirement straight to `spec.md`, without a
-change:
+On a small project you can add a requirement straight to `spec.md`, without a change:
 
 ```bash
 specgate new "Premium customers get 10% off at checkout"
@@ -75,8 +75,7 @@ specgate check     # regenerates the matrix from spec.md, the tags and the tests
 
 Do **not** add a row to `docs/specs/traceability.md`: it is generated, and the
 next `check` replaces it with what the sources say. A feature file with no
-`@REQ-NNN` tag is reported as an orphan; tag its scenario, or create the
-requirement with `specgate new`.
+`@REQ-NNN` tag is reported as an orphan; tag its scenario, or create the requirement with `specgate new`.
 
 ### Writing in Spanish
 

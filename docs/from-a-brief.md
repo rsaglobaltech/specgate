@@ -22,6 +22,8 @@ brief? Use the ticket path instead: [From a Jira ticket](from-a-ticket.md).
 
 <!-- specgate:diagram lifecycle -->
 
+<!-- specgate:diagram brief-to-draft -->
+
 ## 1. Keep the brief in the repository
 
 Save it as `docs/brief.md`, as the client wrote it. Add a front matter that

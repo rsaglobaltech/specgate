@@ -8,6 +8,8 @@ failing on the gaps the project already had.
 git, and an agent you can run from the command line
 ([Choosing your agent](agent-setup.md)).
 
+<!-- specgate:diagram adopt-existing -->
+
 ## 1. See the modules
 
 ```bash

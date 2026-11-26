@@ -4,6 +4,8 @@ Every failure the gate reports says where, what, its code in brackets, and
 the fix on the next line. At the end of this page you can read any of them
 and know what to change — in the code, the test, the scenario or `spec.md`.
 
+<!-- specgate:diagram gate-triage -->
+
 ## The shape of a failure
 
 ```text

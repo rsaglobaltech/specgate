@@ -10,6 +10,8 @@ the agent is short: where to start, and what it must never do.
 **You need:** a project where `specgate init` or `specgate adopt` has run, and
 your agent's steps installed with `specgate agents init --tool <codex|opencode|claude>`.
 
+<!-- specgate:diagram agent-levels -->
+
 ## Get the prompt from the project
 
 ```bash

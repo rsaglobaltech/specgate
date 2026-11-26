@@ -6,6 +6,8 @@ It assumes the repository has already run `specgate init`; if it has not, the
 
 ---
 
+<!-- specgate:diagram pr-lanes -->
+
 ## Once per repository
 
 ```bash
