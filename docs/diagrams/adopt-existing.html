@@ -8,12 +8,14 @@
       features/adoption/baseline.feature, the gate policy .specgate/gate.yaml and the CI
       job — only files that do not exist yet. Your src and tests folders stay as they are:
       git diff shows new specification files only. Three: specgate check is green on day one,
-      with your own tests in it; it certifies the skeleton, not the code yet. Four: specgate
-      reverse --modules finds the candidate modules — folders with their own build manifest,
-      Go packages, code under src or apps — each with its stack; no agent runs. Five: specgate
-      reverse with a module and --agent has your agent read that module and writes the change
-      reverse-module: every requirement Draft, each citing in source= the lines it was read
-      from. Behaviour that looks like a bug becomes a question in questions.md, never a
+      with your own tests in it; it certifies the skeleton, not the code yet. Four: pick one
+      module, by either of two roads. By hand, open a change for it with specgate propose
+      describe-orders --capability orders. Or let specgate reverse --modules find the
+      candidate modules — folders with their own build manifest, Go packages, code under src or
+      apps — each with its stack; no agent runs. Five: your agent reads that module. On the
+      reverse road, specgate reverse with the module and --agent writes the change
+      reverse-orders; on the other, it writes the describe-orders delta. Every requirement is
+      Draft; reverse also cites in source= the lines each was read from. Behaviour that looks like a bug becomes a question in questions.md, never a
       requirement, because written as one the bug would become the contract. A person reads
       each requirement against its lines before moving it past Draft. Six: from then on, one
       behaviour per bug fix — open a change for the behaviour that broke, write the scenario
@@ -73,18 +75,18 @@
 
       <text x="56" y="231" class="dia__s"><tspan class="dia__mono">src/</tspan> and <tspan class="dia__mono">tests/</tspan> stay as they are — <tspan class="dia__mono">git diff</tspan> shows new specification files only</text>
 
-      <text x="704" y="333" class="dia__h"><tspan class="dia__step">4</tspan>  Find the modules</text>
-      <text x="668" y="364" class="dia__s dia__mono">specgate reverse --modules</text>
-      <text x="668" y="384" class="dia__s">folders with their own build</text>
-      <text x="668" y="402" class="dia__s">manifest, Go packages, code</text>
-      <text x="668" y="420" class="dia__s">under src/ or apps/, each with</text>
-      <text x="668" y="438" class="dia__s">its stack — no agent runs</text>
+      <text x="704" y="333" class="dia__h"><tspan class="dia__step">4</tspan>  Pick one module</text>
+      <text x="668" y="364" class="dia__s">by hand, a change for it:</text>
+      <text x="668" y="382" class="dia__s dia__mono">propose describe-orders</text>
+      <text x="668" y="400" class="dia__s dia__mono">  --capability orders</text>
+      <text x="668" y="420" class="dia__s">or let Specgate find them, no agent:</text>
+      <text x="668" y="438" class="dia__s dia__mono">specgate reverse --modules</text>
 
       <text x="374" y="333" class="dia__h dia__on-ink">5  Your agent reads one</text>
       <text x="338" y="364" class="dia__s dia__mono dia__on-ink">reverse orders --agent "…"</text>
-      <text x="338" y="384" class="dia__s dia__on-ink">writes the change reverse-orders:</text>
-      <text x="338" y="402" class="dia__s dia__on-ink">every requirement Draft, citing</text>
-      <text x="338" y="420" class="dia__s dia__on-ink">the lines it was read from</text>
+      <text x="338" y="384" class="dia__s dia__on-ink">writes reverse-orders — or, by hand,</text>
+      <text x="338" y="402" class="dia__s dia__on-ink">the describe-orders delta. All Draft;</text>
+      <text x="338" y="420" class="dia__s dia__on-ink">reverse cites the lines it read:</text>
       <text x="338" y="438" class="dia__s dia__mono dia__on-ink">source=…/Cancel.java:12</text>
 
       <text x="64" y="333" class="dia__h dia__wait-t">Looks like a bug?</text>
@@ -111,5 +113,5 @@
     </g>
   </svg>
   </div>
-  <figcaption>Adopting writes specification files only and is green on day one; reverse then turns one module at a time into Draft requirements that cite their code, and a suspected bug stays a question.</figcaption>
+  <figcaption>Adopting writes specification files only and is green on day one; a change per module — by hand with propose --capability, or found by reverse — then turns each into Draft requirements, and a suspected bug stays a question.</figcaption>
 </figure>

@@ -7,8 +7,9 @@
       fix the code, not the test, because the tests are the contract. No test names the
       requirement, apply_no_test: write the test that names it first, with REQ-007 in it, then
       run apply again. What a person approved has changed, approved_requirement_changed or
-      acceptance_not_sealed: put it back, or a person approves it again with specgate change
-      approve. A new file the approved design does not name, file_outside_design: name it in
+      acceptance_not_sealed: put it back, or a person approves it again — a requirement with
+      specgate change approve and the change id, a sealed acceptance test with specgate change
+      approve, the change id and --layer acceptance. A new file the approved design does not name, file_outside_design: name it in
       design.md and have the design approved again, or open a change for it with specgate
       propose. Nobody approved the change, change_not_approved: a person approves it, at a
       terminal, with specgate change approve. A scenario failed, check_scenarios_failed: make
@@ -67,8 +68,9 @@
       <text x="576" y="162" class="dia__s">name <tspan class="dia__mono">REQ-007</tspan> in it, then <tspan class="dia__mono">apply</tspan> again</text>
       <text x="60" y="213" class="dia__h">What a person approved has changed</text>
       <text x="60" y="234" class="dia__s dia__mono">approved_requirement_changed · acceptance_not_sealed</text>
-      <text x="576" y="213" class="dia__h">Put it back, or a person approves again</text>
-      <text x="576" y="234" class="dia__s"><tspan class="dia__mono">specgate change approve &lt;id&gt;</tspan></text>
+      <text x="576" y="207" class="dia__h">Put it back, or a person approves again</text>
+      <text x="576" y="225" class="dia__s">requirement: <tspan class="dia__mono">specgate change approve &lt;id&gt;</tspan></text>
+      <text x="576" y="241" class="dia__s">sealed test: <tspan class="dia__mono">… approve &lt;id&gt; --layer acceptance</tspan></text>
       <text x="60" y="285" class="dia__h">A new file the design does not name</text>
       <text x="60" y="306" class="dia__s dia__mono">file_outside_design</text>
       <text x="576" y="285" class="dia__h">Name it in design.md, approve again</text>

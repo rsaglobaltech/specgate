@@ -101,8 +101,7 @@ than less: every step says in the YAML what it checks and what to delete to
 remove it, and a step whose tool is not configured yet says so and passes.
 
 - `specgate ci init --provider gitlab` (or `azure`, `jenkins`) writes it for
-  another CI; `--force` writes it again, and `--minimal` (GitHub only) one Ubuntu job
-  running `specgate check` with no base: no id comparison, pack drift or plan.
+  another CI; `--force` writes it again; `--minimal` (GitHub only): one Ubuntu job, `check` alone.
 - An older `specgate init` wrote `.github/workflows/specs.yml`, which only
   validated the specification: `specgate ci init --provider github` shows what
   the gate adds, `--replace` replaces it.

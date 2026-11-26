@@ -16,10 +16,10 @@ is written — [Write the brief](write-the-brief.md) shows how.
 A few words used on this page:
 
 - **Change** — a folder under `docs/specs/changes/` that holds a piece of work
-  until it is built: a proposal, a task list and a **delta**, the requirements
-  and scenarios it adds or modifies.
+  until it is built: `discover.md` (why), `design.md` (how), `tasks.md`, and a
+  **delta**, the requirements and scenarios it adds or modifies.
 - **Draft** — a change opened from one module of the brief.
-- **The checklist** — the drafting rules D1–D12 that `propose --from-brief`
+- **The checklist** — the drafting rules D1–D16 that `propose --from-brief`
   runs on a draft, each finding with its fix.
 
 | Who | Does what in this phase |
@@ -125,7 +125,19 @@ gets those findings, with their fixes, in its prompt.
 
 The draft on this page is the one the landing page shows: three requirements,
 four scenarios — and a fee of 5 euros for a late cancellation that the client
-never mentioned.
+never mentioned:
+
+| Requirement | Its scenarios |
+| --- | --- |
+| REQ-002 — A member books a court for one hour | SCN-002 booking a free court · SCN-003 a member sees their bookings |
+| REQ-003 — A court is never booked twice for the same hour | SCN-004 the second booking is refused |
+| REQ-004 — A member cancels a booking | SCN-005 cancelling late is charged |
+
+Your agent writes its own draft: the ids, the scenarios and the findings below
+will differ. The draft also has `use-cases.md`: each requirement names its use
+case (`uc=UC-002` in its trace, D14), and each use case gets its specification,
+`use-cases/UC-002.md`, whose flows name the scenarios — without it the check
+says `D15_no_spec`.
 
 ## 4. Check it — the same command, again
 
@@ -162,7 +174,9 @@ $ specgate propose --from-brief bookings
 <!-- specgate:out-scratch-draft-check:end -->
 
 Every value a scenario states must be in the brief or written down as an
-assumption. Here the HTTP codes are a reasonable convention — an
+assumption: D6 flags each concrete value — a code, an amount, a name in quotes
+— that the brief does not give. How many findings you get depends on the
+draft; this one has five. Here the HTTP codes are a reasonable convention — an
 **assumption** — but the fee is a business decision only the client can make —
 a **question**. So you:
 
@@ -190,8 +204,9 @@ $ specgate propose --from-brief bookings
   What now ───────────────────────────────────────────────
    1  Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business
    2  Answer what you can in docs/specs/changes/draft-bookings/questions.md
-   3  ➜ specgate apply   its requirements, one at a time; then specgate archive draft-bookings
-   4  ➜ specgate status   every module drafted: what to build first
+   3  ➜ specgate change approve draft-bookings   you, at your terminal, once it reads right — apply waits for it
+   4  ➜ specgate apply   its requirements, one at a time; then specgate archive draft-bookings
+   5  ➜ specgate status   every module drafted: what to build first
 ```
 <!-- specgate:out-scratch-draft-check-again:end -->
 
@@ -199,7 +214,9 @@ $ specgate propose --from-brief bookings
 
 Read the draft with whoever knows the business, and answer what you can in
 `questions.md`. Review happens in the draft's pull request; nothing is
-archived yet.
+archived yet. Once it reads right, a person approves it at their terminal —
+`specgate change approve draft-bookings`, the first step of
+[phase 3](scratch-3-build.md) and the next step `status` names below.
 
 An open change's requirements are **in flight**: `status`, `check` and
 `apply` read them from the change, and the gate judges them as they will be
@@ -240,7 +257,8 @@ $ specgate status
 <!-- specgate:out-scratch-status:end -->
 
 REQ-004 is **waiting for an answer**: the harness will not build it and
-`apply` will not mark it done until the client answers Q1. Nobody has to
+`apply` will not deliver it until the client answers Q1. The answer changes
+REQ-004, so a person approves the draft again before it is built. Nobody has to
 remember that.
 
 ## You're done when…
@@ -250,7 +268,7 @@ remember that.
 - Every open question is in `questions.md`, and the requirement it blocks says so.
 
 For the next module, `specgate propose --from-brief` names it; repeat steps
-3–5. [From a brief](../from-a-brief.md) has the whole checklist (D1–D12) and
+3–5. [From a brief](../from-a-brief.md) has the whole checklist (D1–D16) and
 what each finding means.
 
 ## If something goes wrong

@@ -1,22 +1,24 @@
 <figure class="dia dia--card dia--pack">
   <div class="dia__scroll">
   <svg viewBox="0 0 960 540" class="dia__svg" role="img" aria-labelledby="sg-pu-t sg-pu-d">
-    <title id="sg-pu-t">Upgrading a domain pack: a three-way merge with your spec</title>
+    <title id="sg-pu-t">Upgrading a domain pack: a three-way merge with your project</title>
     <desc id="sg-pu-d">First, specgate specops diff --pack-version v0.2.0 previews the upgrade:
-      the files sync would add and modify, writing nothing. Then three versions meet. The
-      merge base is the pack's previous version, v0.1.0, as it was rendered over your spec —
-      the baseline specops add recorded under .specops/baseline: REQ-002 with status Draft,
-      REQ-003's fee line as v0.1.0 wrote it, and no REQ-006. Yours is spec.md with your
-      edits: REQ-002 now status Implemented, the fee line of REQ-003 edited, and REQ-020, a
-      requirement of your own. The pack's new version, v0.2.0, gives REQ-002 a depends on
-      REQ-001, edits the same fee line, and adds REQ-006, Join Capacity Waitlist. specgate
-      specops sync --pack-version v0.2.0 merges them three ways. What the new version changes
-      arrives: REQ-006 and REQ-002's depends. What you wrote stays: status Implemented and
-      REQ-020. A line both changed is a conflict: the file gets conflict markers, or is left
-      untouched with --abort-on-conflict. And if the pack brings an id you already use — had
-      your own requirement been REQ-006 — sync fails, naming it: REQ-006 is defined twice in
-      spec.md. You give yours a free id, rename it in its tests and features, and run
-      specgate check.</desc>
+      the files sync would add and modify, writing nothing. v0.2.0 requires four variables
+      v0.1.0 did not, so diff and sync both take --var STACK, API_STYLE, TESTING and LANG.
+      Then three versions meet. The merge base is the pack's previous version, v0.1.0, as it
+      was rendered into your project — the baseline specops add recorded under
+      .specops/baseline: REQ-001 to REQ-005, REQ-002's row Draft, and no REQ-006. Yours is the
+      project with your work: REQ-002 Implemented in the matrix, written there by apply, and
+      REQ-020, a requirement of your own. The pack's new version, v0.2.0, leaves REQ-001 to
+      REQ-005 as they were and adds REQ-006, Join Capacity Waitlist: its feature file, its use
+      case and its matrix row. specgate specops sync --pack-version v0.2.0, with the same four
+      variables, merges them three ways. What the new version changes arrives: REQ-006. What
+      you wrote stays: REQ-002 Implemented, and REQ-020. A line both changed is a conflict: the
+      file gets conflict markers, or is left untouched with --abort-on-conflict, and sync stops
+      naming the conflicting files. An id you already use — had your own requirement been
+      REQ-006 — is such a conflict: sync stops naming docs/specs/traceability.md, and keeping
+      both rows makes check fail with Duplicate Requirement ID REQ-006. You give yours a free
+      id, rename it in its spec, tests and features, and run specgate check.</desc>
 
     <defs>
       <marker id="sg-pu-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
@@ -49,8 +51,8 @@
     <g class="dia__ico dia__ico--no" transform="translate(678 346)"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></g>
 
     <g>
-      <text x="64" y="36" class="dia__s dia__mono">specgate specops diff --pack-version v0.2.0</text>
-      <text x="64" y="56" class="dia__s">first, a preview: the files sync would add (+) and modify (~) — it writes nothing</text>
+      <text x="64" y="36" class="dia__s dia__mono">specgate specops diff --pack-version v0.2.0 --var STACK=… --var API_STYLE=… --var TESTING=… --var LANG=…</text>
+      <text x="64" y="56" class="dia__s">first, a preview: the files sync would add (+) and modify (~) — it writes nothing; v0.2.0 needs the four --var</text>
     </g>
     <g text-anchor="middle">
       <text x="158" y="98" class="dia__who">THE MERGE BASE</text>
@@ -61,37 +63,39 @@
       <text x="64" y="141" class="dia__h">v0.1.0, as rendered</text>
       <text x="28" y="166" class="dia__s">the baseline <tspan class="dia__mono">specops add</tspan> recorded</text>
       <text x="28" y="184" class="dia__s dia__mono">.specops/baseline/backend</text>
-      <text x="28" y="216" class="dia__s dia__mono">REQ-002  status=Draft</text>
-      <text x="28" y="236" class="dia__s dia__mono">REQ-003  the fee line</text>
+      <text x="28" y="216" class="dia__s dia__mono">REQ-001 … REQ-005</text>
+      <text x="28" y="236" class="dia__s dia__mono">REQ-002  Draft</text>
       <text x="28" y="256" class="dia__s dia__faint">no REQ-006 yet</text>
 
-      <text x="386" y="141" class="dia__h">Your spec.md</text>
-      <text x="350" y="166" class="dia__s">with your edits</text>
-      <text x="350" y="216" class="dia__s dia__mono">REQ-002  status=Implemented</text>
-      <text x="350" y="236" class="dia__s dia__mono">REQ-003  the fee line, edited</text>
+      <text x="386" y="141" class="dia__h">Your project</text>
+      <text x="350" y="166" class="dia__s">with your work</text>
+      <text x="350" y="216" class="dia__s dia__mono">REQ-002  Implemented</text>
+      <text x="350" y="236" class="dia__s">in the matrix — <tspan class="dia__mono">apply</tspan> wrote it</text>
       <text x="350" y="256" class="dia__s dia__mono">REQ-020  a requirement of yours</text>
 
       <text x="708" y="141" class="dia__h">v0.2.0</text>
       <text x="672" y="166" class="dia__s">the version you move to</text>
-      <text x="672" y="216" class="dia__s dia__mono">REQ-002  depends=REQ-001</text>
-      <text x="672" y="236" class="dia__s dia__mono">REQ-003  the fee line, edited</text>
-      <text x="672" y="256" class="dia__s dia__mono">+ REQ-006  Join Capacity Waitlist</text>
+      <text x="672" y="216" class="dia__s dia__mono">REQ-001 … REQ-005  unchanged</text>
+      <text x="672" y="236" class="dia__s dia__mono">+ REQ-006  Join Capacity Waitlist</text>
+      <text x="672" y="256" class="dia__s">its feature, use case and matrix row</text>
 
       <text x="64" y="363" class="dia__h">A three-way merge</text>
-      <text x="64" y="383" class="dia__s dia__mono">specgate specops sync --pack-version v0.2.0</text>
-      <text x="58" y="418" class="dia__s"><tspan class="dia__ok-t">Arrives</tspan> — what v0.2.0 changes: REQ-006, and REQ-002's depends</text>
-      <text x="58" y="448" class="dia__s"><tspan class="dia__ok-t">Stays</tspan> — what you wrote: status=Implemented, and REQ-020</text>
-      <text x="58" y="478" class="dia__s"><tspan class="dia__no-t">Conflict</tspan> — both changed the fee line: the file gets conflict markers,</text>
-      <text x="58" y="496" class="dia__s">or is left untouched with <tspan class="dia__mono">--abort-on-conflict</tspan></text>
+      <text x="64" y="383" class="dia__s dia__mono">specgate specops sync --pack-version v0.2.0 --var …</text>
+      <text x="58" y="418" class="dia__s"><tspan class="dia__ok-t">Arrives</tspan> — what v0.2.0 changes: REQ-006</text>
+      <text x="58" y="448" class="dia__s"><tspan class="dia__ok-t">Stays</tspan> — what you wrote: REQ-002 Implemented, and REQ-020</text>
+      <text x="58" y="478" class="dia__s"><tspan class="dia__no-t">Conflict</tspan> — a line both changed: the file gets conflict markers,</text>
+      <text x="58" y="496" class="dia__s">or is left untouched with <tspan class="dia__mono">--abort-on-conflict</tspan>;</text>
+      <text x="58" y="514" class="dia__s">either way sync stops, naming the conflicting files</text>
 
       <text x="714" y="363" class="dia__h dia__no-t">An id you already use</text>
-      <text x="678" y="394" class="dia__s">Had yours been REQ-006, the</text>
-      <text x="678" y="412" class="dia__s">pack's REQ-006 clashes with it.</text>
-      <text x="678" y="432" class="dia__s">sync fails, naming it:</text>
-      <text x="678" y="452" class="dia__s dia__mono">REQ-006 is defined twice</text>
-      <text x="678" y="474" class="dia__s">Give yours a free id, rename it in</text>
-      <text x="678" y="492" class="dia__s">its tests and features, then run</text>
-      <text x="678" y="510" class="dia__s dia__mono">specgate check</text>
+      <text x="678" y="394" class="dia__s">Had yours been REQ-006, both</text>
+      <text x="678" y="412" class="dia__s">matrix rows conflict: sync stops,</text>
+      <text x="678" y="430" class="dia__s dia__mono">docs/specs/traceability.md</text>
+      <text x="678" y="448" class="dia__s">Both kept, check fails: Duplicate</text>
+      <text x="678" y="466" class="dia__s">Requirement ID REQ-006. Give yours</text>
+      <text x="678" y="484" class="dia__s">a free id, rename it in its spec,</text>
+      <text x="678" y="502" class="dia__s">tests and features, then run</text>
+      <text x="678" y="520" class="dia__s dia__mono">specgate check</text>
     </g>
 
     <g class="dia__msg">
@@ -103,5 +107,5 @@
     </g>
   </svg>
   </div>
-  <figcaption>A pack upgrade merges the pack's old version, your spec and the pack's new version three ways: the pack's changes arrive, yours stay, and only a line both changed — or an id both use — stops it.</figcaption>
+  <figcaption>A pack upgrade merges the pack's old version, your project and the pack's new version three ways: the pack's changes arrive, yours stay, and only a line both changed — or an id both use — stops it.</figcaption>
 </figure>

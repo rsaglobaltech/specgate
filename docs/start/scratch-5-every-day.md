@@ -188,6 +188,10 @@ $ specgate status
 ```
 <!-- specgate:out-scratch-status-daily:end -->
 
+This recording ran `status` before the approval, so its last line still says
+free-courts waits for a person. Once you have approved it, REQ-012 is
+delivered like the others: its test, its code, `specgate apply REQ-012`.
+
 **A requirement that changes** goes through a change too, under
 `## MODIFIED Requirements` in its delta, so the review sees the before and
 after.

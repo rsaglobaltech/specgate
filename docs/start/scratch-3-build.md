@@ -56,8 +56,11 @@ say so in the prompt: "also wire the test runner so this scenario executes".
 ## Option A — by hand, test first
 
 Read the requirement and its scenarios — in the draft's delta,
-`docs/specs/changes/draft-bookings/specs/bookings/spec.md`, REQ-002 has two:
-SCN-002 and SCN-003 — then write the test. **Name the
+`docs/specs/changes/draft-bookings/specs/bookings/spec.md`. In the draft of
+[phase 2](scratch-2-specify.md#3-open-the-module-and-hand-it-to-your-agent),
+REQ-002 has two: SCN-002, booking a free court, and SCN-003, a member sees
+their bookings. Your agent's draft may number them differently: use its ids.
+Then write the test. **Name the
 requirement in it**: that mention is the whole link between the test and the
 requirement. There is no table to edit and nothing to register.
 
@@ -105,7 +108,8 @@ docstring, a Go test name. The gate looks for the id, not for a framework.
 
 The harness takes the next pending requirement, writes a prompt from its
 Gherkin, creates a git worktree on `harness/REQ-NNN`, runs your agent there,
-and then runs the gate. Green: the requirement is marked done on its branch.
+and then runs the gate. Green: the requirement is applied (Implemented) on its
+branch.
 Red: the failures go into the next attempt. Either way it does not merge —
 that stays a person's job, unless you ask for `--chain`, which merges each
 requirement that passed into the current branch.

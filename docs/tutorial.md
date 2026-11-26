@@ -527,9 +527,12 @@ is a warning, not a refusal. `--force` never skips the requirement check.
 >
 > **Watch the ids when you upgrade the pack.** `propose` reserves the next
 > free ids, and a later pack version can add the same one. Had this change
-> kept `REQ-006`, Step 7's `sync` would stop, naming `REQ-006` as defined
-> twice. Read the diff before syncing, and give your local requirement a free
-> id first if the pack claims its id.
+> kept `REQ-006`, Step 7's `sync` would stop: both versions write a
+> `REQ-006` row in `docs/specs/traceability.md`, so sync reports it as the
+> conflicting file (`CONFLICT (markers written)`) and exits non-zero. Keep
+> both rows and `check` fails with `Duplicate Requirement ID in
+> traceability.md: REQ-006`. Read the diff before syncing, and give your local
+> requirement a free id first if the pack claims its id.
 
 ---
 
@@ -571,9 +574,8 @@ specgate specops diff --pack-version v0.2.0 \
   ~ docs/specs/events.md
   ~ docs/specs/traceability.md
   ~ docs/specs/use-cases.md
-  ~ spec.md
 
-  1 added · 7 modified · 6 unchanged
+  1 added · 6 modified · 7 unchanged
 ```
 
 `+` is a new file, `~` is a modified one. Nothing is written. `--json` emits
@@ -831,7 +833,7 @@ a reference.
 ### 11.4 Version, tag, publish
 
 ```bash
-# bump metadata.version in pack.yaml (e.g. 0.1.0 → 0.2.0), then:
+# bump metadata.version in pack.yaml — this pack's went 1.1.0 → 1.2.0; the tag is separate:
 git commit -am "feat: add capacity waitlist (REQ-006)"
 git tag v0.2.0
 git push --tags
@@ -931,13 +933,25 @@ change — nothing was merged yet.
 
 > **It composes with packs.** When the pack itself changes,
 > `specgate specops diff --pack-version v0.2.0 --as-change --var …` writes a
-> change folder, `docs/specs/changes/upgrade-backend-v0.2.0/`: a proposal, a
-> task list and a delta with one `ADDED`/`MODIFIED`/`REMOVED` requirement per
-> requirement the version moves (here, `REQ-006` added). It writes no
-> generated file — `sync` still does that. Read the delta and give each body a
-> `SHALL` (`change validate` warns `no_rfc2119_keyword` where the pack has
-> none), so you review an upstream upgrade as intent rather than as a file
-> diff.
+> change folder, `docs/specs/changes/upgrade-backend-v0.2.0/`, in the older
+> layout: `proposal.md`, `tasks.md` and a delta with one
+> `ADDED`/`MODIFIED`/`REMOVED` requirement per requirement the version moves
+> (here, `REQ-006` added) — no `discover.md` or `design.md`. It writes no
+> generated file — `sync` still does that. As written, it fails `check`: the
+> pack's REQ-006 body has no `SHALL`, an error under the standard preset
+> (`no_rfc2119_keyword`). To make it pass, give each body a `SHALL` and its
+> trace a `kind=` (approval refuses one without), then approve it:
+>
+> ```bash
+> # in specs/backend/spec.md: "The system SHALL let drivers join a waitlist …"
+> #                           <!-- specgate:trace kind=functional uc=UC-006 … -->
+> specgate check                                          # passes
+> specgate change approve upgrade-backend-v0.2.0          # you, at a terminal
+> ```
+>
+> `change validate` still warns `layer_no_design` until it has a `design.md`
+> (`specgate migrate 1.0` adds one from the proposal). You review an upstream
+> upgrade as intent rather than as a file diff.
 
 → [Change a shipped requirement](reviewing-changes.md) for the full reference.
 

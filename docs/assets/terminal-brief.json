@@ -282,7 +282,7 @@
       "typeMs": 26,
       "holdMs": 1600,
       "truncated": true,
-      "omitted": 1,
+      "omitted": 2,
       "lines": [
         {
           "t": "  ◆ specgate · propose --from-brief bookings   docs/brief.md",
@@ -330,7 +330,7 @@
           "s": "out"
         },
         {
-          "t": "   3  ➜ specgate apply   its requirements, one at a time; then specgate archive draft-bookings",
+          "t": "   3  ➜ specgate change approve draft-bookings   you, at your terminal, once it reads right — apply waits for it",
           "c": "out",
           "s": "out"
         }

@@ -53,9 +53,9 @@ invoice total is rounded to the cent*.
 
 ## 3. Open a change — `specgate propose`
 
-A **change** is a folder that holds one piece of work until it is built: a
-proposal, a task list and a **delta** — the requirements and scenarios the
-change adds or modifies. Open one for the rounding rule:
+A **change** is a folder that holds one piece of work until it is built:
+`discover.md` (why), `design.md` (how), `tasks.md`, and a **delta** — the
+requirements and scenarios the change adds or modifies. Open one for the rounding rule:
 
 ```bash
 specgate propose invoice-rounding

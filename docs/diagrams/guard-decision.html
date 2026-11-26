@@ -1,14 +1,18 @@
 <figure class="dia dia--card dia--guard">
   <div class="dia__scroll">
-  <svg viewBox="0 0 960 350" class="dia__svg" role="img" aria-labelledby="sg-gd-t sg-gd-d">
+  <svg viewBox="0 -30 960 380" class="dia__svg" role="img" aria-labelledby="sg-gd-t sg-gd-d">
     <title id="sg-gd-t">How the guard decides on one tool call</title>
     <desc id="sg-gd-d">A tool call — Write, Edit, a patch or a shell command — goes through four
-      questions in order. First: is it a person's act? If yes, it is refused, because it is a
-      person's act. If no: does it write a sealed test? If yes, it is refused, because the
-      sealed test is the contract. If no: does it write a source file? If no, it is allowed.
-      If yes: does a test that is changed in the working tree, or a sealed test, name a
-      requirement of the open change? If no, it is refused with the step to take: write the
-      test first. If yes, it is allowed, and the guard records the step-definition files.</desc>
+      questions in order. First: is it a person's act — approving a change, switching the
+      guard, or writing a file the controls keep, such as .specgate/gate.yaml,
+      .specgate/config.json, .specgate/evidence or a change's approvals.json? If yes, it is
+      refused. If no: does it write a sealed test? If yes, it is refused, because the sealed
+      test is the contract. If no: does it write a source file? If no, it is allowed. If yes:
+      is a change open, and does a test that is changed in the working tree, or a sealed
+      test, name one of its requirements? If no change is open, it is refused with the step
+      to take: open one with specgate propose. If a change is open and no test names its
+      requirement, it is refused: write the test first. If yes, it is allowed, and the guard
+      records the step-definition files.</desc>
 
     <defs>
       <marker id="sg-gd-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
@@ -30,9 +34,9 @@
       <polygon points="862,104 950,170 862,236 774,170"/>
     </g>
     <g class="dia__box dia__box--no">
-      <rect x="178" y="8" width="160" height="56"/>
+      <rect x="158" y="-22" width="200" height="88"/>
       <rect x="376" y="8" width="160" height="56"/>
-      <rect x="782" y="8" width="160" height="56"/>
+      <rect x="772" y="-22" width="180" height="88"/>
     </g>
     <g class="dia__box dia__box--ok">
       <rect x="574" y="282" width="160" height="56"/>
@@ -52,16 +56,20 @@
       <text x="456" y="184" class="dia__s dia__h">test?</text>
       <text x="654" y="166" class="dia__s dia__h">Source</text>
       <text x="654" y="184" class="dia__s dia__h">file?</text>
-      <text x="862" y="158" class="dia__s dia__h">A changed or</text>
-      <text x="862" y="175" class="dia__s dia__h">sealed test</text>
+      <text x="862" y="158" class="dia__s dia__h">A change open,</text>
+      <text x="862" y="175" class="dia__s dia__h">and a test that</text>
       <text x="862" y="192" class="dia__s dia__h">names its REQ?</text>
 
-      <text x="258" y="32" class="dia__h dia__no-t">Refuse</text>
-      <text x="258" y="51" class="dia__s">it is a person's act</text>
+      <text x="258" y="0" class="dia__h dia__no-t">Refuse</text>
+      <text x="258" y="19" class="dia__s">a person's act: approving,</text>
+      <text x="258" y="36" class="dia__s">the guard, a control file —</text>
+      <text x="258" y="54" class="dia__s">.specgate/ · approvals.json</text>
       <text x="456" y="32" class="dia__h dia__no-t">Refuse</text>
       <text x="456" y="51" class="dia__s">it is the contract</text>
-      <text x="862" y="32" class="dia__h dia__no-t">Refuse</text>
-      <text x="862" y="51" class="dia__s">write the test first</text>
+      <text x="862" y="0" class="dia__h dia__no-t">Refuse</text>
+      <text x="862" y="19" class="dia__s">no change open: open one,</text>
+      <text x="862" y="36" class="dia__s dia__mono">specgate propose &lt;id&gt;</text>
+      <text x="862" y="54" class="dia__s">else: write the test first</text>
 
       <text x="654" y="315" class="dia__h dia__ok-t">Allow</text>
       <text x="862" y="306" class="dia__h dia__ok-t">Allow</text>
@@ -77,11 +85,11 @@
       <line x1="740" y1="170" x2="770" y2="170" marker-end="url(#sg-gd-a)"/>
       <text x="755" y="160" text-anchor="middle">yes</text>
 
-      <line x1="258" y1="114" x2="258" y2="69" class="dia__no" marker-end="url(#sg-gd-r)"/>
+      <line x1="258" y1="114" x2="258" y2="71" class="dia__no" marker-end="url(#sg-gd-r)"/>
       <text x="268" y="96" class="dia__no-t">yes</text>
       <line x1="456" y1="114" x2="456" y2="69" class="dia__no" marker-end="url(#sg-gd-r)"/>
       <text x="466" y="96" class="dia__no-t">yes</text>
-      <line x1="862" y1="102" x2="862" y2="69" class="dia__no" marker-end="url(#sg-gd-r)"/>
+      <line x1="862" y1="102" x2="862" y2="71" class="dia__no" marker-end="url(#sg-gd-r)"/>
       <text x="872" y="91" class="dia__no-t">no</text>
 
       <line x1="654" y1="226" x2="654" y2="277" class="dia__ok" marker-end="url(#sg-gd-g)"/>
@@ -91,5 +99,5 @@
     </g>
   </svg>
   </div>
-  <figcaption>The guard asks four questions of every tool call, in this order; a refusal names the step to take instead.</figcaption>
+  <figcaption>The guard asks four questions of every tool call, in this order — a control file counts as a person's act, and a source write with no change open is refused; a refusal names the step to take instead.</figcaption>
 </figure>

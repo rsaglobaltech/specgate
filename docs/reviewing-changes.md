@@ -224,13 +224,13 @@ specgate archive add-dynamic-pricing --dry-run
 ```
   Archive plan ───────────────────────────────────────────
     ~ docs/specs/capabilities/pricing/spec.md   spec
-    ~ features/pricing/REQ-014.feature   feature
     ~ docs/specs/traceability.md   traceability
     → docs/specs/changes/add-dynamic-pricing moves to docs/specs/changes/archive/2026-10-19-add-dynamic-pricing
 ```
 
-Unticked tasks in `tasks.md` are a warning (`archive_tasks_incomplete`);
-`--force` archives anyway, once every requirement is delivered. Then:
+No feature file in the plan: `change approve` wrote it. Unticked tasks in
+`tasks.md` are a warning (`archive_tasks_incomplete`); `--force` archives
+anyway, once every requirement is delivered. Then:
 
 ```bash
 specgate archive add-dynamic-pricing
@@ -244,9 +244,8 @@ specgate archive add-dynamic-pricing
     Features      0 materialised
 ```
 
-`Features 0 materialised` is expected: `change approve` already wrote
-`features/pricing/REQ-014.feature`. The delta is merged into
-`docs/specs/capabilities/pricing/spec.md`; the matrix row arrives delivered:
+`Features 0 materialised` is expected, for the same reason. The delta is
+merged into `docs/specs/capabilities/pricing/spec.md`; the row arrives delivered:
 
 ```
 | REQ-014 | SCN-014 | `features/pricing/REQ-014.feature` | UC-007 | CMD-011 | AGG-Pricing | EVT-PriceApplied | - | test/pricing.test.js | Implemented |
@@ -260,7 +259,8 @@ a test that disproves the spec text is fixed in the same change.
 A `MODIFIED` requirement is pending again while the change is open: `status`
 lists it as needing a test for its new scenarios, and `archive` waits
 for it like any other. When it is delivered, by `apply` or by the harness,
-every one of its scenarios must be named by a test. Two requirements modified
+its test should name every one of its scenarios — a warning under the
+standard preset (rule `coverage`), an error under the strict one. Two requirements modified
 by the same change are delivered one at a time; neither waits for the other.
 Archiving then rewrites the feature file from the delta
 (`archive_feature_regenerated`).

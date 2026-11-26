@@ -1,4 +1,4 @@
-<!-- translation-of: 73cc5d7ee894 -->
+<!-- translation-of: f9f8e90285da -->
 # Empezar
 
 Dos caminos, unos pocos comandos cada uno. Elige el que corresponde a tu carpeta.
@@ -12,7 +12,7 @@ Dos caminos, unos pocos comandos cada uno. Elige el que corresponde a tu carpeta
 Un repositorio local cuyo código ya funciona.
 
 1. Instala Specgate en el proyecto: `npm i -D @rsaglobaltech/specgate`
-2. Adóptalo sin tocar código: `npx specgate adopt` — guarda el comando de tests que detecta, configura tu agente si hay uno instalado (preguntando antes), escribe las áreas que encontró en `docs/specs/adoption.md` en lugar de inventar requisitos y termina con una lista de lo que está listo. ¿Prefieres una app? `npx specgate studio` y pulsa **Adopt** en su pantalla de inicio.
+2. Adóptalo sin tocar código: `npx specgate adopt` — guarda el comando de tests que detecta, configura tu agente si hay uno instalado (preguntando antes; sin terminal —ejecutado por un agente o un script— no pregunta y pone `claude --permission-mode acceptEdits`), escribe las áreas que encontró en `docs/specs/adoption.md` en lugar de inventar requisitos y termina con una lista de lo que está listo. ¿Prefieres una app? `npx specgate studio` y pulsa **Adopt** en su pantalla de inicio.
 3. Configura tu agente con un solo comando, sus comandos y el agente de Build: `npx specgate agents init --tool claude`
 4. Escribe un comportamiento del que dependes, elegido de `docs/specs/adoption.md` cuando la adopción lo haya escrito: `npx specgate new "<a behaviour you rely on>"` — después sustituye la frase que escribió en `spec.md` y los `<placeholders>` de su escenario en `features/` por los reales
 5. Nombra el nuevo id (`REQ-002`) en un test que lo demuestre — sirve uno que ya tengas — y entrégalo a través del gate: `npx specgate apply REQ-002`

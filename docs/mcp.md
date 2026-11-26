@@ -14,8 +14,10 @@ package; there is nothing else to install.
 ## Install it
 
 ```bash
-specgate mcp install --client claude    # Claude Desktop
-specgate mcp install --client cursor    # Cursor (~/.cursor/mcp.json)
+specgate mcp install --client claude     # Claude Desktop
+specgate mcp install --client cursor     # Cursor (~/.cursor/mcp.json)
+specgate mcp install --client opencode   # OpenCode: the project's opencode.json
+specgate mcp install --client codex      # Codex: runs `codex mcp add`, your own Codex configuration
 ```
 
 It merges a `spec-driven` entry into the client's config and leaves the rest
@@ -41,6 +43,8 @@ By hand, the entry is:
 | Cursor | `~/.cursor/mcp.json` |
 | Claude Code | the Specgate plugin's `.mcp.json` — see [Install the Claude Code plugin](automation.md#install-the-claude-code-plugin) |
 | Antigravity | `.agents/mcp_config.json` — written by `specgate agents init --tool antigravity` |
+| OpenCode | the project's `opencode.json` |
+| Codex | your own Codex configuration, through `codex mcp add` |
 
 `specgate mcp serve` is what every one of those configs starts: the server,
 over stdio, calling the CLI that serves it. You never run it yourself.
@@ -65,6 +69,16 @@ are better run from a terminal. The ones an agent uses every day:
 | `validate_project` | `validate --strict`, parsed. | `projectDir` |
 | `read_spec` | `spec.md`, and the list of every `docs/specs/*.md`. | `projectDir` |
 | `list_requirements` | Every `REQ-NNN` with its title, file and line. | `projectDir` |
+
+The tools that configure the project take only what their schema declares —
+anything else the client sends is dropped:
+
+| Tool | Does | Arguments |
+|---|---|---|
+| `specgate_config_get` | One setting's value, and the file it lives in. | `projectDir`, `key` |
+| `specgate_config_set` | Sets one setting (`test_cmd`, `arch_cmd`, …). `agent_guard off` is refused with no terminal (`guard_needs_person`). | `projectDir`, `key`, `value` |
+| `specgate_config_list` · `specgate_config_keys` | Every setting, and every key there is. | `projectDir` |
+| `specgate_agents_init` | Installs the `/specgate:*` commands and rules for every agent it knows — there is no argument to pick one; for one tool, run `specgate agents init --tool <name>` in a terminal. | `projectDir` |
 
 Seven short names (`read_spec`, `list_requirements`, `update_traceability`,
 `lint_pack`, `validate_project`, `plan` and `mark_requirement_done`) predate

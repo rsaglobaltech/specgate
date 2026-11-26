@@ -5,7 +5,7 @@ gave you, upgrade it to a newer version, and take it off again. It uses the
 public demo pack
 [`parking-management-specops`](https://github.com/rsaglobaltech/parking-management-specops),
 which has two tags, `v0.1.0` and `v0.2.0`. Every command below was run
-against that repository with Specgate 0.18.0.
+against that repository with Specgate 1.5.0.
 
 For what a pack is and which ones exist, read [Domain packs](domain-packs.md).
 If you are starting from your own plan rather than a pack, start with
@@ -73,17 +73,19 @@ specgate status
 ```
 
 ```text
-  Requirements  5 total · 0 done · 5 pending
+  ◆ specgate · status   smart-parking
 
-  To do
-    REQ-001   Monitor Capacity Threshold                    a test and code
-    REQ-002   Register Vehicle Entry                        a test and code
-    REQ-003   Calculate Parking Fee                         a test and code
-    REQ-004   Detect Overstay                               a test and code
-    REQ-005   Send Payment Receipt                          a test and code
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 5 done
 
-  Packs  (.specops.lock)
-    backend @ v0.1.0
+  To do ──────────────────────────────────────────────────
+    ○ REQ-001  Monitor Capacity Threshold  a test and code
+    ○ REQ-002  Register Vehicle Entry      a test and code
+    ○ REQ-003  Calculate Parking Fee       a test and code
+    ○ REQ-004  Detect Overstay             a test and code
+    ○ REQ-005  Send Payment Receipt        a test and code
+
+  Packs ──────────────────────────────────────────────────
+    backend  @ v0.1.0
 ```
 
 `specgate check` passes: the requirements are Draft, so they owe nothing yet.
@@ -141,9 +143,19 @@ specgate specops sync --pack-version v0.2.0 \
 
 `sync` is a three-way merge against the baseline `add` recorded: a file you
 edited keeps your edits, and a real conflict gets markers
-(`--abort-on-conflict` leaves it untouched instead). `specgate status` now
-shows `6 total` — the new `REQ-006 Join Capacity Waitlist` — and
+(`--abort-on-conflict` leaves it untouched instead); either way `sync` exits
+non-zero and names the conflicting files. `v0.2.0` adds REQ-006 — its feature
+file, its use case and its matrix row — and leaves REQ-001 to REQ-005 as they
+were, so a status `apply` wrote into REQ-002's row stays. `specgate status`
+now shows `0 of 6 done` — the new `REQ-006 Join Capacity Waitlist` — and
 `backend @ v0.2.0`.
+
+An id you already use is such a conflict. Had you added a requirement of your
+own as REQ-006 before the upgrade, both versions write a REQ-006 row in
+`docs/specs/traceability.md`: `sync` reports `docs/specs/traceability.md —
+CONFLICT (markers written)` and stops. Keeping both rows makes `check` fail
+with `Duplicate Requirement ID in traceability.md: REQ-006`. Give yours a free
+id, rename it in its spec, tests and features, then run `specgate check`.
 
 ## 6. Take the pack off
 

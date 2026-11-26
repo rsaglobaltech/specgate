@@ -12,8 +12,9 @@
       opens a change; specgate_new, the specgate_req_ tools and specgate_fix;
       mark_requirement_done, which is apply and runs the gate first; and
       specgate_change_archive, which is archive. Tools that write the specification are
-      refused while no change is open. Configure: specgate_config_get, set, list and keys,
-      specgate_agents_init and specgate_harness_init. Never a tool: approving a change, since
+      refused while no change is open. Configure: specgate_config_get with a key, specgate_config_set with a key and a
+      value, specgate_config_list and keys; specgate_agents_init, which takes only the
+      project and installs every agent's commands; and specgate_harness_init. Never a tool: approving a change, since
       specgate change approve is a person's act at a terminal; and switching the guard off,
       since config set agent_guard off with no terminal fails with guard_needs_person.</desc>
 
@@ -72,8 +73,9 @@
       <text x="482" y="264" class="dia__s dia__mono">specgate_change_archive <tspan class="dia__faint">— archive</tspan></text>
 
       <text x="518" y="313" class="dia__h">Configure</text>
-      <text x="482" y="338" class="dia__s dia__mono">specgate_config_get · _set · _list · _keys</text>
-      <text x="482" y="356" class="dia__s dia__mono">specgate_agents_init · specgate_harness_init</text>
+      <text x="482" y="338" class="dia__s dia__mono">specgate_config_get <tspan class="dia__faint">key</tspan> · _set <tspan class="dia__faint">key value</tspan> · _list · _keys</text>
+      <text x="482" y="356" class="dia__s dia__mono">specgate_agents_init <tspan class="dia__faint">— every agent; no tool to pick</tspan></text>
+      <text x="482" y="374" class="dia__s dia__mono">specgate_harness_init</text>
 
       <text x="70" y="446" class="dia__h dia__no-t">Never a tool</text>
       <text x="70" y="472" class="dia__s"><tspan class="dia__h">Approving a change</tspan> — <tspan class="dia__mono">specgate change approve</tspan> is a person's act, at a terminal.</text>
