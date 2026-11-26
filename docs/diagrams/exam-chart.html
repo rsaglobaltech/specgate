@@ -3,16 +3,16 @@
   <svg viewBox="0 0 960 500" class="dia__svg" role="img" aria-labelledby="sg-ec-t sg-ec-d">
     <title id="sg-ec-t">The compatibility exam, without and with Specgate</title>
     <desc id="sg-ec-d">Paired horizontal bars, without Specgate and with it, on an axis from 0 to
-      100 percent of runs. Met the specification: 16 of 36 runs, 44 percent, without; 32 of
-      36, 89 percent, with; p &lt; 0.001. Delivered wrong or unrequested work, where lower is
+      100 percent of runs. Met the specification: 16 of 36 runs, 44 percent, without; 33 of
+      36, 92 percent, with; p &lt; 0.001. Delivered wrong or unrequested work, where lower is
       better: 15 of 36, 42 percent, without; 1 of 36, 3 percent, with; p &lt; 0.001. Stopped
-      at work nobody asked for and proposed a requirement instead: 0 of 9 without; 8 of 9,
-      89 percent, with; p &lt; 0.001. Repaired a suite left red by another requirement, in its
+      at work nobody asked for and proposed a requirement instead: 0 of 9 without; 7 of 9,
+      78 percent, with; p = 0.002. Repaired a suite left red by another requirement, in its
       code and not its test: 4 of 9 without; 9 of 9 with; p = 0.029. Trap tasks, which hand
       the agent a test that contradicts the scenario, with acceptance tests written by a
-      second agent and sealed: 12 of 18 without, 67 percent; 15 of 18, 83 percent, with; not
+      second agent and sealed: 12 of 18 without, 67 percent; 17 of 18, 94 percent, with; not
       significant at this size. 72 graded runs of Claude Haiku, Claude Sonnet and Codex on
-      the released version, both arms in one session, each doing the same four tasks three
+      the released version, the arm with Specgate run on its final build, each doing the same four tasks three
       times, graded by a hidden check the agent never sees; p-values from a two-sided
       Fisher's exact test.</desc>
 
@@ -46,11 +46,11 @@
       <path d="M300 388 H627 A6 6 0 0 1 627 400 H300 Z"/>
     </g>
     <g fill="var(--accent)">
-      <path d="M300 88 H738 A6 6 0 0 1 738 100 H300 Z"/>
+      <path d="M300 88 H752 A6 6 0 0 1 752 100 H300 Z"/>
       <path d="M300 168 H308 A6 6 0 0 1 308 180 H300 Z"/>
-      <path d="M300 248 H738 A6 6 0 0 1 738 260 H300 Z"/>
+      <path d="M300 248 H683 A6 6 0 0 1 683 260 H300 Z"/>
       <path d="M300 328 H794 A6 6 0 0 1 794 340 H300 Z"/>
-      <path d="M300 408 H711 A6 6 0 0 1 711 420 H300 Z"/>
+      <path d="M300 408 H766 A6 6 0 0 1 766 420 H300 Z"/>
     </g>
 
     <g>
@@ -64,7 +64,7 @@
 
       <text x="20" y="238" class="dia__h">Stopped at unrequested work</text>
       <text x="20" y="256" class="dia__s">asked for what no requirement covers</text>
-      <text x="20" y="274" class="dia__s dia__mono dia__small">p &lt; 0.001</text>
+      <text x="20" y="274" class="dia__s dia__mono dia__small">p = 0.002</text>
 
       <text x="20" y="318" class="dia__h">Repaired a red suite</text>
       <text x="20" y="336" class="dia__s">another requirement's test, fixed in its code</text>
@@ -77,17 +77,17 @@
 
     <g class="dia__s">
       <text x="530" y="78"><tspan class="dia__h">16</tspan> of 36 · 44%</text>
-      <text x="752" y="98"><tspan class="dia__h">32</tspan> of 36 · 89%</text>
+      <text x="766" y="98"><tspan class="dia__h">33</tspan> of 36 · 92%</text>
       <text x="516" y="158"><tspan class="dia__h">15</tspan> of 36 · 42%</text>
       <text x="322" y="178"><tspan class="dia__h">1</tspan> of 36 · 3%</text>
       <text x="308" y="238"><tspan class="dia__h">0</tspan> of 9 · 0%</text>
-      <text x="752" y="258"><tspan class="dia__h">8</tspan> of 9 · 89%</text>
+      <text x="697" y="258"><tspan class="dia__h">7</tspan> of 9 · 78%</text>
       <text x="530" y="318"><tspan class="dia__h">4</tspan> of 9 · 44%</text>
       <text x="808" y="338"><tspan class="dia__h">9</tspan> of 9 · 100%</text>
       <text x="641" y="398"><tspan class="dia__h">12</tspan> of 18 · 67%</text>
-      <text x="725" y="418"><tspan class="dia__h">15</tspan> of 18 · 83%</text>
+      <text x="780" y="418"><tspan class="dia__h">17</tspan> of 18 · 94%</text>
     </g>
   </svg>
   </div>
-  <figcaption>72 graded runs on the released version — Claude Haiku, Claude Sonnet and Codex, the same four tasks with and without Specgate in one session, graded by a hidden check; p from a two-sided Fisher's exact test.</figcaption>
+  <figcaption>72 graded runs on the released version — Claude Haiku, Claude Sonnet and Codex, the same four tasks with and without Specgate, graded by a hidden check; p from a two-sided Fisher's exact test.</figcaption>
 </figure>

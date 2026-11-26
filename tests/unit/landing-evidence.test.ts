@@ -22,9 +22,9 @@ test("REQ-762 SCN-762a: the first screen — without and with the gate, and the 
   assert.match(firstSection, /With Specgate/);
   assert.match(firstSection, /44%/);
   // landing-figures-v16: the replication on the released version, both arms in one session.
-  assert.match(firstSection, /89%/);
+  assert.match(firstSection, /92%/);
   assert.match(firstSection, /16 of 36/);
-  assert.match(firstSection, /32 of 36/);
+  assert.match(firstSection, /33 of 36/);
   assert.match(firstSection, /p &lt; 0\.001/);
 });
 

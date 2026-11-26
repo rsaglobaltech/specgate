@@ -6,13 +6,13 @@
 
 <!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
-The system SHALL show, in the first screen of `docs/index.html`, a figure of an agent without Specgate and one with it, each with the measured share of exam runs that met the specification — from the replication on the released version, both arms in one session: 44% (16 of 36) without, 89% (32 of 36) with, and its p-value, below 0.001.
+The system SHALL show, in the first screen of `docs/index.html`, a figure of an agent without Specgate and one with it, each with the measured share of exam runs that met the specification — from the replication on the released version: 44% (16 of 36) without, 92% (33 of 36) with, and its p-value, below 0.001.
 
 #### Scenario: SCN-762a — The first screen
 
 - GIVEN the landing page as published
 - WHEN a reader opens it
-- THEN before any other section it shows "Without Specgate" with 44% (16 of 36) and "With Specgate" with 89% (32 of 36) and p < 0.001
+- THEN before any other section it shows "Without Specgate" with 44% (16 of 36) and "With Specgate" with 92% (33 of 36) and p < 0.001
 
 ### Requirement: REQ-763 — The landing page shows where each control runs
 

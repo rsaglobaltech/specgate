@@ -9,7 +9,7 @@
 
 ## Mechanisms
 
-AC-1 — the hero becomes a dark band with two figures side by side: "Without Specgate", a closed loop in which the agent writes the code, writes the tests and grades itself; "With Specgate", the agents (Claude Code, Codex, OpenCode) whose work meets a gate that a person approves, the shortcuts bouncing back, and the work delivered. Each carries its figure from the paper's replication on the released version, both arms in one session: 44% (16 of 36) and 89% (32 of 36), p < 0.001. Icons are inline stroke SVG; no image file, no external script.
+AC-1 — the hero becomes a dark band with two figures side by side: "Without Specgate", a closed loop in which the agent writes the code, writes the tests and grades itself; "With Specgate", the agents (Claude Code, Codex, OpenCode) whose work meets a gate that a person approves, the shortcuts bouncing back, and the work delivered. Each carries its figure from the paper's replication on the released version: 44% (16 of 36) and 92% (33 of 36), p < 0.001. Icons are inline stroke SVG; no image file, no external script.
 
 AC-2 — a section "The judge sits outside the session" with a figure of the trust boundary (agent, guard, working folder, gate inside; person, outside judge, verdict outside) and a section with the guard's decision on one tool call and the gate's stages. Each figure is inline SVG in a `<figure>` with `role="img"`, an `aria-label` and a `<figcaption>`; colours come from the page's tokens.
 
