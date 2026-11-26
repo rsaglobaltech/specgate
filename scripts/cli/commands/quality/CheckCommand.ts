@@ -1,4 +1,5 @@
 import { detectTestCommand } from "../../../harness/init";
+import { failingElsewhere } from "../../../lib/tests-elsewhere";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -643,10 +644,17 @@ export class CheckCommand extends BaseCommand {
       error("check_arch_failed", `The gate failed: the architecture check \`${command}\`.`, {
         fix: `Move the code where the architecture expects it, or change the rule on purpose; then run \`specgate check\` again.`,
       });
-    const testsVerdict = (command: string) =>
-      error("check_tests_failed", `The gate failed: \`${command}\`.`, {
-        fix: `Make \`${command}\` pass, then run \`specgate check\` again.`,
-      });
+    const testsVerdict = (command: string, run?: { stdout?: string | null; stderr?: string | null }) => {
+      // recover-guidance REQ-787: name the requirements whose tests are red, and that their code is what to repair.
+      const red = run ? failingElsewhere(`${run.stdout || ""}${run.stderr || ""}`, []) : [];
+      return red.length
+        ? error("check_tests_failed", `The gate failed: \`${command}\` — the failing tests name ${red.join(", ")}.`, {
+            fix: `Repair ${red.join(", ")}'s code so its test passes again — never its test. That is within any change's scope: the design's scope judges new files only. Then run \`specgate check\` again.`,
+          })
+        : error("check_tests_failed", `The gate failed: \`${command}\`.`, {
+            fix: `Make \`${command}\` pass, then run \`specgate check\` again.`,
+          });
+    };
 
     // 1. validate --strict, alone: it is the fastest, and it fails fast.
     {
@@ -776,7 +784,7 @@ export class CheckCommand extends BaseCommand {
         gate.set("tests", "passed", tests.findings, { ms: testsResult.ms, command: testCommand });
       } else {
         if (!json) showFailure(testsResult);
-        const verdict = testsVerdict(testCommand);
+        const verdict = testsVerdict(testCommand, testsResult);
         gate.set("tests", "failed", [...tests.findings, verdict], {
           ms: testsResult.ms,
           command: testCommand,

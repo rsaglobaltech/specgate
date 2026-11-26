@@ -1,4 +1,5 @@
 import { readGatePolicy } from "../../../lib/gate-policy";
+import { elsewhereFix, failingElsewhere } from "../../../lib/tests-elsewhere";
 import { endStepRecord, keepStepsReview, stepsVerdict, STEPS_FINDING, STEPS_FIX } from "../../../lib/step-seal";
 import { gitIdentity, missingApprovals } from "../../../lib/approvals";
 import { scenariosOf } from "./ScenariosCommand";
@@ -411,6 +412,12 @@ export class DoneCommand extends BaseCommand {
       }
 
       const again = `specgate ${verb} ${id}`;
+      // recover-guidance REQ-787: only another requirement's test is red — say so, and that repairing it is in scope.
+      const others = step.stage === "tests" ? failingElsewhere(`${run.stdout || ""}${run.stderr || ""}`, [id]) : [];
+      if (others.length) {
+        const e = elsewhereFix(others, [id], again);
+        io.fail(NULL_SHAPE, [...findings, error("done_tests_failed", `not marked ${opts.status}: ${e.message}.`, { target: id, fix: e.fix })]);
+      }
       io.fail(NULL_SHAPE, [
         ...findings,
         error(
@@ -653,13 +660,17 @@ export class DoneCommand extends BaseCommand {
         if (run.status !== 0) {
           const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
           if (detail && !opts.json) process.stderr.write(indent(detail) + "\n\n");
+          // recover-guidance REQ-787: only another requirement's test is red.
+          const others = failingElsewhere(detail, passing);
           for (const id of passing) {
             results.set(id, {
               ok: false,
               code: "done_tests_failed",
-              message: "the project's tests failed",
+              message: others.length ? elsewhereFix(others, passing, `specgate ${this.verb} ${passing.join(" ")}`).message : "the project's tests failed",
             });
           }
+          if (others.length && !opts.json)
+            process.stderr.write(indent(elsewhereFix(others, passing, `specgate ${this.verb} ${passing.join(" ")}`).fix) + "\n\n");
         }
       }
     }
