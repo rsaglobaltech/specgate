@@ -716,7 +716,10 @@ function copyVerbatim(
  * here without anybody remembering to add it twice.
  */
 function docsHome(version: string, opts: SiteOptions): string {
+  // The page's table of contents links to each section by this id: the heading must carry it.
+  const groupIds = new Set<string>();
   const groups = NAV.map((section) => {
+    const id = slugifyHeading(sectionTitle(section), groupIds);
     const cards = section.entries
       .map(
         (entry) =>
@@ -727,7 +730,7 @@ function docsHome(version: string, opts: SiteOptions): string {
       .join("");
     return (
       `<section class="home__group">` +
-      `<h2>${icon(section.icon, "icon")}${escapeHtml(sectionTitle(section))}</h2>` +
+      `<h2 id="${id}">${icon(section.icon, "icon")}${escapeHtml(sectionTitle(section))}</h2>` +
       `<p class="home__summary">${escapeHtml(sectionSummary(section))}</p>` +
       `<div class="cards" data-cols="2">${cards}</div></section>`
     );
