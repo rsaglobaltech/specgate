@@ -40,6 +40,8 @@ import {
 import { sessionOf, testFirst } from "../../../../packages/core/src/domain/CompatSession";
 import { makeSandbox, removeSandbox, sandboxLine, useSandbox, type ExamSandbox } from "../../../lib/compat-sandbox";
 import { CLI_CODE, cliReach, examCli } from "../../../lib/cli-reach";
+import { takeAcceptance, writerCopy } from "../../../lib/acceptance-writer";
+import { twoFunctionAttack } from "../../../lib/attack";
 
 /** Tools whose default command approves its own actions: not run outside a sandbox unless the Developer says so (REQ-738). */
 const SELF_APPROVING: readonly CompatTool[] = ["opencode"];
@@ -63,6 +65,8 @@ interface Task {
   test?: string;
   /** compat-honest REQ-731: the gate also runs the requirement's scenarios. */
   scenarios?: boolean;
+  /** sealed-acceptance REQ-761: at L3a, what the writer writes and the command that runs it. */
+  acceptance?: { kind: string; cmd: string };
 }
 
 /** This Specgate's version: each run says which one examined it (REQ-732). */
@@ -385,6 +389,41 @@ interface RunOptions {
   outDir: string;
 }
 
+/**
+ * sealed-acceptance REQ-761: the writer of L3a. It runs as the same tool and
+ * model, in a folder of the run that holds the contract and no source; what it
+ * lists comes back to the project and is sealed as a person would seal it, with
+ * the task's command to run it. Its session is kept beside the agent's.
+ */
+function writeAcceptanceFirst(
+  task: Task,
+  scratch: string,
+  dir: string,
+  logDir: string,
+  box: ExamSandbox | null,
+  template: string,
+  env: Record<string, string>,
+  timeoutMs: number
+): { ok: true; sealed: string[] } | { ok: false; reason: string } {
+  if (!task.acceptance) return { ok: false, reason: `task ${task.id} says nothing of its acceptance tests` };
+  const writerDir = path.join(scratch, "writer");
+  writerCopy(dir, writerDir);
+  const promptFile = path.join(scratch, "writer-prompt.md");
+  const prompt = fs.readFileSync(path.join(ROOT, "compat", "writer-prompt.md"), "utf8").split("{kind}").join(task.acceptance.kind);
+  fs.writeFileSync(promptFile, prompt);
+  fs.copyFileSync(promptFile, path.join(logDir, "writer-prompt.md"));
+  const agent = template.split("{extra}").join("").split("{prompt_file}").join(q(promptFile));
+  const inside = box ? sandboxLine(box, writerDir, agent, { XDG_CONFIG_HOME: opencodeConfig(scratch) }) : agent;
+  const command = `( ${inside} ) > ${q(path.join(logDir, "writer-session.jsonl"))} 2> ${q(path.join(logDir, "writer-stderr.log"))}`;
+  runWithDeadline(command, { cwd: writerDir, timeoutMs, maxBuffer: 256 * 1024 * 1024, env });
+  const taken = takeAcceptance(writerDir, dir, new Date().toISOString().slice(0, 10));
+  if (!taken.ok) return taken;
+  fs.appendFileSync(path.join(dir, "harness.config.yaml"), `\nacceptance_cmd: ${q(task.acceptance.cmd)}\n`);
+  git(dir, "add", "-A");
+  git(dir, "commit", "-qm", "the acceptance tests another agent wrote, approved and sealed");
+  return taken;
+}
+
 function oneRun(
   tool: CompatTool, level: CompatLevel, task: Task, n: number, version: string, model: string, o: RunOptions
 ): CompatRun {
@@ -484,6 +523,16 @@ function oneRun(
         home?.done();
         return { ...base, ran: true, invalid: `${CLI_CODE}: ${r.missed.join("; ")}`, passed: false };
       }
+    }
+    // sealed-acceptance REQ-761: at L3a another agent, in a folder with no source, writes the acceptance tests first.
+    if (level === "L3a") {
+      const w = writeAcceptanceFirst(task, scratch, dir, logDir, box, template, agentEnv, o.timeoutMs);
+      if (!w.ok) {
+        Object.assign(process.env, saved);
+        home?.done();
+        return { ...base, ran: true, invalid: `writer: ${w.reason}`, passed: false };
+      }
+      base.sealed = w.sealed;
     }
     // outside-judge REQ-747: the controls before the agent starts, kept here — not in its folder.
     const controlsBefore = controlsOf(dir);
@@ -628,6 +677,39 @@ export class CompatCommand extends BaseCommand {
       return;
     }
 
+    if (sub === "attack") {
+      // sealed-acceptance REQ-761: the recorded two-function attack, replayed with no model.
+      const name = args[1] || "";
+      if (name !== "two-function") {
+        io.fail({ compat: null }, [
+          { code: "unknown_attack", message: `Unknown attack: ${name || "(none)"}`, severity: "error", fix: "specgate compat attack two-function" },
+        ]);
+        process.exitCode = 2;
+        return;
+      }
+      const r = twoFunctionAttack(path.join(TASKS, "trap-scenarios", "fixture"));
+      if (!r.passed) {
+        io.fail(
+          { compat: { attack: name, ...r } },
+          r.roads
+            .filter((x) => x.outcome === "missed")
+            .map((x) => ({
+              code: "attack_missed",
+              message: `${x.road}: the sealed step file was written and neither the guard nor the judge saw it`,
+              severity: "error" as const,
+              fix: "The guard (scripts/plugin/guard-hook.ts) or the judge (scripts/lib/controls.ts) has a gap for this road.",
+            }))
+        );
+        process.exitCode = 1;
+        return;
+      }
+      io.emit({ compat: { attack: name, ...r } }, () => {
+        for (const x of r.roads) process.stdout.write(`  ✔  ${x.road.padEnd(18)} ${x.outcome} — ${x.by.slice(0, 90)}\n`);
+        process.stdout.write(`  ✔  two-function: ${r.roads.length} roads, each refused or reported\n`);
+      });
+      return;
+    }
+
     if (sub === "check-release") {
       // REQ-732: was this Specgate examined with the real tools?
       const gaps = releaseGaps(readRuns(runsFile), VERSION);
@@ -652,7 +734,7 @@ export class CompatCommand extends BaseCommand {
 
     if (sub !== "run") {
       io.fail({ compat: null }, [
-        { code: "unknown_compat_command", message: `Unknown: compat ${sub}`, severity: "error", fix: "specgate compat run | report" },
+        { code: "unknown_compat_command", message: `Unknown: compat ${sub}`, severity: "error", fix: "specgate compat run | report | attack two-function" },
       ]);
       process.exitCode = 2;
       return;

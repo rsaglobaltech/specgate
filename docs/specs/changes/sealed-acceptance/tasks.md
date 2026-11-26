@@ -10,8 +10,8 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-757 — a person approves a change's acceptance tests, sealed by hash
-- [ ] 2.2 REQ-758 — a changed or missing sealed test fails the gate
-- [ ] 2.3 REQ-759 — the gate runs the sealed tests with the project's command
-- [ ] 2.4 REQ-760 — no tool of the agent writes a sealed test; the judge sees one changed
-- [ ] 2.5 REQ-761 — the exam replays the two-function attack and measures the L3a level
+- [x] 2.1 REQ-757 — a person approves a change's acceptance tests, sealed by hash
+- [x] 2.2 REQ-758 — a changed or missing sealed test fails the gate
+- [x] 2.3 REQ-759 — the gate runs the sealed tests with the project's command
+- [x] 2.4 REQ-760 — no tool of the agent writes a sealed test; the judge sees one changed
+- [x] 2.5 REQ-761 — the exam replays the two-function attack and measures the L3a level

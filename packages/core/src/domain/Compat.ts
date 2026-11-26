@@ -11,7 +11,8 @@ export type CompatTool = (typeof COMPAT_TOOLS)[number];
  * B is the control: the task with no Specgate guidance or integration (REQ-719).
  * M is the server as the only way to Specgate: the rules, the MCP server, no shell (REQ-726).
  */
-export const COMPAT_LEVELS = ["B", "L0", "L1", "L2", "L3", "M"] as const;
+/** sealed-acceptance REQ-761: L3a is L3 with acceptance tests written beforehand by another agent that sees no source, and sealed. */
+export const COMPAT_LEVELS = ["B", "L0", "L1", "L2", "L3", "L3a", "M"] as const;
 export type CompatLevel = (typeof COMPAT_LEVELS)[number];
 /** What a run without `--level` covers: every level with Specgate. */
 export const DEFAULT_LEVELS: readonly CompatLevel[] = ["L0", "L1", "L2", "L3"];
@@ -50,7 +51,7 @@ export interface LevelIntegration {
 export function integrationOf(tool: CompatTool, level: CompatLevel): LevelIntegration | null {
   if (level === "B") return { rules: false, agentsInit: [], skillsFor: null, mcp: false, plugin: false, shell: true };
   if (level === "M") return { rules: true, agentsInit: [], skillsFor: null, mcp: true, plugin: false, shell: false };
-  const n = ["L0", "L1", "L2", "L3"].indexOf(level);
+  const n = ["L0", "L1", "L2", "L3"].indexOf(level === "L3a" ? "L3" : level);
   return {
     rules: true,
     agentsInit: n >= 1 ? [tool] : [],
@@ -91,6 +92,8 @@ export interface CompatRun {
   mcpCalls?: number;
   /** Writes Specgate's plugin refused, and times its gate hook spoke. */
   refusals?: number;
+  /** sealed-acceptance REQ-761: at L3a, the acceptance tests the writer wrote and the exam sealed. */
+  sealed?: string[];
   gateHooks?: number;
   /** From the tool's session (REQ-718). */
   toolCalls?: number;
@@ -333,8 +336,8 @@ function cellText(c: Cell, level: CompatLevel): string {
   const use: string[] = [];
   if (c.stopped > 0) use.push(`stopped ${c.stopped}`);
   if (c.invalid > 0) use.push(`${c.invalid} invalid`);
-  if ((level === "L2" || level === "L3" || level === "M") && c.mcpCalls !== null) use.push(`mcp ${c.mcpCalls}`);
-  if (level === "L3" && c.refusals !== null) use.push(`refused ${c.refusals}`);
+  if ((level === "L2" || level === "L3" || level === "L3a" || level === "M") && c.mcpCalls !== null) use.push(`mcp ${c.mcpCalls}`);
+  if ((level === "L3" || level === "L3a") && c.refusals !== null) use.push(`refused ${c.refusals}`);
   return `${MARK[c.colour]} ${c.passed}/${c.runs} · ${c.medianSeconds} s${use.length ? ` · ${use.join(", ")}` : ""}`;
 }
 
