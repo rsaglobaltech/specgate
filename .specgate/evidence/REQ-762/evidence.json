@@ -1,10 +1,10 @@
 {
   "requirement": "REQ-762",
-  "at": "2026-11-26T13:47:51.449Z",
+  "at": "2026-11-26T15:39:24.222Z",
   "scenarios": {
     "command": "node scripts/scenarios.mjs @REQ-762",
     "exitCode": 0,
-    "ms": 152,
+    "ms": 234,
     "tags": [
       "@REQ-762"
     ]
