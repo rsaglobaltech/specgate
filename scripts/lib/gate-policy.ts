@@ -32,6 +32,7 @@ export const RULES = [
   "use_cases",
   "state_machines",
   "scope",
+  "controls",
 ] as const;
 export type Rule = (typeof RULES)[number];
 
@@ -56,6 +57,8 @@ export const RULE_MEANING: Record<Rule, string> = {
   state_machines:
     "every state machine of docs/specs/state-machines/ starts somewhere, names states and requirements that exist, and takes no forbidden transition",
   scope: "every new source file is named by the design of an approved change, where one names files",
+  controls:
+    "what the branch changes in the controls — the guard, the gate's policy, approvals, evidence — is named for the person who reviews it (--base)",
 };
 
 const STRICT: Record<Rule, Level> = {
@@ -72,6 +75,8 @@ const STRICT: Record<Rule, Level> = {
   state_machines: "error",
   // shortcut-proof REQ-744: says nothing where no approved design names a file.
   scope: "error",
+  // branch-controls REQ-754: reported for the reviewer; who approved cannot be told from a branch.
+  controls: "warning",
 };
 
 /** The three starting points; `rules:` overrides any rule of the one chosen. */
@@ -93,6 +98,7 @@ export const PRESET_RULES: Record<Preset, Record<Rule, Level>> = {
     use_cases: "off",
     state_machines: "warning",
     scope: "warning",
+    controls: "warning",
   },
 };
 

@@ -1,0 +1,22 @@
+▶ dist/tests/unit/agents-init.test.js
+✔ dist/tests/unit/agents-init.test.js (43.08125ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 47.78275
+▶ dist/tests/unit/codex-guard.test.js
+✔ REQ-751 SCN-751a: the hooks are written, and the scripts they run (419.111958ms)
+✔ REQ-751 SCN-751b: a patch to source code before its test is refused, exit code 2 (375.246291ms)
+✔ REQ-751 SCN-751c: hooks a person wrote are kept, --force or not (305.988917ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1209.586583

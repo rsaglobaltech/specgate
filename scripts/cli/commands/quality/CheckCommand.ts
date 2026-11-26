@@ -19,6 +19,7 @@ import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
 import { listChangeIds } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { scopeDiagnostics, sealDiagnostics } from "../../../lib/approvals";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
+import { branchControls } from "../../../lib/controls";
 import type { BaseIdCheck } from "../../../lib/base-ids";
 import { prBase, ticketKeyFindings } from "../../../lib/ticket-keys";
 import { changeOverlaps } from "../../../lib/change-overlap";
@@ -475,6 +476,27 @@ export class CheckCommand extends BaseCommand {
       ];
       gate.set("ids", "failed", collisions, { ms: since(idsStarted) });
       fail(NULL_SHAPE, [...ticketKeys, ...collisions]);
+    }
+    // branch-controls REQ-754: what the branch changes in the controls, named for the person who reviews it.
+    const controlsLevel = levelOf(policy, "controls");
+    if (ids.state === "checked" && controlsLevel !== "off") {
+      const ctl = branchControls(projectDir, ids.base);
+      if (ctl.state === "checked" && ctl.changed.length) {
+        const say = (d: string) =>
+          `${d} on this branch, against ${ids.base}: a person who reviews the branch reads it before it merges.`;
+        const fix =
+          "Review it as part of the pull request; make .specgate/ and docs/specs/changes/*/approvals.json code-owned so that review is required.";
+        if (controlsLevel === "error") {
+          const errors = ctl.changed.map((d) => error("controls_changed_on_branch", say(d), { fix }));
+          gate.set("ids", "failed", errors, { ms: since(idsStarted) });
+          fail(NULL_SHAPE, [...ticketKeys, ...errors]);
+        }
+        for (const d of ctl.changed) {
+          const w = warning("controls_changed_on_branch", say(d), { fix });
+          idWarnings.push(w);
+          if (!json) process.stdout.write(ui.warn(`${w.message}  [${w.code}]`));
+        }
+      }
     }
     gate.set(
       "ids",

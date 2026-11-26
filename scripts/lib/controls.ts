@@ -1,6 +1,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { createHash } from "node:crypto";
+import * as os from "node:os";
+import { spawnSync } from "node:child_process";
 import {
   controlsChanged,
   stepLog,
@@ -77,4 +79,41 @@ export function sessionChanged(projectDir: string, before: ControlRecord, hookLo
       recorded: log.map((e) => e.requirement).filter((r) => fs.existsSync(stepRecordFile(projectDir, r))),
     },
   });
+}
+
+/**
+ * branch-controls: what a branch changes in the controls, against where it
+ * left its base — read for the person who reviews it before it merges. The
+ * base's controls are read from git into a folder of the check's own; an
+ * approval that left with its change into the archive is not a change.
+ */
+export function branchControls(
+  projectDir: string,
+  base: string
+): { state: "checked"; changed: string[] } | { state: "skipped"; reason: string } {
+  const git = (args: string[]) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  const met = git(["merge-base", "HEAD", base]);
+  if (met.status !== 0) return { state: "skipped", reason: `no common history with '${base}'` };
+  const at = met.stdout.trim();
+  const prefix = git(["rev-parse", "--show-prefix"]).stdout.trim();
+  const listed = git(["ls-tree", "-r", "--name-only", at, "--", ".specgate", "docs/specs/changes"]);
+  if (listed.status !== 0) return { state: "skipped", reason: `'${base}' cannot be read` };
+  const wanted = /^(\.specgate\/(gate\.yaml|config\.json|evidence\/[^/]+\/evidence\.json)|docs\/specs\/changes\/(?!archive\/)[^/]+\/(change\.yaml|approvals\.json))$/;
+  const there = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-base-controls-"));
+  try {
+    for (const rel of listed.stdout.split("\n").filter((f) => wanted.test(f))) {
+      const shown = git(["show", `${at}:${prefix}${rel}`]);
+      if (shown.status !== 0) continue;
+      fs.mkdirSync(path.dirname(path.join(there, rel)), { recursive: true });
+      fs.writeFileSync(path.join(there, rel), shown.stdout);
+    }
+    const archived = dirs(path.join(projectDir, "docs", "specs", "changes", "archive"));
+    const changed = controlsChanged(controlsOf(there), controlsOf(projectDir)).filter((line) => {
+      const gone = /^the approval of (.+) is gone$/.exec(line);
+      return !(gone && archived.some((a) => a.endsWith(`-${gone[1]}`)));
+    });
+    return { state: "checked", changed };
+  } finally {
+    fs.rmSync(there, { recursive: true, force: true });
+  }
 }

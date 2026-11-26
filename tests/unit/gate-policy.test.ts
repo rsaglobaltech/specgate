@@ -107,6 +107,7 @@ test("REQ-604 SCN-604a: a preset and an override", () => {
     use_cases: "warning",
     state_machines: "error",
     scope: "warning",
+    controls: "warning",
   });
 });
 
@@ -115,10 +116,12 @@ test("REQ-604: no file is the strict gate; the template reads as the standard pr
   try {
     const p = readGatePolicy(dir);
     assert.equal(p.source, "default");
-    // Every rule fails it but use_cases, reported until a catalog is written (REQ-627).
-    const { use_cases: useCases, ...rest } = p.rules;
+    // Every rule fails it but use_cases, reported until a catalog is written (REQ-627),
+    // and controls, reported for the reviewer in every preset (REQ-754).
+    const { use_cases: useCases, controls, ...rest } = p.rules;
     assert.ok(Object.values(rest).every((l) => l === "error"));
     assert.equal(useCases, "warning");
+    assert.equal(controls, "warning");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

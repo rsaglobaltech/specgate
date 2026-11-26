@@ -1,0 +1,22 @@
+▶ dist/tests/unit/branch-controls.test.js
+✔ REQ-754 SCN-754a: the guard switched off on a branch is named, and the gate passes (899.232083ms)
+✔ REQ-754 SCN-754b: with controls: error the gate fails (744.391416ms)
+✔ REQ-754 SCN-754c: an archived change, and a branch that changed only code, are told nothing (1698.05975ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3411.202459
+▶ dist/tests/unit/gate-policy.test.js
+✔ dist/tests/unit/gate-policy.test.js (38.94525ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 43.645875
