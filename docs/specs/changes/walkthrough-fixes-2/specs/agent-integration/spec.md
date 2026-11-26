@@ -40,7 +40,7 @@ The system SHALL accept, in the draft checklist's rule D6, a value a scenario st
 
 ### Requirement: REQ-784 — A ready draft names the approval next
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL name `specgate change approve <change>` as the next step of a draft that is ready to review and not approved — in `propose --from-brief`'s numbered steps, before `specgate apply`, and wherever a module's next command is given — and `specgate apply` once a person approved it.
 

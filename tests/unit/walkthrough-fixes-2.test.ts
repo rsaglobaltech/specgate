@@ -152,3 +152,11 @@ test("REQ-786 SCN-786a: an id the pack brings and the project already uses is fo
   fs.writeFileSync(path.join(dir, "docs/specs/capabilities/reservations/spec.md"), "# Reservations\n\n## Requirements\n\n### Requirement: REQ-006 — Reserve a spot\n");
   assert.deepEqual(duplicateRequirementIds(dir), ["REQ-006"]);
 });
+
+test("REQ-784 SCN-784a: a ready draft names the approval next, then apply", () => {
+  const { draftNextCommand } = require("../../scripts/cli/commands/spec/DraftCommand");
+  const ready = { module: "bookings", change: "draft-bookings", state: "ready", findings: 0 };
+  assert.equal(draftNextCommand({ ...ready, approved: false }), "specgate change approve draft-bookings");
+  assert.equal(draftNextCommand({ ...ready, approved: true }), "specgate apply");
+  assert.equal(draftNextCommand({ ...ready, state: "drafting", findings: 2 }), "specgate propose --from-brief bookings");
+});
