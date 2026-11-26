@@ -1,0 +1,12 @@
+▶ dist/tests/unit/recover-guidance.test.js
+✔ REQ-787: the failing tests' requirements are read from the runner's output (1.05975ms)
+✔ REQ-787 SCN-787a: REQ-001 is red while REQ-002 is delivered — apply names it and says how (850.306417ms)
+✔ REQ-787: the agents' instructions say the same (0.213459ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 904.833375

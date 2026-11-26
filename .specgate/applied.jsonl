@@ -167,3 +167,7 @@
 {"req":"REQ-785","capability":"agent-integration","at":"2026-11-26T11:41:42.690Z"}
 {"req":"REQ-786","capability":"agent-integration","at":"2026-11-26T11:41:58.825Z"}
 {"req":"REQ-784","capability":"agent-integration","at":"2026-11-26T11:42:54.709Z"}
+{"req":"REQ-787","capability":"trusted-gate","at":"2026-11-26T13:15:45.976Z"}
+{"req":"REQ-790","capability":"agent-integration","at":"2026-11-26T13:15:49.725Z"}
+{"req":"REQ-791","capability":"agent-integration","at":"2026-11-26T13:15:53.135Z"}
+{"req":"REQ-792","capability":"agent-integration","at":"2026-11-26T13:17:14.053Z"}

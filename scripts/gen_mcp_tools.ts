@@ -104,10 +104,15 @@ class CliInvoker {
     const cmd = CliInvoker.parseCliCommand(cliPath);
     const useShell = process.platform === "win32";
     const quote = (v: string) => (useShell && /\\s/.test(v) ? \`"\${v}"\` : v);
+    // walkthrough-fixes-3 REQ-792: a call over MCP is never a person at a terminal, whatever
+    // the server's environment says — the acts reserved to a person stay refused.
+    const env = { ...process.env };
+    delete env.SPECGATE_ASSUME_TTY;
     return spawnSync(quote(cmd[0]), [...cmd.slice(1), ...args].map(quote), {
       encoding: "utf8",
       shell: useShell,
       timeout: 60000,
+      env,
     });
   }
 }

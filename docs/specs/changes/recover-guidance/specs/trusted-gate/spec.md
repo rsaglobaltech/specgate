@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-787 — A red suite caused by another requirement says so, and how to repair it
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL, when the project's tests fail during `specgate apply` and the failing tests name only requirements other than the ones being delivered, say in `done_tests_failed` which requirements are red and, as its fix, to repair their code — never their test — as part of the change, the design's scope judging new files only; SHALL name, in `specgate check`'s `check_tests_failed`, the requirements the failing tests name, with the same fix; and the instructions `specgate agents init` writes into AGENTS.md SHALL say the same.
 

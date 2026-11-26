@@ -1,0 +1,45 @@
+[
+  {
+    "layer": "discover",
+    "by": {
+      "name": "Full Stack Engineer | Oracle Certified Java Programmer",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "product",
+    "hash": "sha256:2dce071121e7a9f8246cd09c1c5139dca504700b00609daf6465ea199b13287b",
+    "at": "2026-11-26"
+  },
+  {
+    "layer": "design",
+    "by": {
+      "name": "Full Stack Engineer | Oracle Certified Java Programmer",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "architect",
+    "hash": "sha256:74b00d24c3c8e1f6ec42f5b4a332939c9ca19ff35590e1ba8c2bd6febeb9b7aa",
+    "at": "2026-11-26"
+  },
+  {
+    "layer": "tasks",
+    "by": {
+      "name": "Full Stack Engineer | Oracle Certified Java Programmer",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "developer",
+    "hash": "sha256:cfdf316280812e3fd35189be74ae6fa8ca3c309c2d52ad7f786956f22ae69fbf",
+    "at": "2026-11-26"
+  },
+  {
+    "layer": "requirements",
+    "seals": {
+      "REQ-790": "sha256:2cb3c380e5e454ec39fe5a477f942099bbe914bcd43888a355c51686163cf559",
+      "REQ-791": "sha256:aa0c8ff1ab7e2367e02140c9bce25ffe3fd9a80b17ea2bb9dd21e2dc143cc38b",
+      "REQ-792": "sha256:5078fd92036da34bfd6bcca05066145fdd7f813a82721598c58dd80170681096"
+    },
+    "by": {
+      "name": "Full Stack Engineer | Oracle Certified Java Programmer",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "at": "2026-11-26"
+  }
+]

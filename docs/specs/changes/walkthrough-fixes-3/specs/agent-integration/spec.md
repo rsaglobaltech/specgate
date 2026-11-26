@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-790 — The plugin's hooks run as CommonJS in any project
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL write, with the Claude Code plugin's hook scripts, a `scripts/package.json` that declares them CommonJS, so that the guard refuses as it should in a project whose package.json says `"type": "module"`.
 
@@ -18,7 +18,7 @@ The system SHALL write, with the Claude Code plugin's hook scripts, a `scripts/p
 
 ### Requirement: REQ-791 — A first pack is not rendered over a project's own specification
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL refuse `specgate specops add` (and `expand`), writing nothing, when the project has no `.specops.lock` and already has capability specs with requirements or archived changes, naming what it found and offering `--force`.
 
@@ -32,7 +32,7 @@ The system SHALL refuse `specgate specops add` (and `expand`), writing nothing, 
 
 ### Requirement: REQ-792 — The MCP config tools declare and pass their key and value
 
-<!-- specgate:trace actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 The system SHALL declare, in the MCP tools for `config set`, `config get` and `config unset`, their `key` (and `value`), and pass the declared arguments to the CLI in the schema's order whatever order the client sent them in; switching the guard off SHALL stay refused.
 
