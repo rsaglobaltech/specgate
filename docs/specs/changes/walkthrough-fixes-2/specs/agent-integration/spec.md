@@ -66,7 +66,7 @@ The system SHALL compare, in `specgate check --base`, the sealed acceptance test
 
 <!-- specgate:trace actor=Developer kind=functional -->
 
-The system SHALL exit non-zero from `specgate specops diff` when a pack's expansion fails, and from `specgate specops sync` when, after the merge, `spec.md` holds a requirement id twice, naming the ids and saying to give the project's requirement a free id.
+The system SHALL exit non-zero from `specgate specops diff` when a pack's expansion fails, and from `specgate specops sync` when, after the merge, a requirement id is defined twice across `spec.md` and the capability specs, naming the ids and saying to give the project's requirement a free id.
 
 #### Scenario: SCN-786a — The pack's REQ-006 and the project's
 
