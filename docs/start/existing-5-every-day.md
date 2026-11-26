@@ -80,21 +80,25 @@ at a time, each module its own change.
 
 1. **Propose.** Open the change, from one of the three sources above, and
    write or review its delta.
-2. **Build.** For each requirement, write the test first and name the
+2. **Approve.** A person reads the delta and runs
+   `specgate change approve <change-id>` at a terminal. An agent cannot, and
+   `apply` refuses a requirement of an unapproved change
+   (`change_not_approved`).
+3. **Build.** For each requirement, write the test first and name the
    requirement in it (`REQ-007`), then the code — by hand, with your agent,
    or with [the harness](../harness.md).
-3. **Apply.** `specgate apply REQ-007` runs the gate and marks the
+4. **Apply.** `specgate apply REQ-007` runs the gate and marks the
    requirement `Implemented`. Commit; for ticket work, start the commit
    message with the ticket key.
-4. **Archive.** Once every requirement of the change is applied,
+5. **Archive.** Once every requirement of the change is applied,
    `specgate archive <change-id>` merges it into the specification — on your
    branch.
-5. **Pull request.** The specification and the code reach review together,
+6. **Pull request.** The specification and the code reach review together,
    and CI runs the gate. For a ticket's change, the `alm pr` command opens its
    one pull request on GitHub — see [From a Jira ticket](../from-a-ticket.md).
 
 ```
-specgate propose  →  test and code  →  specgate apply  →  specgate archive  →  pull request
+specgate propose  →  change approve  →  test and code  →  specgate apply  →  specgate archive  →  pull request
 ```
 
 ## Three habits that make adoption stick
@@ -105,8 +109,9 @@ specgate propose  →  test and code  →  specgate apply  →  specgate archive
    risk actually was.
 2. **One module at a time.** When a module matters — billing, permissions,
    anything regulated — describe it as a change, as in
-   [phase 2](existing-2-specify.md#the-whole-module-when-you-are-ready). Then
-   replace or remove the requirement adoption proposed for it.
+   [phase 2](existing-2-specify.md#the-whole-module-when-you-are-ready). Its
+   area in `docs/specs/adoption.md` is only a map: adoption wrote no
+   requirement for it to replace.
 3. **New features start as requirements.** A feature request becomes a
    change, a ticket's change or a brief's module before it becomes code.
 

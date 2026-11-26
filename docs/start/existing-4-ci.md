@@ -73,7 +73,8 @@ $ specgate check
 <!-- specgate:out-existing-check-green:end -->
 
 This is what makes the gate safe on old code: requirements still in `Draft`
-— the adoption's proposals, anything not described yet — are **exempt**. The
+are **exempt**, and the areas adoption found sit in `docs/specs/adoption.md`,
+outside the specification, until you describe them. The
 gate holds the code to what you have written down, and only that. Each
 requirement you apply raises the bar by one.
 

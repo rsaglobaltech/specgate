@@ -246,10 +246,12 @@ statuses, Gherkin that parses, and no requirement past `Draft` without a test
 that names it — and then **your own test suite**. This is what CI runs, and
 it is the same command you run locally.
 
-Tell it once how to run your tests:
+Tell it once how to run your tests. `init` wrote no build — no `pom.xml`,
+no `mvnw` — so create your Quarkus/Maven project in `smart-parking/` first
+(code.quarkus.io, or your own), then set **your build's** test command:
 
 ```bash
-specgate config set test_cmd "./mvnw -B verify"   # or mvn -B test, npm test, pytest…
+specgate config set test_cmd "./mvnw -B verify"   # your build's: mvn -B test, npm test, pytest…
 ```
 
 ```text
@@ -326,7 +328,9 @@ open are listed too — they count while the change is in flight.
 specgate plan --json
 ```
 
-`plan` is the detailed view behind `status`: per requirement, whether its
+`plan` is the detailed view behind `status` for the requirements already in
+`spec.md` — an open change's requirements are listed by `status`, not by
+`plan`, until the change is archived. Per requirement, whether its
 feature, test and code exist, in a bucket (`NEEDS_FEATURE`,
 `NEEDS_EVERYTHING`, `NEEDS_TEST`, `NEEDS_IMPLEMENTATION`,
 `NEEDS_STATUS_UPDATE`, `DONE`). Its JSON is the task queue the harness
@@ -450,10 +454,14 @@ The system SHALL let an operator reserve a free spot for a future window.
 - GIVEN spot "A-12" is free between "09:00" and "11:00"
 - WHEN an operator reserves spot "A-12" for that window
 - THEN spot "A-12" is marked "Reserved" for that window
+
+<!-- specgate:trace kind=functional -->
 ```
 
 Steps are plain `- GIVEN` bullets, and the body needs `SHALL`, `MUST`,
-`SHOULD` or `MAY`. `specgate status` now lists `REQ-006` with *a test and
+`SHOULD` or `MAY`. The trace comment's `kind=` (functional, non-functional or
+business-rule) is required: without it `change validate` reports
+`change_not_approvable` and `change approve` refuses the change. `specgate status` now lists `REQ-006` with *a test and
 code* to go. `archive` refuses while it is pending:
 
 ```text
@@ -655,8 +663,9 @@ specgate pack init --out ./domain-packs --name "Reservations Backend" --type bac
 # flavours: backend · frontend · mobile · contracts
 ```
 
-Writes `./domain-packs/reservations/backend/pack.yaml` plus a `templates/`
-folder.
+Writes `./domain-packs/reservations-backend/backend/pack.yaml` plus a
+`templates/` folder: the pack id is the slug of `--name`, then `--type` —
+`reservations-backend/backend`, the id every `--pack` below uses.
 
 ### 10.2 Lint — `pack lint`
 
@@ -664,7 +673,7 @@ folder.
 cross-reference integrity, and **scenario quality**.
 
 ```bash
-specgate pack lint --pack-root ./domain-packs --pack reservations/backend
+specgate pack lint --pack-root ./domain-packs --pack reservations-backend/backend
 ```
 
 The scenario-quality rules flag vague or thin Gherkin — a `Scenario
@@ -675,7 +684,7 @@ has drifted from its template title.
 
 ```bash
 # In CI — and before a pack feeds the harness — promote those to errors:
-specgate pack lint --pack-root ./domain-packs --pack reservations/backend --strict
+specgate pack lint --pack-root ./domain-packs --pack reservations-backend/backend --strict
 ```
 
 This matters because the pack's scenarios become the **reward signal** for
@@ -690,10 +699,10 @@ The hardest part of authoring a pack is keeping the
 
 ```bash
 # Mermaid (default) — renders natively in GitHub and VS Code
-specgate pack lint --pack-root ./domain-packs --pack reservations/backend --graph
+specgate pack lint --pack-root ./domain-packs --pack reservations-backend/backend --graph
 
 # Graphviz DOT
-specgate pack lint --pack-root ./domain-packs --pack reservations/backend --graph --graph-format dot
+specgate pack lint --pack-root ./domain-packs --pack reservations-backend/backend --graph --graph-format dot
 ```
 
 A reference to an ID/name that does not exist becomes a red **missing**
@@ -742,7 +751,7 @@ correction you made by hand:
 
 ```bash
 # Review the proposal, then merge the parts you want:
-specgate pack infer --from ./drafts/reserve_spot.feature >> domain-packs/reservations/backend/pack.yaml
+specgate pack infer --from ./drafts/reserve_spot.feature >> domain-packs/reservations-backend/backend/pack.yaml
 ```
 
 ---
@@ -827,7 +836,8 @@ That is the full pack-author loop: **draft scenario → `pack infer` → merge
 
 Step 6 added a requirement. This is the other case, the one you hit for the
 rest of the project's life: **a requirement shipped, and now it has to
-change.** It is the same loop — `propose`, `apply`, `archive` — with a delta
+change.** It is the same loop — `propose`, `change approve`, `apply`,
+`archive` — with a delta
 that states only what moves, so the review reads the modification as intent.
 
 This works on the requirements under `docs/specs/capabilities/` — the ones
@@ -859,14 +869,18 @@ release the spot if the deposit is not paid within 15 minutes.
 - GIVEN spot "A-12" is reserved but unpaid
 - WHEN 15 minutes pass
 - THEN the reservation is cancelled and the spot is free again
+
+<!-- specgate:trace kind=functional -->
 ```
 
 `MODIFIED` replaces the whole requirement block; it does not merge scenario
 by scenario. While the change is open, `REQ-006` is judged as it will be after
 archive: `status` lists it again and `archive` refuses until it is applied.
-Extend its test to cover the deposit, change the code, then:
+A person approves the change again, at a terminal; then extend its test to
+cover the deposit, change the code, and deliver it:
 
 ```bash
+specgate change approve reservations-need-a-deposit   # you, not the agent
 specgate apply REQ-006
 specgate archive reservations-need-a-deposit --dry-run   # the plan, nothing written
 specgate archive reservations-need-a-deposit
@@ -1023,7 +1037,7 @@ throw away.
 ### 13.4 Inspect what the agent will receive (`harness prompt`)
 
 ```bash
-specgate harness prompt REQ-001
+specgate harness prompt REQ-004   # still pending: the run above left it failing (REQ-001 shipped in Step 5)
 ```
 
 Prints the exact prompt the harness _would_ hand the agent for one REQ —
@@ -1140,9 +1154,10 @@ The 📍 / 📦 column is the thing to remember — **where** you run it.
 | `specgate explore ["<question>"]` | 📍 project | A brief of where the project stands, to think with before a change exists |
 | `specgate config set test_cmd "<cmd>"` | 📍 project | Tell `check` and `apply` how to run your tests |
 | `specgate matrix [--check]` | 📍 project | Regenerate the traceability matrix from spec, tags and tests |
-| `specgate plan [--json]` | 📍 project | The detailed per-requirement view behind `status` |
+| `specgate plan [--json]` | 📍 project | The per-requirement detail for the requirements in `spec.md` — not those of open changes |
 | `specgate fix [--dry-run]` | 📍 project | Apply the repairs `validate` suggests |
 | `specgate change status \| validate \| show \| list` | 📍 project | What to write next · check the deltas · inspect · enumerate |
+| `specgate change approve <id>` | 📍 project, a person at a terminal | Approve a change before `apply` delivers its requirements; an agent cannot |
 | `specgate specops add --pack-repo … --pack-version … --pack … --var …` | 📍 project | Pull a pack in; writes `.specops.lock` and the `.specops/` baseline |
 | `specgate specops diff [--pack-version …] [--var …]` | 📍 project | Preview what a sync would change — writes nothing |
 | `specgate specops sync [--pack-version …] [--var …]` | 📍 project | Re-render and three-way merge the pack into the project |
@@ -1165,7 +1180,7 @@ The 📍 / 📦 column is the thing to remember — **where** you run it.
 | --- | --- | --- | --- |
 | Where | 📍 your implementation project | 📍 your implementation project | 📦 the pack repo |
 | 1 | `propose <id> --capability <c>` | `specgate new "<title>"` | draft a `.feature`, run `pack infer` |
-| 2 | write the delta under `specs/<cap>/spec.md` | rewrite its section and scenario | merge the inferred skeleton into `pack.yaml` |
+| 2 | write the delta under `specs/<cap>/spec.md`, then a person runs `change approve <id>` | rewrite its section and scenario | merge the inferred skeleton into `pack.yaml` |
 | 3 | a test that names the REQ, the code | a test that names the REQ, the code | add the feature template under `templates/` |
 | 4 | `apply`, then `archive` | `apply` | `pack lint --strict --graph` |
 | 5 | reviewable as intent, archived with a date | — | bump version, tag; consumers `specops diff` + `sync` |

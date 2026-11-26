@@ -184,6 +184,17 @@ The guards stop a session, not a determined process outside it. The
 the controls before the agent starts and compare when it stops
 (`controls_changed_by_session`). Without a harness or CI, that check is absent.
 
+**`--tool claude-plugin` writes a plugin, not a project's settings.** Its
+folder holds `plugin.json` (and `.claude-plugin/plugin.json`), `commands/`,
+`skills/`, `scripts/`, `hooks/hooks.json` and `.mcp.json`, and its hooks call
+`${CLAUDE_PLUGIN_ROOT}/scripts/…`, a path only Claude Code fills in for an
+installed plugin. Writing the folder activates nothing: no hook runs until the
+plugin is installed in Claude Code — see
+[Install the Claude Code plugin](automation.md#install-the-claude-code-plugin),
+or the command below, which prints the two `/plugin` lines to paste into
+Claude Code (`/plugin marketplace add rsaglobaltech/specgate`, then
+`/plugin install specgate@specgate`).
+
 Install the Claude Code and OpenCode guards once for every project:
 
 ```bash

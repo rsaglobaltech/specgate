@@ -1,0 +1,355 @@
+schema_version: "1.1.0"
+
+metadata:
+  name: "Parking Management Backend Domain Pack"
+  version: "1.1.0"
+  language: "en"
+  project_type: "backend"
+
+variables:
+  required:
+    - PROJECT_NAME
+    - PROJECT_SLUG
+    - DOMAIN
+
+requirements:
+  - id: REQ-001
+    title: "Alert operators when parking capacity reaches a threshold"
+    priority: Must
+    description: "Operators need proactive alerts when occupancy approaches capacity."
+    status: Draft
+
+  - id: REQ-002
+    title: "Register vehicle entry when a slot is available"
+    priority: Must
+    description: "Drivers can enter only when the facility has available capacity."
+    status: Draft
+
+  - id: REQ-003
+    title: "Calculate parking fee at exit"
+    priority: Must
+    description: "Drivers receive a fee calculation based on stay duration and tariff."
+    status: Draft
+
+  - id: REQ-004
+    title: "Detect vehicles that exceed allowed duration"
+    priority: Should
+    description: "Operators can identify overstays for enforcement workflows."
+    status: Draft
+
+  - id: REQ-005
+    title: "Send receipt after successful payment"
+    priority: Should
+    description: "Drivers receive confirmation after payment succeeds."
+    status: Draft
+
+bounded_contexts:
+  - id: BC-001
+    name: Parking Operations
+    type: Core
+    responsibility: "Capacity, vehicle entry, occupancy, and stay lifecycle"
+    aggregates:
+      - ParkingFacility
+      - ParkingSession
+
+  - id: BC-002
+    name: Billing
+    type: Supporting
+    responsibility: "Fee calculation, payment confirmation, and receipts"
+    aggregates:
+      - ParkingSession
+
+use_cases:
+  - id: UC-001
+    name: Monitor Capacity Threshold
+    actor: Operator
+    requirement: REQ-001
+    command: CheckCapacityThresholdCommand
+    aggregate: ParkingFacility
+    emits:
+      - CapacityThresholdReached
+    scenarios:
+      - SCN-001
+    status: Draft
+
+  - id: UC-002
+    name: Register Vehicle Entry
+    actor: Driver
+    requirement: REQ-002
+    command: RegisterVehicleEntryCommand
+    aggregate: ParkingFacility
+    emits:
+      - VehicleEntered
+    scenarios:
+      - SCN-002
+    status: Draft
+
+  - id: UC-003
+    name: Calculate Parking Fee
+    actor: Driver
+    requirement: REQ-003
+    command: CalculateParkingFeeCommand
+    aggregate: ParkingSession
+    emits:
+      - ParkingFeeCalculated
+    scenarios:
+      - SCN-003
+    status: Draft
+
+  - id: UC-004
+    name: Detect Overstay
+    actor: Operator
+    requirement: REQ-004
+    command: DetectOverstayCommand
+    aggregate: ParkingSession
+    emits:
+      - OverstayDetected
+    scenarios:
+      - SCN-004
+    status: Draft
+
+  - id: UC-005
+    name: Send Payment Receipt
+    actor: Driver
+    requirement: REQ-005
+    command: SendPaymentReceiptCommand
+    aggregate: ParkingSession
+    emits:
+      - ReceiptSent
+    scenarios:
+      - SCN-005
+    status: Draft
+
+commands:
+  - id: CMD-001
+    name: CheckCapacityThresholdCommand
+    use_case: UC-001
+    fields:
+      - facility_id
+      - occupancy_count
+      - capacity_threshold
+
+  - id: CMD-002
+    name: RegisterVehicleEntryCommand
+    use_case: UC-002
+    fields:
+      - facility_id
+      - license_plate
+      - entry_time
+
+  - id: CMD-003
+    name: CalculateParkingFeeCommand
+    use_case: UC-003
+    fields:
+      - session_id
+      - exit_time
+      - tariff_id
+
+  - id: CMD-004
+    name: DetectOverstayCommand
+    use_case: UC-004
+    fields:
+      - session_id
+      - current_time
+      - allowed_duration
+
+  - id: CMD-005
+    name: SendPaymentReceiptCommand
+    use_case: UC-005
+    fields:
+      - payment_id
+      - session_id
+      - driver_contact
+
+aggregates:
+  - id: AGG-001
+    name: ParkingFacility
+    context: Parking Operations
+    invariants:
+      - "Occupancy cannot exceed facility capacity."
+      - "A vehicle can enter only when a slot is available."
+
+  - id: AGG-002
+    name: ParkingSession
+    context: Parking Operations
+    invariants:
+      - "A session must have an entry time before exit."
+      - "A fee can only be calculated for an active session."
+
+value_objects:
+  - id: VO-001
+    name: LicensePlate
+    fields:
+      - value
+    invariants:
+      - "Must identify a vehicle within the parking domain."
+
+  - id: VO-002
+    name: Money
+    fields:
+      - amount
+      - currency
+    invariants:
+      - "Amount cannot be negative."
+
+events:
+  - id: EVT-001
+    name: CapacityThresholdReached
+    type: domain
+    producer: ParkingFacility
+    consumers:
+      - Notifications
+    payload:
+      - facility_id
+      - occupancy_count
+      - occurred_at
+
+  - id: EVT-002
+    name: VehicleEntered
+    type: domain
+    producer: ParkingFacility
+    consumers:
+      - Billing
+    payload:
+      - session_id
+      - facility_id
+      - license_plate
+      - occurred_at
+
+  - id: EVT-003
+    name: ParkingFeeCalculated
+    type: domain
+    producer: ParkingSession
+    consumers:
+      - Payments
+    payload:
+      - session_id
+      - amount
+      - currency
+      - occurred_at
+
+  - id: EVT-004
+    name: OverstayDetected
+    type: domain
+    producer: ParkingSession
+    consumers:
+      - Enforcement
+    payload:
+      - session_id
+      - exceeded_by_minutes
+      - occurred_at
+
+  - id: EVT-005
+    name: ReceiptSent
+    type: domain
+    producer: ParkingSession
+    consumers:
+      - Notifications
+    payload:
+      - payment_id
+      - session_id
+      - occurred_at
+
+outputs:
+  files:
+    - target: "AI_RULES.md"
+      template: "templates/AI_RULES.md.tpl"
+    - target: "spec.md"
+      template: "templates/spec.md.tpl"
+
+rules:
+  traceability:
+    target: "docs/specs/traceability.md"
+    include_existing_rows: true
+    default_status: "Draft"
+
+scenarios:
+  - id: "SCN-001"
+    requirement_id: REQ-001
+    use_case: UC-001
+    seed: true
+    target: "features/capacity/capacity_threshold.feature"
+    template: "templates/features/capacity/capacity_threshold.feature.tpl"
+    feature: "Parking Capacity"
+    scenario: "Triggering alert when occupancy reaches threshold"
+    command: CheckCapacityThresholdCommand
+    aggregate: ParkingFacility
+    events:
+      - CapacityThresholdReached
+    technical_artifacts:
+      - "Occupancy monitor"
+      - "CapacityThresholdReached event"
+    test_artifact: "capacity_threshold.steps"
+    status: "Draft"
+
+  - id: "SCN-002"
+    requirement_id: REQ-002
+    use_case: UC-002
+    seed: true
+    target: "features/entry_exit/vehicle_entry.feature"
+    template: "templates/features/entry_exit/vehicle_entry.feature.tpl"
+    feature: "Vehicle Entry"
+    scenario: "Registering vehicle entry with available slot"
+    command: RegisterVehicleEntryCommand
+    aggregate: ParkingFacility
+    events:
+      - VehicleEntered
+    technical_artifacts:
+      - "Entry use case"
+      - "VehicleEntered event"
+    test_artifact: "vehicle_entry.steps"
+    status: "Draft"
+
+  - id: "SCN-003"
+    requirement_id: REQ-003
+    use_case: UC-003
+    seed: true
+    target: "features/billing/ticket_billing.feature"
+    template: "templates/features/billing/ticket_billing.feature.tpl"
+    feature: "Parking Billing"
+    scenario: "Calculating parking fee at exit"
+    command: CalculateParkingFeeCommand
+    aggregate: ParkingSession
+    events:
+      - ParkingFeeCalculated
+    technical_artifacts:
+      - "Billing service"
+      - "ParkingFeeCalculated event"
+    test_artifact: "ticket_billing.steps"
+    status: "Draft"
+
+  - id: "SCN-004"
+    requirement_id: REQ-004
+    use_case: UC-004
+    seed: true
+    target: "features/enforcement/overstay_enforcement.feature"
+    template: "templates/features/enforcement/overstay_enforcement.feature.tpl"
+    feature: "Overstay Enforcement"
+    scenario: "Flagging vehicles that exceed allowed parking duration"
+    command: DetectOverstayCommand
+    aggregate: ParkingSession
+    events:
+      - OverstayDetected
+    technical_artifacts:
+      - "Enforcement policy"
+      - "OverstayDetected event"
+    test_artifact: "overstay_enforcement.steps"
+    status: "Draft"
+
+  - id: "SCN-005"
+    requirement_id: REQ-005
+    use_case: UC-005
+    seed: true
+    target: "features/notifications/payment_receipt.feature"
+    template: "templates/features/notifications/payment_receipt.feature.tpl"
+    feature: "Driver Notifications"
+    scenario: "Sending receipt after successful payment"
+    command: SendPaymentReceiptCommand
+    aggregate: ParkingSession
+    events:
+      - ReceiptSent
+    technical_artifacts:
+      - "Notification router"
+      - "ReceiptSent event"
+    test_artifact: "payment_receipt.steps"
+    status: "Draft"

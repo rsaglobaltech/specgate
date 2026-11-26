@@ -27,7 +27,8 @@ way your stack starts one — `npm init`, Spring Initializr, `cargo new`,
 ```bash
 mkdir court-bookings && cd court-bookings
 git init
-npm init -y          # here: a package.json whose test script is `node --test`
+npm init -y
+npm pkg set scripts.test="node --test"   # npm init writes a "no test specified" stub
 ```
 
 ## 2. Set Specgate up — `specgate init`

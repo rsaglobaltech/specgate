@@ -83,8 +83,8 @@ configured threshold.
 - WHEN a vehicle enters
 - THEN the peak tariff is applied
 
-<!-- specgate:trace uc=UC-007 cmd=CMD-011 agg=AGG-Pricing evt=EVT-PriceApplied
-     feature=features/pricing/dynamic_pricing.feature -->
+<!-- specgate:trace kind=functional uc=UC-007 cmd=CMD-011 agg=AGG-Pricing
+     evt=EVT-PriceApplied feature=features/pricing/dynamic_pricing.feature -->
 ```
 
 Three sections are valid: `## ADDED Requirements`, `## MODIFIED Requirements`
@@ -98,9 +98,12 @@ The validator is strict about two things:
 - **The body needs an obligation keyword** (`SHALL`, `MUST`, `SHOULD` or
   `MAY`), otherwise you get `no_rfc2119_keyword`.
 
-The `specgate:trace` comment is optional. It fills the use case, command,
-aggregate and event columns of the matrix; without it the requirement still
-archives, with `-` in those columns.
+Every requirement needs a `specgate:trace` comment with `kind=` (functional,
+non-functional or business-rule): without it `change validate` reports
+`change_not_approvable` and `change approve` refuses the change
+(`approve_blocked`). The rest of the comment is optional: `uc`, `cmd`, `agg`
+and `evt` fill those columns of the matrix, and without them the requirement
+still archives, with `-` there.
 
 While the change is open, its requirements already count: `status` lists
 REQ-014 as to do, and `apply`, `check` and `harness run` judge the project as
@@ -110,14 +113,17 @@ yet.
 **`depends=` says what a requirement builds on.** Add it to the same comment:
 
 ```markdown
-<!-- specgate:trace uc=UC-008 feature=features/pricing/refunds.feature
-     depends=REQ-014 -->
+<!-- specgate:trace kind=functional uc=UC-008
+     feature=features/pricing/refunds.feature depends=REQ-014 -->
 ```
 
 Separate several with commas: `depends=REQ-014, REQ-016`. Then:
 
 - **`specgate plan` orders the queue** so a requirement never comes before the
   work it needs, and marks one whose dependency is pending as `⛔ blocked`.
+  `plan` reads the requirements in the specification, so it orders a change's
+  requirements once the change is archived; while it is open, `status` lists
+  them.
 - **`specgate validate` fails** on a cycle (`requirement_cycle`), on a
   dependency that names no requirement (`unknown_dependency`) and on a
   requirement that depends on itself (`self_dependency`).
@@ -284,8 +290,8 @@ second one.
 
 ### When the change modifies a shipped requirement
 
-A `MODIFIED` requirement is pending again while the change is open: `plan` and
-`status` list it as needing a test for its new scenarios, and `archive` waits
+A `MODIFIED` requirement is pending again while the change is open: `status`
+lists it as needing a test for its new scenarios, and `archive` waits
 for it like any other. When it is delivered, by `apply` or by the harness,
 every one of its scenarios must be named by a test. Two requirements modified
 by the same change are delivered one at a time; neither waits for the other.

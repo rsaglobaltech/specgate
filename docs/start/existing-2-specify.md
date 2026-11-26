@@ -112,8 +112,9 @@ The system SHALL round an invoice total, VAT included, to the cent.
 ```
 <!-- specgate:out-existing-delta:end -->
 
-- `REQ-004` is the first id the change reserved; `SCN-002` names the scenario
-  (`SCN-001` is the baseline scenario from adoption).
+- `REQ-004` is one of the ids the change reserved, `REQ-002…REQ-004`; any of
+  them will do. `SCN-002` names the scenario (`SCN-001` is the baseline
+  scenario from adoption).
 - `kind=business-rule` says what sort of requirement it is: `functional`,
   `non-functional` or `business-rule`.
 - A scenario with numbers is a claim someone can check. "Totals are correct"
@@ -165,7 +166,8 @@ specgate propose --from-brief --check describe-invoices
 The second command runs the drafting checklist on the delta: every
 requirement has a scenario and a kind, no scenario is left as a template, no
 id is used twice. Review it with whoever knows the business, then build and
-archive it like any other change, and remove or rewrite the proposed `REQ-002`.
+archive it like any other change. Its area in `docs/specs/adoption.md` is a
+map, not a requirement: there is nothing in the specification to remove.
 
 ## You're done when…
 
@@ -178,7 +180,6 @@ archive it like any other change, and remove or rewrite the proposed `REQ-002`.
 
 | You see | It means | Do |
 | --- | --- | --- |
-| `Next  specgate plan  — REQ-002's feature file is missing` | A proposed capability has no scenario yet | Expected; it is `Draft`. Describe the module later, as above |
 | `Change invoice-rounding — delta not written yet, not judged until it is` | The delta is still the template, so REQ-004 is not listed | Write the requirement and its scenario |
 | `unfilled placeholder in "given <precondition>"` | A scenario step still has the template's text | Write the real steps |
 

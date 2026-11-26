@@ -91,6 +91,11 @@ the gate names the change for the reviewer. `state_machines`, `scope` and
 design that names files, or no sealed acceptance tests. `rules:` overrides any
 rule of the preset.
 
+**Changing `preset:` alone relaxes nothing that `init` wrote.** `specgate init`
+writes every rule out in full under `rules:`, and a rule written there wins
+over the preset. To move to `minimal`, delete the `rules:` lines you want the
+preset to decide, or set each rule to the level you want.
+
 ## The other keys
 
 | Key | What it does |
@@ -99,9 +104,11 @@ rule of the preset.
 | `rules` | One level per rule, over the preset's |
 | `enforce_from` | A date, `YYYY-MM-DD`: until then every `error` is a warning (below) |
 | `bdd: required` | The scenarios are executable: the gate runs them with `bdd_cmd` of `harness.config.yaml` (the Scenarios stage). `specgate init` writes it when the project has a runner for its feature files; otherwise `specgate migrate bdd` |
-| `trust` | Each module's trust level, 1 to 5, for the harness: `trust: { payments: 2, catalog: 4 }`. `specgate trust` shows what each module has earned. A project with no `trust:` is untouched |
+| `trust` | Each module's trust level, 1 to 5, for the harness: `trust: { payments: 2, catalog: 4 }`. Each key must be a capability under `docs/specs/capabilities/`; any other fails the gate (`payments is not a capability of this project`). `specgate trust` shows what each module has earned. A project with no `trust:` is untouched |
 
-Any other key fails the gate with `gate_policy_invalid`.
+Any other key fails the gate: on the terminal `check` names the key
+(`` `foo` is not a key of the gate policy ``) and fails with
+`check_validate_failed`; with `--json`, the finding is `gate_policy_invalid`.
 
 ## Tighten it on a date
 

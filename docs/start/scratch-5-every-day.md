@@ -77,16 +77,19 @@ same command without `--check` opens the change and pushes its branch,
 
 1. **Propose** — open the change and write its delta: the requirements and
    scenarios it adds.
-2. **Build** — for each requirement, a test that names it, then the code.
-3. **Apply** — `specgate apply REQ-NNN`; commit.
-4. **Archive** — `specgate archive <change-id>` once every requirement is
+2. **Approve** — you read the delta and run `specgate change approve
+   <change-id>` in your terminal; an agent cannot, and `apply` refuses a
+   requirement of an unapproved change (`change_not_approved`).
+3. **Build** — for each requirement, a test that names it, then the code.
+4. **Apply** — `specgate apply REQ-NNN`; commit.
+5. **Archive** — `specgate archive <change-id>` once every requirement is
    applied, on your branch.
-5. **Pull request** — the specification and the code reach review together.
+6. **Pull request** — the specification and the code reach review together.
    For a ticket's change, the `alm pr` command opens it — see
    [From a Jira ticket](../from-a-ticket.md).
 
 ```
-specgate propose  →  test and code  →  specgate apply  →  specgate archive  →  pull request
+specgate propose  →  change approve  →  test and code  →  specgate apply  →  specgate archive  →  pull request
 ```
 
 <!-- specgate:tip -->
@@ -137,6 +140,13 @@ The system SHALL list, for a day, the courts that are free at each hour.
 - GIVEN the centre court is booked on Monday evening
 - WHEN a member sends GET /api/courts/free?day=monday
 - THEN Monday evening lists every court except the centre court
+```
+
+Read the delta, then approve it yourself, at your terminal — `apply` waits
+for it:
+
+```bash
+specgate change approve free-courts
 ```
 
 **Start the day with `status`** — it lists the new requirement with the rest,

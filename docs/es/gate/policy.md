@@ -94,6 +94,11 @@ nada en un proyecto sin máquinas de estados, sin un diseño aprobado que nombre
 archivos o sin tests de aceptación sellados. `rules:` sobrescribe cualquier
 regla del preset.
 
+**Cambiar solo `preset:` no relaja nada de lo que escribió `init`.**
+`specgate init` escribe todas las reglas bajo `rules:`, y una regla escrita
+ahí gana al preset. Para pasar a `minimal`, borra las líneas de `rules:` que
+quieras que decida el preset, o pon cada regla en el nivel que quieras.
+
 ## Las otras claves
 
 | Clave | Qué hace |
@@ -102,9 +107,11 @@ regla del preset.
 | `rules` | Un nivel por regla, por encima del preset |
 | `enforce_from` | Una fecha, `YYYY-MM-DD`: hasta entonces cada `error` es un warning (abajo) |
 | `bdd: required` | Los escenarios son ejecutables: el gate los ejecuta con `bdd_cmd` de `harness.config.yaml` (la etapa Scenarios). `specgate init` la escribe cuando el proyecto tiene un runner para sus archivos feature; si no, `specgate migrate bdd` |
-| `trust` | El nivel de confianza de cada módulo, de 1 a 5, para el harness: `trust: { pagos: 2, catalogo: 4 }`. `specgate trust` muestra lo que se ha ganado cada módulo. Un proyecto sin `trust:` no cambia |
+| `trust` | El nivel de confianza de cada módulo, de 1 a 5, para el harness: `trust: { pagos: 2, catalogo: 4 }`. Cada clave debe ser una capability de `docs/specs/capabilities/`; cualquier otra hace fallar el gate (`pagos is not a capability of this project`). `specgate trust` muestra lo que se ha ganado cada módulo. Un proyecto sin `trust:` no cambia |
 
-Cualquier otra clave hace fallar el gate con `gate_policy_invalid`.
+Cualquier otra clave hace fallar el gate: en la terminal `check` nombra la
+clave (`` `foo` is not a key of the gate policy ``) y falla con
+`check_validate_failed`; con `--json`, el hallazgo es `gate_policy_invalid`.
 
 ## Endurécelo en una fecha
 

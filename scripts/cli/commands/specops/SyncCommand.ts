@@ -276,6 +276,29 @@ function resolvePackRootForChanges(
   }
 }
 
+/**
+ * sync-keeps-local REQ-774: what the pack's recorded version renders over the
+ * project's seeded copy — the merge base of every seeded file. Empty when it
+ * cannot be rendered; the copy is then the base, as before.
+ */
+export function previousRender(entry: PackEntry, args: SyncArgs, projectDir: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specops-sync-base-"));
+  try {
+    const seeded = seedRender(projectDir, dir);
+    const expandArgs = buildExpandArgs(entry, entry.version, dir, args.cacheDir, false, args.vars);
+    const r = spawnSync(process.execPath, [EXPAND_SCRIPT, ...expandArgs], { encoding: "utf8" });
+    if (r.status !== 0) return out;
+    for (const rel of seeded.files.keys()) {
+      const file = path.join(dir, rel);
+      if (fs.existsSync(file)) out.set(rel, fs.readFileSync(file, "utf8"));
+    }
+    return out;
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 function syncPack(entry: PackEntry, args: SyncArgs, projectDir: string) {
   const version = args.packVersion || entry.version;
   const bumping = args.packVersion && args.packVersion !== entry.version;
@@ -298,6 +321,11 @@ function syncPack(entry: PackEntry, args: SyncArgs, projectDir: string) {
     const resolvedEntry =
       (tmpLock && tmpLock.packs.find((p) => p.pack_id === entry.pack_id)) || null;
 
+    // sync-keeps-local REQ-774: a seeded file's base is what the recorded
+    // version renders over the same copy — not the copy itself, which
+    // `expand` rewrites as it merges the pack in.
+    const previous = seeded.files.size > 0 ? previousRender(entry, args, projectDir) : new Map<string, string>();
+
     const renderedFiles = walkFiles(tmpDir);
     const counts: OutcomeCounts = {};
     const conflictFiles: ConflictFile[] = [];
@@ -316,7 +344,7 @@ function syncPack(entry: PackEntry, args: SyncArgs, projectDir: string) {
         projectDir,
         entry.pack_id,
         args,
-        seed
+        seed === null ? null : previous.get(rel) ?? seed
       );
       counts[outcome] = (counts[outcome] || 0) + 1;
       if (CONFLICT_OUTCOMES.has(outcome)) conflictFiles.push({ rel, outcome });

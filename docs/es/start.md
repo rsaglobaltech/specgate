@@ -23,9 +23,10 @@ Una carpeta vacía, quizá con el brief de un cliente.
 1. Crea el proyecto respondiendo unas pocas preguntas: `npx @rsaglobaltech/specgate@latest init`
 2. En la carpeta del proyecto, configura tu agente: `npx specgate agents init --tool claude`
 3. Guarda el plan como `docs/brief.md` y convierte un módulo en un borrador que revisa una persona: `npx specgate propose --from-brief`
-4. Escribe un test que nombre un requisito del borrador, escribe el código y entrégalo: `npx specgate apply REQ-001`
-5. Cuando todos los requisitos del change estén aplicados, haz merge en la especificación: `npx specgate archive <change-id>`
-6. Antes de cada pull request, ejecuta el gate que también ejecuta CI: `npx specgate check`
+4. Cuando hayas leído el borrador, apruébalo tú, en tu terminal — un agente no puede, y `apply` lo espera: `npx specgate change approve <change-id>`
+5. Escribe un test que nombre un requisito del borrador — sus ids empiezan en `REQ-002`; `REQ-001` es la línea base que escribió `init` — escribe el código y entrégalo: `npx specgate apply REQ-002`
+6. Cuando todos los requisitos del change estén aplicados, haz merge en la especificación: `npx specgate archive <change-id>`
+7. Antes de cada pull request, ejecuta el gate que también ejecuta CI: `npx specgate check`
 
 ## Siguiente
 

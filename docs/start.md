@@ -22,9 +22,10 @@ An empty folder, maybe with a client's brief.
 1. Create the project, answering a few questions: `npx @rsaglobaltech/specgate@latest init`
 2. In the project's folder, set up your agent: `npx specgate agents init --tool claude`
 3. Save the plan as `docs/brief.md` and turn one module into a draft a person reviews: `npx specgate propose --from-brief`
-4. Write a test that names a requirement of the draft, write the code, and deliver it: `npx specgate apply REQ-001`
-5. Once every requirement of the change is applied, merge it into the specification: `npx specgate archive <change-id>`
-6. Before each pull request, run the gate CI runs too: `npx specgate check`
+4. Once you have read the draft, approve it yourself, at your terminal — an agent cannot, and `apply` waits for it: `npx specgate change approve <change-id>`
+5. Write a test that names a requirement of the draft — its ids start at `REQ-002`; `REQ-001` is the baseline `init` wrote — write the code, and deliver it: `npx specgate apply REQ-002`
+6. Once every requirement of the change is applied, merge it into the specification: `npx specgate archive <change-id>`
+7. Before each pull request, run the gate CI runs too: `npx specgate check`
 
 ## Next
 

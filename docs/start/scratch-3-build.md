@@ -56,7 +56,8 @@ say so in the prompt: "also wire the test runner so this scenario executes".
 ## Option A — by hand, test first
 
 Read the requirement and its scenarios — in the draft's delta,
-`docs/specs/changes/draft-bookings/specs/bookings/spec.md` — then write the test. **Name the
+`docs/specs/changes/draft-bookings/specs/bookings/spec.md`, REQ-002 has two:
+SCN-002 and SCN-003 — then write the test. **Name the
 requirement in it**: that mention is the whole link between the test and the
 requirement. There is no table to edit and nothing to register.
 
