@@ -120,6 +120,8 @@ export default [
     name: "harness sandboxes: a sandbox nobody recorded is listed, and --prune removes it (REQ-701)",
     covers: ["harness sandboxes"],
     run(dir, t) {
+      // sbx is stood in for by a shell script; Docker Sandboxes on Windows are not proven yet.
+      if (process.platform === "win32") t.skip("the sbx stand-in is a POSIX shell script");
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
       // sbx stands in: one sandbox sg-stray until it is removed.

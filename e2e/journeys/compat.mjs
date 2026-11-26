@@ -7,6 +7,8 @@ export default [
     name: "compat: a tool that implements REQ-002 passes, and the matrix says so",
     covers: ["compat"],
     run(dir, t) {
+      // The exam runs the real agents on the Developer's macOS or Linux machine; on Windows it is not proven yet.
+      if (process.platform === "win32") t.skip("the compatibility exam is not proven on Windows yet");
       fs.mkdirSync(dir, { recursive: true });
       const agent = path.join(path.dirname(dir), `codex-${path.basename(dir)}.js`);
       t.write(
