@@ -1,4 +1,4 @@
-<!-- translation-of: 95bd8dfc0328 -->
+<!-- translation-of: 83835331e20f -->
 # Versiones y despliegue
 
 Cómo se corta y se publica una versión de Specgate —en npm, en el registro de
@@ -15,9 +15,9 @@ requests; los workflows de publicación se ejecutan con un tag `v*`. Estuvieron 
 
 | Artefacto | Registro | Workflow | Estado |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, público | `publish-npm.yml` | Activo — **1.5.0** es `latest`; `next` es 1.0.0-rc.12 |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Activo — la más reciente es **1.5.0** |
-| Imagen de la CLI | `ghcr.io` | `publish-docker.yml` | Activo — imagen más reciente **1.5.0**, `linux/amd64` y `linux/arm64` |
+| `@rsaglobaltech/specgate` | npm, público | `publish-npm.yml` | Activo — **1.6.0** es `latest`; `next` es 1.0.0-rc.12 |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Activo — la más reciente es **1.6.0** |
+| Imagen de la CLI | `ghcr.io` | `publish-docker.yml` | Activo — imagen más reciente **1.6.0**, `linux/amd64` y `linux/arm64` |
 | Servidor MCP | dentro del paquete de la CLI | `publish-npm.yml` | Activo: `specgate mcp serve` |
 | Sitio de documentación y registro de packs | GitHub Pages | `pages.yml` | Activo — ver [Despliegue del sitio](#despliegue-del-sitio) |
 | `specgate-maven-plugin` | Maven Central o un Nexus interno | ninguno aún | C7-05 |
@@ -91,7 +91,7 @@ registran. Los dos gates de abajo se añadieron al descubrir que la CLI escribí
 
 | Campo | Dónde | Esta CLI soporta | Si no coincide |
 | --- | --- | --- | --- |
-| `schema_version` | `pack.yaml` | hasta **1.5.0** | Un pack que declara un esquema más nuevo se rechaza con el motivo y el comando para actualizar |
+| `schema_version` | `pack.yaml` | hasta **1.6.0** | Un pack que declara un esquema más nuevo se rechaza con el motivo y el comando para actualizar |
 | `specops_version` | `.specops.lock` | **1** | Un lockfile de una CLI más nueva se rechaza al leerlo |
 | `version` del pack | `.specops.lock` | cualquiera | Fijada; un cambio del digest de contenido hace fallar el build — ver [cadena de suministro](supply-chain.md) |
 

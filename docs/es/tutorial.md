@@ -1,4 +1,4 @@
-<!-- translation-of: 119fb30da435 -->
+<!-- translation-of: afd7d1acc8b8 -->
 <!-- specgate:allow-placeholders — this file documents the {{VAR}} template syntax. -->
 # 🚗 Tutorial de principio a fin — construyendo **Smart Parking**
 
@@ -103,7 +103,7 @@ Si quieres, instala la CLI de forma global para que `specgate` funcione en todas
 
 ```bash
 npm install -g @rsaglobaltech/specgate@latest
-specgate --version          # 1.5.0
+specgate --version          # 1.6.0
 specgate --help             # the six you start with: init; propose, apply, status, archive; check
 specgate --help --all       # the whole surface
 ```

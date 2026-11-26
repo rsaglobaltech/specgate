@@ -103,7 +103,7 @@ or the Maven and Gradle plugins.
 
 ```bash
 docker run --rm -v "$PWD:/workspace" \
-  ghcr.io/rsaglobaltech/specgate:1.5.0 validate . --strict
+  ghcr.io/rsaglobaltech/specgate:1.6.0 validate . --strict
 ```
 
 Pin the version: `latest` is fine on a laptop, but a gate that changes under a
@@ -116,7 +116,7 @@ In GitLab CI, that is the whole job:
 
 ```yaml
 spec-gate:
-  image: ghcr.io/rsaglobaltech/specgate:1.5.0
+  image: ghcr.io/rsaglobaltech/specgate:1.6.0
   stage: test
   script:
     - specgate validate . --strict
@@ -126,7 +126,7 @@ In Jenkins:
 
 ```groovy
 stage('Spec gate') {
-    agent { docker { image 'ghcr.io/rsaglobaltech/specgate:1.5.0' } }
+    agent { docker { image 'ghcr.io/rsaglobaltech/specgate:1.6.0' } }
     steps { sh 'specgate validate . --strict' }
 }
 ```

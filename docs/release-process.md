@@ -14,9 +14,9 @@ a `v*` tag. They were off for months to save a quota that public repositories do
 
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **1.5.0** is `latest`; `next` is 1.0.0-rc.12 |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **1.5.0** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **1.5.0**, `linux/amd64` and `linux/arm64` |
+| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **1.6.0** is `latest`; `next` is 1.0.0-rc.12 |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **1.6.0** |
+| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **1.6.0**, `linux/amd64` and `linux/arm64` |
 | MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
@@ -91,7 +91,7 @@ written by the CLI and read by nothing.
 
 | Field | Where | This CLI supports | On mismatch |
 | --- | --- | --- | --- |
-| `schema_version` | `pack.yaml` | up to **1.5.0** | A pack declaring a newer schema is rejected with the reason and the upgrade command |
+| `schema_version` | `pack.yaml` | up to **1.6.0** | A pack declaring a newer schema is rejected with the reason and the upgrade command |
 | `specops_version` | `.specops.lock` | **1** | A lockfile from a newer CLI is rejected on read |
 | pack `version` | `.specops.lock` | any | Pinned; a content digest change fails the build — see [supply chain](supply-chain.md) |
 

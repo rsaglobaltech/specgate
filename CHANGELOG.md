@@ -9,6 +9,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-11-26
+
 ### Added
 
 - Approving a change seals each of its requirements — statement and scenarios — at every rigor; the gate fails with `approved_requirement_changed` when one differs, was added or was removed, until a person approves again. Delivering a requirement is not a change to it. A change approved before seals existed is reported as `approval_not_sealed`, with the way to seal it (REQ-739, REQ-740, REQ-741).
@@ -65,6 +67,12 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - `specgate config unset <key>` removes a setting, `config unset profiles.<name>` a whole profile, `config unset sandbox` the whole block (REQ-707).
 - Each exam is kept in `evals/<skill>/history.jsonl` per version of the skill, and compared with the previous version: better, worse or the same (REQ-687).
 - `specgate trust [--json]`: each module's level, its green streak since its last bug, and the promotion it is ready for (REQ-674).
+- The guard refuses a new source file that the approved design of the open change does not name, with `file_outside_design`: the work is proposed, not written (REQ-793).
+- Sealing acceptance tests runs them once with `acceptance_cmd` and shows why they fail, so a test that loads a file from a wrong path is caught before the code exists (REQ-794).
+- `specgate apply` and `check`, when the red tests name only other requirements, say which requirements are red and that their code — not their test — is repaired in the change; AGENTS.md says the same (REQ-787).
+- `specgate status` names the approval a change waits for (REQ-777); the verdict names the fix for what a person approved (REQ-780).
+- The landing page shows the measured exam — 16 of 36 jobs by the agent on its own, 33 of 36 with Specgate — how it was measured, where each control runs and the nine controls (REQ-762, REQ-763, REQ-764).
+- The documentation in Spanish covers every page.
 
 ### Changed
 
@@ -73,6 +81,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - `compat run` does not start OpenCode, which approves its own commands, outside a sandbox: it asks for `--sandbox sbx`, and runs on the machine only with `--no-sandbox`, saying the agent can read what the Developer can (REQ-738).
 - On the Developer's machine, an exam run starts only when the agent's login shell and `npx` reach the `specgate` its level gives — the one under exam, or none at the baseline; otherwise it is invalid and says what they reached (REQ-749).
 - A run in which the tool never worked — a provider error before any call, or the tool not installed — is invalid, not failed, left out of every cell; after two in a row the tool is not asked again in that batch (REQ-730).
+- **Switching the guard off takes a person at a terminal** (REQ-768); an MCP tool passes only the arguments it declares (REQ-769), and never the terminal stand-in (REQ-792).
+- A question on a requirement that waits no longer blocks approving the rest of the change (REQ-771); a requirement waiting for an answer is never handed to an agent (REQ-782), and a ready draft names the approval next (REQ-784).
+- A change's acceptance tests are listed in `acceptance-tests.md` (REQ-757); a sealed test of an archived change is still checked and guarded (REQ-779).
+- `agents init` writes the Claude Code plugin under `.claude/` (REQ-781).
 
 ### Fixed
 
@@ -82,6 +94,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - The generated matrix reads code under a folder named `spec` deeper than the root as code, not tests (REQ-675).
 - `matrix --migrate` no longer writes into `spec.md` requirements an open change adds or modifies, or a capability spec states; their rows wait for the archive (`matrix_rows_in_changes`) (REQ-676).
 - `matrix --migrate` keeps a row the generated matrix only fills in with more code or tests (`matrix_rows_richer`), and pins in the trace only what it would miss (REQ-677).
+- Upgrading a pack keeps what the team wrote in `spec.md` (REQ-774); a first pack is not rendered over a project's own specification without `--force` (REQ-791); `diff` fails on a pack it cannot render and `sync` on an id clash (REQ-786).
+- The plugin's hooks run as CommonJS in a project whose `package.json` says `"type": "module"` (REQ-790).
+- The MCP config tools declare and pass their key and value (REQ-792).
+- A trace comment over several lines survives `apply` and `archive` (REQ-778); a client's answer counts as a source for its requirements' values (REQ-783); a branch that changes no control is reported as changing none (REQ-785).
+- A draft is approved by a person only (REQ-206).
 
 ## [1.5.0] — 2026-11-23
 
