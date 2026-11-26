@@ -287,3 +287,11 @@ test("REQ-760 SCN-760b: changed where no hook runs — the judge reports it", ()
     changed.join("; ")
   );
 });
+
+test("REQ-758, REQ-759: the rule acceptance fails strict and standard gates, warns in minimal", () => {
+  const { PRESET_RULES, RULE_MEANING } = require("../../scripts/lib/gate-policy");
+  assert.equal(PRESET_RULES.strict.acceptance, "error");
+  assert.equal(PRESET_RULES.standard.acceptance, "error");
+  assert.equal(PRESET_RULES.minimal.acceptance, "warning");
+  assert.match(RULE_MEANING.acceptance, /acceptance_cmd/);
+});

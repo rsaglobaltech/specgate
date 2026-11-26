@@ -108,6 +108,8 @@ test("REQ-604 SCN-604a: a preset and an override", () => {
     state_machines: "error",
     scope: "warning",
     controls: "warning",
+    // sealed-acceptance REQ-758, REQ-759.
+    acceptance: "error",
   });
 });
 

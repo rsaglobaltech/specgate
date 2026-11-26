@@ -57,6 +57,7 @@ exports.stepRecordFile = stepRecordFile;
 exports.stepHashes = stepHashes;
 exports.recordSteps = recordSteps;
 exports.patchFiles = patchFiles;
+exports.sealedTests = sealedTests;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
 const node_child_process_1 = require("node:child_process");
@@ -296,5 +297,39 @@ function patchFiles(patchText) {
         out.push(m[1].trim());
     }
     return out;
+}
+/**
+ * sealed-acceptance REQ-760: the acceptance tests a person approved in the
+ * open changes, relative to the project with `/` — the guard keeps the
+ * agent's tools off them. Read from each change's `approvals.json`, its last
+ * acceptance record.
+ */
+function sealedTests(root) {
+    const dir = path.join(root, "docs", "specs", "changes");
+    let ids = [];
+    try {
+        ids = fs
+            .readdirSync(dir, { withFileTypes: true })
+            .filter((e) => e.isDirectory() && e.name !== "archive")
+            .map((e) => e.name);
+    }
+    catch {
+        return [];
+    }
+    const out = new Set();
+    for (const id of ids) {
+        try {
+            const records = JSON.parse(fs.readFileSync(path.join(dir, id, "approvals.json"), "utf8"));
+            if (!Array.isArray(records))
+                continue;
+            const last = records.filter((r) => r && r.layer === "acceptance" && r.seals && typeof r.seals === "object").pop();
+            for (const f of Object.keys(last?.seals ?? {}))
+                out.add(f.replace(/\\/g, "/"));
+        }
+        catch {
+            /* no approvals, nothing sealed */
+        }
+    }
+    return [...out].sort();
 }
 //# sourceMappingURL=project-state.js.map
