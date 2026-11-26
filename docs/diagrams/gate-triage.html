@@ -1,0 +1,104 @@
+<figure class="dia dia--card dia--triage">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 584" class="dia__svg" role="img" aria-labelledby="sg-gt-t sg-gt-d">
+    <title id="sg-gt-t">The gate said no — what now: each kind of failure, and the one thing to do</title>
+    <desc id="sg-gt-d">Seven kinds of failure on the left, each with its codes, and on the right
+      the one action that answers it. The tests are red, check_tests_failed or acceptance_red:
+      fix the code, not the test, because the tests are the contract. No test names the
+      requirement, apply_no_test: write the test that names it first, with REQ-007 in it, then
+      run apply again. What a person approved has changed, approved_requirement_changed or
+      acceptance_not_sealed: put it back, or a person approves it again with specgate change
+      approve. A new file the approved design does not name, file_outside_design: name it in
+      design.md and have the design approved again, or open a change for it with specgate
+      propose. Nobody approved the change, change_not_approved: a person approves it, at a
+      terminal, with specgate change approve. A scenario failed, check_scenarios_failed: make
+      the code do what the scenario says; specgate scenarios with the requirement id runs them
+      one by one. The branch changes the controls, controls_changed_on_branch, a warning named
+      by check --base: the reviewer reads it as part of the pull request. Nobody edits the
+      approval record by hand; every failure prints its fix on the line below it.</desc>
+
+    <defs>
+      <marker id="sg-gt-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+    </defs>
+
+    <text x="16" y="26" class="dia__band-t">THE GATE SAID NO — WHAT IT SAYS</text>
+    <text x="530" y="26" class="dia__band-t">WHAT NOW — THE ONE THING TO DO</text>
+
+    <g class="dia__box dia__box--no"><rect x="16" y="44" width="470" height="60"/></g>
+    <g class="dia__box"><rect x="530" y="44" width="414" height="60"/></g>
+    <g class="dia__box dia__box--no"><rect x="16" y="116" width="470" height="60"/></g>
+    <g class="dia__box"><rect x="530" y="116" width="414" height="60"/></g>
+    <g class="dia__box dia__box--no"><rect x="16" y="188" width="470" height="60"/></g>
+    <g class="dia__box"><rect x="530" y="188" width="414" height="60"/></g>
+    <g class="dia__box dia__box--no"><rect x="16" y="260" width="470" height="60"/></g>
+    <g class="dia__box"><rect x="530" y="260" width="414" height="60"/></g>
+    <g class="dia__box dia__box--no"><rect x="16" y="332" width="470" height="60"/></g>
+    <g class="dia__box dia__box--ok"><rect x="530" y="332" width="414" height="60"/></g>
+    <g class="dia__box dia__box--no"><rect x="16" y="404" width="470" height="60"/></g>
+    <g class="dia__box"><rect x="530" y="404" width="414" height="60"/></g>
+    <g class="dia__box"><rect x="16" y="476" width="470" height="60"/></g>
+    <g class="dia__box"><rect x="530" y="476" width="414" height="60"/></g>
+
+    <g class="dia__ico dia__ico--no" transform="translate(30 56) scale(.75)"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></g>
+    <g class="dia__ico" transform="translate(546 56) scale(.75)"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></g>
+    <g class="dia__ico dia__ico--no" transform="translate(30 128) scale(.75)"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></g>
+    <g class="dia__ico" transform="translate(546 128) scale(.75)"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></g>
+    <g class="dia__ico dia__ico--no" transform="translate(30 200) scale(.75)"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></g>
+    <g class="dia__ico" transform="translate(546 200) scale(.75)"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></g>
+    <g class="dia__ico dia__ico--no" transform="translate(30 272) scale(.75)"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></g>
+    <g class="dia__ico" transform="translate(546 272) scale(.75)"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M9 15h6"/><path d="M12 18v-6"/></g>
+    <g class="dia__ico dia__ico--no" transform="translate(30 344) scale(.75)"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></g>
+    <g class="dia__ico dia__ico--ok" transform="translate(546 344) scale(.75)"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></g>
+    <g class="dia__ico dia__ico--no" transform="translate(30 416) scale(.75)"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></g>
+    <g class="dia__ico" transform="translate(546 416) scale(.75)"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></g>
+    <g class="dia__ico" transform="translate(30 488) scale(.75)"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></g>
+    <g class="dia__ico" transform="translate(546 488) scale(.75)"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></g>
+
+    <g>
+      <text x="60" y="69" class="dia__h">The tests are red</text>
+      <text x="60" y="90" class="dia__s dia__mono">check_tests_failed · acceptance_red</text>
+      <text x="576" y="69" class="dia__h">Fix the code, not the test</text>
+      <text x="576" y="90" class="dia__s">the tests are the contract</text>
+      <text x="60" y="141" class="dia__h">No test names the requirement</text>
+      <text x="60" y="162" class="dia__s dia__mono">apply_no_test</text>
+      <text x="576" y="141" class="dia__h">Write the test that names it, first</text>
+      <text x="576" y="162" class="dia__s">name <tspan class="dia__mono">REQ-007</tspan> in it, then <tspan class="dia__mono">apply</tspan> again</text>
+      <text x="60" y="213" class="dia__h">What a person approved has changed</text>
+      <text x="60" y="234" class="dia__s dia__mono">approved_requirement_changed · acceptance_not_sealed</text>
+      <text x="576" y="213" class="dia__h">Put it back, or a person approves again</text>
+      <text x="576" y="234" class="dia__s"><tspan class="dia__mono">specgate change approve &lt;id&gt;</tspan></text>
+      <text x="60" y="285" class="dia__h">A new file the design does not name</text>
+      <text x="60" y="306" class="dia__s dia__mono">file_outside_design</text>
+      <text x="576" y="285" class="dia__h">Name it in design.md, approve again</text>
+      <text x="576" y="306" class="dia__s">or open a change: <tspan class="dia__mono">specgate propose &lt;change-id&gt;</tspan></text>
+      <text x="60" y="357" class="dia__h">Nobody approved the change</text>
+      <text x="60" y="378" class="dia__s dia__mono">change_not_approved</text>
+      <text x="576" y="357" class="dia__h dia__ok-t">A person approves, at a terminal</text>
+      <text x="576" y="378" class="dia__s"><tspan class="dia__mono">specgate change approve &lt;id&gt;</tspan></text>
+      <text x="60" y="429" class="dia__h">A scenario failed</text>
+      <text x="60" y="450" class="dia__s dia__mono">check_scenarios_failed</text>
+      <text x="576" y="429" class="dia__h">Make the code do what it says</text>
+      <text x="576" y="450" class="dia__s"><tspan class="dia__mono">specgate scenarios &lt;REQ&gt;</tspan> runs them one by one</text>
+      <text x="60" y="501" class="dia__h">The branch changes the controls</text>
+      <text x="60" y="522" class="dia__s dia__mono">controls_changed_on_branch  <tspan class="dia__s dia__wait-t">warning</tspan></text>
+      <text x="576" y="501" class="dia__h">The reviewer reads it in the PR</text>
+      <text x="576" y="522" class="dia__s">a warning, named by <tspan class="dia__mono">check --base</tspan></text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="488" y1="74" x2="525" y2="74" marker-end="url(#sg-gt-a)"/>
+      <line x1="488" y1="146" x2="525" y2="146" marker-end="url(#sg-gt-a)"/>
+      <line x1="488" y1="218" x2="525" y2="218" marker-end="url(#sg-gt-a)"/>
+      <line x1="488" y1="290" x2="525" y2="290" marker-end="url(#sg-gt-a)"/>
+      <line x1="488" y1="362" x2="525" y2="362" marker-end="url(#sg-gt-a)"/>
+      <line x1="488" y1="434" x2="525" y2="434" marker-end="url(#sg-gt-a)"/>
+      <line x1="488" y1="506" x2="525" y2="506" marker-end="url(#sg-gt-a)"/>
+    </g>
+
+    <text x="0" y="574" class="dia__note">Never edit the approval record by hand. Every failure prints its fix on the line below it.</text>
+  </svg>
+  </div>
+  <figcaption>Each failure has one move: fix the code, write the test first, put back what a person approved, or have a person approve again.</figcaption>
+</figure>

@@ -1,0 +1,98 @@
+<figure class="dia dia--card dia--anatomy">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 540" class="dia__svg" role="img" aria-labelledby="sg-ra-t sg-ra-d">
+    <title id="sg-ra-t">The parts of a requirement, and the three files that point back at it</title>
+    <desc id="sg-ra-d">A requirement block as it is written in the delta of the change
+      add-premium-discount. The heading, Requirement: REQ-007 — Apply a premium discount, is the
+      id and the title; REQ-007 is what tests, tags and commits name. The sentence, The system
+      SHALL discount a premium customer's order 10% before tax at checkout, is the obligation:
+      one sentence with SHALL or MUST. The scenario, SCN-007 — Premium customer gets 10% off,
+      is one that can fail: GIVEN a logged-in premium customer, WHEN they checkout with an
+      order of 100 EUR, THEN the final price is 90 EUR, with real values. The trace comment,
+      specgate:trace kind=functional actor=Customer feature=features/billing/discounts.feature,
+      gives the kind, which is required, the actor and the feature file. Three things point
+      back at the requirement: the feature file features/billing/discounts.feature, whose
+      scenario is tagged @REQ-007 @SCN-007, and the gate matches @SCN-007; a test whose title
+      names REQ-007 SCN-007, the mention that is the link; and the row of the traceability
+      matrix, REQ-007, SCN-007, discounts.feature, which specgate check generates from spec.md,
+      the tags and the tests and which nobody edits by hand.</desc>
+
+    <defs>
+      <marker id="sg-ra-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+    </defs>
+
+    <g class="dia__box dia__box--strong"><rect x="16" y="16" width="548" height="284"/></g>
+    <g class="dia__box">
+      <rect x="600" y="40"  width="344" height="52"/>
+      <rect x="600" y="100" width="344" height="52"/>
+      <rect x="600" y="168" width="344" height="52"/>
+      <rect x="600" y="240" width="344" height="52"/>
+      <rect x="16"  y="384" width="292" height="112"/>
+      <rect x="328" y="384" width="272" height="112"/>
+    </g>
+    <g class="dia__box dia__box--ink"><rect x="620" y="384" width="324" height="112"/></g>
+
+    <g class="dia__ico" transform="translate(32 26) scale(.75)"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></g>
+    <g class="dia__ico" transform="translate(32 398) scale(.75)"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/></g>
+    <g class="dia__ico" transform="translate(344 398) scale(.75)"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></g>
+    <g class="dia__ico dia__ico--brand" transform="translate(636 398) scale(.75)"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></g>
+
+    <g>
+      <text x="56" y="41" class="dia__who">THE DELTA OF add-premium-discount</text>
+
+      <text x="36" y="78" class="dia__h dia__mono">### Requirement: <tspan class="dia__step">REQ-007</tspan> — Apply a premium discount</text>
+      <text x="36" y="112" class="dia__s dia__mono">The system <tspan class="dia__step">SHALL</tspan> discount a premium customer's order</text>
+      <text x="36" y="130" class="dia__s dia__mono">10% before tax at checkout.</text>
+      <text x="36" y="164" class="dia__h dia__mono">#### Scenario: <tspan class="dia__step">SCN-007</tspan> — Premium customer gets 10% off</text>
+      <text x="36" y="188" class="dia__s dia__mono">- <tspan class="dia__step">GIVEN</tspan> a logged-in premium customer</text>
+      <text x="36" y="206" class="dia__s dia__mono">- <tspan class="dia__step">WHEN</tspan> they checkout with an order of 100 EUR</text>
+      <text x="36" y="224" class="dia__s dia__mono">- <tspan class="dia__step">THEN</tspan> the final price is 90 EUR</text>
+      <text x="36" y="258" class="dia__s dia__mono dia__faint">&lt;!-- specgate:trace kind=functional actor=Customer</text>
+      <text x="74" y="276" class="dia__s dia__mono dia__faint">feature=features/billing/discounts.feature --&gt;</text>
+
+      <text x="616" y="62" class="dia__h">Id and title</text>
+      <text x="616" y="81" class="dia__s"><tspan class="dia__mono">REQ-007</tspan> is what tests, tags and commits name</text>
+      <text x="616" y="122" class="dia__h">The obligation</text>
+      <text x="616" y="141" class="dia__s">one sentence, with <tspan class="dia__mono">SHALL</tspan> or <tspan class="dia__mono">MUST</tspan></text>
+      <text x="616" y="190" class="dia__h">A scenario that can fail</text>
+      <text x="616" y="209" class="dia__s">GIVEN / WHEN / THEN, with real values</text>
+      <text x="616" y="262" class="dia__h">The trace</text>
+      <text x="616" y="281" class="dia__s"><tspan class="dia__mono">kind=</tspan> required · <tspan class="dia__mono">actor=</tspan> · <tspan class="dia__mono">feature=</tspan></text>
+
+      <text x="60" y="414" class="dia__h">The feature file</text>
+      <text x="32" y="442" class="dia__s dia__mono">features/billing/discounts.feature</text>
+      <text x="32" y="460" class="dia__s dia__mono"><tspan class="dia__step">@REQ-007 @SCN-007</tspan></text>
+      <text x="32" y="478" class="dia__s">the gate matches <tspan class="dia__mono">@SCN-007</tspan></text>
+
+      <text x="372" y="414" class="dia__h">The test</text>
+      <text x="344" y="442" class="dia__s dia__mono">test("<tspan class="dia__step">REQ-007 SCN-007</tspan> …", …)</text>
+      <text x="344" y="466" class="dia__s">its title names the requirement:</text>
+      <text x="344" y="482" class="dia__s">the mention is the link</text>
+
+      <text x="664" y="414" class="dia__h dia__on-ink">The matrix row — generated</text>
+      <text x="636" y="442" class="dia__s dia__mono dia__on-ink">REQ-007 · SCN-007 · discounts.feature</text>
+      <text x="636" y="466" class="dia__s dia__on-ink">from spec.md, the tags and the tests;</text>
+      <text x="636" y="482" class="dia__s dia__on-ink">nobody edits it by hand</text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="598" y1="73"  x2="569" y2="73"  marker-end="url(#sg-ra-a)"/>
+      <line x1="598" y1="122" x2="569" y2="122" marker-end="url(#sg-ra-a)"/>
+      <line x1="598" y1="194" x2="569" y2="194" marker-end="url(#sg-ra-a)"/>
+      <line x1="598" y1="266" x2="569" y2="266" marker-end="url(#sg-ra-a)"/>
+
+      <line x1="160" y1="302" x2="160" y2="379" marker-end="url(#sg-ra-a)"/>
+      <text x="170" y="346">its scenario, tagged</text>
+      <line x1="464" y1="302" x2="464" y2="379" marker-end="url(#sg-ra-a)"/>
+      <text x="474" y="346">proven by</text>
+      <path d="M548 302 V326 H782 V379" marker-end="url(#sg-ra-a)"/>
+      <text x="792" y="358">specgate check</text>
+    </g>
+
+    <text x="0" y="530" class="dia__note">The block sits in the change's delta until archive merges it into the specs; the links stay the same.</text>
+  </svg>
+  </div>
+  <figcaption>A requirement is an id, one obligation, a scenario that can fail and a trace; the feature file, the test and the matrix row all point back at its id.</figcaption>
+</figure>

@@ -1,0 +1,134 @@
+<figure class="dia dia--card dia--levels">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 510" class="dia__svg" role="img" aria-labelledby="sg-al-t sg-al-d">
+    <title id="sg-al-t">What each agent gets from Specgate, and which controls hold where</title>
+    <desc id="sg-al-d">A table of four agents against four things Specgate gives them. Claude
+      Code: the rules in AGENTS.md; slash commands such as /specgate:apply in
+      .claude/commands/; the MCP server through the plugin's .mcp.json; and hooks, the guard,
+      from agents init --tool claude-plugin. Codex: AGENTS.md; skills such as $specgate-apply
+      in .agents/skills/; the MCP server through mcp install --client codex; and hooks from
+      --tool codex-hooks, written to .codex/hooks.json. OpenCode: AGENTS.md; commands such as
+      /specgate-apply in .opencode/commands/; the MCP server through mcp install --client
+      opencode; and hooks from --tool opencode-plugin. Any other agent CLI: AGENTS.md and the
+      prompt that specgate status --prompt prints, to paste; the MCP server if it speaks MCP;
+      no hooks, so no guard. Below, which controls hold where. Everywhere: the gate (specgate
+      check), the seals, and approval first. With hooks: the guard, which enforces test
+      first and refuses a person's acts and writes to sealed tests and control files. With a
+      harness or CI: the outside judge, which reads the controls before the agent starts and
+      compares them when it stops.</desc>
+
+    <text x="192" y="38" class="dia__band-t">RULES</text>
+    <text x="382" y="38" class="dia__band-t">COMMANDS · SKILLS</text>
+    <text x="572" y="38" class="dia__band-t">MCP SERVER</text>
+    <text x="762" y="38" class="dia__band-t">HOOKS — THE GUARD</text>
+
+    <g class="dia__box dia__box--ink">
+      <rect x="20" y="52" width="162" height="60"/>
+      <rect x="20" y="120" width="162" height="60"/>
+      <rect x="20" y="188" width="162" height="60"/>
+    </g>
+    <g class="dia__box dia__box--strong"><rect x="20" y="256" width="162" height="60"/></g>
+    <g class="dia__box">
+      <rect x="192" y="52" width="182" height="60"/>
+      <rect x="382" y="52" width="182" height="60"/>
+      <rect x="572" y="52" width="182" height="60"/>
+      <rect x="192" y="120" width="182" height="60"/>
+      <rect x="382" y="120" width="182" height="60"/>
+      <rect x="572" y="120" width="182" height="60"/>
+      <rect x="192" y="188" width="182" height="60"/>
+      <rect x="382" y="188" width="182" height="60"/>
+      <rect x="572" y="188" width="182" height="60"/>
+      <rect x="192" y="256" width="182" height="60"/>
+      <rect x="382" y="256" width="182" height="60"/>
+      <rect x="572" y="256" width="182" height="60"/>
+      <rect x="762" y="256" width="178" height="60"/>
+    </g>
+    <g class="dia__box dia__box--ok">
+      <rect x="762" y="52" width="178" height="60"/>
+      <rect x="762" y="120" width="178" height="60"/>
+      <rect x="762" y="188" width="178" height="60"/>
+    </g>
+
+    <g class="dia__ico dia__ico--brand" transform="translate(32 70)"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></g>
+    <g class="dia__ico dia__ico--brand" transform="translate(32 138)"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></g>
+    <g class="dia__ico dia__ico--brand" transform="translate(32 206)"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></g>
+    <g class="dia__ico" transform="translate(32 274)"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></g>
+
+    <g>
+      <text x="64" y="87" class="dia__h dia__on-ink">Claude Code</text>
+      <text x="64" y="155" class="dia__h dia__on-ink">Codex</text>
+      <text x="64" y="223" class="dia__h dia__on-ink">OpenCode</text>
+      <text x="64" y="282" class="dia__h">Any other</text>
+      <text x="64" y="300" class="dia__h">agent CLI</text>
+    </g>
+
+    <g text-anchor="middle">
+      <text x="283" y="78" class="dia__s dia__mono">AGENTS.md</text>
+      <text x="283" y="96" class="dia__s">the contract</text>
+      <text x="473" y="78" class="dia__s dia__mono">/specgate:apply …</text>
+      <text x="473" y="96" class="dia__s dia__mono">.claude/commands/</text>
+      <text x="663" y="78" class="dia__s">the plugin's</text>
+      <text x="663" y="96" class="dia__s dia__mono">.mcp.json</text>
+      <text x="851" y="78" class="dia__s dia__mono">--tool claude-plugin</text>
+      <text x="851" y="96" class="dia__s dia__ok-t">the guard</text>
+
+      <text x="283" y="146" class="dia__s dia__mono">AGENTS.md</text>
+      <text x="283" y="164" class="dia__s">the contract</text>
+      <text x="473" y="146" class="dia__s dia__mono">$specgate-apply …</text>
+      <text x="473" y="164" class="dia__s dia__mono">.agents/skills/</text>
+      <text x="663" y="146" class="dia__s dia__mono">mcp install</text>
+      <text x="663" y="164" class="dia__s dia__mono">--client codex</text>
+      <text x="851" y="146" class="dia__s dia__mono">--tool codex-hooks</text>
+      <text x="851" y="164" class="dia__s dia__mono">.codex/hooks.json</text>
+
+      <text x="283" y="214" class="dia__s dia__mono">AGENTS.md</text>
+      <text x="283" y="232" class="dia__s">the contract</text>
+      <text x="473" y="214" class="dia__s dia__mono">/specgate-apply …</text>
+      <text x="473" y="232" class="dia__s dia__mono">.opencode/commands/</text>
+      <text x="663" y="214" class="dia__s dia__mono">mcp install</text>
+      <text x="663" y="232" class="dia__s dia__mono">--client opencode</text>
+      <text x="851" y="214" class="dia__s dia__mono">--tool opencode-plugin</text>
+      <text x="851" y="232" class="dia__s dia__ok-t">the guard</text>
+
+      <text x="283" y="282" class="dia__s dia__mono">AGENTS.md</text>
+      <text x="283" y="300" class="dia__s">the contract</text>
+      <text x="473" y="282" class="dia__s">paste what</text>
+      <text x="473" y="300" class="dia__s dia__mono">status --prompt</text>
+      <text x="663" y="282" class="dia__s">if it speaks MCP</text>
+      <text x="663" y="300" class="dia__s dia__mono">mcp serve</text>
+      <text x="851" y="282" class="dia__s dia__faint">no hooks</text>
+      <text x="851" y="300" class="dia__s dia__faint">no guard</text>
+    </g>
+
+    <text x="20" y="356" class="dia__band-t">WHICH CONTROLS HOLD WHERE</text>
+
+    <g class="dia__box dia__box--gate"><rect x="20" y="370" width="296" height="110"/></g>
+    <g class="dia__box dia__box--ok"><rect x="332" y="370" width="296" height="110"/></g>
+    <g class="dia__box dia__box--ink"><rect x="644" y="370" width="296" height="110"/></g>
+
+    <g class="dia__ico dia__ico--on-gate" transform="translate(36 386)"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></g>
+    <g class="dia__ico dia__ico--ok" transform="translate(348 386)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></g>
+    <g class="dia__ico dia__ico--brand" transform="translate(660 386)"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></g>
+
+    <g>
+      <text x="70" y="404" class="dia__h dia__on-gate">Everywhere</text>
+      <text x="36" y="434" class="dia__s dia__on-gate">the gate — <tspan class="dia__mono">specgate check</tspan></text>
+      <text x="36" y="452" class="dia__s dia__on-gate">the seals by hash</text>
+      <text x="36" y="470" class="dia__s dia__on-gate">approval first</text>
+
+      <text x="382" y="404" class="dia__h dia__ok-t">With hooks: the guard</text>
+      <text x="348" y="434" class="dia__s">test first</text>
+      <text x="348" y="452" class="dia__s">a person's acts refused</text>
+      <text x="348" y="470" class="dia__s">sealed tests, control files refused</text>
+
+      <text x="694" y="404" class="dia__h dia__on-ink">With a harness or CI</text>
+      <text x="660" y="434" class="dia__s dia__on-ink">the outside judge: reads the</text>
+      <text x="660" y="452" class="dia__s dia__on-ink">controls before the agent starts,</text>
+      <text x="660" y="470" class="dia__s dia__on-ink">compares them when it stops</text>
+    </g>
+
+    <text x="0" y="502" class="dia__note">A tool with no hooks has no guard; the gate, the seals and approval first still hold.</text>
+  </svg>
+  </div>
+  <figcaption>Every agent gets the rules and the steps; the hooks add the guard, the gate and the seals hold for all of them, and a harness or CI adds the outside judge.</figcaption>
+</figure>

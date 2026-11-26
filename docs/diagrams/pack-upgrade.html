@@ -1,0 +1,107 @@
+<figure class="dia dia--card dia--pack">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 960 530" class="dia__svg" role="img" aria-labelledby="sg-pu-t sg-pu-d">
+    <title id="sg-pu-t">Upgrading a domain pack: a three-way merge with your spec</title>
+    <desc id="sg-pu-d">First, specgate specops diff --pack-version v0.2.0 previews the upgrade:
+      the files sync would add and modify, writing nothing. Then three versions meet. The
+      merge base is the pack's previous version, v0.1.0, as it was rendered over your spec —
+      the baseline specops add recorded under .specops/baseline: REQ-002 with status Draft,
+      REQ-003's fee line as v0.1.0 wrote it, and no REQ-006. Yours is spec.md with your
+      edits: REQ-002 now status Implemented, the fee line of REQ-003 edited, and REQ-020, a
+      requirement of your own. The pack's new version, v0.2.0, gives REQ-002 a depends on
+      REQ-001, edits the same fee line, and adds REQ-006, Join Capacity Waitlist. specgate
+      specops sync --pack-version v0.2.0 merges them three ways. What the new version changes
+      arrives: REQ-006 and REQ-002's depends. What you wrote stays: status Implemented and
+      REQ-020. A line both changed is a conflict: the file gets conflict markers, or is left
+      untouched with --abort-on-conflict. And if the pack brings an id you already use — had
+      your own requirement been REQ-006 — sync fails, naming it: Sync wrote REQ-006 twice into
+      spec.md. You give yours a free id, rename it in its tests and features, and run
+      specgate check.</desc>
+
+    <defs>
+      <marker id="sg-pu-a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+      <marker id="sg-pu-r" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--red)"/>
+      </marker>
+    </defs>
+
+    <g class="dia__box">
+      <rect x="12" y="12" width="936" height="56"/>
+      <rect x="12" y="108" width="292" height="170"/>
+      <rect x="656" y="108" width="292" height="170"/>
+    </g>
+    <g class="dia__box dia__box--strong">
+      <rect x="334" y="108" width="292" height="170"/>
+      <rect x="12" y="330" width="620" height="186"/>
+    </g>
+    <g class="dia__box dia__box--no"><rect x="662" y="330" width="286" height="186"/></g>
+
+    <g class="dia__ico" transform="translate(28 28)"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></g>
+    <g class="dia__ico" transform="translate(28 124)"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></g>
+    <g class="dia__ico" transform="translate(350 124)"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></g>
+    <g class="dia__ico dia__ico--brand" transform="translate(672 124)"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></g>
+    <g class="dia__ico" transform="translate(28 346)"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></g>
+    <g class="dia__ico dia__ico--ok" transform="translate(30 404) scale(.75)"><path d="M20 6 9 17l-5-5"/></g>
+    <g class="dia__ico dia__ico--ok" transform="translate(30 434) scale(.75)"><path d="M20 6 9 17l-5-5"/></g>
+    <g class="dia__ico dia__ico--no" transform="translate(30 464) scale(.75)"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></g>
+    <g class="dia__ico dia__ico--no" transform="translate(678 346)"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></g>
+
+    <g>
+      <text x="64" y="36" class="dia__s dia__mono">specgate specops diff --pack-version v0.2.0</text>
+      <text x="64" y="56" class="dia__s">first, a preview: the files sync would add (+) and modify (~) — it writes nothing</text>
+    </g>
+    <g text-anchor="middle">
+      <text x="158" y="98" class="dia__who">THE MERGE BASE</text>
+      <text x="480" y="98" class="dia__who">YOURS</text>
+      <text x="802" y="98" class="dia__who">THE PACK'S NEW VERSION</text>
+    </g>
+    <g>
+      <text x="64" y="141" class="dia__h">v0.1.0, as rendered</text>
+      <text x="28" y="166" class="dia__s">the baseline <tspan class="dia__mono">specops add</tspan> recorded</text>
+      <text x="28" y="184" class="dia__s dia__mono">.specops/baseline/backend</text>
+      <text x="28" y="216" class="dia__s dia__mono">REQ-002  status=Draft</text>
+      <text x="28" y="236" class="dia__s dia__mono">REQ-003  the fee line</text>
+      <text x="28" y="256" class="dia__s dia__faint">no REQ-006 yet</text>
+
+      <text x="386" y="141" class="dia__h">Your spec.md</text>
+      <text x="350" y="166" class="dia__s">with your edits</text>
+      <text x="350" y="216" class="dia__s dia__mono">REQ-002  status=Implemented</text>
+      <text x="350" y="236" class="dia__s dia__mono">REQ-003  the fee line, edited</text>
+      <text x="350" y="256" class="dia__s dia__mono">REQ-020  a requirement of yours</text>
+
+      <text x="708" y="141" class="dia__h">v0.2.0</text>
+      <text x="672" y="166" class="dia__s">the version you move to</text>
+      <text x="672" y="216" class="dia__s dia__mono">REQ-002  depends=REQ-001</text>
+      <text x="672" y="236" class="dia__s dia__mono">REQ-003  the fee line, edited</text>
+      <text x="672" y="256" class="dia__s dia__mono">+ REQ-006  Join Capacity Waitlist</text>
+
+      <text x="64" y="363" class="dia__h">A three-way merge</text>
+      <text x="64" y="383" class="dia__s dia__mono">specgate specops sync --pack-version v0.2.0</text>
+      <text x="58" y="418" class="dia__s"><tspan class="dia__ok-t">Arrives</tspan> — what v0.2.0 changes: REQ-006, and REQ-002's depends</text>
+      <text x="58" y="448" class="dia__s"><tspan class="dia__ok-t">Stays</tspan> — what you wrote: status=Implemented, and REQ-020</text>
+      <text x="58" y="478" class="dia__s"><tspan class="dia__no-t">Conflict</tspan> — both changed the fee line: the file gets conflict markers,</text>
+      <text x="58" y="496" class="dia__s">or is left untouched with <tspan class="dia__mono">--abort-on-conflict</tspan></text>
+
+      <text x="714" y="363" class="dia__h dia__no-t">An id you already use</text>
+      <text x="678" y="394" class="dia__s">Had yours been REQ-006, the</text>
+      <text x="678" y="412" class="dia__s">pack's REQ-006 clashes with it.</text>
+      <text x="678" y="432" class="dia__s">sync fails, naming it:</text>
+      <text x="678" y="452" class="dia__s dia__mono">Sync wrote REQ-006 twice</text>
+      <text x="678" y="474" class="dia__s">Give yours a free id, rename it in</text>
+      <text x="678" y="492" class="dia__s">its tests and features, then run</text>
+      <text x="678" y="510" class="dia__s dia__mono">specgate check</text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="158" y1="280" x2="158" y2="325" marker-end="url(#sg-pu-a)"/>
+      <line x1="480" y1="280" x2="480" y2="325" marker-end="url(#sg-pu-a)"/>
+      <path d="M760 280 V302 H580 V325" marker-end="url(#sg-pu-a)"/>
+      <line x1="900" y1="280" x2="900" y2="325" class="dia__no" stroke-dasharray="5 4" marker-end="url(#sg-pu-r)"/>
+      <text x="892" y="306" text-anchor="end" class="dia__no-t">id clash</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>specops sync merges the pack's old version, your spec and the pack's new version three ways: the pack's changes arrive, yours stay, and only a line both changed — or an id both use — stops it.</figcaption>
+</figure>
