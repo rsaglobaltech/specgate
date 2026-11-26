@@ -31,7 +31,8 @@ const sg = (dir: string, ...args: string[]) =>
     encoding: "utf8",
     env: { ...process.env, NO_COLOR: "1" },
   });
-const codes = (r: { stdout: string }) => JSON.parse(r.stdout).status.map((s: { code: string }) => s.code);
+const codes = (r: { stdout: string }) =>
+  JSON.parse(r.stdout).status.map((s: { code: string }) => s.code);
 
 /** An `init` project with catalogo (REQ-050, reached at /products/:id), trust catalogo 4, a bdd_cmd that exits as `scenarios.exit` says. */
 function project() {
@@ -48,15 +49,33 @@ function project() {
     "# catalogo\n\n## Requirements\n\n### Requirement: REQ-050 — Show a product\n\n<!-- specgate:trace status=Draft route=/products/:id -->\n\nThe system SHALL show a product with its price.\n\n#### Scenario: SCN-050 — Shown\n\n- GIVEN a product\n- WHEN the customer opens it\n- THEN it is shown\n"
   );
   w(dir, ".specgate/gate.yaml", "preset: standard\nbdd: required\ntrust: { catalogo: 4 }\n");
-  w(dir, "run-scenarios.js", 'const fs=require("fs");const code=Number(fs.readFileSync("scenarios.exit","utf8"));console.log((code?"1 failed":"1 passed")+" for "+process.argv[2]);process.exit(code);\n');
+  w(
+    dir,
+    "run-scenarios.js",
+    'const fs=require("fs");const code=Number(fs.readFileSync("scenarios.exit","utf8"));console.log((code?"1 failed":"1 passed")+" for "+process.argv[2]);process.exit(code);\n'
+  );
   w(dir, "scenarios.exit", "1");
-  fs.appendFileSync(path.join(dir, "harness.config.yaml"), 'bdd_cmd: "node run-scenarios.js {tags}"\n');
+  fs.appendFileSync(
+    path.join(dir, "harness.config.yaml"),
+    'bdd_cmd: "node run-scenarios.js {tags}"\n'
+  );
   return dir;
 }
 
 /** `reproduce` run in `dir`; the requirement it opened. */
 function reproduce(dir: string): string {
-  const r = sg(dir, "reproduce", "fix-precio", "--capability", "catalogo", "--title", "The price shows without its discount", "--ticket", "KAN-21", "--json");
+  const r = sg(
+    dir,
+    "reproduce",
+    "fix-precio",
+    "--capability",
+    "catalogo",
+    "--title",
+    "The price shows without its discount",
+    "--ticket",
+    "KAN-21",
+    "--json"
+  );
   assert.equal(r.status, 0, r.stdout + r.stderr);
   return JSON.parse(r.stdout).reproduce.requirement;
 }
@@ -74,7 +93,15 @@ test("REQ-681 SCN-681a: a bug in catalogo opens a change that must reproduce it"
   assert.match(discover, /KAN-21/);
   assert.match(discover, /\/products\/:id/);
   assert.match(read(dir, ".specgate/gate.yaml"), /catalogo: 3/);
-  const human = sg(dir, "reproduce", "fix-otro", "--capability", "catalogo", "--title", "Stock wrong");
+  const human = sg(
+    dir,
+    "reproduce",
+    "fix-otro",
+    "--capability",
+    "catalogo",
+    "--title",
+    "Stock wrong"
+  );
   assert.match(human.stdout, /specgate reproduce run REQ-\d+/);
 });
 
@@ -101,7 +128,10 @@ test("REQ-682 SCN-682b: green, refused", () => {
   // No runner, no reproduction.
   const bare = project();
   const id = reproduce(bare);
-  fs.writeFileSync(path.join(bare, "harness.config.yaml"), read(bare, "harness.config.yaml").replace(/^bdd_cmd:.*\n/m, ""));
+  fs.writeFileSync(
+    path.join(bare, "harness.config.yaml"),
+    read(bare, "harness.config.yaml").replace(/^bdd_cmd:.*\n/m, "")
+  );
   assert.ok(codes(sg(bare, "reproduce", "run", id, "--json")).includes("repro_no_runner"));
 });
 
@@ -111,7 +141,10 @@ function readyToApply(dir: string, req: string) {
   w(
     dir,
     file,
-    read(dir, file).replace(/#### Scenario:[\s\S]*$/, `#### Scenario: SCN-${req.slice(4)} — Discount shown\n\n- GIVEN a product priced 100 with a 10% discount\n- WHEN the customer opens it\n- THEN the price shows 90\n`)
+    read(dir, file).replace(
+      /#### Scenario:[\s\S]*$/,
+      `#### Scenario: SCN-${req.slice(4)} — Discount shown\n\n- GIVEN a product priced 100 with a 10% discount\n- WHEN the customer opens it\n- THEN the price shows 90\n`
+    )
   );
   w(dir, `tests/precio.test.ts`, `// ${req}\n`);
   const approved = sg(dir, "change", "approve", "fix-precio", "--json");
@@ -127,7 +160,10 @@ test("REQ-683 SCN-683a: never seen red, never delivered", () => {
   assert.notEqual(r.status, 0, r.stdout);
   assert.match(r.stdout, /apply_not_reproduced/);
   assert.match(r.stdout, new RegExp(`specgate reproduce run ${req}`));
-  assert.doesNotMatch(read(dir, "docs/specs/changes/fix-precio/specs/catalogo/spec.md"), /status=Implemented/);
+  assert.doesNotMatch(
+    read(dir, "docs/specs/changes/fix-precio/specs/catalogo/spec.md"),
+    /status=Implemented/
+  );
 });
 
 test("REQ-683 SCN-683b: red, then green — delivered with both", () => {

@@ -51,13 +51,21 @@ export class McpInstallCommand extends BaseCommand {
           doc = JSON.parse(fs.readFileSync(file, "utf8"));
         } catch {
           io.fail({ installed: false }, [
-            { code: "invalid_config", message: `Could not parse ${file}`, severity: "error", fix: "Fix the JSON file" },
+            {
+              code: "invalid_config",
+              message: `Could not parse ${file}`,
+              severity: "error",
+              fix: "Fix the JSON file",
+            },
           ]);
           process.exitCode = 1;
           return;
         }
       }
-      doc.mcp = { ...(doc.mcp || {}), specgate: { type: "local", command: [mcpConfig.command, ...mcpConfig.args], enabled: true } };
+      doc.mcp = {
+        ...(doc.mcp || {}),
+        specgate: { type: "local", command: [mcpConfig.command, ...mcpConfig.args], enabled: true },
+      };
       fs.writeFileSync(file, `${JSON.stringify(doc, null, 2)}\n`);
       io.emit({ installed: true, client, configPath: file }, () => {
         console.log(`✅ MCP server configured for opencode in ${file}`);
@@ -86,9 +94,15 @@ export class McpInstallCommand extends BaseCommand {
       }
       io.emit({ installed: true, client, configPath: "codex mcp (global)", global: true }, () => {
         console.log("✅ MCP server added to Codex with `codex mcp add specgate`");
-        console.log("   This is your own Codex configuration: it applies to every project, not only this one.");
-        console.log("   `codex exec` refuses MCP calls with nobody to approve them: to allow this server's there, add");
-        console.log('   default_tools_approval_mode = "approve"  under [mcp_servers.specgate] in ~/.codex/config.toml');
+        console.log(
+          "   This is your own Codex configuration: it applies to every project, not only this one."
+        );
+        console.log(
+          "   `codex exec` refuses MCP calls with nobody to approve them: to allow this server's there, add"
+        );
+        console.log(
+          '   default_tools_approval_mode = "approve"  under [mcp_servers.specgate] in ~/.codex/config.toml'
+        );
       });
       return;
     }

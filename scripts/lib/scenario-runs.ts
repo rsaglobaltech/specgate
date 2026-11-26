@@ -14,10 +14,12 @@ import { forShell } from "./shell-command";
 import { scenariosOf } from "../cli/commands/spec/ScenariosCommand";
 
 /** The project's gate requires executable scenarios (REQ-661). */
-export const scenariosRequired = (projectDir: string): boolean => readGatePolicy(projectDir).bdd === "required";
+export const scenariosRequired = (projectDir: string): boolean =>
+  readGatePolicy(projectDir).bdd === "required";
 
 /** The command that runs the feature files, or "" when the project has none. */
-export const scenarioCommand = (projectDir: string): string => (readHarnessConfig(projectDir)?.bddCmd || "").trim();
+export const scenarioCommand = (projectDir: string): string =>
+  (readHarnessConfig(projectDir)?.bddCmd || "").trim();
 
 export interface ScenarioVerdict {
   ok: boolean;
@@ -30,17 +32,32 @@ export interface ScenarioVerdict {
   failed: string[];
 }
 
-const withTag = (bddCmd: string, tag: string) => (bddCmd.includes("{tags}") ? bddCmd.split("{tags}").join(tag) : `${bddCmd} ${tag}`);
+const withTag = (bddCmd: string, tag: string) =>
+  bddCmd.includes("{tags}") ? bddCmd.split("{tags}").join(tag) : `${bddCmd} ${tag}`;
 
-export function runRequirementScenarios(projectDir: string, requirement: string, bddCmd = scenarioCommand(projectDir)): ScenarioVerdict {
+export function runRequirementScenarios(
+  projectDir: string,
+  requirement: string,
+  bddCmd = scenarioCommand(projectDir)
+): ScenarioVerdict {
   const command = withTag(bddCmd, `@${requirement}`);
   const started = Date.now();
-  const run = spawnSync(forShell(command), { cwd: projectDir, encoding: "utf8", shell: true, maxBuffer: 64 * 1024 * 1024 });
+  const run = spawnSync(forShell(command), {
+    cwd: projectDir,
+    encoding: "utf8",
+    shell: true,
+    maxBuffer: 64 * 1024 * 1024,
+  });
   const output = `${run.stdout || ""}${run.stderr || ""}`.trim().split("\n").slice(-40).join("\n");
   if (run.status === 0) return { ok: true, command, ms: Date.now() - started, output, failed: [] };
   const failed: string[] = [];
   for (const s of scenariosOf(projectDir, requirement)) {
-    const one = spawnSync(forShell(withTag(bddCmd, `@${s.id}`)), { cwd: projectDir, encoding: "utf8", shell: true, maxBuffer: 64 * 1024 * 1024 });
+    const one = spawnSync(forShell(withTag(bddCmd, `@${s.id}`)), {
+      cwd: projectDir,
+      encoding: "utf8",
+      shell: true,
+      maxBuffer: 64 * 1024 * 1024,
+    });
     if (one.status !== 0) failed.push(s.id);
   }
   return { ok: false, command, ms: Date.now() - started, output, failed };

@@ -528,9 +528,13 @@ function checksBeforeGate(env: AttemptEnv, state: RequirementState, attempt: num
   // REQ-708: a continued branch that already holds the work has nothing left
   // to write; the gate judges it as it stands.
   const judgedAsItStands =
-    Boolean(ctx.resumeAt) && producedNothing(worktreeDir) && branchHoldsWork(worktreeDir, ctx.projectDir || worktreeDir, ctx.baseRef);
+    Boolean(ctx.resumeAt) &&
+    producedNothing(worktreeDir) &&
+    branchHoldsWork(worktreeDir, ctx.projectDir || worktreeDir, ctx.baseRef);
   if (judgedAsItStands) {
-    info(`${req.requirement}: the agent added nothing — the branch already holds the work; the gate judges it as it stands`);
+    info(
+      `${req.requirement}: the agent added nothing — the branch already holds the work; the gate judges it as it stands`
+    );
   } else if (producedNothing(worktreeDir)) {
     // REQ-417: the agent wrote for another requirement of this run, so it
     // can write; one more attempt, told so, before giving up.

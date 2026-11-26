@@ -146,7 +146,10 @@ function withSandboxLock<T>(projectDir: string, name: string, fn: () => T): T {
         fs.rmSync(dir, { recursive: true, force: true });
         continue;
       }
-      if (Date.now() > deadline) throw new Error(`the sandbox ${name} stayed locked for ${SANDBOX_LOCK_WAIT_MS / 60_000} minutes`);
+      if (Date.now() > deadline)
+        throw new Error(
+          `the sandbox ${name} stayed locked for ${SANDBOX_LOCK_WAIT_MS / 60_000} minutes`
+        );
       Atomics.wait(nap, 0, 0, 500);
     }
   }

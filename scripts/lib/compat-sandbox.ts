@@ -11,7 +11,17 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { sbxAllow, sbxBin, sbxCreate, sbxDeny, sbxExec, sbxKitHosts, sbxRemove, sbxWorkspace, shq } from "./sbx";
+import {
+  sbxAllow,
+  sbxBin,
+  sbxCreate,
+  sbxDeny,
+  sbxExec,
+  sbxKitHosts,
+  sbxRemove,
+  sbxWorkspace,
+  shq,
+} from "./sbx";
 
 export type SandboxKind = "specgate" | "bare";
 
@@ -45,7 +55,9 @@ const SESSION_FILE: Readonly<Record<string, string>> = {
 
 const bare = (host: string) => host.replace(/:\d+$/, "");
 const matches = (host: string, pattern: string) =>
-  pattern.startsWith("*.") ? host === pattern.slice(2) || host.endsWith(pattern.slice(1)) : host === pattern;
+  pattern.startsWith("*.")
+    ? host === pattern.slice(2) || host.endsWith(pattern.slice(1))
+    : host === pattern;
 
 /** REQ-737: of the kit's hosts, those to deny — every one that is not the tool's provider or the registry. */
 export function hostsToDeny(kitHosts: readonly string[], tool: string): string[] {
@@ -83,7 +95,11 @@ function setupScript(tarball: string | null): string {
 export function makeSandbox(
   tool: string,
   kind: SandboxKind,
-  o: { tarball: string | null; auth: boolean; /** The provider whose session goes inside: the model's own, as `opencode-go`. */ provider?: string }
+  o: {
+    tarball: string | null;
+    auth: boolean;
+    /** The provider whose session goes inside: the model's own, as `opencode-go`. */ provider?: string;
+  }
 ): ExamSandbox {
   const workspace = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "specgate-compat-box-")));
   const name = `sgc-${tool}-${kind}-${Math.random().toString(36).slice(2, 8)}`;
@@ -108,29 +124,44 @@ export function makeSandbox(
     }
     const home = sbxExec(name, workspace, 'printf %s "$HOME"').out.trim() || "/home/agent";
 
-    const tgz = kind === "specgate" && o.tarball ? path.join(workspace, path.basename(o.tarball)) : null;
+    const tgz =
+      kind === "specgate" && o.tarball ? path.join(workspace, path.basename(o.tarball)) : null;
     if (tgz) fs.copyFileSync(o.tarball!, tgz);
     const setup = path.join(workspace, "setup.sh");
     fs.writeFileSync(setup, setupScript(tgz), { mode: 0o755 });
     const done = sbxExec(name, workspace, `sh ${shq(setup)}`);
     fs.rmSync(setup, { force: true });
     if (tgz) fs.rmSync(tgz, { force: true });
-    if (!done.ok) throw new Error(`the sandbox ${name} could not be set up: ${(done.err || done.out).trim().split("\n").slice(-2).join(" ")}`);
+    if (!done.ok)
+      throw new Error(
+        `the sandbox ${name} could not be set up: ${(done.err || done.out).trim().split("\n").slice(-2).join(" ")}`
+      );
 
     // REQ-736: the Developer's own session of the tool, for a model that needs an account — never a key.
     if (o.auth && SESSION_FILE[tool]) {
       const mine = path.join(os.homedir(), SESSION_FILE[tool]!);
-      if (!fs.existsSync(mine)) throw new Error(`no stored ${tool} session at ${mine}: log in to ${tool} first`);
+      if (!fs.existsSync(mine))
+        throw new Error(`no stored ${tool} session at ${mine}: log in to ${tool} first`);
       // Only the provider asked for: the file holds every account the Developer is logged in to.
       const all = JSON.parse(fs.readFileSync(mine, "utf8")) as Record<string, unknown>;
       const provider = o.provider || tool;
-      if (!all[provider]) throw new Error(`no stored session for ${provider} in ${mine} (it has ${Object.keys(all).join(", ") || "none"})`);
+      if (!all[provider])
+        throw new Error(
+          `no stored session for ${provider} in ${mine} (it has ${Object.keys(all).join(", ") || "none"})`
+        );
       const carried = path.join(workspace, ".session");
       fs.writeFileSync(carried, JSON.stringify({ [provider]: all[provider] }), { mode: 0o600 });
       const dest = `$HOME/${SESSION_FILE[tool]!.split(path.sep).join("/")}`;
-      const put = sbxExec(name, workspace, `mkdir -p "$(dirname "${dest}")" && cp ${shq(carried)} "${dest}" && chmod 600 "${dest}"`);
+      const put = sbxExec(
+        name,
+        workspace,
+        `mkdir -p "$(dirname "${dest}")" && cp ${shq(carried)} "${dest}" && chmod 600 "${dest}"`
+      );
       fs.rmSync(carried, { force: true });
-      if (!put.ok) throw new Error(`the ${tool} session could not be put in the sandbox ${name}: ${(put.err || put.out).trim()}`);
+      if (!put.ok)
+        throw new Error(
+          `the ${tool} session could not be put in the sandbox ${name}: ${(put.err || put.out).trim()}`
+        );
     }
     return { name, tool, kind, workspace, home, open };
   } catch (e) {
@@ -147,10 +178,28 @@ export function useSandbox(tool: string, kind: SandboxKind, name: string): ExamS
   const workspace = sbxWorkspace(name);
   if (!workspace) throw new Error(`sbx has no sandbox named ${name} with a workspace: sbx ls`);
   const home = sbxExec(name, workspace, 'printf %s "$HOME"').out.trim() || "/home/agent";
-  const has = sbxExec(name, workspace, 'export PATH="$HOME/.local/bin:$PATH"; command -v specgate >/dev/null 2>&1 && echo yes || echo no').out.trim();
-  if (kind === "specgate" && has !== "yes") throw new Error(`the sandbox ${name} has no specgate inside, and is asked for the levels that have it`);
-  if (kind === "bare" && has === "yes") throw new Error(`the sandbox ${name} has specgate inside, and is asked for the level without it`);
-  return { name, tool, kind, workspace: fs.realpathSync(workspace), home, open: [...(PROVIDER_HOSTS[tool] || []), REGISTRY_HOST], kept: true };
+  const has = sbxExec(
+    name,
+    workspace,
+    'export PATH="$HOME/.local/bin:$PATH"; command -v specgate >/dev/null 2>&1 && echo yes || echo no'
+  ).out.trim();
+  if (kind === "specgate" && has !== "yes")
+    throw new Error(
+      `the sandbox ${name} has no specgate inside, and is asked for the levels that have it`
+    );
+  if (kind === "bare" && has === "yes")
+    throw new Error(
+      `the sandbox ${name} has specgate inside, and is asked for the level without it`
+    );
+  return {
+    name,
+    tool,
+    kind,
+    workspace: fs.realpathSync(workspace),
+    home,
+    open: [...(PROVIDER_HOSTS[tool] || []), REGISTRY_HOST],
+    kept: true,
+  };
 }
 
 /**
@@ -158,14 +207,24 @@ export function useSandbox(tool: string, kind: SandboxKind, name: string): ExamS
  * environment is HOME, PATH and `env`: none of the host's variables and none
  * of the kit's, so no provider key reaches it by name (REQ-736).
  */
-export function sandboxLine(box: ExamSandbox, cwd: string, command: string, env: Record<string, string> = {}): string {
+export function sandboxLine(
+  box: ExamSandbox,
+  cwd: string,
+  command: string,
+  env: Record<string, string> = {}
+): string {
   const named = Object.entries(env)
     .filter(([k]) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(k))
     .sort(([a], [b]) => a.localeCompare(b));
   // The kit fills the sandbox's environment with its own: provider keys' placeholders its proxy completes,
   // and a tool configuration that points at them (measured: OPENCODE_API_KEY, OPENCODE_CONFIG_CONTENT).
   // The agent starts from an empty environment and gets what is named here, and nothing else.
-  const given = [`HOME="$HOME"`, `PATH="$HOME/.local/bin:$PATH"`, "TERM=dumb", ...named.map(([k, v]) => shq(`${k}=${v}`))].join(" ");
+  const given = [
+    `HOME="$HOME"`,
+    `PATH="$HOME/.local/bin:$PATH"`,
+    "TERM=dumb",
+    ...named.map(([k, v]) => shq(`${k}=${v}`)),
+  ].join(" ");
   const inside = `exec env -i ${given} sh -c ${shq(command)}`;
   return [shq(sbxBin()), "exec", "-w", shq(cwd), shq(box.name), "sh", "-lc", shq(inside)].join(" ");
 }

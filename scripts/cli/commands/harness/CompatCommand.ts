@@ -38,7 +38,13 @@ import {
   type Verdict,
 } from "../../../../packages/core/src/domain/Compat";
 import { sessionOf, testFirst } from "../../../../packages/core/src/domain/CompatSession";
-import { makeSandbox, removeSandbox, sandboxLine, useSandbox, type ExamSandbox } from "../../../lib/compat-sandbox";
+import {
+  makeSandbox,
+  removeSandbox,
+  sandboxLine,
+  useSandbox,
+  type ExamSandbox,
+} from "../../../lib/compat-sandbox";
 import { CLI_CODE, cliReach, examCli } from "../../../lib/cli-reach";
 import { takeAcceptance, writerCopy } from "../../../lib/acceptance-writer";
 import { twoFunctionAttack } from "../../../lib/attack";
@@ -85,7 +91,10 @@ function tasks(): Task[] {
     .filter((id) => fs.existsSync(path.join(TASKS, id, "task.json")))
     .sort()
     .map((id) => {
-      const doc = JSON.parse(fs.readFileSync(path.join(TASKS, id, "task.json"), "utf8")) as Omit<Task, "id" | "dir">;
+      const doc = JSON.parse(fs.readFileSync(path.join(TASKS, id, "task.json"), "utf8")) as Omit<
+        Task,
+        "id" | "dir"
+      >;
       return { id, dir: path.join(TASKS, id), ...doc };
     });
 }
@@ -108,7 +117,9 @@ function usage(): void {
   A run passes by its task's verdicts: \`specgate check\`, a hidden check it never
   saw, the specification left as it was.
 
-  Tasks: ${tasks().map((t) => t.id).join(", ")} (default: deliver). Levels default to L0–L3.
+  Tasks: ${tasks()
+    .map((t) => t.id)
+    .join(", ")} (default: deliver). Levels default to L0–L3.
   Each run keeps the tool's session, and what Specgate's server and plugin saw.
   --ladder runs each tool's cheapest model first and the next only where a cell
   is not green: ${COMPAT_TOOLS.map((t) => `${t} ${MODEL_LADDER[t].join(" → ")}`).join("; ")}.
@@ -154,10 +165,14 @@ function versionOf(tool: CompatTool): string {
 }
 
 function git(dir: string, ...args: string[]) {
-  return spawnSync("git", ["-c", "user.email=compat@specgate", "-c", "user.name=specgate compat", ...args], {
-    cwd: dir,
-    encoding: "utf8",
-  });
+  return spawnSync(
+    "git",
+    ["-c", "user.email=compat@specgate", "-c", "user.name=specgate compat", ...args],
+    {
+      cwd: dir,
+      encoding: "utf8",
+    }
+  );
 }
 
 /** The environment of a check: never a test runner's own, which makes a child `node --test` report to it and exit 0. */
@@ -179,7 +194,16 @@ function cli(dir: string, ...args: string[]) {
 /** Files under `dir` the agent wrote that name the requirement: a test that links it. */
 function testNamesReq(dir: string, req: string | null, hidden: string | undefined): boolean {
   if (!req) return false;
-  const skip = new Set(["node_modules", ".git", "docs", "features", ".specgate", ".claude", ".agents", ".opencode"]);
+  const skip = new Set([
+    "node_modules",
+    ".git",
+    "docs",
+    "features",
+    ".specgate",
+    ".claude",
+    ".agents",
+    ".opencode",
+  ]);
   const walk = (d: string): boolean => {
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
       if (skip.has(e.name)) continue;
@@ -197,8 +221,12 @@ function testNamesReq(dir: string, req: string | null, hidden: string | undefine
 
 /** Paths changed since `base`, tracked or new, under `prefixes`. */
 function changedSince(dir: string, base: string, prefixes: string[]): string[] {
-  const tracked = (git(dir, "diff", "--name-only", base, "--", ...prefixes).stdout || "").split("\n");
-  const fresh = (git(dir, "ls-files", "--others", "--exclude-standard", "--", ...prefixes).stdout || "").split("\n");
+  const tracked = (git(dir, "diff", "--name-only", base, "--", ...prefixes).stdout || "").split(
+    "\n"
+  );
+  const fresh = (
+    git(dir, "ls-files", "--others", "--exclude-standard", "--", ...prefixes).stdout || ""
+  ).split("\n");
   return [...new Set([...tracked, ...fresh].map((l) => l.trim()).filter(Boolean))].sort();
 }
 
@@ -236,9 +264,12 @@ function specChanged(dir: string, base: string): string[] {
 
 /** Requirement ids the specification states now and did not at `base` (REQ-723). */
 function newRequirements(dir: string, base: string): string[] {
-  const ids = (text: string) => new Set([...text.matchAll(/^#{2,4} Requirement: (REQ-\d+)/gm)].map((m) => m[1]!));
+  const ids = (text: string) =>
+    new Set([...text.matchAll(/^#{2,4} Requirement: (REQ-\d+)/gm)].map((m) => m[1]!));
   const before = new Set<string>();
-  const listed = (git(dir, "ls-tree", "-r", "--name-only", base, "--", ...SPEC_PATHS).stdout || "").split("\n");
+  const listed = (
+    git(dir, "ls-tree", "-r", "--name-only", base, "--", ...SPEC_PATHS).stdout || ""
+  ).split("\n");
   for (const rel of listed.filter((f) => f.endsWith(".md")))
     for (const id of ids(git(dir, "show", `${base}:${rel}`).stdout || "")) before.add(id);
   const now = new Set<string>();
@@ -264,7 +295,14 @@ interface Wiring {
 }
 
 /** The copy, given the level's integration (REQ-712, REQ-719); the command line's extra flags. */
-function integrate(dir: string, tool: CompatTool, level: CompatLevel, scratch: string, logDir: string, box: ExamSandbox | null): Wiring {
+function integrate(
+  dir: string,
+  tool: CompatTool,
+  level: CompatLevel,
+  scratch: string,
+  logDir: string,
+  box: ExamSandbox | null
+): Wiring {
   const it = integrationOf(tool, level)!;
   // In the run's folder from the start: what Specgate's side sees can be read while the agent works.
   // In a sandbox they are written inside it, where the run's folder on the host does not exist.
@@ -284,7 +322,8 @@ function integrate(dir: string, tool: CompatTool, level: CompatLevel, scratch: s
   // Claude Code's rules file: it reads CLAUDE.md, which points at AGENTS.md.
   if (tool === "claude") fs.writeFileSync(path.join(dir, "CLAUDE.md"), "@AGENTS.md\n", "utf8");
   for (const t of it.agentsInit) cli(dir, "agents", "init", "--tool", t, "--force");
-  if (it.skillsFor) cli(dir, "agents", "init", "--format", "skills", "--tool", it.skillsFor, "--force");
+  if (it.skillsFor)
+    cli(dir, "agents", "init", "--format", "skills", "--tool", it.skillsFor, "--force");
   // REQ-717: the server says what it was asked in the run's own file.
   const serve = box
     ? { command: `${box.home}/.local/bin/specgate`, args: ["mcp", "serve", "--log", mcpLog] }
@@ -306,7 +345,9 @@ function integrate(dir: string, tool: CompatTool, level: CompatLevel, scratch: s
         file,
         `${JSON.stringify(
           {
-            mcp: { specgate: { type: "local", command: [serve.command, ...serve.args], enabled: true } },
+            mcp: {
+              specgate: { type: "local", command: [serve.command, ...serve.args], enabled: true },
+            },
             ...(it.shell ? {} : { permission: { bash: "deny" } }),
           },
           null,
@@ -370,13 +411,20 @@ function opencodeConfig(scratch: string): string {
   const dir = path.join(scratch, "xdg-config");
   fs.mkdirSync(path.join(dir, "opencode"), { recursive: true });
   // What OpenCode can be told: no folder outside the project. Its shell is not held by this — a sandbox is.
-  fs.writeFileSync(path.join(dir, "opencode", "opencode.json"), `${JSON.stringify({ permission: { external_directory: "deny" } }, null, 2)}\n`);
+  fs.writeFileSync(
+    path.join(dir, "opencode", "opencode.json"),
+    `${JSON.stringify({ permission: { external_directory: "deny" } }, null, 2)}\n`
+  );
   return dir;
 }
 
 const linesOf = (file: string): Array<Record<string, unknown>> => {
   try {
-    return fs.readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+    return fs
+      .readFileSync(file, "utf8")
+      .split("\n")
+      .filter(Boolean)
+      .map((l) => JSON.parse(l));
   } catch {
     return [];
   }
@@ -407,35 +455,62 @@ function writeAcceptanceFirst(
   env: Record<string, string>,
   timeoutMs: number
 ): { ok: true; sealed: string[] } | { ok: false; reason: string } {
-  if (!task.acceptance) return { ok: false, reason: `task ${task.id} says nothing of its acceptance tests` };
+  if (!task.acceptance)
+    return { ok: false, reason: `task ${task.id} says nothing of its acceptance tests` };
   const writerDir = path.join(scratch, "writer");
   writerCopy(dir, writerDir);
   const promptFile = path.join(scratch, "writer-prompt.md");
-  const prompt = fs.readFileSync(path.join(ROOT, "compat", "writer-prompt.md"), "utf8").split("{kind}").join(task.acceptance.kind);
+  const prompt = fs
+    .readFileSync(path.join(ROOT, "compat", "writer-prompt.md"), "utf8")
+    .split("{kind}")
+    .join(task.acceptance.kind);
   fs.writeFileSync(promptFile, prompt);
   fs.copyFileSync(promptFile, path.join(logDir, "writer-prompt.md"));
   const agent = template.split("{extra}").join("").split("{prompt_file}").join(q(promptFile));
-  const inside = box ? sandboxLine(box, writerDir, agent, { XDG_CONFIG_HOME: opencodeConfig(scratch) }) : agent;
+  const inside = box
+    ? sandboxLine(box, writerDir, agent, { XDG_CONFIG_HOME: opencodeConfig(scratch) })
+    : agent;
   const command = `( ${inside} ) > ${q(path.join(logDir, "writer-session.jsonl"))} 2> ${q(path.join(logDir, "writer-stderr.log"))}`;
   runWithDeadline(command, { cwd: writerDir, timeoutMs, maxBuffer: 256 * 1024 * 1024, env });
   const taken = takeAcceptance(writerDir, dir, new Date().toISOString().slice(0, 10));
   if (!taken.ok) return taken;
-  fs.appendFileSync(path.join(dir, "harness.config.yaml"), `\nacceptance_cmd: ${q(task.acceptance.cmd)}\n`);
+  fs.appendFileSync(
+    path.join(dir, "harness.config.yaml"),
+    `\nacceptance_cmd: ${q(task.acceptance.cmd)}\n`
+  );
   git(dir, "add", "-A");
   git(dir, "commit", "-qm", "the acceptance tests another agent wrote, approved and sealed");
   return taken;
 }
 
 function oneRun(
-  tool: CompatTool, level: CompatLevel, task: Task, n: number, version: string, model: string, o: RunOptions
+  tool: CompatTool,
+  level: CompatLevel,
+  task: Task,
+  n: number,
+  version: string,
+  model: string,
+  o: RunOptions
 ): CompatRun {
   const base: CompatRun = {
-    tool, level, version, model, task: task.id, ran: false, check: false, hidden: false,
-    testNamesReq: false, seconds: 0, exit: null, at: new Date().toISOString(), specgate: VERSION,
+    tool,
+    level,
+    version,
+    model,
+    task: task.id,
+    ran: false,
+    check: false,
+    hidden: false,
+    testNamesReq: false,
+    seconds: 0,
+    exit: null,
+    at: new Date().toISOString(),
+    specgate: VERSION,
   };
   if (!integrationOf(tool, level)) return base;
   // REQ-730: a tool that is not there never worked.
-  if (version === "unknown" && !o.agents[tool]) return { ...base, ran: true, invalid: `${tool} is not installed`, passed: false };
+  if (version === "unknown" && !o.agents[tool])
+    return { ...base, ran: true, invalid: `${tool} is not installed`, passed: false };
 
   // REQ-736: in a sandbox the run is a folder of the batch's own, the only one the sandbox has.
   let box: ExamSandbox | null = null;
@@ -449,17 +524,34 @@ function oneRun(
     base.sandbox = "sbx";
     base.network = box.open;
   }
-  const scratch = fs.mkdtempSync(path.join(box ? box.workspace : os.tmpdir(), `specgate-compat-${tool}-${level}-`));
+  const scratch = fs.mkdtempSync(
+    path.join(box ? box.workspace : os.tmpdir(), `specgate-compat-${tool}-${level}-`)
+  );
   const dir = path.join(scratch, "project");
-  const logDir = path.join(o.outDir, "runs", `${base.at.replace(/[:.]/g, "-")}-${tool}-${level}-${task.id}-${n}`);
+  const logDir = path.join(
+    o.outDir,
+    "runs",
+    `${base.at.replace(/[:.]/g, "-")}-${tool}-${level}-${task.id}-${n}`
+  );
   fs.mkdirSync(logDir, { recursive: true });
   let keptDir: string | null = null;
   try {
     fs.cpSync(path.join(task.dir, "fixture"), dir, { recursive: true });
     // REQ-731: a task's project with dependencies has them before the agent starts.
     if (fs.existsSync(path.join(dir, "package-lock.json"))) {
-      const ci = spawnSync("npm", ["ci", "--silent", "--no-audit", "--no-fund"], { cwd: dir, encoding: "utf8", timeout: 300_000, shell: process.platform === "win32" });
-      if (ci.status !== 0) return { ...base, ran: true, invalid: `npm ci failed in the task's project: ${(ci.stderr || ci.stdout || "").trim().split("\n").slice(-1)[0]}`, passed: false };
+      const ci = spawnSync("npm", ["ci", "--silent", "--no-audit", "--no-fund"], {
+        cwd: dir,
+        encoding: "utf8",
+        timeout: 300_000,
+        shell: process.platform === "win32",
+      });
+      if (ci.status !== 0)
+        return {
+          ...base,
+          ran: true,
+          invalid: `npm ci failed in the task's project: ${(ci.stderr || ci.stdout || "").trim().split("\n").slice(-1)[0]}`,
+          passed: false,
+        };
     }
     git(dir, "init", "-q");
     git(dir, "add", "-A");
@@ -480,7 +572,10 @@ function oneRun(
       // In a sandbox Specgate is installed inside at the levels that have it, and is not there at B: nothing to shadow.
     } else if (level === "M")
       // Should a shell be reached all the same, the CLI is not there to answer it.
-      reach = examCli(scratch, bin, mark, { absent: "specgate: the CLI is not available here — use the tools of the specgate MCP server" });
+      reach = examCli(scratch, bin, mark, {
+        absent:
+          "specgate: the CLI is not available here — use the tools of the specgate MCP server",
+      });
     else if (level === "B")
       // REQ-719: a Specgate installed for every project on this machine does not answer here.
       reach = examCli(scratch, bin, mark, { absent: "specgate: command not found" });
@@ -490,14 +585,21 @@ function oneRun(
     fs.copyFileSync(promptFile, path.join(logDir, "prompt.md"));
 
     const template = o.agents[tool] || defaultCommand(tool, model);
-    const agent = template.split("{extra}").join(wiring.extra).split("{prompt_file}").join(q(promptFile));
+    const agent = template
+      .split("{extra}")
+      .join(wiring.extra)
+      .split("{prompt_file}")
+      .join(q(promptFile));
     fs.writeFileSync(path.join(logDir, "command.txt"), `${agent}\n`);
     // REQ-718: the session is kept as it happens, not when the tool ends.
     const sessionFile = path.join(logDir, "session.jsonl");
     const stderrFile = path.join(logDir, "stderr.log");
     // In the sandbox too, the tool's configuration is a folder of the run: the kit's own AGENTS.md, skills and servers stay out.
     const inside = box
-      ? sandboxLine(box, dir, agent, { SPECGATE_HOOK_LOG: wiring.hookLog, XDG_CONFIG_HOME: opencodeConfig(scratch) })
+      ? sandboxLine(box, dir, agent, {
+          SPECGATE_HOOK_LOG: wiring.hookLog,
+          XDG_CONFIG_HOME: opencodeConfig(scratch),
+        })
       : agent;
     const command = `( ${inside} ) > ${q(sessionFile)} 2> ${q(stderrFile)}`;
 
@@ -523,12 +625,26 @@ function oneRun(
       if (!r.ok) {
         Object.assign(process.env, saved);
         home?.done();
-        return { ...base, ran: true, invalid: `${CLI_CODE}: ${r.missed.join("; ")}`, passed: false };
+        return {
+          ...base,
+          ran: true,
+          invalid: `${CLI_CODE}: ${r.missed.join("; ")}`,
+          passed: false,
+        };
       }
     }
     // sealed-acceptance REQ-761: at L3a another agent, in a folder with no source, writes the acceptance tests first.
     if (level === "L3a") {
-      const w = writeAcceptanceFirst(task, scratch, dir, logDir, box, template, agentEnv, o.timeoutMs);
+      const w = writeAcceptanceFirst(
+        task,
+        scratch,
+        dir,
+        logDir,
+        box,
+        template,
+        agentEnv,
+        o.timeoutMs
+      );
       if (!w.ok) {
         Object.assign(process.env, saved);
         home?.done();
@@ -589,7 +705,8 @@ function oneRun(
     if (controls.length) base.controls = controls;
 
     // The gate's own file, put back to judge a run that worked without it (REQ-719).
-    if (wiring.kept) fs.copyFileSync(path.join(wiring.kept, "AGENTS.md"), path.join(dir, "AGENTS.md"));
+    if (wiring.kept)
+      fs.copyFileSync(path.join(wiring.kept, "AGENTS.md"), path.join(dir, "AGENTS.md"));
 
     base.testNamesReq = testNamesReq(dir, task.requirement, task.hidden);
     const trap = task.verdicts.includes("trap");
@@ -609,18 +726,31 @@ function oneRun(
     }
     if ((task.verdicts.includes("hidden") || trap) && task.hidden) {
       fs.copyFileSync(path.join(task.dir, "hidden", task.hidden), path.join(dir, task.hidden));
-      const hidden = spawnSync(process.execPath, ["--test", task.hidden], { cwd: dir, encoding: "utf8", timeout: 120_000, env: checkEnv() });
+      const hidden = spawnSync(process.execPath, ["--test", task.hidden], {
+        cwd: dir,
+        encoding: "utf8",
+        timeout: 120_000,
+        env: checkEnv(),
+      });
       base.hidden = hidden.status === 0;
-      fs.writeFileSync(path.join(logDir, "hidden.log"), `${hidden.stdout || ""}${hidden.stderr || ""}`);
+      fs.writeFileSync(
+        path.join(logDir, "hidden.log"),
+        `${hidden.stdout || ""}${hidden.stderr || ""}`
+      );
     }
     const verdict = verdictOf(task.verdicts, {
-      gate: base.check, hidden: base.hidden, specChanged: changed, newRequirements: fresh, sourceChanged: source,
+      gate: base.check,
+      hidden: base.hidden,
+      specChanged: changed,
+      newRequirements: fresh,
+      sourceChanged: source,
       controlsChanged: controls,
       codeThere: Boolean(task.code) && fs.existsSync(path.join(dir, task.code!)),
       testAsGiven:
         Boolean(task.test) &&
         fs.existsSync(path.join(dir, task.test!)) &&
-        fs.readFileSync(path.join(dir, task.test!), "utf8") === (git(dir, "show", `${given}:${task.test}`).stdout || ""),
+        fs.readFileSync(path.join(dir, task.test!), "utf8") ===
+          (git(dir, "show", `${given}:${task.test}`).stdout || ""),
     });
     base.passed = verdict.passed;
     base.reason = verdict.reason;
@@ -632,17 +762,30 @@ function oneRun(
   }
 }
 
-function listOf<T extends string>(value: string | undefined, all: readonly T[], fallback: readonly T[], what: string): T[] {
+function listOf<T extends string>(
+  value: string | undefined,
+  all: readonly T[],
+  fallback: readonly T[],
+  what: string
+): T[] {
   if (!value) return [...fallback];
-  const out = value.split(",").map((s) => s.trim()).filter(Boolean);
+  const out = value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
   for (const v of out)
-    if (!(all as readonly string[]).includes(v)) throw new Error(`unknown ${what}: ${v} — there is ${all.join(", ")}`);
+    if (!(all as readonly string[]).includes(v))
+      throw new Error(`unknown ${what}: ${v} — there is ${all.join(", ")}`);
   return out as T[];
 }
 
 const readRuns = (file: string): CompatRun[] =>
   fs.existsSync(file)
-    ? fs.readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l) as CompatRun)
+    ? fs
+        .readFileSync(file, "utf8")
+        .split("\n")
+        .filter(Boolean)
+        .map((l) => JSON.parse(l) as CompatRun)
     : [];
 
 export class CompatCommand extends BaseCommand {
@@ -673,7 +816,16 @@ export class CompatCommand extends BaseCommand {
       const md = matrixMarkdown(tables, date, cheapest);
       fs.writeFileSync(file, md);
       io.emit(
-        { compat: { date, file, rows: matrixOf(runs), tables, cheapest, deliveredWithoutUse: deliveredWithoutUse(tables) } },
+        {
+          compat: {
+            date,
+            file,
+            rows: matrixOf(runs),
+            tables,
+            cheapest,
+            deliveredWithoutUse: deliveredWithoutUse(tables),
+          },
+        },
         () => {
           process.stdout.write(`${md}\n  ✔  ${path.relative(projectDir, file)}\n`);
         }
@@ -686,7 +838,12 @@ export class CompatCommand extends BaseCommand {
       const name = args[1] || "";
       if (name !== "two-function") {
         io.fail({ compat: null }, [
-          { code: "unknown_attack", message: `Unknown attack: ${name || "(none)"}`, severity: "error", fix: "specgate compat attack two-function" },
+          {
+            code: "unknown_attack",
+            message: `Unknown attack: ${name || "(none)"}`,
+            severity: "error",
+            fix: "specgate compat attack two-function",
+          },
         ]);
         process.exitCode = 2;
         return;
@@ -708,8 +865,11 @@ export class CompatCommand extends BaseCommand {
         return;
       }
       io.emit({ compat: { attack: name, ...r } }, () => {
-        for (const x of r.roads) process.stdout.write(`  ✔  ${x.road.padEnd(18)} ${x.outcome} — ${x.by.slice(0, 90)}\n`);
-        process.stdout.write(`  ✔  two-function: ${r.roads.length} roads, each refused or reported\n`);
+        for (const x of r.roads)
+          process.stdout.write(`  ✔  ${x.road.padEnd(18)} ${x.outcome} — ${x.by.slice(0, 90)}\n`);
+        process.stdout.write(
+          `  ✔  two-function: ${r.roads.length} roads, each refused or reported\n`
+        );
       });
       return;
     }
@@ -731,14 +891,21 @@ export class CompatCommand extends BaseCommand {
         return;
       }
       io.emit({ compat: { version: VERSION, gaps } }, () => {
-        process.stdout.write(`  ✔  Specgate ${VERSION} was examined with ${COMPAT_TOOLS.join(", ")}: L0 on deliver is green\n`);
+        process.stdout.write(
+          `  ✔  Specgate ${VERSION} was examined with ${COMPAT_TOOLS.join(", ")}: L0 on deliver is green\n`
+        );
       });
       return;
     }
 
     if (sub !== "run") {
       io.fail({ compat: null }, [
-        { code: "unknown_compat_command", message: `Unknown: compat ${sub}`, severity: "error", fix: "specgate compat run | report | attack two-function" },
+        {
+          code: "unknown_compat_command",
+          message: `Unknown: compat ${sub}`,
+          severity: "error",
+          fix: "specgate compat run | report | attack two-function",
+        },
       ]);
       process.exitCode = 2;
       return;
@@ -751,7 +918,12 @@ export class CompatCommand extends BaseCommand {
     try {
       tools = listOf(flag("--tool"), COMPAT_TOOLS, COMPAT_TOOLS, "tool");
       levels = listOf(flag("--level"), COMPAT_LEVELS, DEFAULT_LEVELS, "level");
-      const ids = listOf(flag("--task"), all.map((t) => t.id), ["deliver"], "task");
+      const ids = listOf(
+        flag("--task"),
+        all.map((t) => t.id),
+        ["deliver"],
+        "task"
+      );
       chosen = ids.map((id) => all.find((t) => t.id === id)!);
     } catch (e) {
       io.fail({ compat: null }, [
@@ -779,7 +951,12 @@ export class CompatCommand extends BaseCommand {
       if (a) agents[t] = a;
       if (m) models[t] = m;
     }
-    const o: RunOptions = { agents, keep, timeoutMs: Number(flag("--timeout") || 900) * 1000, outDir };
+    const o: RunOptions = {
+      agents,
+      keep,
+      timeoutMs: Number(flag("--timeout") || 900) * 1000,
+      outDir,
+    };
     fs.mkdirSync(outDir, { recursive: true });
 
     // compat-sandboxed REQ-738: a tool that approves its own actions reads what the Developer can.
@@ -787,7 +964,12 @@ export class CompatCommand extends BaseCommand {
     const noSandbox = args.includes("--no-sandbox");
     if (sandbox && sandbox !== "sbx") {
       io.fail({ compat: null }, [
-        { code: "compat_bad_flag", message: `unknown sandbox: ${sandbox}`, severity: "error", fix: "--sandbox sbx" },
+        {
+          code: "compat_bad_flag",
+          message: `unknown sandbox: ${sandbox}`,
+          severity: "error",
+          fix: "--sandbox sbx",
+        },
       ]);
       process.exitCode = 2;
       return;
@@ -806,24 +988,33 @@ export class CompatCommand extends BaseCommand {
       return;
     }
     if (!sandbox && noSandbox && exposed.length > 0 && !json)
-      process.stdout.write(`  ▲  --no-sandbox: the agent of ${exposed.join(", ")} can read what you can read on this machine.\n`);
+      process.stdout.write(
+        `  ▲  --no-sandbox: the agent of ${exposed.join(", ")} can read what you can read on this machine.\n`
+      );
 
     // REQ-736: one sandbox per tool and kind for the batch, made when first needed, removed when it ends.
     const boxes = new Map<string, ExamSandbox>();
     let tarball: string | null = null;
     const packed = (): string => {
       if (tarball) return tarball;
-      if (process.env.SPECGATE_COMPAT_TARBALL) return (tarball = process.env.SPECGATE_COMPAT_TARBALL);
+      if (process.env.SPECGATE_COMPAT_TARBALL)
+        return (tarball = process.env.SPECGATE_COMPAT_TARBALL);
       const dest = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-compat-pack-"));
-      const r = spawnSync("npm", ["pack", "--silent", "--ignore-scripts", "--pack-destination", dest], { cwd: ROOT, encoding: "utf8", shell: process.platform === "win32" });
+      const r = spawnSync(
+        "npm",
+        ["pack", "--silent", "--ignore-scripts", "--pack-destination", dest],
+        { cwd: ROOT, encoding: "utf8", shell: process.platform === "win32" }
+      );
       const name = `${r.stdout || ""}`.trim().split("\n").pop() || "";
-      if (r.status !== 0 || !name) throw new Error(`npm pack failed: ${(r.stderr || "").trim().split("\n").slice(-1)[0]}`);
+      if (r.status !== 0 || !name)
+        throw new Error(`npm pack failed: ${(r.stderr || "").trim().split("\n").slice(-1)[0]}`);
       return (tarball = path.join(dest, name));
     };
     const removeBoxes = () => {
       for (const b of boxes.values()) removeSandbox(b);
       boxes.clear();
-      if (tarball && !process.env.SPECGATE_COMPAT_TARBALL) fs.rmSync(path.dirname(tarball), { recursive: true, force: true });
+      if (tarball && !process.env.SPECGATE_COMPAT_TARBALL)
+        fs.rmSync(path.dirname(tarball), { recursive: true, force: true });
     };
     // REQ-736: sandboxes the Developer made, by kind: `--use-sandbox specgate=<name>,bare=<name>`.
     const given: Partial<Record<"specgate" | "bare", string>> = {};
@@ -839,17 +1030,26 @@ export class CompatCommand extends BaseCommand {
         if (!b && given[kind]) {
           b = useSandbox(tool, kind, given[kind]!);
           boxes.set(key, b);
-          if (!json) process.stdout.write(`  ·  ${b.name}: yours, kept — runs go in ${b.workspace}; network ${b.open.join(", ")}\n`);
+          if (!json)
+            process.stdout.write(
+              `  ·  ${b.name}: yours, kept — runs go in ${b.workspace}; network ${b.open.join(", ")}\n`
+            );
         }
         if (!b) {
-          if (!json) process.stdout.write(`  ·  making the sandbox for ${tool} (${kind === "bare" ? "no Specgate" : "with Specgate"})…\n`);
+          if (!json)
+            process.stdout.write(
+              `  ·  making the sandbox for ${tool} (${kind === "bare" ? "no Specgate" : "with Specgate"})…\n`
+            );
           b = makeSandbox(tool, kind, {
             tarball: kind === "specgate" ? packed() : null,
             auth: args.includes(`--auth-${tool}`),
             provider: (models[tool] || CHEAPEST_MODEL[tool]).split("/")[0],
           });
           boxes.set(key, b);
-          if (!json) process.stdout.write(`  ·  ${b.name}: sees ${b.workspace} only; network ${b.open.join(", ")}\n`);
+          if (!json)
+            process.stdout.write(
+              `  ·  ${b.name}: sees ${b.workspace} only; network ${b.open.join(", ")}\n`
+            );
         }
         return b;
       };
@@ -869,7 +1069,9 @@ export class CompatCommand extends BaseCommand {
       const use = r.ran ? `  mcp ${r.mcpCalls ?? 0} refused ${r.refusals ?? 0}` : "";
       process.stdout.write(
         `  ${verdict === "pass" ? "✔" : verdict === "n/a" ? "·" : "✖"}  ${r.tool} ${r.model} ${r.level} ${taskOf(r)} ${r.ran ? `${n}/${count}` : ""}  ${verdict}` +
-          (r.ran ? `  ${r.seconds} s${use}${r.outcome ? `  (${r.outcome})` : ""}${r.reason ? `  — ${r.reason}` : ""}${r.invalid ? `  — ${r.invalid}` : ""}` : "") +
+          (r.ran
+            ? `  ${r.seconds} s${use}${r.outcome ? `  (${r.outcome})` : ""}${r.reason ? `  — ${r.reason}` : ""}${r.invalid ? `  — ${r.invalid}` : ""}`
+            : "") +
           "\n"
       );
     };
@@ -883,12 +1085,23 @@ export class CompatCommand extends BaseCommand {
       toolRuns: for (const task of chosen) {
         for (const level of levels) {
           if (refused()) {
-            if (!json) process.stdout.write(`  ·  ${tool} was stopped after two invalid runs: ${done.filter((r) => r.tool === tool).slice(-1)[0]!.invalid}\n`);
+            if (!json)
+              process.stdout.write(
+                `  ·  ${tool} was stopped after two invalid runs: ${done.filter((r) => r.tool === tool).slice(-1)[0]!.invalid}\n`
+              );
             break toolRuns;
           }
           if (!integrationOf(tool, level)) {
             // The same model as the tool's other runs: a level it has no form for is a cell of its row, not a row of its own.
-            const r = oneRun(tool, level, task, 1, version, models[tool] || (agents[tool] ? "custom" : CHEAPEST_MODEL[tool]), o);
+            const r = oneRun(
+              tool,
+              level,
+              task,
+              1,
+              version,
+              models[tool] || (agents[tool] ? "custom" : CHEAPEST_MODEL[tool]),
+              o
+            );
             fs.appendFileSync(runsFile, `${JSON.stringify(r)}\n`);
             done.push(r);
             say(r, 1, 1);
@@ -909,7 +1122,11 @@ export class CompatCommand extends BaseCommand {
           // REQ-725: the next model only while this cell is not green.
           for (;;) {
             const cell = readRuns(runsFile).filter(
-              (r) => r.tool === tool && r.version === version && r.level === level && taskOf(r) === task.id
+              (r) =>
+                r.tool === tool &&
+                r.version === version &&
+                r.level === level &&
+                taskOf(r) === task.id
             );
             const model = nextModel(tool, cell);
             if (!model || refused()) break;
@@ -920,7 +1137,9 @@ export class CompatCommand extends BaseCommand {
     }
     removeBoxes();
     io.emit({ compat: { runs: done, file: runsFile } }, () => {
-      process.stdout.write(`\n  ➜  specgate compat report   the matrix from .specgate/compat/runs.jsonl\n`);
+      process.stdout.write(
+        `\n  ➜  specgate compat report   the matrix from .specgate/compat/runs.jsonl\n`
+      );
     });
   }
 }

@@ -39,7 +39,11 @@ function cli(dir: string, ...args: string[]) {
   return spawnSync(
     process.execPath,
     [path.join(findCliRoot(__dirname), "bin", "specgate.js"), ...args],
-    { cwd: dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1", SPECGATE_PET: "0", SPECGATE_ASSUME_TTY: "1" } }
+    {
+      cwd: dir,
+      encoding: "utf8",
+      env: { ...process.env, NO_COLOR: "1", SPECGATE_PET: "0", SPECGATE_ASSUME_TTY: "1" },
+    }
   );
 }
 

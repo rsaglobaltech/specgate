@@ -68,7 +68,11 @@ function sh(
   onChunk?: (text: string) => void
 ): Promise<{ code: number; out: string }> {
   return new Promise((resolve) => {
-    const p = spawn(forShell(command), { cwd, shell: true, env: { ...process.env, SPECGATE_EVAL: "1" } });
+    const p = spawn(forShell(command), {
+      cwd,
+      shell: true,
+      env: { ...process.env, SPECGATE_EVAL: "1" },
+    });
     let out = "";
     const take = (d: Buffer) => {
       out += d;
@@ -109,7 +113,9 @@ async function oneRun(
   try {
     fs.cpSync(path.join(examDir, task.fixture), dir, { recursive: true });
     const git = (...a: string[]) =>
-      spawnSync("git", ["-c", "user.email=eval@specgate", "-c", "user.name=specgate eval", ...a], { cwd: dir });
+      spawnSync("git", ["-c", "user.email=eval@specgate", "-c", "user.name=specgate eval", ...a], {
+        cwd: dir,
+      });
     git("init", "-q");
     git("add", "-A");
     git("commit", "-q", "-m", "the task as given", "--allow-empty");
@@ -145,7 +151,9 @@ async function oneRun(
     try {
       const doc = JSON.parse(check.out) as { stages?: Array<{ stage: string; result: string }> };
       stages = (doc.stages || [])
-        .filter((s) => (s.stage === "architecture" || s.stage === "quality") && s.result !== "skipped")
+        .filter(
+          (s) => (s.stage === "architecture" || s.stage === "quality") && s.result !== "skipped"
+        )
         .map((s) => (s.result === "passed" ? 1 : 0));
     } catch {
       /* no answer: no stage measured */
@@ -212,7 +220,9 @@ export class EvalCommand extends BaseCommand {
       else if (a === "--list") listing = true;
       else if (!a.startsWith("-")) positional.push(a);
       else
-        io.usage(NULL_SHAPE, [error("unknown_flag", `Unknown argument for eval: ${a}`, { fix: "specgate eval --help" })]);
+        io.usage(NULL_SHAPE, [
+          error("unknown_flag", `Unknown argument for eval: ${a}`, { fix: "specgate eval --help" }),
+        ]);
     }
     if (listing) return this.list(path.resolve(dirArg), io);
     void this.run(path.resolve(dirArg), positional[0], runsArg, agentArg, io);
@@ -245,7 +255,9 @@ export class EvalCommand extends BaseCommand {
       const doc = (parseYamlLite(examText) || {}) as Record<string, unknown>;
       const skillFile = String(doc.skill || "");
       const skillText = skillFile ? read(path.join(dir, skillFile)) : null;
-      const version = skillText ? crypto.createHash("sha256").update(skillText).digest("hex").slice(0, 12) : null;
+      const version = skillText
+        ? crypto.createHash("sha256").update(skillText).digest("hex").slice(0, 12)
+        : null;
       const tasks = ((Array.isArray(doc.tasks) ? doc.tasks : []) as Task[]).map((t) => ({
         id: String(t.id || ""),
         prompt: String(t.prompt || ""),
@@ -263,17 +275,32 @@ export class EvalCommand extends BaseCommand {
           }
         });
       // Per version, its last exam, against the version before it.
-      const versions: Array<{ version: string; at: string; correct: number; good: number | null; vsPrevious: { correct: string | null; good: string | null } | null }> = [];
+      const versions: Array<{
+        version: string;
+        at: string;
+        correct: number;
+        good: number | null;
+        vsPrevious: { correct: string | null; good: string | null } | null;
+      }> = [];
       for (const h of history) {
         const at = versions.findIndex((v) => v.version === h.version);
-        const row = { version: h.version, at: h.at, correct: h.correct, good: h.good, vsPrevious: null };
+        const row = {
+          version: h.version,
+          at: h.at,
+          correct: h.correct,
+          good: h.good,
+          vsPrevious: null,
+        };
         if (at >= 0) versions.splice(at, 1);
         versions.push(row);
       }
       for (let i = 1; i < versions.length; i += 1) {
         const before = versions[i - 1];
         const now = versions[i];
-        now.vsPrevious = { correct: trend(now.correct, before.correct), good: trend(now.good, before.good) };
+        now.vsPrevious = {
+          correct: trend(now.correct, before.correct),
+          good: trend(now.good, before.good),
+        };
       }
       const runningText = read(path.join(examDir, "running.json"));
       let running: unknown = null;
@@ -290,7 +317,8 @@ export class EvalCommand extends BaseCommand {
       } catch {
         stamps = [];
       }
-      const lastStamp = (running as { stamp?: string } | null)?.stamp || stamps[stamps.length - 1] || null;
+      const lastStamp =
+        (running as { stamp?: string } | null)?.stamp || stamps[stamps.length - 1] || null;
       const lastRuns = lastStamp
         ? (() => {
             let folders: string[] = [];
@@ -335,7 +363,13 @@ export class EvalCommand extends BaseCommand {
         agent: typeof doc.agent === "string" ? doc.agent : null,
         runs: Number(doc.runs) || 3,
         tasks,
-        history: history.map((h) => ({ at: h.at, version: h.version, runs: h.runs, correct: h.correct, good: h.good })),
+        history: history.map((h) => ({
+          at: h.at,
+          version: h.version,
+          runs: h.runs,
+          correct: h.correct,
+          good: h.good,
+        })),
         versions,
         running,
         lastExam: lastStamp,
@@ -348,9 +382,13 @@ export class EvalCommand extends BaseCommand {
       const pct = (x: number | null) => (x === null ? "—" : `${Math.round(x * 100)} %`);
       for (const e of exams) {
         const last = e.versions[e.versions.length - 1];
-        out(`  ${c.bold}${e.skill}${c.reset}  ${ui.muted(`${e.tasks.length} task(s) · version ${e.version ?? "—"}`)}\n`);
+        out(
+          `  ${c.bold}${e.skill}${c.reset}  ${ui.muted(`${e.tasks.length} task(s) · version ${e.version ?? "—"}`)}\n`
+        );
         if (last)
-          out(`     last: correct ${pct(last.correct)} · good ${pct(last.good)}${last.vsPrevious ? ` · ${last.vsPrevious.correct} than before` : ""}\n`);
+          out(
+            `     last: correct ${pct(last.correct)} · good ${pct(last.good)}${last.vsPrevious ? ` · ${last.vsPrevious.correct} than before` : ""}\n`
+          );
         const r = e.running as { runs?: number; ended?: number; correct?: number } | null;
         if (r) out(`     running: ${r.ended}/${r.runs} ended · ${r.correct} correct\n`);
       }
@@ -358,7 +396,13 @@ export class EvalCommand extends BaseCommand {
     });
   }
 
-  private async run(dir: string, skillName: string, runsArg: number | null, agentArg: string | null, io: AgentIo) {
+  private async run(
+    dir: string,
+    skillName: string,
+    runsArg: number | null,
+    agentArg: string | null,
+    io: AgentIo
+  ) {
     const examDir = path.join(dir, "evals", skillName);
     const file = path.join(examDir, "eval.yaml");
     const rel = path.relative(dir, file).split(path.sep).join("/");
@@ -373,22 +417,37 @@ export class EvalCommand extends BaseCommand {
     const doc = (parseYamlLite(fs.readFileSync(file, "utf8")) || {}) as Record<string, unknown>;
     const skillPath = path.join(dir, String(doc.skill || ""));
     const tasks = (Array.isArray(doc.tasks) ? doc.tasks : []) as Task[];
-    const agent = agentArg || (typeof doc.agent === "string" ? doc.agent : "") || readHarnessConfig(dir)?.agent || "";
+    const agent =
+      agentArg ||
+      (typeof doc.agent === "string" ? doc.agent : "") ||
+      readHarnessConfig(dir)?.agent ||
+      "";
     const problems: string[] = [];
-    if (!doc.skill || !fs.existsSync(skillPath)) problems.push(`its skill file (${String(doc.skill || "skill:")}) does not exist`);
+    if (!doc.skill || !fs.existsSync(skillPath))
+      problems.push(`its skill file (${String(doc.skill || "skill:")}) does not exist`);
     if (!agent.includes("{prompt_file}")) problems.push("no agent with {prompt_file}");
     if (!tasks.length) problems.push("it has no tasks");
     for (const t of tasks)
       if (!t?.id || !t.prompt || !t.fixture || !fs.existsSync(path.join(examDir, t.fixture)))
-        problems.push(`task ${t?.id ?? "?"} needs an id, a prompt and a fixture folder that exists`);
+        problems.push(
+          `task ${t?.id ?? "?"} needs an id, a prompt and a fixture folder that exists`
+        );
     for (const t of tasks) {
-      const files = Array.isArray(t?.check_files) ? t.check_files : t?.check_files ? [t.check_files] : [];
+      const files = Array.isArray(t?.check_files)
+        ? t.check_files
+        : t?.check_files
+          ? [t.check_files]
+          : [];
       for (const f of files)
-        if (!fs.existsSync(path.join(examDir, f))) problems.push(`task ${t.id}: its check file ${f} does not exist`);
+        if (!fs.existsSync(path.join(examDir, f)))
+          problems.push(`task ${t.id}: its check file ${f} does not exist`);
     }
     if (problems.length) {
       io.fail(NULL_SHAPE, [
-        error("eval_invalid", `${rel} cannot run: ${problems.join("; ")}.`, { file: rel, fix: "specgate eval --help" }),
+        error("eval_invalid", `${rel} cannot run: ${problems.join("; ")}.`, {
+          file: rel,
+          fix: "specgate eval --help",
+        }),
       ]);
       return;
     }
@@ -405,17 +464,33 @@ export class EvalCommand extends BaseCommand {
     if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "runs/\nrunning.json\n", "utf8");
     // REQ-703: how far the exam got, while it runs.
     const runningFile = path.join(examDir, "running.json");
-    const progress = { started: new Date().toISOString(), stamp, runs: tasks.length * runs, ended: 0, correct: 0 };
-    const writeProgress = () => fs.writeFileSync(runningFile, `${JSON.stringify(progress)}\n`, "utf8");
+    const progress = {
+      started: new Date().toISOString(),
+      stamp,
+      runs: tasks.length * runs,
+      ended: 0,
+      correct: 0,
+    };
+    const writeProgress = () =>
+      fs.writeFileSync(runningFile, `${JSON.stringify(progress)}\n`, "utf8");
     writeProgress();
     const jobs = tasks.flatMap((t) =>
-      Array.from({ length: runs }, (_, n) => () =>
-        oneRun(examDir, t, skill, agent, reviewer, path.join(runsDir, stamp, `${t.id}-${n + 1}`)).then((r) => {
-          progress.ended += 1;
-          if (r.correct) progress.correct += 1;
-          writeProgress();
-          return { task: t.id, r };
-        })
+      Array.from(
+        { length: runs },
+        (_, n) => () =>
+          oneRun(
+            examDir,
+            t,
+            skill,
+            agent,
+            reviewer,
+            path.join(runsDir, stamp, `${t.id}-${n + 1}`)
+          ).then((r) => {
+            progress.ended += 1;
+            if (r.correct) progress.correct += 1;
+            writeProgress();
+            return { task: t.id, r };
+          })
       )
     );
     let done: Array<{ task: string; r: RunResult & { dir: string } }>;
@@ -431,7 +506,10 @@ export class EvalCommand extends BaseCommand {
     } catch {
       /* no runs folder */
     }
-    const byTask = tasks.map((t) => ({ id: t.id, runs: done.filter((d) => d.task === t.id).map((d) => d.r) }));
+    const byTask = tasks.map((t) => ({
+      id: t.id,
+      runs: done.filter((d) => d.task === t.id).map((d) => d.r),
+    }));
     const score = examScore(byTask);
     const tasksOut = byTask.map((t) => ({ ...taskScore(t.id, t.runs), results: t.runs }));
 
@@ -462,16 +540,34 @@ export class EvalCommand extends BaseCommand {
 
     const pct = (x: number | null) => (x === null ? "—" : `${Math.round(x * 100)} %`);
     io.emit(
-      { eval: { skill: skillName, version, runs, correct: score.correct, good: score.good, tasks: tasksOut, compared } },
+      {
+        eval: {
+          skill: skillName,
+          version,
+          runs,
+          correct: score.correct,
+          good: score.good,
+          tasks: tasksOut,
+          compared,
+        },
+      },
       () => {
         const out = (s: string) => process.stdout.write(s);
         out(ui.header("eval", `${skillName} · version ${version}`));
         for (const t of tasksOut)
-          out(`  ${c.bold}${t.id.padEnd(20)}${c.reset}${String(t.correct)}/${t.runs} correct  ${ui.muted(`good ${pct(t.good)}`)}\n`);
-        out(`\n  ${c.bold}correct ${pct(score.correct)}${c.reset}  ${ui.muted(`good ${pct(score.good)}`)}\n`);
+          out(
+            `  ${c.bold}${t.id.padEnd(20)}${c.reset}${String(t.correct)}/${t.runs} correct  ${ui.muted(`good ${pct(t.good)}`)}\n`
+          );
+        out(
+          `\n  ${c.bold}correct ${pct(score.correct)}${c.reset}  ${ui.muted(`good ${pct(score.good)}`)}\n`
+        );
         if (compared)
-          out(`  ${ui.muted(`against ${compared.version}: correct ${compared.correct} (${pct(compared.from)} → ${pct(score.correct)}), good ${compared.good ?? "—"}`)}\n`);
-        out(`\n  ${ui.muted(`kept in ${path.relative(dir, historyFile).split(path.sep).join("/")}`)}\n\n`);
+          out(
+            `  ${ui.muted(`against ${compared.version}: correct ${compared.correct} (${pct(compared.from)} → ${pct(score.correct)}), good ${compared.good ?? "—"}`)}\n`
+          );
+        out(
+          `\n  ${ui.muted(`kept in ${path.relative(dir, historyFile).split(path.sep).join("/")}`)}\n\n`
+        );
       }
     );
   }

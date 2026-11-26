@@ -50,7 +50,9 @@ export class TrustCommand extends BaseCommand {
       else if (!a.startsWith("-")) positional.push(a);
       else
         io.usage(NULL_SHAPE, [
-          error("unknown_flag", `Unknown argument for trust: ${a}`, { fix: "specgate trust --help" }),
+          error("unknown_flag", `Unknown argument for trust: ${a}`, {
+            fix: "specgate trust --help",
+          }),
         ]);
     }
     const dir = path.resolve(dirArg);
@@ -123,10 +125,14 @@ export class TrustCommand extends BaseCommand {
     }
     if (row.level >= MAX_LEVEL) {
       io.fail(NULL_SHAPE, [
-        error("trust_at_top", `${capability} is at level ${row.level}, the highest a module can have yet.`, {
-          target: capability,
-          fix: "Level 6, merging alone, comes in a later change.",
-        }),
+        error(
+          "trust_at_top",
+          `${capability} is at level ${row.level}, the highest a module can have yet.`,
+          {
+            target: capability,
+            fix: "Level 6, merging alone, comes in a later change.",
+          }
+        ),
       ]);
       return;
     }
@@ -173,10 +179,15 @@ export class TrustCommand extends BaseCommand {
       ].join("\n"),
     };
     fs.mkdirSync(changeDir, { recursive: true });
-    for (const [f, text] of Object.entries(files)) fs.writeFileSync(path.join(changeDir, f), text, "utf8");
+    for (const [f, text] of Object.entries(files))
+      fs.writeFileSync(path.join(changeDir, f), text, "utf8");
     const rel = path.relative(dir, changeDir).split(path.sep).join("/");
     io.emit(
-      { trust: { promote: { capability, from: row.level, to, change: id, path: rel, evidence: row } } },
+      {
+        trust: {
+          promote: { capability, from: row.level, to, change: id, path: rel, evidence: row },
+        },
+      },
       () => {
         process.stdout.write(
           ui.header("trust promote", capability) +

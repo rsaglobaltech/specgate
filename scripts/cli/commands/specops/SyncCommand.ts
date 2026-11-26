@@ -283,7 +283,11 @@ function resolvePackRootForChanges(
  * project's seeded copy — the merge base of every seeded file. Empty when it
  * cannot be rendered; the copy is then the base, as before.
  */
-export function previousRender(entry: PackEntry, args: SyncArgs, projectDir: string): Map<string, string> {
+export function previousRender(
+  entry: PackEntry,
+  args: SyncArgs,
+  projectDir: string
+): Map<string, string> {
   const out = new Map<string, string>();
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specops-sync-base-"));
   try {
@@ -310,7 +314,8 @@ export function duplicateRequirementIds(projectDir: string): string[] {
   const files = [path.join(projectDir, "spec.md")];
   const caps = path.join(projectDir, "docs", "specs", "capabilities");
   try {
-    for (const d of fs.readdirSync(caps, { withFileTypes: true })) if (d.isDirectory()) files.push(path.join(caps, d.name, "spec.md"));
+    for (const d of fs.readdirSync(caps, { withFileTypes: true }))
+      if (d.isDirectory()) files.push(path.join(caps, d.name, "spec.md"));
   } catch {
     /* no capabilities */
   }
@@ -322,9 +327,13 @@ export function duplicateRequirementIds(projectDir: string): string[] {
     } catch {
       continue;
     }
-    for (const m of text.matchAll(/^#{2,4}\s+(?:Requirement:\s*)?(REQ-\d+)\b/gm)) seen.set(m[1]!, (seen.get(m[1]!) || 0) + 1);
+    for (const m of text.matchAll(/^#{2,4}\s+(?:Requirement:\s*)?(REQ-\d+)\b/gm))
+      seen.set(m[1]!, (seen.get(m[1]!) || 0) + 1);
   }
-  return [...seen].filter(([, n]) => n > 1).map(([id]) => id).sort();
+  return [...seen]
+    .filter(([, n]) => n > 1)
+    .map(([id]) => id)
+    .sort();
 }
 
 function syncPack(entry: PackEntry, args: SyncArgs, projectDir: string) {
@@ -352,7 +361,8 @@ function syncPack(entry: PackEntry, args: SyncArgs, projectDir: string) {
     // sync-keeps-local REQ-774: a seeded file's base is what the recorded
     // version renders over the same copy — not the copy itself, which
     // `expand` rewrites as it merges the pack in.
-    const previous = seeded.files.size > 0 ? previousRender(entry, args, projectDir) : new Map<string, string>();
+    const previous =
+      seeded.files.size > 0 ? previousRender(entry, args, projectDir) : new Map<string, string>();
 
     const renderedFiles = walkFiles(tmpDir);
     const counts: OutcomeCounts = {};
@@ -372,7 +382,7 @@ function syncPack(entry: PackEntry, args: SyncArgs, projectDir: string) {
         projectDir,
         entry.pack_id,
         args,
-        seed === null ? null : previous.get(rel) ?? seed
+        seed === null ? null : (previous.get(rel) ?? seed)
       );
       counts[outcome] = (counts[outcome] || 0) + 1;
       if (CONFLICT_OUTCOMES.has(outcome)) conflictFiles.push({ rel, outcome });

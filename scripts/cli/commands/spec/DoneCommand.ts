@@ -1,6 +1,12 @@
 import { readGatePolicy } from "../../../lib/gate-policy";
 import { elsewhereFix, failingElsewhere } from "../../../lib/tests-elsewhere";
-import { endStepRecord, keepStepsReview, stepsVerdict, STEPS_FINDING, STEPS_FIX } from "../../../lib/step-seal";
+import {
+  endStepRecord,
+  keepStepsReview,
+  stepsVerdict,
+  STEPS_FINDING,
+  STEPS_FIX,
+} from "../../../lib/step-seal";
 import { gitIdentity, missingApprovals } from "../../../lib/approvals";
 import { scenariosOf } from "./ScenariosCommand";
 import { keepEvidence, mustReproduce, readRed } from "../../../lib/evidence";
@@ -119,7 +125,11 @@ function stepsRefusal(
   const v = stepsVerdict(projectDir, id);
   if (!v.recorded || v.changed.length === 0) return null;
   if (!opts.stepsReviewed)
-    return { code: "steps_changed_after_code", message: STEPS_FINDING(id, v.changed), fix: STEPS_FIX(id) };
+    return {
+      code: "steps_changed_after_code",
+      message: STEPS_FINDING(id, v.changed),
+      fix: STEPS_FIX(id),
+    };
   // A person's word is said at a terminal: a tool that runs its own commands has none.
   if (!process.stdin.isTTY && !process.env.SPECGATE_ASSUME_TTY)
     return {
@@ -413,10 +423,19 @@ export class DoneCommand extends BaseCommand {
 
       const again = `specgate ${verb} ${id}`;
       // recover-guidance REQ-787: only another requirement's test is red — say so, and that repairing it is in scope.
-      const others = step.stage === "tests" ? failingElsewhere(`${run.stdout || ""}${run.stderr || ""}`, [id]) : [];
+      const others =
+        step.stage === "tests"
+          ? failingElsewhere(`${run.stdout || ""}${run.stderr || ""}`, [id])
+          : [];
       if (others.length) {
         const e = elsewhereFix(others, [id], again);
-        io.fail(NULL_SHAPE, [...findings, error("done_tests_failed", `not marked ${opts.status}: ${e.message}.`, { target: id, fix: e.fix })]);
+        io.fail(NULL_SHAPE, [
+          ...findings,
+          error("done_tests_failed", `not marked ${opts.status}: ${e.message}.`, {
+            target: id,
+            fix: e.fix,
+          }),
+        ]);
       }
       io.fail(NULL_SHAPE, [
         ...findings,
@@ -504,20 +523,31 @@ export class DoneCommand extends BaseCommand {
     }
 
     const updated = result.updated;
-    io.emit({ requirement: { id, status: opts.status, rowsUpdated: updated, ...(stepsSaid ? { steps: stepsSaid } : {}) } }, () =>
-      process.stdout.write(
-        "\n" +
-          ui.ok(
-            `${c.bold}${id}${c.reset} ${ui.sym.arrow} ${c.ok}${c.bold}${opts.status}${c.reset} ` +
-              ui.muted(`(${updated} row${updated > 1 ? "s" : ""} updated)`)
-          ) +
-          // gate-runs-scenarios REQ-735: said plainly, at each delivery, what the gate did not check.
-          (gated && readGatePolicy(projectDir).bdd !== "required" && scenariosOf(projectDir, id).length > 0
-            ? `  ${ui.muted(`·  ${id} is delivered on a test that names it: its scenarios were not run. specgate migrate bdd makes the gate run them.`)}\n`
-            : "") +
-          (stepsSaid ? `  ${ui.muted(`·  ${stepsSaid}`)}\n` : "") +
-          (plan.testsUnverified ? "" : nextAfter(queue().items, id, owner, view))
-      )
+    io.emit(
+      {
+        requirement: {
+          id,
+          status: opts.status,
+          rowsUpdated: updated,
+          ...(stepsSaid ? { steps: stepsSaid } : {}),
+        },
+      },
+      () =>
+        process.stdout.write(
+          "\n" +
+            ui.ok(
+              `${c.bold}${id}${c.reset} ${ui.sym.arrow} ${c.ok}${c.bold}${opts.status}${c.reset} ` +
+                ui.muted(`(${updated} row${updated > 1 ? "s" : ""} updated)`)
+            ) +
+            // gate-runs-scenarios REQ-735: said plainly, at each delivery, what the gate did not check.
+            (gated &&
+            readGatePolicy(projectDir).bdd !== "required" &&
+            scenariosOf(projectDir, id).length > 0
+              ? `  ${ui.muted(`·  ${id} is delivered on a test that names it: its scenarios were not run. specgate migrate bdd makes the gate run them.`)}\n`
+              : "") +
+            (stepsSaid ? `  ${ui.muted(`·  ${stepsSaid}`)}\n` : "") +
+            (plan.testsUnverified ? "" : nextAfter(queue().items, id, owner, view))
+        )
     );
 
     // Said out loud, after the tick, because this is the command that writes
@@ -666,11 +696,18 @@ export class DoneCommand extends BaseCommand {
             results.set(id, {
               ok: false,
               code: "done_tests_failed",
-              message: others.length ? elsewhereFix(others, passing, `specgate ${this.verb} ${passing.join(" ")}`).message : "the project's tests failed",
+              message: others.length
+                ? elsewhereFix(others, passing, `specgate ${this.verb} ${passing.join(" ")}`)
+                    .message
+                : "the project's tests failed",
             });
           }
           if (others.length && !opts.json)
-            process.stderr.write(indent(elsewhereFix(others, passing, `specgate ${this.verb} ${passing.join(" ")}`).fix) + "\n\n");
+            process.stderr.write(
+              indent(
+                elsewhereFix(others, passing, `specgate ${this.verb} ${passing.join(" ")}`).fix
+              ) + "\n\n"
+            );
         }
       }
     }
@@ -680,7 +717,8 @@ export class DoneCommand extends BaseCommand {
       for (const id of ids.filter((x) => results.get(x)!.ok)) {
         const change = view ? view.requirements.find((r) => r.id === id)?.change : undefined;
         const unapproved = approvalRefusal(projectDir, change);
-        if (unapproved) results.set(id, { ok: false, code: unapproved.code, message: unapproved.message });
+        if (unapproved)
+          results.set(id, { ok: false, code: unapproved.code, message: unapproved.message });
       }
 
     // REQ-662: with executable scenarios required, each requirement's own must pass.

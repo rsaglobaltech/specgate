@@ -85,6 +85,8 @@ function expand(projectDir: string, id: string) {
     "PROJECT_SLUG=guard",
     "--var",
     "DOMAIN=guard",
+    // Several packs go into one project with no .specops.lock: REQ-791 refuses the second without it.
+    "--force",
   ]);
   assert.equal(r.status, 0, `${id}: ${r.stdout}${r.stderr}`);
 }

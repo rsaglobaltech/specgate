@@ -15,13 +15,16 @@ const { writerCopy, takeAcceptance, WRITER_PATHS } = require("../../scripts/lib/
 const { readAcceptanceSeals } = require("../../scripts/lib/acceptance");
 const { integrationOf, COMPAT_LEVELS } = require("../../packages/core/src/domain/Compat");
 
-const ROOT_DIR = path.resolve(__dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, ""));
+const ROOT_DIR = path.resolve(
+  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
+);
 const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 const FIXTURE = path.join(ROOT_DIR, "compat", "tasks", "trap-scenarios", "fixture");
 
 const made: string[] = [];
 test.after(() => {
-  for (const d of made) fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  for (const d of made)
+    fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 });
 const tmp = (p: string) => {
   const d = fs.mkdtempSync(path.join(os.tmpdir(), p));
@@ -32,8 +35,18 @@ const tmp = (p: string) => {
 test("REQ-761 SCN-761a: the attack replayed — every road refused by the guard or reported by the judge", () => {
   const r = twoFunctionAttack(FIXTURE);
   assert.equal(r.passed, true, JSON.stringify(r.roads, null, 2));
-  const by = Object.fromEntries(r.roads.map((x: { road: string; outcome: string }) => [x.road, x.outcome]));
-  for (const road of ["write tool", "edit tool", "apply_patch", "shell heredoc", "shell sed -i", "shell node -e", "git checkout"])
+  const by = Object.fromEntries(
+    r.roads.map((x: { road: string; outcome: string }) => [x.road, x.outcome])
+  );
+  for (const road of [
+    "write tool",
+    "edit tool",
+    "apply_patch",
+    "shell heredoc",
+    "shell sed -i",
+    "shell node -e",
+    "git checkout",
+  ])
     assert.equal(by[road], "refused", road);
   // The road no hook sees is the judge's.
   assert.equal(by["unhooked process"], "reported");
@@ -47,11 +60,15 @@ test("REQ-761: with nothing sealed the same attack gets through — the test can
 
 test("REQ-761 SCN-761a: specgate compat attack two-function passes", () => {
   const dir = tmp("specgate-attack-cli-");
-  const run = spawnSync(process.execPath, [CLI, "compat", "attack", "two-function", "--json", "--project-dir", dir], {
-    cwd: dir,
-    encoding: "utf8",
-    env: { ...process.env, NO_COLOR: "1" },
-  });
+  const run = spawnSync(
+    process.execPath,
+    [CLI, "compat", "attack", "two-function", "--json", "--project-dir", dir],
+    {
+      cwd: dir,
+      encoding: "utf8",
+      env: { ...process.env, NO_COLOR: "1" },
+    }
+  );
   assert.equal(run.status, 0, run.stdout + run.stderr);
   const doc = JSON.parse(run.stdout.slice(run.stdout.indexOf("{")));
   const compat = doc.compat ?? doc.data?.compat ?? doc;
@@ -64,7 +81,9 @@ test("REQ-761 SCN-761b: the writer sees no source — spec, features and design,
   writerCopy(FIXTURE, writer);
   assert.ok(fs.existsSync(path.join(writer, "spec.md")));
   assert.ok(fs.existsSync(path.join(writer, "features", "fees", "REQ-002.feature")));
-  assert.ok(fs.existsSync(path.join(writer, "docs", "specs", "changes", "draft-fees", "design.md")));
+  assert.ok(
+    fs.existsSync(path.join(writer, "docs", "specs", "changes", "draft-fees", "design.md"))
+  );
   assert.ok(!fs.existsSync(path.join(writer, "src")));
   assert.ok(!fs.existsSync(path.join(writer, "test")));
   assert.ok(!WRITER_PATHS.some((p: string) => /^(src|test|tests)\b/.test(p)));
@@ -97,10 +116,15 @@ test("REQ-761: what the writer lists comes back sealed; a listed src/ file is re
 
 test("REQ-761: L3a is a level, wired as L3", () => {
   assert.ok(COMPAT_LEVELS.includes("L3a"));
-  for (const tool of ["claude", "codex", "opencode"]) assert.deepEqual(integrationOf(tool, "L3a"), integrationOf(tool, "L3"));
+  for (const tool of ["claude", "codex", "opencode"])
+    assert.deepEqual(integrationOf(tool, "L3a"), integrationOf(tool, "L3"));
   for (const id of ["trap", "trap-scenarios"]) {
-    const task = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "compat", "tasks", id, "task.json"), "utf8"));
+    const task = JSON.parse(
+      fs.readFileSync(path.join(ROOT_DIR, "compat", "tasks", id, "task.json"), "utf8")
+    );
     assert.ok(task.acceptance?.kind && task.acceptance?.cmd, id);
   }
-  assert.ok(fs.readFileSync(path.join(ROOT_DIR, "compat", "writer-prompt.md"), "utf8").includes("{kind}"));
+  assert.ok(
+    fs.readFileSync(path.join(ROOT_DIR, "compat", "writer-prompt.md"), "utf8").includes("{kind}")
+  );
 });

@@ -383,7 +383,10 @@ test("REQ-727 SCN-727a: the plugin is the definition OpenCode 2 loads", () => {
     f.path.split(path.sep).join("/").endsWith(".opencode/plugins/specgate/index.js")
   ).contents;
   assert.match(plugin, /import \{ Plugin \} from "@opencode\/plugin";/);
-  assert.match(plugin, /export default Plugin\.define\(\{ id: "specgate", setup: \(ctx\) => setupV2\(ctx\) \}\);/);
+  assert.match(
+    plugin,
+    /export default Plugin\.define\(\{ id: "specgate", setup: \(ctx\) => setupV2\(ctx\) \}\);/
+  );
   assert.doesNotMatch(plugin, /export const Specgate/);
 });
 
@@ -392,8 +395,15 @@ test("REQ-727 SCN-727b: the plugin an earlier Specgate generated is taken away, 
   try {
     const old = path.join(root, ".opencode", "plugin", "specgate.js");
     fs.mkdirSync(path.dirname(old), { recursive: true });
-    fs.writeFileSync(old, `${agentsInit.OPENCODE_PLUGIN_MARK}\nexport const Specgate = async () => ({});\n`);
-    const r = spawnSync(process.execPath, [path.join(ROOT_DIR, "bin", "specgate.js"), "agents", "init", "--tool", "opencode-plugin"], { cwd: root, encoding: "utf8" });
+    fs.writeFileSync(
+      old,
+      `${agentsInit.OPENCODE_PLUGIN_MARK}\nexport const Specgate = async () => ({});\n`
+    );
+    const r = spawnSync(
+      process.execPath,
+      [path.join(ROOT_DIR, "bin", "specgate.js"), "agents", "init", "--tool", "opencode-plugin"],
+      { cwd: root, encoding: "utf8" }
+    );
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.equal(fs.existsSync(old), false, "the generated v1 plugin is still there");
     assert.ok(fs.existsSync(path.join(root, ".opencode", "plugins", "specgate", "index.js")));
@@ -455,17 +465,32 @@ test("REQ-728 SCN-728a SCN-728c: on OpenCode 2, code before its test is refused 
   try {
     const file = path.join(root, "src/core/map/scan.ts");
     await assert.rejects(
-      async () => v2.hooks["tool.execute.before"]!({ tool: "write", input: { path: file, content: "x" } }),
+      async () =>
+        v2.hooks["tool.execute.before"]!({ tool: "write", input: { path: file, content: "x" } }),
       /write the test for REQ-311 first/
     );
     await assert.rejects(
-      async () => v2.hooks["tool.execute.before"]!({ tool: "edit", input: { path: file, oldString: "a", newString: "b" } }),
+      async () =>
+        v2.hooks["tool.execute.before"]!({
+          tool: "edit",
+          input: { path: file, oldString: "a", newString: "b" },
+        }),
       /write the test for REQ-311 first/
     );
-    await v2.hooks["tool.execute.before"]!({ tool: "write", input: { path: "test/module-map.test.ts", content: "x" } });
+    await v2.hooks["tool.execute.before"]!({
+      tool: "write",
+      input: { path: "test/module-map.test.ts", content: "x" },
+    });
     await v2.hooks["tool.execute.before"]!({ tool: "shell", input: { command: "npm test" } });
-    const lines = fs.readFileSync(log, "utf8").trim().split("\n").map((l) => JSON.parse(l));
-    assert.deepEqual(lines.map((l) => l.decision), ["refused", "refused", "allowed"]);
+    const lines = fs
+      .readFileSync(log, "utf8")
+      .trim()
+      .split("\n")
+      .map((l) => JSON.parse(l));
+    assert.deepEqual(
+      lines.map((l) => l.decision),
+      ["refused", "refused", "allowed"]
+    );
     assert.equal(lines[0].file, file);
 
     const event = { system: [{ type: "text", text: "base" }] };
@@ -484,10 +509,16 @@ test("REQ-728 SCN-728b: on OpenCode 2 the gate's findings are sent once per mess
   const stop = await bridge.setupV2(v2.ctx, {
     env: {},
     runValidate: () =>
-      red ? { ok: false, diagnostics: [{ code: "TDD-1", message: "REQ-311 has no test", fix: "write it" }] } : { ok: true, diagnostics: [] },
+      red
+        ? {
+            ok: false,
+            diagnostics: [{ code: "TDD-1", message: "REQ-311 has no test", fix: "write it" }],
+          }
+        : { ok: true, diagnostics: [] },
   });
   try {
-    const stopped = () => v2.emit({ type: "session.execution.succeeded", data: { sessionID: "s1" } });
+    const stopped = () =>
+      v2.emit({ type: "session.execution.succeeded", data: { sessionID: "s1" } });
     await v2.hooks["session.prompt"]!({ sessionID: "s1", messageID: "m1" });
     await stopped();
     assert.equal(v2.sent.length, 1);

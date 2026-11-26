@@ -226,7 +226,10 @@ for (const command of SURFACE) {
     // walkthrough-fixes-3 REQ-792: several positionals, in order — `config set`'s key and value.
     const argNames = argName ? argName.split(/\s+/).filter(Boolean) : [];
     const argProp = argNames
-      .map((n) => `,\n      ${n}: { type: "string", description: ${JSON.stringify(`The <${n}> argument of \`specgate ${cmdString}\`.`)} }`)
+      .map(
+        (n) =>
+          `,\n      ${n}: { type: "string", description: ${JSON.stringify(`The <${n}> argument of \`specgate ${cmdString}\`.`)} }`
+      )
       .join("");
     const required = JSON.stringify(["projectDir", ...argNames]).replace(/,/g, ", ");
     // `change *` is how a specification is edited on purpose; refusing it would

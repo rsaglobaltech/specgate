@@ -45,7 +45,12 @@ function filesChangedSince(root: string, since: number, rel = "", out: string[] 
 }
 
 /** Write the evidence of `id`'s delivery; returns its folder, relative to the project. */
-export function keepEvidence(projectDir: string, id: string, run: ScenarioRun, at = new Date()): string {
+export function keepEvidence(
+  projectDir: string,
+  id: string,
+  run: ScenarioRun,
+  at = new Date()
+): string {
   const root = path.join(projectDir, EVIDENCE_DIR);
   const dir = path.join(root, id);
   // The red run of a reproduced bug (REQ-683) stays; the last green replaces the one before.
@@ -54,7 +59,11 @@ export function keepEvidence(projectDir: string, id: string, run: ScenarioRun, a
   const red = readRed(projectDir, id);
   const ignore = path.join(root, ".gitignore");
   if (!fs.existsSync(ignore))
-    fs.writeFileSync(ignore, "# Screenshots, traces and videos: kept here, not in git (REQ-680).\n*/artifacts/\n", "utf8");
+    fs.writeFileSync(
+      ignore,
+      "# Screenshots, traces and videos: kept here, not in git (REQ-680).\n*/artifacts/\n",
+      "utf8"
+    );
 
   const results = path.join(projectDir, RESULTS_DIR);
   const artifacts = filesChangedSince(results, run.startedAt);
@@ -105,7 +114,13 @@ export function keepRed(projectDir: string, id: string, run: ScenarioRun, at = n
   fs.writeFileSync(
     path.join(dir, "red.json"),
     JSON.stringify(
-      { requirement: id, command: run.command, exitCode: run.exitCode, ms: run.ms, at: at.toISOString() },
+      {
+        requirement: id,
+        command: run.command,
+        exitCode: run.exitCode,
+        ms: run.ms,
+        at: at.toISOString(),
+      },
       null,
       2
     ) + "\n",

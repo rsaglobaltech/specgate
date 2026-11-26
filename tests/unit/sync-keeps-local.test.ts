@@ -11,15 +11,23 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
-const ROOT_DIR = path.resolve(__dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, ""));
+const ROOT_DIR = path.resolve(
+  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
+);
 const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 const FIXTURE = path.join(ROOT_DIR, "tests", "fixtures", "pack-upgrade");
 
 const made: string[] = [];
 test.after(() => {
-  for (const d of made) fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  for (const d of made)
+    fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 });
-const GIT_ENV = { GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@t.invalid", GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@t.invalid" };
+const GIT_ENV = {
+  GIT_AUTHOR_NAME: "t",
+  GIT_AUTHOR_EMAIL: "t@t.invalid",
+  GIT_COMMITTER_NAME: "t",
+  GIT_COMMITTER_EMAIL: "t@t.invalid",
+};
 const git = (cwd: string, ...args: string[]) => {
   const r = spawnSync("git", args, { cwd, encoding: "utf8", env: { ...process.env, ...GIT_ENV } });
   assert.equal(r.status, 0, `git ${args.join(" ")}: ${r.stderr}`);
@@ -47,7 +55,14 @@ function packRepo(root: string): string {
   return repo;
 }
 
-const VARS = ["--var", "PROJECT_NAME=Smart Parking", "--var", "PROJECT_SLUG=smart-parking", "--var", "DOMAIN=parking operations"];
+const VARS = [
+  "--var",
+  "PROJECT_NAME=Smart Parking",
+  "--var",
+  "PROJECT_SLUG=smart-parking",
+  "--var",
+  "DOMAIN=parking operations",
+];
 
 test("REQ-774 SCN-774a: a delivered requirement stays delivered across a pack upgrade", () => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "specgate-sync-keeps-")));
@@ -63,7 +78,19 @@ test("REQ-774 SCN-774a: a delivered requirement stays delivered across a pack up
   git(project, "init", "-q");
   git(project, "add", "-A");
   git(project, "commit", "-qm", "init");
-  const add = cli(project, ["specops", "add", "--pack-repo", repo, "--pack-version", "v0.1.0", "--pack", "backend", "--cache-dir", cache, ...VARS]);
+  const add = cli(project, [
+    "specops",
+    "add",
+    "--pack-repo",
+    repo,
+    "--pack-version",
+    "v0.1.0",
+    "--pack",
+    "backend",
+    "--cache-dir",
+    cache,
+    ...VARS,
+  ]);
   assert.equal(add.status, 0, add.stdout + add.stderr);
 
   // The team delivered REQ-001: `apply` wrote its status on the trace comment.
@@ -71,12 +98,30 @@ test("REQ-774 SCN-774a: a delivered requirement stays delivered across a pack up
   const before = fs.readFileSync(specFile, "utf8");
   const block = before.slice(before.indexOf("REQ-001"));
   assert.match(block, /<!-- specgate:trace /);
-  fs.writeFileSync(specFile, before.replace(/(REQ-001[^\n]*\n\n<!-- specgate:trace )/, "$1status=Implemented "));
+  fs.writeFileSync(
+    specFile,
+    before.replace(/(REQ-001[^\n]*\n\n<!-- specgate:trace )/, "$1status=Implemented ")
+  );
   assert.match(fs.readFileSync(specFile, "utf8"), /status=Implemented/);
   git(project, "add", "-A");
   git(project, "commit", "-qm", "delivered REQ-001");
 
-  const sync = cli(project, ["specops", "sync", "--pack-version", "v0.2.0", "--cache-dir", cache, "--var", "STACK=Node 20", "--var", "API_STYLE=REST", "--var", "TESTING=node:test", "--var", "LANG=en"]);
+  const sync = cli(project, [
+    "specops",
+    "sync",
+    "--pack-version",
+    "v0.2.0",
+    "--cache-dir",
+    cache,
+    "--var",
+    "STACK=Node 20",
+    "--var",
+    "API_STYLE=REST",
+    "--var",
+    "TESTING=node:test",
+    "--var",
+    "LANG=en",
+  ]);
   assert.equal(sync.status, 0, sync.stdout + sync.stderr);
   const after = fs.readFileSync(specFile, "utf8");
   const req001 = after.slice(after.indexOf("## REQ-001"), after.indexOf("## REQ-002"));

@@ -70,7 +70,11 @@ export function lessonsOf(notes: readonly NoteRef[], failures: readonly GateFail
   const found: Array<Omit<Lesson, "id" | "next">> = [];
   for (const g of groups.values()) {
     if (new Set(g.map((n) => n.change)).size < 2) continue;
-    found.push({ kind: "review", count: g.length, evidence: [...g].sort((a, b) => a.date.localeCompare(b.date)) });
+    found.push({
+      kind: "review",
+      count: g.length,
+      evidence: [...g].sort((a, b) => a.date.localeCompare(b.date)),
+    });
   }
 
   // The harness: a stage failed in three attempts or more, over two requirements or more.

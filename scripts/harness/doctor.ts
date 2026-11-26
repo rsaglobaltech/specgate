@@ -108,7 +108,12 @@ export function routesOf(
       category: (req as { category?: string }).category,
     });
     const agent = (picked && routing.agents[picked]) || routing.defaultAgent;
-    return { requirement: id, module, profile: picked && routing.agents[picked] ? picked : null, agent };
+    return {
+      requirement: id,
+      module,
+      profile: picked && routing.agents[picked] ? picked : null,
+      agent,
+    };
   });
 }
 
@@ -153,6 +158,7 @@ function onPath(program: string): boolean {
 function lastLine(text: string): string {
   const lines = text
     .split(/\r?\n/)
+    // eslint-disable-next-line no-control-regex -- strips the terminal colour codes
     .map((l) => l.replace(/\x1b\[[0-9;]*m/g, "").trim())
     .filter(Boolean);
   return lines[lines.length - 1] || "";
@@ -175,7 +181,8 @@ export function checkAgent(
       fix: `Install ${program}, or point the profile at an agent that is.`,
     };
   }
-  if (!opts.probe) return { agent, program, installed: true, answered: null, reason: null, fix: null };
+  if (!opts.probe)
+    return { agent, program, installed: true, answered: null, reason: null, fix: null };
 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-doctor-"));
   const promptFile = path.join(dir, "probe.md");
@@ -266,7 +273,11 @@ export function agentLabel(command: string): string {
  */
 export function agentPreflight(
   projectDir: string,
-  settings: { agent?: string; profileRules?: Array<{ name: string; match: Record<string, string> }>; profileAgents?: Record<string, string> },
+  settings: {
+    agent?: string;
+    profileRules?: Array<{ name: string; match: Record<string, string> }>;
+    profileAgents?: Record<string, string>;
+  },
   pending: readonly HarnessRequirement[],
   /** The run's own deadline, ms: the probe waits no longer than it. */
   runTimeoutMs = PROBE_TIMEOUT_MS
@@ -320,13 +331,14 @@ export function main(argv: string[]): void {
     else if (a === "--no-probe") probe = false;
     else if (a === "--json") continue;
     else {
-      io.usage(shape, [error("doctor_usage", `Unknown argument ${a}.`, { fix: "specgate harness doctor --help" })]);
+      io.usage(shape, [
+        error("doctor_usage", `Unknown argument ${a}.`, { fix: "specgate harness doctor --help" }),
+      ]);
       return;
     }
   }
   const dir = resolveProjectDir(projectDir, { requireSentinel: true });
   // Pending requirements, as `harness run` takes them.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { runQueue } = require("./run/prepare") as typeof import("./run/prepare");
   const { pending } = runQueue(dir, { reqs: [] } as never);
   const routing = routingOf(dir);
@@ -349,14 +361,23 @@ export function main(argv: string[]): void {
     io.emit({ ...data, status: findings });
     process.exit(bad.length ? EXIT.FAILURE : EXIT.OK);
   }
-  let text = ui.header("harness doctor", `${routes.length} requirement(s) · ${checks.length} agent(s)`);
+  let text = ui.header(
+    "harness doctor",
+    `${routes.length} requirement(s) · ${checks.length} agent(s)`
+  );
   for (const r of routes) {
     text += `  ${r.requirement.padEnd(9)} ${String(r.module || "—").padEnd(16)} ${String(r.profile || "default").padEnd(12)} ${r.agent ? agentLabel(r.agent) : "(no agent)"}\n`;
   }
   text += "\n";
   for (const c of checks) {
     const ok = !failed(c);
-    const state = !c.installed ? "not installed" : c.answered === null ? "installed" : c.answered ? "answers" : "does not answer";
+    const state = !c.installed
+      ? "not installed"
+      : c.answered === null
+        ? "installed"
+        : c.answered
+          ? "answers"
+          : "does not answer";
     text += `  ${ok ? "✔" : "✖"}  ${agentLabel(c.agent)}  ${state} · ${c.usedBy.join(", ")}\n     ${c.agent}\n`;
     if (!ok) text += `     ${c.reason}\n     fix: ${c.fix}\n`;
   }

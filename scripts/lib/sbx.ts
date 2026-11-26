@@ -86,7 +86,12 @@ export function sbxExec(name: string, cwd: string, command: string) {
 }
 
 /** The line that runs `command` in the sandbox from `cwd`, passing `env` through. */
-export function sbxExecLine(name: string, cwd: string, command: string, env: string[] = []): string {
+export function sbxExecLine(
+  name: string,
+  cwd: string,
+  command: string,
+  env: string[] = []
+): string {
   const pass = [...new Set(env)]
     .filter((v) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(v))
     .sort()
@@ -122,12 +127,21 @@ export function sbxWorkspace(name: string): string | null {
   const r = sbx(["ls", "--format", "json"]);
   if (!r.ok) return null;
   try {
-    const doc = JSON.parse(r.out || "[]") as Array<{ name?: string; workspaces?: unknown[]; mounts?: string[] }>;
+    const doc = JSON.parse(r.out || "[]") as Array<{
+      name?: string;
+      workspaces?: unknown[];
+      mounts?: string[];
+    }>;
     const one = doc.find((d) => d.name === name);
     if (!one) return null;
     const first = (one.workspaces || [])[0];
     if (typeof first === "string" && first) return first;
-    if (first && typeof first === "object" && typeof (first as { path?: unknown }).path === "string") return (first as { path: string }).path;
+    if (
+      first &&
+      typeof first === "object" &&
+      typeof (first as { path?: unknown }).path === "string"
+    )
+      return (first as { path: string }).path;
     const mount = (one.mounts || []).find((m) => !m.endsWith(":ro"));
     return mount ? mount.split(":")[0]! : null;
   } catch {

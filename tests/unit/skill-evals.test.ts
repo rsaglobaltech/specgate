@@ -132,8 +132,14 @@ test("REQ-687 SCN-687a: a new version of the skill that does worse", () => {
   assert.equal(second.compared.correct, "worse");
   assert.equal(second.compared.from, 1);
   assert.equal(second.correct, 0.5);
-  const history = read(dir, "evals/orders/history.jsonl").trim().split("\n").map((l: string) => JSON.parse(l));
-  assert.deepEqual(history.map((h: { version: string }) => h.version), [first.version, second.version]);
+  const history = read(dir, "evals/orders/history.jsonl")
+    .trim()
+    .split("\n")
+    .map((l: string) => JSON.parse(l));
+  assert.deepEqual(
+    history.map((h: { version: string }) => h.version),
+    [first.version, second.version]
+  );
 });
 
 test("REQ-697 SCN-697a: a hidden check fails — not correct, and unseen while the agent worked", () => {
@@ -158,7 +164,10 @@ test("REQ-697 SCN-697a: a hidden check fails — not correct, and unseen while t
   const e = evalOf(dir);
   const cancel = e.tasks.find((t: { id: string }) => t.id === "cancel");
   assert.equal(cancel.correct, 0, "specgate check passes, the hidden test does not");
-  assert.ok(!read(dir, "saw.log").includes("true"), "hidden/ was not in the copy while the agent worked");
+  assert.ok(
+    !read(dir, "saw.log").includes("true"),
+    "hidden/ was not in the copy while the agent worked"
+  );
   const prompt = read(dir, ".claude/skills/orders/SKILL.md") + yaml;
   assert.ok(prompt.includes("check:"), "the control: the exam declares it");
 
@@ -192,13 +201,23 @@ test("REQ-702 SCN-702a: two versions of a skill — the task marked hidden, two 
   w(exam, "eval.yaml", yaml);
   w(exam, "hidden/ok.js", "process.exit(0);\n");
   const row = (version: string, correct: number, good: number) =>
-    JSON.stringify({ at: `2026-11-23T10:0${version === "a1" ? 0 : 1}:00Z`, version, runs: 3, correct, good, tasks: [] });
+    JSON.stringify({
+      at: `2026-11-23T10:0${version === "a1" ? 0 : 1}:00Z`,
+      version,
+      runs: 3,
+      correct,
+      good,
+      tasks: [],
+    });
   w(exam, "history.jsonl", `${row("a1", 1, 0.8)}\n${row("b2", 2 / 3, 0.8)}\n`);
   const [e] = listOf(dir);
   assert.equal(e.skill, "orders");
   assert.deepEqual(
     e.tasks.map((t: { id: string; hidden: boolean }) => [t.id, t.hidden]),
-    [["cancel", true], ["pay", false]]
+    [
+      ["cancel", true],
+      ["pay", false],
+    ]
   );
   assert.equal(e.history.length, 2);
   const b2 = e.versions.find((v: { version: string }) => v.version === "b2");
@@ -213,7 +232,10 @@ test("REQ-703 SCN-703a: half way through — running with its runs, ended and co
   const agent = read(dir, "agent.js");
   w(dir, "agent.js", `const until = Date.now() + 700; while (Date.now() < until) {}\n${agent}`);
   w(exam, "eval.yaml", read(exam, "eval.yaml").replace("runs: 3", "runs: 2\nconcurrency: 1"));
-  const child = spawn(process.execPath, [CLI, "eval", "orders", "--json"], { cwd: dir, env: { ...process.env, NO_COLOR: "1" } });
+  const child = spawn(process.execPath, [CLI, "eval", "orders", "--json"], {
+    cwd: dir,
+    env: { ...process.env, NO_COLOR: "1" },
+  });
   const exited = new Promise((r) => child.on("close", r));
   await waitFor(() => {
     const e = listOf(dir)[0];
@@ -237,8 +259,17 @@ test("REQ-704 SCN-704a: a run read while it works — its start and output, no e
     "agent.js",
     `console.log("writing src/ausleihe.js");\nconst fs = require("fs");\nconst until = Date.now() + 20000;\nwhile (!fs.existsSync(${JSON.stringify(go)}) && Date.now() < until) {}\nfs.writeFileSync("done.txt", "ok");\n`
   );
-  w(exam, "eval.yaml", read(exam, "eval.yaml").replace("runs: 3", "runs: 1").replace(/  - id: pay[\s\S]*$/, ""));
-  const child = spawn(process.execPath, [CLI, "eval", "orders", "--json"], { cwd: dir, env: { ...process.env, NO_COLOR: "1" } });
+  w(
+    exam,
+    "eval.yaml",
+    read(exam, "eval.yaml")
+      .replace("runs: 3", "runs: 1")
+      .replace(/ {2}- id: pay[\s\S]*$/, "")
+  );
+  const child = spawn(process.execPath, [CLI, "eval", "orders", "--json"], {
+    cwd: dir,
+    env: { ...process.env, NO_COLOR: "1" },
+  });
   const exited = new Promise((r) => child.on("close", r));
   const runFolder = () => {
     const runs = path.join(exam, "runs");
@@ -248,12 +279,25 @@ test("REQ-704 SCN-704a: a run read while it works — its start and output, no e
   };
   await waitFor(() => {
     const f = runFolder();
-    return Boolean(f && fs.existsSync(path.join(f, "log.jsonl")) && /writing src\/ausleihe\.js/.test(fs.readFileSync(path.join(f, "log.jsonl"), "utf8")));
+    return Boolean(
+      f &&
+      fs.existsSync(path.join(f, "log.jsonl")) &&
+      /writing src\/ausleihe\.js/.test(fs.readFileSync(path.join(f, "log.jsonl"), "utf8"))
+    );
   });
   const folder = runFolder()!;
-  const events = fs.readFileSync(path.join(folder, "log.jsonl"), "utf8").trim().split("\n").map((l: string) => JSON.parse(l));
+  const events = fs
+    .readFileSync(path.join(folder, "log.jsonl"), "utf8")
+    .trim()
+    .split("\n")
+    .map((l: string) => JSON.parse(l));
   assert.equal(events[0].type, "start");
-  assert.ok(events.some((e: { type: string; text?: string }) => e.type === "output" && /writing src\/ausleihe\.js/.test(e.text || "")));
+  assert.ok(
+    events.some(
+      (e: { type: string; text?: string }) =>
+        e.type === "output" && /writing src\/ausleihe\.js/.test(e.text || "")
+    )
+  );
   assert.ok(!events.some((e: { type: string }) => e.type === "end"), "no end yet");
   const prompt = fs.readFileSync(path.join(folder, "prompt.md"), "utf8");
   assert.match(prompt, /Orders skill\. GOOD\./);

@@ -11,7 +11,10 @@ export interface FakeSbx {
   /** What SPECGATE_SBX points at. */
   bin: string;
   calls: () => string[][];
-  state: () => { sandboxes: Record<string, { kit: string; workspace: string }>; rules: Array<{ id: string; sandbox: string; host: string }> };
+  state: () => {
+    sandboxes: Record<string, { kit: string; workspace: string }>;
+    rules: Array<{ id: string; sandbox: string; host: string }>;
+  };
   /** A sandbox sbx has that nobody recorded. */
   add: (name: string) => void;
 }
@@ -87,7 +90,11 @@ export function fakeSbx(): FakeSbx {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-fake-sbx-"));
   fs.writeFileSync(path.join(dir, "sbx.js"), SCRIPT);
   const bin = path.join(dir, "sbx");
-  fs.writeFileSync(bin, `#!/bin/sh\nexec "${process.execPath}" "${path.join(dir, "sbx.js")}" "$@"\n`, { mode: 0o755 });
+  fs.writeFileSync(
+    bin,
+    `#!/bin/sh\nexec "${process.execPath}" "${path.join(dir, "sbx.js")}" "$@"\n`,
+    { mode: 0o755 }
+  );
   const state = () => {
     try {
       return JSON.parse(fs.readFileSync(path.join(dir, "state.json"), "utf8"));

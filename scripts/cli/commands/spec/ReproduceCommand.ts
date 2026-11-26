@@ -83,7 +83,20 @@ export class ReproduceCommand extends BaseCommand {
     }
     const proposed = spawnSync(
       process.execPath,
-      [CLI, "propose", changeId, "--kind", "bug", "--capability", capability, "--reserve", "1", "--project-dir", dir, "--json"],
+      [
+        CLI,
+        "propose",
+        changeId,
+        "--kind",
+        "bug",
+        "--capability",
+        capability,
+        "--reserve",
+        "1",
+        "--project-dir",
+        dir,
+        "--json",
+      ],
       { cwd: dir, encoding: "utf8", env: process.env }
     );
     let doc: {
@@ -104,7 +117,12 @@ export class ReproduceCommand extends BaseCommand {
         NULL_SHAPE,
         refused.length
           ? refused
-          : [error("reproduce_propose_failed", `propose failed: ${proposed.stderr || proposed.stdout}`)]
+          : [
+              error(
+                "reproduce_propose_failed",
+                `propose failed: ${proposed.stderr || proposed.stdout}`
+              ),
+            ]
       );
       return;
     }
@@ -192,7 +210,8 @@ export class ReproduceCommand extends BaseCommand {
       ].join("\n"),
       "utf8"
     );
-    if (ticket) fs.appendFileSync(path.join(changeDir, "change.yaml"), `ticket: ${ticket}\n`, "utf8");
+    if (ticket)
+      fs.appendFileSync(path.join(changeDir, "change.yaml"), `ticket: ${ticket}\n`, "utf8");
 
     io.emit(
       {
@@ -210,9 +229,13 @@ export class ReproduceCommand extends BaseCommand {
           ui.header("reproduce", changeId) +
             ui.ok(`${changeId} opened: ${req} — ${title}, to be reproduced first.`) +
             (doc.trust
-              ? ui.warn(`${capability} went down to trust level ${doc.trust.to} (from ${doc.trust.from}).`)
+              ? ui.warn(
+                  `${capability} went down to trust level ${doc.trust.to} (from ${doc.trust.from}).`
+                )
               : "") +
-            (uniqueRoutes.length ? `     ${ui.muted(`reached at ${uniqueRoutes.join(", ")}`)}\n` : "") +
+            (uniqueRoutes.length
+              ? `     ${ui.muted(`reached at ${uniqueRoutes.join(", ")}`)}\n`
+              : "") +
             ui.next(
               `specgate reproduce run ${req}`,
               `after you write its scenario as the app should behave, and a test that names ${req}`
@@ -235,10 +258,14 @@ export class ReproduceCommand extends BaseCommand {
     const bddCmd = String(readHarnessConfig(dir)?.bddCmd || "").trim();
     if (!bddCmd) {
       io.fail(NULL_SHAPE, [
-        error("repro_no_runner", `No bdd_cmd runs ${req}'s scenarios, so nothing can show the bug.`, {
-          target: req,
-          fix: 'specgate config set bdd_cmd "<runs the feature files, with {tags}>"',
-        }),
+        error(
+          "repro_no_runner",
+          `No bdd_cmd runs ${req}'s scenarios, so nothing can show the bug.`,
+          {
+            target: req,
+            fix: 'specgate config set bdd_cmd "<runs the feature files, with {tags}>"',
+          }
+        ),
       ]);
       return;
     }
@@ -266,13 +293,18 @@ export class ReproduceCommand extends BaseCommand {
       return;
     }
     const file = keepRed(dir, req, run);
-    io.emit({ reproduce: { requirement: req, red: true, command, exitCode: run.exitCode, evidence: file } }, () => {
-      process.stdout.write(
-        ui.header("reproduce run", req) +
-          ui.ok(`${req} reproduced: its scenarios fail on today's code (exit ${run.exitCode}).`) +
-          `     ${ui.muted(`kept in ${file}`)}\n` +
-          ui.next(`specgate apply ${req}`, "once the fix makes the same scenarios pass")
-      );
-    });
+    io.emit(
+      {
+        reproduce: { requirement: req, red: true, command, exitCode: run.exitCode, evidence: file },
+      },
+      () => {
+        process.stdout.write(
+          ui.header("reproduce run", req) +
+            ui.ok(`${req} reproduced: its scenarios fail on today's code (exit ${run.exitCode}).`) +
+            `     ${ui.muted(`kept in ${file}`)}\n` +
+            ui.next(`specgate apply ${req}`, "once the fix makes the same scenarios pass")
+        );
+      }
+    );
   }
 }

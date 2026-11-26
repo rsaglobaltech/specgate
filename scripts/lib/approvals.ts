@@ -466,7 +466,10 @@ export function scopeDiagnostics(
   if (level === "off") return none;
   const designs = ids
     .filter((id) => isApproved(projectDir, id))
-    .map((id) => ({ id, files: designFiles(layerTexts(projectDir, id).find((l) => l.id === "design")?.text ?? "") }))
+    .map((id) => ({
+      id,
+      files: designFiles(layerTexts(projectDir, id).find((l) => l.id === "design")?.text ?? ""),
+    }))
     .filter((d) => d.files.length > 0);
   if (designs.length === 0) return none;
   const outside = outsideDesign(
@@ -476,8 +479,13 @@ export function scopeDiagnostics(
   const change = designs[0]!.id;
   const found = outside.map((file) => {
     const message = `${file} is new, and the design of ${designs.map((d) => d.id).join(", ")} does not name it. Name it in docs/specs/changes/${change}/design.md and have the design approved again, or open a change for it: specgate propose <change-id>.`;
-    const extra = { target: file, fix: `Name ${file} in docs/specs/changes/${change}/design.md, then specgate change approve ${change} — or specgate propose <change-id>.` };
-    return level === "error" ? error("file_outside_design", message, extra) : warning("file_outside_design", message, extra);
+    const extra = {
+      target: file,
+      fix: `Name ${file} in docs/specs/changes/${change}/design.md, then specgate change approve ${change} — or specgate propose <change-id>.`,
+    };
+    return level === "error"
+      ? error("file_outside_design", message, extra)
+      : warning("file_outside_design", message, extra);
   });
   return level === "error" ? { errors: found, warnings: [] } : { errors: [], warnings: found };
 }

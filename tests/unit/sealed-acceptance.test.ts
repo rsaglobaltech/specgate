@@ -12,16 +12,23 @@ const path = require("node:path");
 const { createHash } = require("node:crypto");
 const { spawnSync } = require("node:child_process");
 
-const { acceptanceRun, acceptanceSealDiagnostics, readAcceptanceSeals } = require("../../scripts/lib/acceptance");
+const {
+  acceptanceRun,
+  acceptanceSealDiagnostics,
+  readAcceptanceSeals,
+} = require("../../scripts/lib/acceptance");
 const { decide } = require("../../scripts/plugin/guard-hook");
 const { controlsOf, sessionChanged } = require("../../scripts/lib/controls");
 
-const ROOT_DIR = path.resolve(__dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, ""));
+const ROOT_DIR = path.resolve(
+  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
+);
 const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 
 const made: string[] = [];
 test.after(() => {
-  for (const d of made) fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  for (const d of made)
+    fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 });
 const tmp = (p: string) => {
   const d = fs.mkdtempSync(path.join(os.tmpdir(), p));
@@ -29,15 +36,25 @@ const tmp = (p: string) => {
   return fs.realpathSync(d);
 };
 
-const sha = (text: string) => `sha256:${createHash("sha256").update(text.replace(/\r\n/g, "\n")).digest("hex")}`;
+const sha = (text: string) =>
+  `sha256:${createHash("sha256").update(text.replace(/\r\n/g, "\n")).digest("hex")}`;
 
 const cli = (dir: string, args: string[], person = true) =>
-  spawnSync(process.execPath, [CLI, ...args, ...(args[0] === "check" ? [] : ["--project-dir", dir])], {
-    cwd: dir,
-    encoding: "utf8",
-    stdio: ["pipe", "pipe", "pipe"],
-    env: { ...process.env, NO_COLOR: "1", SPECGATE_ASSUME_TTY: person ? "1" : "", SPECGATE_SKIP_DOCTOR: "1" },
-  });
+  spawnSync(
+    process.execPath,
+    [CLI, ...args, ...(args[0] === "check" ? [] : ["--project-dir", dir])],
+    {
+      cwd: dir,
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        NO_COLOR: "1",
+        SPECGATE_ASSUME_TTY: person ? "1" : "",
+        SPECGATE_SKIP_DOCTOR: "1",
+      },
+    }
+  );
 
 /** A project with export-csv open, its delta written; the scenario's id is returned. */
 function csvProject(): { dir: string; scn: string } {
@@ -85,7 +102,11 @@ function listed(): { dir: string; scn: string } {
   const p = csvProject();
   assert.equal(cli(p.dir, ["change", "approve", "export-csv"]).status, 0);
   write(p.dir, TEST, TEST_TEXT);
-  write(p.dir, "docs/specs/changes/export-csv/acceptance-tests.md", `# Acceptance\n\n- ${TEST} — ${p.scn}\n`);
+  write(
+    p.dir,
+    "docs/specs/changes/export-csv/acceptance-tests.md",
+    `# Acceptance\n\n- ${TEST} — ${p.scn}\n`
+  );
   return p;
 }
 
@@ -130,14 +151,22 @@ test("REQ-757 SCN-757b: a test that proves no scenario — refused, nothing reco
 
 test("REQ-757: a listed file that is not there, or a change not approved — refused", () => {
   const { dir, scn } = listed();
-  write(dir, "docs/specs/changes/export-csv/acceptance-tests.md", `- tests/acceptance/missing.spec.ts — ${scn}\n`);
+  write(
+    dir,
+    "docs/specs/changes/export-csv/acceptance-tests.md",
+    `- tests/acceptance/missing.spec.ts — ${scn}\n`
+  );
   let r = sealAcceptance(dir);
   assert.notEqual(r.status, 0);
   assert.ok(codes(r.stdout).includes("acceptance_file_missing"), r.stdout);
 
   const fresh = csvProject();
   write(fresh.dir, TEST, TEST_TEXT);
-  write(fresh.dir, "docs/specs/changes/export-csv/acceptance-tests.md", `- ${TEST} — ${fresh.scn}\n`);
+  write(
+    fresh.dir,
+    "docs/specs/changes/export-csv/acceptance-tests.md",
+    `- ${TEST} — ${fresh.scn}\n`
+  );
   r = cli(fresh.dir, ["change", "approve", "export-csv", "--layer", "acceptance", "--json"]);
   assert.notEqual(r.status, 0);
   assert.ok(codes(r.stdout).includes("acceptance_change_not_approved"), r.stdout);
@@ -156,7 +185,8 @@ test("REQ-757: sealing is approving — no terminal, no seal (REQ-748)", () => {
 test("REQ-757 SCN-757c: any language — a Maven integration test is sealed the same way", () => {
   const { dir, scn } = listed();
   const java = "src/test/java/shop/FeesAcceptanceIT.java";
-  const text = "package shop;\nclass FeesAcceptanceIT { @org.junit.jupiter.api.Test void fees() {} }\n";
+  const text =
+    "package shop;\nclass FeesAcceptanceIT { @org.junit.jupiter.api.Test void fees() {} }\n";
   write(dir, java, text);
   write(dir, "docs/specs/changes/export-csv/acceptance-tests.md", `- ${java} — ${scn}\n`);
   assert.equal(sealAcceptance(dir).status, 0);
@@ -208,7 +238,10 @@ test("REQ-758 SCN-758b: approved again — acceptance_not_sealed is gone", () =>
 // ── REQ-759 ──
 
 const setCmd = (dir: string, cmd: string) =>
-  fs.appendFileSync(path.join(dir, "harness.config.yaml"), `\nacceptance_cmd: '${cmd.replace(/'/g, "''")}'\n`);
+  fs.appendFileSync(
+    path.join(dir, "harness.config.yaml"),
+    `\nacceptance_cmd: '${cmd.replace(/'/g, "''")}'\n`
+  );
 
 test("REQ-759 SCN-759a: red is red — acceptance_red with the command's output", () => {
   const { dir } = listed();
@@ -233,7 +266,10 @@ test("REQ-759 SCN-759b: no command — acceptance_no_command, nothing installed"
   const { dir } = listed();
   assert.equal(sealAcceptance(dir).status, 0);
   const list = () =>
-    spawnSync("git", ["status", "--porcelain", "--untracked-files=all"], { cwd: dir, encoding: "utf8" }).stdout;
+    spawnSync("git", ["status", "--porcelain", "--untracked-files=all"], {
+      cwd: dir,
+      encoding: "utf8",
+    }).stdout;
   const before = list();
   const v = acceptanceRun(dir);
   assert.equal(v.errors[0]?.code, "acceptance_no_command");
@@ -265,16 +301,28 @@ test("REQ-760 SCN-760a: each road refused — Write, a patch, sed -i, a redirect
   refused({ tool_name: "Edit", tool_input: { file_path: TEST, old_string: "a", new_string: "b" } });
   refused({
     tool_name: "apply_patch",
-    tool_input: { command: `*** Begin Patch\n*** Update File: ${TEST}\n@@\n-a\n+b\n*** End Patch\n` },
+    tool_input: {
+      command: `*** Begin Patch\n*** Update File: ${TEST}\n@@\n-a\n+b\n*** End Patch\n`,
+    },
   });
   refused({ tool_name: "Bash", tool_input: { command: `sed -i '' 's/two/one/' ${TEST}` } });
   refused({ tool_name: "Bash", tool_input: { command: `echo pass > ./${TEST}` } });
   refused({ tool_name: "Bash", tool_input: { command: `git checkout HEAD~1 -- ${TEST}` } });
   refused({ tool_name: "Bash", tool_input: { command: `cp /tmp/fake.ts ${TEST}` } });
   // Reading it is allowed; so is writing a test that is not sealed.
-  assert.equal(decide({ cwd: dir, tool_name: "Bash", tool_input: { command: `cat ${TEST}` } }, env).allow, true);
   assert.equal(
-    decide({ cwd: dir, tool_name: "Write", tool_input: { file_path: "tests/unit/mine.test.ts", content: "x" } }, env).allow,
+    decide({ cwd: dir, tool_name: "Bash", tool_input: { command: `cat ${TEST}` } }, env).allow,
+    true
+  );
+  assert.equal(
+    decide(
+      {
+        cwd: dir,
+        tool_name: "Write",
+        tool_input: { file_path: "tests/unit/mine.test.ts", content: "x" },
+      },
+      env
+    ).allow,
     true
   );
 });
@@ -306,16 +354,38 @@ test("REQ-760 SCN-760c: the sealed test came first — a source write is allowed
   write(dir, TEST, `test("${id} ${scn} — two loans, two lines", () => {});\n`);
   assert.equal(sealAcceptance(dir).status, 0);
   spawnSync("git", ["add", "-A"], { cwd: dir });
-  spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@t.invalid", "commit", "-qm", "sealed"], { cwd: dir });
-  const d = decide({ cwd: dir, tool_name: "Write", tool_input: { file_path: "src/export.ts", content: "export {}" } }, {});
+  spawnSync(
+    "git",
+    ["-c", "user.name=t", "-c", "user.email=t@t.invalid", "commit", "-qm", "sealed"],
+    { cwd: dir }
+  );
+  const d = decide(
+    {
+      cwd: dir,
+      tool_name: "Write",
+      tool_input: { file_path: "src/export.ts", content: "export {}" },
+    },
+    {}
+  );
   assert.equal(d.allow, true, d.message);
   // A sealed test that names nothing of the change does not open the door.
   const other = listed();
   assert.equal(sealAcceptance(other.dir).status, 0);
   spawnSync("git", ["add", "-A"], { cwd: other.dir });
-  spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@t.invalid", "commit", "-qm", "sealed"], { cwd: other.dir });
+  spawnSync(
+    "git",
+    ["-c", "user.name=t", "-c", "user.email=t@t.invalid", "commit", "-qm", "sealed"],
+    { cwd: other.dir }
+  );
   assert.equal(
-    decide({ cwd: other.dir, tool_name: "Write", tool_input: { file_path: "src/export.ts", content: "export {}" } }, {}).allow,
+    decide(
+      {
+        cwd: other.dir,
+        tool_name: "Write",
+        tool_input: { file_path: "src/export.ts", content: "export {}" },
+      },
+      {}
+    ).allow,
     false
   );
 });
@@ -323,9 +393,16 @@ test("REQ-760 SCN-760c: the sealed test came first — a source write is allowed
 test("REQ-757: a line of acceptance-tests.md without its bullet is read; prose is not", () => {
   const { acceptanceList } = require("../../scripts/lib/acceptance");
   const { dir, scn } = listed();
-  write(dir, "docs/specs/changes/export-csv/acceptance-tests.md", `# Acceptance\n\nThese prove the export - see below.\n\n${TEST} — ${scn}\n- \`src/test/java/A.java\` — ${scn}\n`);
+  write(
+    dir,
+    "docs/specs/changes/export-csv/acceptance-tests.md",
+    `# Acceptance\n\nThese prove the export - see below.\n\n${TEST} — ${scn}\n- \`src/test/java/A.java\` — ${scn}\n`
+  );
   const list = acceptanceList(dir, "export-csv");
-  assert.deepEqual(list.map((l: { path: string }) => l.path), [TEST, "src/test/java/A.java"]);
+  assert.deepEqual(
+    list.map((l: { path: string }) => l.path),
+    [TEST, "src/test/java/A.java"]
+  );
 });
 
 test("REQ-757 SCN-757d: the sign-off checklist is not a list of tests — acceptance.md stays specgate acceptance's", () => {
@@ -348,14 +425,20 @@ test("REQ-779 SCN-779a: the seal outlives the change — an archived change's se
   assert.equal(sealAcceptance(dir).status, 0);
   const archive = path.join(dir, "docs/specs/changes/archive");
   fs.mkdirSync(archive, { recursive: true });
-  fs.renameSync(path.join(dir, "docs/specs/changes/export-csv"), path.join(archive, "2026-11-26-export-csv"));
+  fs.renameSync(
+    path.join(dir, "docs/specs/changes/export-csv"),
+    path.join(archive, "2026-11-26-export-csv")
+  );
   setCmd(dir, "node -e 0");
   assert.deepEqual(acceptanceRun(dir).errors, []);
   write(dir, TEST, "test('always', () => {});\n");
   const v = acceptanceRun(dir);
   assert.equal(v.errors[0]?.code, "acceptance_not_sealed");
   assert.match(v.errors[0].message, /acceptance-tests\.md/);
-  const d = decide({ cwd: dir, tool_name: "Write", tool_input: { file_path: TEST, content: "x" } }, {});
+  const d = decide(
+    { cwd: dir, tool_name: "Write", tool_input: { file_path: TEST, content: "x" } },
+    {}
+  );
   assert.equal(d.allow, false);
   assert.match(d.message, /acceptance_sealed/);
 });

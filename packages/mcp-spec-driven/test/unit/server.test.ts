@@ -32,7 +32,11 @@ function parseFramed(output: string) {
   // A JSON line — MCP's stdio transport — or a Content-Length-framed message.
   const match = output.match(/Content-Length: \d+\r\n\r\n(\{.*\})$/s);
   if (match) return JSON.parse(match[1]);
-  assert.match(output, /^\{.*\}\n$/s, `Output is neither a JSON line nor Content-Length framed: ${output}`);
+  assert.match(
+    output,
+    /^\{.*\}\n$/s,
+    `Output is neither a JSON line nor Content-Length framed: ${output}`
+  );
   return JSON.parse(output);
 }
 

@@ -174,7 +174,8 @@ function planMigration(projectDir: string, original: RawMatrixRow[]) {
       const have = new Set(derivedRows.flatMap((r) => list(r[column])));
       if (want.some((f) => !have.has(f))) fields[key] = want.join(", ");
     }
-    if (Object.keys(fields).length) file.source = setTraceFields(file.source, id, fields) ?? file.source;
+    if (Object.keys(fields).length)
+      file.source = setTraceFields(file.source, id, fields) ?? file.source;
   };
 
   for (const [id, rows] of byReq) {
@@ -241,7 +242,8 @@ export function migrateToDerived(projectDir: string): boolean {
   );
   if (blocked.length > 0 || d.missing.length > 0 || d.extra.length > 0) return false;
   fs.writeFileSync(specFile, spec, "utf8");
-  for (const f of capabilityWrites) fs.writeFileSync(path.join(projectDir, f.path), f.source, "utf8");
+  for (const f of capabilityWrites)
+    fs.writeFileSync(path.join(projectDir, f.path), f.source, "utf8");
   fs.writeFileSync(file, renderDerivedMatrix(derived, projectNameOf(existing)), "utf8");
   ensureUnionMerge(projectDir);
   return true;
@@ -438,10 +440,8 @@ export class MatrixCommand extends BaseCommand {
       ]);
     }
 
-    const { spec, specFile, derived, blocked, d, byReq, inChanges, capabilityWrites } = planMigration(
-      projectDir,
-      original
-    );
+    const { spec, specFile, derived, blocked, d, byReq, inChanges, capabilityWrites } =
+      planMigration(projectDir, original);
 
     if (blocked.length > 0 || d.missing.length > 0 || d.extra.length > 0) {
       if (!io.json) {

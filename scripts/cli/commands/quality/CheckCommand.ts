@@ -12,14 +12,22 @@ import {
   NO_TEST_COMMAND_WARNING,
 } from "../../../../packages/core/src/domain/DoneVerification";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
-import { runRequirementScenarios, scenarioCommand, scenariosRequired } from "../../../lib/scenario-runs";
+import {
+  runRequirementScenarios,
+  scenarioCommand,
+  scenariosRequired,
+} from "../../../lib/scenario-runs";
 import { deliveredWithFeature } from "../spec/StatusCommand";
 import type { HarnessSettings } from "../../../../packages/core/src/domain/HarnessConfig";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
 import { listChangeIds } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { scopeDiagnostics, sealDiagnostics } from "../../../lib/approvals";
-import { acceptanceRun, acceptanceSealDiagnostics, sealedAcceptance } from "../../../lib/acceptance";
+import {
+  acceptanceRun,
+  acceptanceSealDiagnostics,
+  sealedAcceptance,
+} from "../../../lib/acceptance";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
 import { branchControls } from "../../../lib/controls";
 import type { BaseIdCheck } from "../../../lib/base-ids";
@@ -497,7 +505,9 @@ export class CheckCommand extends BaseCommand {
         const fix =
           "Review it as part of the pull request; make .specgate/ and docs/specs/changes/*/approvals.json code-owned so that review is required.";
         if (controlsLevel === "error") {
-          const errors = ctl.changed.map((d) => error("controls_changed_on_branch", say(d), { fix }));
+          const errors = ctl.changed.map((d) =>
+            error("controls_changed_on_branch", say(d), { fix })
+          );
           gate.set("ids", "failed", errors, { ms: since(idsStarted) });
           fail(NULL_SHAPE, [...ticketKeys, ...errors]);
         }
@@ -543,13 +553,17 @@ export class CheckCommand extends BaseCommand {
       ...listChangeIds(projectDir).flatMap((id) => sealDiagnostics(projectDir, id).warnings),
       ...scopeDiagnostics(projectDir, listChangeIds(projectDir)).warnings,
       // sealed-acceptance REQ-758: where the rule `acceptance` is a warning.
-      ...listChangeIds(projectDir).flatMap((id) => acceptanceSealDiagnostics(projectDir, id).warnings),
+      ...listChangeIds(projectDir).flatMap(
+        (id) => acceptanceSealDiagnostics(projectDir, id).warnings
+      ),
     ];
     if (!json) {
       for (const n of unwritten) {
         process.stdout.write(
           `  ${ui.muted(
-            n.code === "approval_not_sealed" || n.code === "file_outside_design" || n.code === "acceptance_not_sealed"
+            n.code === "approval_not_sealed" ||
+              n.code === "file_outside_design" ||
+              n.code === "acceptance_not_sealed"
               ? `·  Change          ${n.message}`
               : `·  Change          ${n.target} — delta not written yet, not judged until it is`
           )}\n`
@@ -564,7 +578,11 @@ export class CheckCommand extends BaseCommand {
       const problems = view.problems.map(({ fix: _fix, change: _change, ...d }) => d);
       gate.set("changes", "failed", problems, { ms: since(changesStarted) });
       // What a person approved changed: the fix is to restore it or approve again, not to fix the delta.
-      const APPROVED = new Set(["acceptance_not_sealed", "approved_requirement_changed", "file_outside_design"]);
+      const APPROVED = new Set([
+        "acceptance_not_sealed",
+        "approved_requirement_changed",
+        "file_outside_design",
+      ]);
       const approvedOnly = problems.every((d) => APPROVED.has(d.code));
       fail(NULL_SHAPE, [
         ...ticketKeys,
@@ -573,7 +591,10 @@ export class CheckCommand extends BaseCommand {
           ? error(
               "check_approved_changed",
               `The gate failed: what a person approved in open change '${first}' is not what is there now.`,
-              { target: first, fix: view.problems.find((d) => d.fix)?.fix || `specgate change approve ${first}` }
+              {
+                target: first,
+                fix: view.problems.find((d) => d.fix)?.fix || `specgate change approve ${first}`,
+              }
             )
           : error(
               "check_change_invalid",
@@ -644,13 +665,20 @@ export class CheckCommand extends BaseCommand {
       error("check_arch_failed", `The gate failed: the architecture check \`${command}\`.`, {
         fix: `Move the code where the architecture expects it, or change the rule on purpose; then run \`specgate check\` again.`,
       });
-    const testsVerdict = (command: string, run?: { stdout?: string | null; stderr?: string | null }) => {
+    const testsVerdict = (
+      command: string,
+      run?: { stdout?: string | null; stderr?: string | null }
+    ) => {
       // recover-guidance REQ-787: name the requirements whose tests are red, and that their code is what to repair.
       const red = run ? failingElsewhere(`${run.stdout || ""}${run.stderr || ""}`, []) : [];
       return red.length
-        ? error("check_tests_failed", `The gate failed: \`${command}\` — the failing tests name ${red.join(", ")}.`, {
-            fix: `Repair ${red.join(", ")}'s code so its test passes again — never its test. That is within any change's scope: the design's scope judges new files only. Then run \`specgate check\` again.`,
-          })
+        ? error(
+            "check_tests_failed",
+            `The gate failed: \`${command}\` — the failing tests name ${red.join(", ")}.`,
+            {
+              fix: `Repair ${red.join(", ")}'s code so its test passes again — never its test. That is within any change's scope: the design's scope judges new files only. Then run \`specgate check\` again.`,
+            }
+          )
         : error("check_tests_failed", `The gate failed: \`${command}\`.`, {
             fix: `Make \`${command}\` pass, then run \`specgate check\` again.`,
           });
@@ -809,9 +837,12 @@ export class CheckCommand extends BaseCommand {
     const scenariosCmd = scenariosRequired(projectDir) ? scenarioCommand(projectDir) : "";
     if (scenariosCmd && noScenarios) {
       gate.set("scenarios", "skipped", [
-        info("check_scenarios_skipped", "The scenarios were not run: --no-scenarios.", { target: "scenarios" }),
+        info("check_scenarios_skipped", "The scenarios were not run: --no-scenarios.", {
+          target: "scenarios",
+        }),
       ]);
-      if (!json) process.stdout.write(`  ${ui.muted("·  Scenarios       not run — --no-scenarios")}\n`);
+      if (!json)
+        process.stdout.write(`  ${ui.muted("·  Scenarios       not run — --no-scenarios")}\n`);
     } else if (scenariosCmd) {
       const delivered = deliveredWithFeature(projectDir);
       const startedScenarios = Date.now();
@@ -833,17 +864,28 @@ export class CheckCommand extends BaseCommand {
       }
       const ms = Date.now() - startedScenarios;
       if (broken.length > 0) {
-        const verdict = error("check_scenarios_failed", `The gate failed: the scenarios of ${broken.length} delivered requirement(s).`, {
-          target: "scenarios",
-          fix: "specgate scenarios <REQ> runs one requirement's, scenario by scenario",
-        });
+        const verdict = error(
+          "check_scenarios_failed",
+          `The gate failed: the scenarios of ${broken.length} delivered requirement(s).`,
+          {
+            target: "scenarios",
+            fix: "specgate scenarios <REQ> runs one requirement's, scenario by scenario",
+          }
+        );
         gate.set("scenarios", "failed", [...broken, verdict], { ms });
-        if (!json) process.stdout.write(ui.fail(`Scenarios       ${delivered.length} delivered requirement(s), ${broken.length} failing`));
+        if (!json)
+          process.stdout.write(
+            ui.fail(
+              `Scenarios       ${delivered.length} delivered requirement(s), ${broken.length} failing`
+            )
+          );
         fail(NULL_SHAPE, [...ticketKeys, ...broken, verdict]);
       }
       gate.set("scenarios", "passed", [], { ms });
       if (!json && delivered.length > 0)
-        process.stdout.write(ui.ok(`Scenarios       ${ui.muted(`${delivered.length} delivered requirement(s)`)}`));
+        process.stdout.write(
+          ui.ok(`Scenarios       ${ui.muted(`${delivered.length} delivered requirement(s)`)}`)
+        );
     }
 
     // sealed-acceptance REQ-759: the acceptance tests a person approved, run
@@ -852,18 +894,30 @@ export class CheckCommand extends BaseCommand {
     if (acceptance.ran || acceptance.errors.length || acceptance.warnings.length) {
       const findings = [...acceptance.errors, ...acceptance.warnings];
       if (acceptance.errors.length > 0) {
-        gate.set("acceptance", "failed", findings, { ms: acceptance.ms, command: acceptance.command || null });
-        if (!json) process.stdout.write(ui.fail(`Acceptance      ${acceptance.errors[0]!.code}`));
-        const verdict = error("check_acceptance_failed", "The gate failed: the sealed acceptance tests.", {
-          target: "acceptance",
-          fix: acceptance.errors.find((d) => d.fix)?.fix || "specgate check",
+        gate.set("acceptance", "failed", findings, {
+          ms: acceptance.ms,
+          command: acceptance.command || null,
         });
+        if (!json) process.stdout.write(ui.fail(`Acceptance      ${acceptance.errors[0]!.code}`));
+        const verdict = error(
+          "check_acceptance_failed",
+          "The gate failed: the sealed acceptance tests.",
+          {
+            target: "acceptance",
+            fix: acceptance.errors.find((d) => d.fix)?.fix || "specgate check",
+          }
+        );
         fail(NULL_SHAPE, [...ticketKeys, ...acceptance.errors, verdict]);
       }
-      gate.set("acceptance", acceptance.ran ? "passed" : "skipped", findings, { ms: acceptance.ms, command: acceptance.command || null });
+      gate.set("acceptance", acceptance.ran ? "passed" : "skipped", findings, {
+        ms: acceptance.ms,
+        command: acceptance.command || null,
+      });
       if (!json) {
-        if (acceptance.ran) process.stdout.write(ui.ok(`Acceptance      ${ui.muted(acceptance.command)}`));
-        for (const w of acceptance.warnings) process.stdout.write(`  ${ui.muted(`·  Acceptance     ${w.message}`)}\n`);
+        if (acceptance.ran)
+          process.stdout.write(ui.ok(`Acceptance      ${ui.muted(acceptance.command)}`));
+        for (const w of acceptance.warnings)
+          process.stdout.write(`  ${ui.muted(`·  Acceptance     ${w.message}`)}\n`);
       }
     }
 

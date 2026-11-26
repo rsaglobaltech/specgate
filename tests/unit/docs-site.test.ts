@@ -342,7 +342,8 @@ test("the documentation home lists every section and every page", () => {
     const html = fs.readFileSync(path.join(dir, "docs.html"), "utf8");
     // Every link to a section of this page lands on one.
     const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
-    for (const [, id] of html.matchAll(/href="#([^"]+)"/g)) assert.ok(ids.has(id), `#${id} has no target in docs.html`);
+    for (const [, id] of html.matchAll(/href="#([^"]+)"/g))
+      assert.ok(ids.has(id), `#${id} has no target in docs.html`);
     for (const section of NAV) {
       assert.ok(html.includes(section.title), `docs home is missing "${section.title}"`);
       for (const entry of section.entries) {

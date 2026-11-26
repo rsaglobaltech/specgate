@@ -221,7 +221,8 @@ export const BRIEF_BEATS: readonly Beat[] = [
 export const GATE_BEATS: readonly Beat[] = [
   {
     id: "approve",
-    caption: "A person approves the draft, at their own terminal. Nothing is delivered before this.",
+    caption:
+      "A person approves the draft, at their own terminal. Nothing is delivered before this.",
     cwd: "courts",
     argv: ["specgate", "change", "approve", "draft-bookings"],
     surface: "change",

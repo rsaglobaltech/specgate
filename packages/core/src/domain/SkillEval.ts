@@ -27,7 +27,8 @@ export function goodOf(run: RunResult): number | null {
   return parts.length ? parts.reduce((a, b) => a + b, 0) / parts.length : null;
 }
 
-const mean = (xs: number[]): number | null => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+const mean = (xs: number[]): number | null =>
+  xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
 const round = (x: number | null) => (x === null ? null : Math.round(x * 1000) / 1000);
 
 export function taskScore(id: string, runs: readonly RunResult[]): TaskScore {
@@ -77,7 +78,13 @@ export function compareWith(
   history: readonly HistoryEntry[],
   version: string,
   score: { correct: number; good: number | null }
-): { version: string; correct: Trend | null; good: Trend | null; from: number; fromGood: number | null } | null {
+): {
+  version: string;
+  correct: Trend | null;
+  good: Trend | null;
+  from: number;
+  fromGood: number | null;
+} | null {
   for (let i = history.length - 1; i >= 0; i -= 1) {
     const h = history[i];
     if (h.version === version) continue;

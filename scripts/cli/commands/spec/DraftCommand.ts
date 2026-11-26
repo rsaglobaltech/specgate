@@ -498,7 +498,12 @@ export function moduleStatus(projectDir: string, module: string, brief = ""): Mo
   const result = draftReport(projectDir, change, brief);
   if ("failure" in result) return { ...base, state: "drafting", findings: 1 };
   const findings = errorCount(result.report.status);
-  return { ...base, state: findings === 0 ? "ready" : "drafting", findings, approved: findings === 0 && isApprovedChange(projectDir, change) };
+  return {
+    ...base,
+    state: findings === 0 ? "ready" : "drafting",
+    findings,
+    approved: findings === 0 && isApprovedChange(projectDir, change),
+  };
 }
 
 /**
@@ -533,7 +538,8 @@ export function briefProgress(
 /** What to run for this module, given where it stands. */
 export function draftNextCommand(s: ModuleStatus): string {
   // walkthrough-fixes-2 REQ-784: a ready draft waits for a person's approval before anything is applied.
-  if (s.state === "ready") return s.approved ? "specgate apply" : `specgate change approve ${s.change}`;
+  if (s.state === "ready")
+    return s.approved ? "specgate apply" : `specgate change approve ${s.change}`;
   return `specgate propose --from-brief ${s.module}`;
 }
 
@@ -1905,7 +1911,10 @@ export class DraftCommand extends BaseCommand {
             fs.existsSync(path.join(projectDir, CHANGES, changeId, "questions.md"))
               ? `Answer what you can in ${dir}/questions.md`
               : `Check ${dir}/assumptions.md, if the agent wrote one`,
-            [`specgate change approve ${changeId}`, "you, at your terminal, once it reads right — apply waits for it"],
+            [
+              `specgate change approve ${changeId}`,
+              "you, at your terminal, once it reads right — apply waits for it",
+            ],
             ["specgate apply", "its requirements, one at a time; then specgate archive " + changeId]
           );
           const after = nextModuleAfter(projectDir, brief, opts.module);

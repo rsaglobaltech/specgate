@@ -10,7 +10,15 @@ import * as path from "node:path";
 import { acceptanceList, sealAcceptance } from "./acceptance";
 
 /** What the writer sees: the contract and how the project runs its tests — never src/ or the tests already there. */
-export const WRITER_PATHS = ["spec.md", "features", "docs/specs", "AGENTS.md", "README.md", "package.json", "harness.config.yaml"];
+export const WRITER_PATHS = [
+  "spec.md",
+  "features",
+  "docs/specs",
+  "AGENTS.md",
+  "README.md",
+  "package.json",
+  "harness.config.yaml",
+];
 
 /** The writer's folder: the paths above, copied from the project; nothing else. */
 export function writerCopy(projectDir: string, writerDir: string): string[] {
@@ -53,17 +61,26 @@ export function takeAcceptance(
     for (const line of list) {
       const rel = path.normalize(line.path);
       if (rel.startsWith("..") || path.isAbsolute(rel) || rel.split(path.sep)[0] === "src")
-        return { ok: false, reason: `the writer listed ${line.path}, which is not a test it may write` };
+        return {
+          ok: false,
+          reason: `the writer listed ${line.path}, which is not a test it may write`,
+        };
       const from = path.join(writerDir, rel);
-      if (!fs.existsSync(from)) return { ok: false, reason: `the writer listed ${line.path} and did not write it` };
+      if (!fs.existsSync(from))
+        return { ok: false, reason: `the writer listed ${line.path} and did not write it` };
       fs.mkdirSync(path.dirname(path.join(projectDir, rel)), { recursive: true });
       fs.copyFileSync(from, path.join(projectDir, rel));
     }
     const doc = path.join("docs", "specs", "changes", id, "acceptance-tests.md");
     fs.copyFileSync(path.join(writerDir, doc), path.join(projectDir, doc));
-    const r = sealAcceptance(projectDir, id, today, { name: "exam (as the person)", email: "exam@specgate.invalid" });
+    const r = sealAcceptance(projectDir, id, today, {
+      name: "exam (as the person)",
+      email: "exam@specgate.invalid",
+    });
     if (!r.ok) return { ok: false, reason: `the writer's tests could not be sealed: ${r.message}` };
     sealed.push(...r.sealed);
   }
-  return sealed.length ? { ok: true, sealed } : { ok: false, reason: "the writer listed no acceptance test" };
+  return sealed.length
+    ? { ok: true, sealed }
+    : { ok: false, reason: "the writer listed no acceptance test" };
 }

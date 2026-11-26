@@ -373,7 +373,9 @@ function sealedTests(root) {
             const records = JSON.parse(fs.readFileSync(path.join(dir, id, "approvals.json"), "utf8"));
             if (!Array.isArray(records))
                 continue;
-            const last = records.filter((r) => r && r.layer === "acceptance" && r.seals && typeof r.seals === "object").pop();
+            const last = records
+                .filter((r) => r && r.layer === "acceptance" && r.seals && typeof r.seals === "object")
+                .pop();
             for (const f of Object.keys(last?.seals ?? {}))
                 out.add(f.replace(/\\/g, "/"));
         }

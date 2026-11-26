@@ -49,7 +49,8 @@ function allNotes(dir: string): NoteRef[] {
     if (!e.isDirectory()) continue;
     if (e.name === "archive") {
       for (const a of fs.readdirSync(path.join(root, e.name), { withFileTypes: true })) {
-        if (a.isDirectory()) read(path.join(root, e.name, a.name), a.name.replace(/^\d{4}-\d{2}-\d{2}-/, ""));
+        if (a.isDirectory())
+          read(path.join(root, e.name, a.name), a.name.replace(/^\d{4}-\d{2}-\d{2}-/, ""));
       }
     } else read(path.join(root, e.name), e.name);
   }
@@ -92,11 +93,14 @@ export class LearnCommand extends BaseCommand {
       const a = argv[i];
       if (a === "--project-dir") dirArg = argv[++i] || ".";
       else if (a === "--json") continue;
-      else if (["--title", "--forbid", "--in", "--run", "--level"].includes(a)) flags[a.slice(2)] = argv[++i] ?? "";
+      else if (["--title", "--forbid", "--in", "--run", "--level"].includes(a))
+        flags[a.slice(2)] = argv[++i] ?? "";
       else if (!a.startsWith("-")) positional.push(a);
       else
         io.usage(NULL_SHAPE, [
-          error("unknown_flag", `Unknown argument for learn: ${a}`, { fix: "specgate learn --help" }),
+          error("unknown_flag", `Unknown argument for learn: ${a}`, {
+            fix: "specgate learn --help",
+          }),
         ]);
     }
     const dir = path.resolve(dirArg);
@@ -106,10 +110,16 @@ export class LearnCommand extends BaseCommand {
     io.emit({ learn: { lessons } }, () => {
       const out = (s: string) => process.stdout.write(s);
       out(ui.header("learn", `${lessons.length} lesson(s)`));
-      if (!lessons.length) out(`  ${ui.muted("Nothing comes back yet: no review note repeats, no gate stage keeps failing.")}\n\n`);
+      if (!lessons.length)
+        out(
+          `  ${ui.muted("Nothing comes back yet: no review note repeats, no gate stage keeps failing.")}\n\n`
+        );
       for (const l of lessons) {
-        out(`  ${c.bold}${l.id}${c.reset}  ${l.kind === "review" ? "review notes" : `the agent fails ${l.stage}`} ${ui.muted(`· ${l.count} time(s)`)}\n`);
-        if (l.evidence) for (const n of l.evidence) out(`     ${ui.muted(`${n.change}:`)} ${n.text}\n`);
+        out(
+          `  ${c.bold}${l.id}${c.reset}  ${l.kind === "review" ? "review notes" : `the agent fails ${l.stage}`} ${ui.muted(`· ${l.count} time(s)`)}\n`
+        );
+        if (l.evidence)
+          for (const n of l.evidence) out(`     ${ui.muted(`${n.change}:`)} ${n.text}\n`);
         if (l.requirements) out(`     ${ui.muted(l.requirements.join(", "))}\n`);
       }
       if (lessons.length) out(ui.next(lessons[0].next, "a person approves the rule"));
@@ -117,14 +127,22 @@ export class LearnCommand extends BaseCommand {
   }
 
   /** REQ-685: the change that carries a lesson as a principle. */
-  private promote(dir: string, lessons: Lesson[], id: string | undefined, flags: Record<string, string>, io: AgentIo) {
+  private promote(
+    dir: string,
+    lessons: Lesson[],
+    id: string | undefined,
+    flags: Record<string, string>,
+    io: AgentIo
+  ) {
     const lesson = lessons.find((l) => l.id === id);
     const title = (flags.title || "").trim();
     if (!lesson || !title) {
       io.fail(NULL_SHAPE, [
         error(
           lesson ? "learn_title_required" : "learn_lesson_unknown",
-          lesson ? "promote needs the rule's --title." : `No lesson ${id ?? ""}: specgate learn lists them.`,
+          lesson
+            ? "promote needs the rule's --title."
+            : `No lesson ${id ?? ""}: specgate learn lists them.`,
           { fix: 'specgate learn promote L1 --title "<the rule, in a sentence>"' }
         ),
       ]);
@@ -142,13 +160,15 @@ export class LearnCommand extends BaseCommand {
     const changeDir = path.join(dir, CHANGES, changeId);
     if (fs.existsSync(changeDir)) {
       io.fail(NULL_SHAPE, [
-        error("change_exists", `The rule ${changeId} is already proposed.`, { fix: `specgate change approve ${changeId}` }),
+        error("change_exists", `The rule ${changeId} is already proposed.`, {
+          fix: `specgate change approve ${changeId}`,
+        }),
       ]);
       return;
     }
     const from = lesson.evidence
       ? [...new Set(lesson.evidence.map((n) => n.change))]
-      : (lesson.requirements || []);
+      : lesson.requirements || [];
     const rule: LearnedRule = {
       title,
       ...(flags.forbid ? { forbid: flags.forbid, in: flags.in || "**" } : {}),
@@ -159,8 +179,13 @@ export class LearnCommand extends BaseCommand {
     };
     const kind = rule.forbid || rule.run ? "a barrier the gate checks" : "an instruction";
     const evidence = lesson.evidence
-      ? lesson.evidence.map((n) => `- ${n.date} · ${n.change}${n.requirement ? ` · ${n.requirement}` : ""}: "${n.text}"`)
-      : [`- The gate stage \`${lesson.stage}\` failed ${lesson.count} times, in ${(lesson.requirements || []).join(", ")}.`];
+      ? lesson.evidence.map(
+          (n) =>
+            `- ${n.date} · ${n.change}${n.requirement ? ` · ${n.requirement}` : ""}: "${n.text}"`
+        )
+      : [
+          `- The gate stage \`${lesson.stage}\` failed ${lesson.count} times, in ${(lesson.requirements || []).join(", ")}.`,
+        ];
     const today = new Date().toISOString().slice(0, 10);
     const files: Record<string, string> = {
       "change.yaml": [
@@ -199,19 +224,35 @@ export class LearnCommand extends BaseCommand {
         `- AC-1 — approving the three layers appends "${title}" to docs/specs/principles.md as the next principle${rule.forbid ? `, forbidding \`${rule.forbid}\` in \`${rule.in}\`` : rule.run ? `, passing when \`${rule.run}\` exits 0` : ", in prose"}.`,
         "",
       ].join("\n"),
-      "tasks.md": ["# Tasks", "", "## 1. Review", "", `- [ ] 1.1 Read the evidence, then \`specgate change approve ${changeId}\``, ""].join("\n"),
+      "tasks.md": [
+        "# Tasks",
+        "",
+        "## 1. Review",
+        "",
+        `- [ ] 1.1 Read the evidence, then \`specgate change approve ${changeId}\``,
+        "",
+      ].join("\n"),
     };
     fs.mkdirSync(changeDir, { recursive: true });
-    for (const [f, text] of Object.entries(files)) fs.writeFileSync(path.join(changeDir, f), text, "utf8");
+    for (const [f, text] of Object.entries(files))
+      fs.writeFileSync(path.join(changeDir, f), text, "utf8");
     const rel = path.relative(dir, changeDir).split(path.sep).join("/");
-    io.emit({ learn: { promote: { lesson: lesson.id, change: changeId, path: rel, rule } } }, () => {
-      process.stdout.write(
-        ui.header("learn promote", lesson.id) +
-          ui.ok(`${changeId} opened: "${title}", ${kind}, once a person approves it.`) +
-          "\n" +
-          Object.keys(files).map((f) => ui.fileLine("added", `${rel}/${f}`)).join("") +
-          ui.next(`specgate change approve ${changeId}`, "after reading the evidence in discover.md")
-      );
-    });
+    io.emit(
+      { learn: { promote: { lesson: lesson.id, change: changeId, path: rel, rule } } },
+      () => {
+        process.stdout.write(
+          ui.header("learn promote", lesson.id) +
+            ui.ok(`${changeId} opened: "${title}", ${kind}, once a person approves it.`) +
+            "\n" +
+            Object.keys(files)
+              .map((f) => ui.fileLine("added", `${rel}/${f}`))
+              .join("") +
+            ui.next(
+              `specgate change approve ${changeId}`,
+              "after reading the evidence in discover.md"
+            )
+        );
+      }
+    );
   }
 }

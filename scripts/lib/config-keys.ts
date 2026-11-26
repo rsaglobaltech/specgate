@@ -214,7 +214,8 @@ const YAML: KeySpec[] = [
   // config-agents REQ-706: where the agents work (sandbox-swarm REQ-698).
   {
     key: "sandbox.engine",
-    description: "Where the agents work: docker or podman (one container), or sbx (a Docker sandbox per module).",
+    description:
+      "Where the agents work: docker or podman (one container), or sbx (a Docker sandbox per module).",
     values: ["docker", "podman", "sbx"],
     pattern: null,
     default: null,
@@ -501,7 +502,8 @@ const YAML: KeySpec[] = [
     default: null,
     file: PROFILES_FILE,
     kind: "string",
-    check: (v) => (/^REQ-\d+$/.test(v) ? null : "A requirement id: REQ- and its number, e.g. REQ-008."),
+    check: (v) =>
+      /^REQ-\d+$/.test(v) ? null : "A requirement id: REQ- and its number, e.g. REQ-008.",
   },
   {
     key: "profiles.<name>.advisory",
@@ -778,12 +780,16 @@ export function currentValue(projectDir: string, key: string): Value | null {
   let v: unknown;
   const dig = (o: unknown, parts: string[]): unknown =>
     parts.reduce<unknown>(
-      (at, k) => (at && typeof at === "object" && !Array.isArray(at) ? (at as Record<string, unknown>)[k] : undefined),
+      (at, k) =>
+        at && typeof at === "object" && !Array.isArray(at)
+          ? (at as Record<string, unknown>)[k]
+          : undefined,
       o
     );
   if (r.spec.file === PROFILES_FILE) {
     v = dig(profilesOf(projectDir)[r.name as string] || {}, key.split(".").slice(2));
-  } else if (key.startsWith("sandbox.")) v = dig(readYaml(projectDir, HARNESS_FILE), key.split("."));
+  } else if (key.startsWith("sandbox."))
+    v = dig(readYaml(projectDir, HARNESS_FILE), key.split("."));
   else if (key.startsWith("checks.")) {
     v = (checksOf(projectDir).find((c) => String(c.name) === r.name) || {})[field];
   } else if (key.startsWith("alm.pr.")) {
@@ -941,7 +947,11 @@ export function setYamlKey(
   const field = key.split(".").pop() as string;
   let after: string;
   if (spec.file === PROFILES_FILE) {
-    after = setYamlValue(before ?? "", ["profiles", name as string, ...key.split(".").slice(2)], scalar);
+    after = setYamlValue(
+      before ?? "",
+      ["profiles", name as string, ...key.split(".").slice(2)],
+      scalar
+    );
   } else if (key.startsWith("sandbox.")) {
     after = setYamlValue(before ?? "harness_version: 1\n", key.split("."), scalar);
   } else if (key.startsWith("checks.")) {
@@ -1027,15 +1037,25 @@ export function unsetYamlKey(
   } else {
     const r = resolveKey(key);
     if (!r || !r.yaml || r.spec.file === AGENTS_FILE) {
-      return { ok: false, message: `config unset does not know ${key}.`, fix: "`specgate config keys` lists the keys it writes." };
+      return {
+        ok: false,
+        message: `config unset does not know ${key}.`,
+        fix: "`specgate config keys` lists the keys it writes.",
+      };
     }
     rel = r.spec.file;
-    if (r.spec.file === PROFILES_FILE) at = ["profiles", r.name as string, ...key.split(".").slice(2)];
-    else if (key.startsWith("sandbox.") || key.startsWith("gate.")) at = key.startsWith("gate.") ? key.split(".").slice(1) : key.split(".");
+    if (r.spec.file === PROFILES_FILE)
+      at = ["profiles", r.name as string, ...key.split(".").slice(2)];
+    else if (key.startsWith("sandbox.") || key.startsWith("gate."))
+      at = key.startsWith("gate.") ? key.split(".").slice(1) : key.split(".");
     else if (key.startsWith("alm.pr.")) at = ["pr", key.split(".").pop() as string];
     else if (key.startsWith("alm.")) at = [key.split(".").pop() as string];
     else if (key.startsWith("checks.")) {
-      return { ok: false, message: "config unset does not remove a check's field.", fix: "Edit harness.config.yaml's checks: by hand." };
+      return {
+        ok: false,
+        message: "config unset does not remove a check's field.",
+        fix: "Edit harness.config.yaml's checks: by hand.",
+      };
     } else at = [key];
   }
   const file = path.join(projectDir, ...rel.split("/"));

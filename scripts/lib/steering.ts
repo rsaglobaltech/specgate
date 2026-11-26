@@ -178,13 +178,25 @@ export function steering(projectDir: string): SteeringResult {
  * output; a warn-level one is advice and does not fail.
  */
 export function runPrinciples(dir: string): {
-  failed: Array<{ id: string; title: string; run: string; output: string; level: "error" | "warn" }>;
+  failed: Array<{
+    id: string;
+    title: string;
+    run: string;
+    output: string;
+    level: "error" | "warn";
+  }>;
   ran: number;
 } {
   const file = path.join(dir, PRINCIPLES_FILE);
   if (!fs.existsSync(file)) return { failed: [], ran: 0 };
   const doc = parsePrinciples(fs.readFileSync(file, "utf8"));
-  const failed: Array<{ id: string; title: string; run: string; output: string; level: "error" | "warn" }> = [];
+  const failed: Array<{
+    id: string;
+    title: string;
+    run: string;
+    output: string;
+    level: "error" | "warn";
+  }> = [];
   let ran = 0;
   for (const p of doc.principles) {
     if (!p.run) continue;
@@ -216,7 +228,9 @@ export function principlesPromptSection(dir: string): string {
     "",
   ];
   for (const p of doc.principles) {
-    lines.push(`- **${p.id} — ${p.title}**${p.statement ? `: ${p.statement}` : ""}${p.run ? ` (checked: \`${p.run}\`)` : ""}`);
+    lines.push(
+      `- **${p.id} — ${p.title}**${p.statement ? `: ${p.statement}` : ""}${p.run ? ` (checked: \`${p.run}\`)` : ""}`
+    );
   }
   return lines.join("\n") + "\n";
 }

@@ -157,7 +157,10 @@ export function gateTooling(projectDir: string): Set<string> {
     for (const word of cmd.split(/\s+/)) {
       const bare = word.replace(/^["']|["']$/g, "");
       if (!bare || bare.startsWith("-") || /[*?{]/.test(bare)) continue;
-      const rel = path.relative(projectDir, path.resolve(projectDir, bare)).split(path.sep).join("/");
+      const rel = path
+        .relative(projectDir, path.resolve(projectDir, bare))
+        .split(path.sep)
+        .join("/");
       if (rel.startsWith("..")) continue;
       try {
         if (fs.statSync(path.join(projectDir, rel)).isFile()) out.add(rel);

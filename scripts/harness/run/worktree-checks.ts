@@ -116,7 +116,10 @@ export function branchHoldsWork(worktreeDir: string, projectDir: string, baseRef
   if (base.status !== 0 || !sha) return false;
   const changed = git(worktreeDir, ["diff", "--name-only", sha, "HEAD"]);
   if (changed.status !== 0) return false;
-  const files = (changed.stdout || "").split("\n").map((l) => l.trim()).filter(Boolean);
+  const files = (changed.stdout || "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
   return !isEmptyAttempt(files);
 }
 

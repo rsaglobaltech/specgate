@@ -49,9 +49,17 @@ export function examCli(
   const zdot = path.join(scratch, "zdot");
   fs.mkdirSync(zdot, { recursive: true });
   const first = `export PATH=${sh(bin)}:"$PATH"\n`;
-  for (const [file, again] of [[".zshenv", false], [".zprofile", true], [".zshrc", true], [".zlogin", true]] as const) {
+  for (const [file, again] of [
+    [".zshenv", false],
+    [".zprofile", true],
+    [".zshrc", true],
+    [".zlogin", true],
+  ] as const) {
     const theirs = path.join(own, file);
-    fs.writeFileSync(path.join(zdot, file), `[ -f ${sh(theirs)} ] && . ${sh(theirs)}\n${again ? first : ""}`);
+    fs.writeFileSync(
+      path.join(zdot, file),
+      `[ -f ${sh(theirs)} ] && . ${sh(theirs)}\n${again ? first : ""}`
+    );
   }
   return { NPM_CONFIG_PREFIX: prefix, ZDOTDIR: zdot };
 }
@@ -82,9 +90,18 @@ export function cliReach(
     fs.rmSync(mark, { force: true });
     spawnSync(cmd, args, { cwd: dir, env: full, encoding: "utf8", timeout: 60_000 });
     if (fs.existsSync(mark)) continue;
-    const where = spawnSync(shell, ["-lc", "command -v specgate || true"], { cwd: dir, env: full, encoding: "utf8", timeout: 30_000 });
+    const where = spawnSync(shell, ["-lc", "command -v specgate || true"], {
+      cwd: dir,
+      env: full,
+      encoding: "utf8",
+      timeout: 30_000,
+    });
     const found = (where.stdout || "").trim();
-    missed.push(name === "npx" ? `npx reached another specgate (the login shell finds ${found || "none"})` : `the login shell reached ${found || "no specgate"}`);
+    missed.push(
+      name === "npx"
+        ? `npx reached another specgate (the login shell finds ${found || "none"})`
+        : `the login shell reached ${found || "no specgate"}`
+    );
   }
   fs.rmSync(mark, { force: true });
   return { ok: missed.length === 0, missed };

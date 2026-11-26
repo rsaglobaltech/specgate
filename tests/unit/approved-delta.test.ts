@@ -6,7 +6,12 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { requirementBlocks, sealDiff, sealOf, sealsOf } from "../../packages/core/src/domain/DeltaSeal";
+import {
+  requirementBlocks,
+  sealDiff,
+  sealOf,
+  sealsOf,
+} from "../../packages/core/src/domain/DeltaSeal";
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -58,7 +63,8 @@ const REQ_032 = [
   '- THEN "A-1" is refunded',
   "",
 ].join("\n");
-const delta = (...reqs: string[]) => `# Delta — pedidos\n\n## ADDED Requirements\n\n${reqs.join("\n")}`;
+const delta = (...reqs: string[]) =>
+  `# Delta — pedidos\n\n## ADDED Requirements\n\n${reqs.join("\n")}`;
 
 const w = (dir: string, rel: string, text: string) => {
   fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
@@ -79,7 +85,11 @@ function project() {
   assert.equal(adopted.status, 0, adopted.stdout + adopted.stderr);
   const config = path.join(dir, "harness.config.yaml");
   const harness = fs.existsSync(config) ? read(dir, "harness.config.yaml") : "";
-  w(dir, "harness.config.yaml", `${harness.replace(/^(test_cmd|bdd_cmd):.*\n?/gm, "").replace(/\s*$/, "")}\ntest_cmd: "node -e 0"\n`);
+  w(
+    dir,
+    "harness.config.yaml",
+    `${harness.replace(/^(test_cmd|bdd_cmd):.*\n?/gm, "").replace(/\s*$/, "")}\ntest_cmd: "node -e 0"\n`
+  );
   w(dir, ".specgate/gate.yaml", "preset: standard\n");
   // As `propose` leaves it: lite rigor, its layers still as scaffolded.
   const proposed = run(process.execPath, [CLI, "propose", "draft-pedidos", "--project-dir", dir]);
@@ -130,8 +140,14 @@ test("REQ-739: a seal is of the heading, the statement and the scenarios — not
 test("REQ-740: the difference between two sets of seals says which changed, which were added, which are gone", () => {
   const sealed = sealsOf([delta(REQ_031, REQ_032)]);
   assert.deepEqual(sealDiff(sealed, sealed), { changed: [], added: [], gone: [] });
-  const now = sealsOf([delta(REQ_031.replace("not shipped yet", "shipped"), REQ_032.replace(/REQ-032/g, "REQ-033"))]);
-  assert.deepEqual(sealDiff(sealed, now), { changed: ["REQ-031"], added: ["REQ-033"], gone: ["REQ-032"] });
+  const now = sealsOf([
+    delta(REQ_031.replace("not shipped yet", "shipped"), REQ_032.replace(/REQ-032/g, "REQ-033")),
+  ]);
+  assert.deepEqual(sealDiff(sealed, now), {
+    changed: ["REQ-031"],
+    added: ["REQ-033"],
+    gone: ["REQ-032"],
+  });
 });
 
 test("REQ-739 SCN-739a: sealed at lite rigor — approving a change with nothing written in its layers records a seal for REQ-031", () => {
@@ -150,7 +166,11 @@ test("REQ-739 SCN-739b: delivering is not changing — apply writes the status i
   p.approve();
   const r = p.cli("apply", "REQ-031");
   assert.equal(r.status, 0, r.stdout + r.stderr);
-  assert.doesNotMatch(read(p.dir, DELTA_FILE), /status=Draft/, "apply wrote the status in the delta");
+  assert.doesNotMatch(
+    read(p.dir, DELTA_FILE),
+    /status=Draft/,
+    "apply wrote the status in the delta"
+  );
   const c = p.check();
   assert.equal(c.status, 0, c.said);
   assert.doesNotMatch(c.said, /approved_requirement_changed/);
@@ -217,7 +237,11 @@ test("REQ-741 SCN-741a: approved by an earlier Specgate — only `approved:` in 
   const c = p.check();
   assert.equal(c.status, 0, c.said);
   assert.match(c.said, /approval_not_sealed/);
-  const v = spawnSync(process.execPath, [CLI, "validate", p.dir, "--strict", "--json"], { cwd: p.dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+  const v = spawnSync(process.execPath, [CLI, "validate", p.dir, "--strict", "--json"], {
+    cwd: p.dir,
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "1" },
+  });
   assert.equal(v.status, 0, v.stdout + v.stderr);
   assert.match(v.stdout, /approval_not_sealed/);
   assert.match(v.stdout, /draft-pedidos/);
@@ -226,6 +250,10 @@ test("REQ-741 SCN-741a: approved by an earlier Specgate — only `approved:` in 
 
 test("REQ-741: a change nobody approved is not said to be unsealed", () => {
   const p = project();
-  const v = spawnSync(process.execPath, [CLI, "validate", p.dir, "--strict", "--json"], { cwd: p.dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+  const v = spawnSync(process.execPath, [CLI, "validate", p.dir, "--strict", "--json"], {
+    cwd: p.dir,
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "1" },
+  });
   assert.doesNotMatch(v.stdout, /approval_not_sealed|approved_requirement_changed/);
 });

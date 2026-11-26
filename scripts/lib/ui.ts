@@ -1,4 +1,3 @@
-
 // walkthrough-fixes-3: a reader that closes the pipe (`specgate … | head`) is
 // not an error — the output was wanted up to there. Exit quietly, as Unix tools do.
 for (const stream of [process.stdout, process.stderr]) {

@@ -58,7 +58,9 @@ export function main(argv: string[]): void {
     else if (a === "--json") continue;
     else {
       io.usage({ sandboxes: null }, [
-        error("sandboxes_usage", `Unknown argument ${a}.`, { fix: "specgate harness sandboxes --help" }),
+        error("sandboxes_usage", `Unknown argument ${a}.`, {
+          fix: "specgate harness sandboxes --help",
+        }),
       ]);
     }
   }
@@ -100,7 +102,10 @@ export function main(argv: string[]): void {
     },
   };
   io.emit(data, () => {
-    let text = ui.header("harness sandboxes", `${records.length} recorded · ${strays.length} unrecorded`);
+    let text = ui.header(
+      "harness sandboxes",
+      `${records.length} recorded · ${strays.length} unrecorded`
+    );
     if (alive === null) text += "  sbx did not answer: whether each sandbox exists is unknown.\n";
     for (const r of listed) {
       const state = r.removed

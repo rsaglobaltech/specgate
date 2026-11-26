@@ -24,7 +24,11 @@ export function failingElsewhere(output: string, delivering: readonly string[]):
 }
 
 /** What a refusal says when only another requirement's test is red. */
-export function elsewhereFix(others: readonly string[], delivering: readonly string[], again: string): { message: string; fix: string } {
+export function elsewhereFix(
+  others: readonly string[],
+  delivering: readonly string[],
+  again: string
+): { message: string; fix: string } {
   const them = others.join(", ");
   const mine = delivering.join(", ");
   return {

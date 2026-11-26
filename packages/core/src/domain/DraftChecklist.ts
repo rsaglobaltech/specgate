@@ -26,7 +26,13 @@ import { error, info, warning } from "./Diagnostic";
 import { parseDelta } from "./SpecParser";
 import { analyseScenario } from "./GherkinQuality";
 import { withoutComments } from "./QuotedText";
-import { answerLines, assumptionsToReview, deferredAnswer, isAnswered, questionTable } from "./Clarification";
+import {
+  answerLines,
+  assumptionsToReview,
+  deferredAnswer,
+  isAnswered,
+  questionTable,
+} from "./Clarification";
 
 export { deferredAnswer };
 
@@ -653,7 +659,9 @@ export function checkDraft(files: DraftFiles): DraftReport {
     const briefText = withoutComments(files.brief);
     // walkthrough-fixes-2 REQ-783: the client's answer to a question is a source,
     // as the brief is — for the requirements the question blocks.
-    const answered = questionTable(files.questions || "").filter((q) => q.answered && q.answer.trim());
+    const answered = questionTable(files.questions || "").filter(
+      (q) => q.answered && q.answer.trim()
+    );
     for (const r of reqs) {
       for (const s of r.scenarios) {
         // One finding per value per scenario: a name repeated in three steps is
@@ -672,7 +680,9 @@ export function checkDraft(files: DraftFiles): DraftReport {
               // "modulo 97" of ISO 13616 had to be copied into assumptions.md
               // (FinCore, #75).
               (SOURCED.test(r.text) && inText(value, r.text)) ||
-              answered.some((q) => q.blocks.some((b) => b.includes(r.id)) && inText(value, q.answer)) ||
+              answered.some(
+                (q) => q.blocks.some((b) => b.includes(r.id)) && inText(value, q.answer)
+              ) ||
               rows.some(
                 (row) => inRow(value, row) && (rowNamesId(row, s.id) || rowNamesId(row, r.id))
               );

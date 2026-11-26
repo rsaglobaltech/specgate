@@ -83,5 +83,9 @@ export function sealDiff(sealed: Seals, now: Seals): SealDiff {
     else if (now[id] !== seal) changed.push(id);
   }
   const added = Object.keys(now).filter((id) => !(id in sealed));
-  return { changed: changed.sort(byNumber), added: added.sort(byNumber), gone: gone.sort(byNumber) };
+  return {
+    changed: changed.sort(byNumber),
+    added: added.sort(byNumber),
+    gone: gone.sort(byNumber),
+  };
 }

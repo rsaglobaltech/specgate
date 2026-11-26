@@ -303,13 +303,13 @@ function refusedBeforeStarting(
       waits
         ? `It waits for an answer (Needs Clarification): answer its question, then run it.`
         : unrunnable
-        ? `Its scenario would pass without testing anything, so the gate could not ` +
+          ? `Its scenario would pass without testing anything, so the gate could not ` +
             `tell success from failure. Run \`specgate validate <dir> --strict-scenarios\` ` +
             `to see every one.`
-        : `Not ready for an agent: ${readiness.blockers
-            .filter((b) => b.severity === "error")
-            .map((b) => b.code)
-            .join(", ")}. Fix the blockers above, or drop --skip-not-ready to run it anyway.`
+          : `Not ready for an agent: ${readiness.blockers
+              .filter((b) => b.severity === "error")
+              .map((b) => b.code)
+              .join(", ")}. Fix the blockers above, or drop --skip-not-ready to run it anyway.`
     );
   }
 

@@ -116,7 +116,8 @@ export function designScope(root: string): string[] {
   } catch {
     /* no policy: the rule's default */
   }
-  const SOURCE = /\.([cm]?[jt]sx?|java|kt|kts|scala|groovy|py|go|rb|cs|php|rs|swift|c|cc|cpp|h|hpp|vue|svelte)$/;
+  const SOURCE =
+    /\.([cm]?[jt]sx?|java|kt|kts|scala|groovy|py|go|rb|cs|php|rs|swift|c|cc|cpp|h|hpp|vue|svelte)$/;
   const norm = (p: string) => p.replace(/\\/g, "/").replace(/^\.\//, "");
   const dir = path.join(root, "docs", "specs", "changes");
   const out: string[] = [];
@@ -249,7 +250,12 @@ export function runSpecgate(
  */
 export function hookLog(
   event:
-    | { hook: "guard" | "gate"; decision: "allowed" | "refused" | "passed" | "blocked" | "told"; reason?: string; file?: string }
+    | {
+        hook: "guard" | "gate";
+        decision: "allowed" | "refused" | "passed" | "blocked" | "told";
+        reason?: string;
+        file?: string;
+      }
     // outside-judge REQ-747: the steps of when a requirement's code began, where the session does not look.
     | { hook: "steps"; requirement: string; files: Record<string, string> },
   env: Record<string, string | undefined> = process.env
@@ -358,7 +364,9 @@ export function sealedTests(root: string): string[] {
     try {
       const records = JSON.parse(fs.readFileSync(path.join(dir, id, "approvals.json"), "utf8"));
       if (!Array.isArray(records)) continue;
-      const last = records.filter((r) => r && r.layer === "acceptance" && r.seals && typeof r.seals === "object").pop();
+      const last = records
+        .filter((r) => r && r.layer === "acceptance" && r.seals && typeof r.seals === "object")
+        .pop();
       for (const f of Object.keys(last?.seals ?? {})) out.add(f.replace(/\\/g, "/"));
     } catch {
       /* no approvals, nothing sealed */

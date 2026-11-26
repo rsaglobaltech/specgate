@@ -397,7 +397,9 @@ export function setTraceFields(
   let end = at;
   while (end !== -1 && end < lines.length - 1 && !lines[end].includes("-->")) end += 1;
   const current =
-    at === -1 ? {} : (parseTraceComment(lines.slice(at, end + 1).join(" ")) as Record<string, string>);
+    at === -1
+      ? {}
+      : (parseTraceComment(lines.slice(at, end + 1).join(" ")) as Record<string, string>);
   const merged: Record<string, string> = { ...current };
   for (const [k, v] of Object.entries(fields)) {
     if (v === "") delete merged[k];

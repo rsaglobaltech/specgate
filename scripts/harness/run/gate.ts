@@ -55,7 +55,11 @@ import {
   type ControlRecord,
 } from "../../../packages/core/src/domain/ControlRecord";
 import { runPrinciples } from "../../lib/steering";
-import { runRequirementScenarios, scenarioCommand, scenariosRequired } from "../../lib/scenario-runs";
+import {
+  runRequirementScenarios,
+  scenarioCommand,
+  scenariosRequired,
+} from "../../lib/scenario-runs";
 import { sandboxAround } from "../../lib/sandbox-registry";
 import { sbxExecLine } from "../../lib/sbx";
 import {
@@ -243,7 +247,9 @@ export function runGate(
   const unapproved = [
     ...listChangeIds(worktreeDir).flatMap((id) => sealDiagnostics(worktreeDir, id).errors),
     // sealed-acceptance REQ-758.
-    ...listChangeIds(worktreeDir).flatMap((id) => acceptanceSealDiagnostics(worktreeDir, id).errors),
+    ...listChangeIds(worktreeDir).flatMap(
+      (id) => acceptanceSealDiagnostics(worktreeDir, id).errors
+    ),
     ...scopeDiagnostics(worktreeDir, listChangeIds(worktreeDir)).errors,
   ];
   const validated = validate.status === 0 && unapproved.length === 0;
@@ -858,7 +864,11 @@ export function runAdversarialProbe(
  * requirement built to a test that says something else than its scenario is
  * not delivered. Null: not required, or green.
  */
-export function scenariosStage(worktreeDir: string, requirement: string, report: GateReport = () => {}): GateResult | null {
+export function scenariosStage(
+  worktreeDir: string,
+  requirement: string,
+  report: GateReport = () => {}
+): GateResult | null {
   if (!requirement || !scenariosRequired(worktreeDir)) return null;
   const bddCmd = scenarioCommand(worktreeDir);
   if (!bddCmd) {
@@ -891,7 +901,10 @@ export function scenariosStage(worktreeDir: string, requirement: string, report:
  * the worktree. An error-level failure fails the attempt, named so the next
  * attempt is told; a warn-level one is reported and passes. Null: green.
  */
-export function principlesStage(worktreeDir: string, report: GateReport = () => {}): GateResult | null {
+export function principlesStage(
+  worktreeDir: string,
+  report: GateReport = () => {}
+): GateResult | null {
   const started = Date.now();
   const { failed, ran } = runPrinciples(worktreeDir);
   if (ran === 0) return null;
@@ -917,7 +930,11 @@ export function principlesStage(worktreeDir: string, report: GateReport = () => 
  * requirement's step definitions when its code began, they are still those.
  * Null: nothing recorded, or unchanged.
  */
-export function stepsStage(worktreeDir: string, requirement: string, report: GateReport = () => {}): GateResult | null {
+export function stepsStage(
+  worktreeDir: string,
+  requirement: string,
+  report: GateReport = () => {}
+): GateResult | null {
   if (!requirement) return null;
   const v = stepsVerdict(worktreeDir, requirement);
   if (!v.recorded || v.changed.length === 0) return null;

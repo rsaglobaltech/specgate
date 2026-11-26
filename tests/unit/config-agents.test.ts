@@ -30,7 +30,11 @@ function requirement(id: string, title: string) {
 function library() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-config-agents-"));
   const cli = (...args: string[]): R =>
-    spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1", SPECGATE_PROFILE: "" } });
+    spawnSync(process.execPath, [CLI, ...args], {
+      cwd: dir,
+      encoding: "utf8",
+      env: { ...process.env, NO_COLOR: "1", SPECGATE_PROFILE: "" },
+    });
   spawnSync("git", ["init", "-q"], { cwd: dir });
   assert.equal(cli("init").status, 0);
   for (const [change, cap, id, title] of [
@@ -38,7 +42,11 @@ function library() {
     ["draft-ausleihe", "ausleihe", "REQ-006", "Borrow a book"],
   ]) {
     assert.equal(cli("propose", change, "--capability", cap).status, 0);
-    w(dir, `docs/specs/changes/${change}/specs/${cap}/spec.md`, `# Delta — ${cap}\n\n## ADDED Requirements\n\n${requirement(id, title)}`);
+    w(
+      dir,
+      `docs/specs/changes/${change}/specs/${cap}/spec.md`,
+      `# Delta — ${cap}\n\n## ADDED Requirements\n\n${requirement(id, title)}`
+    );
     assert.equal(cli("change", "approve", change).status, 0);
   }
   return { dir, cli, done: () => fs.rmSync(dir, { recursive: true, force: true }) };
@@ -48,13 +56,26 @@ test("REQ-705 SCN-705a: ausleihe given its own agent, and a module it lacks refu
   const p = library();
   try {
     assert.equal(p.cli("config", "set", "agent", "claude -p < {prompt_file}").status, 0);
-    assert.equal(p.cli("config", "set", "profiles.careful.agent", "codex exec - < {prompt_file}").status, 0);
+    assert.equal(
+      p.cli("config", "set", "profiles.careful.agent", "codex exec - < {prompt_file}").status,
+      0
+    );
     const r = p.cli("config", "set", "profiles.careful.match.module", "ausleihe");
     assert.equal(r.status, 0, out(r));
-    assert.match(read(p.dir, ".harness/profiles.yaml"), /careful:[\s\S]*match:\s*\n\s+module: "ausleihe"/);
-    const routes = JSON.parse(p.cli("harness", "doctor", "--no-probe", "--json").stdout).doctor.routes;
-    assert.equal(routes.find((x: { requirement: string }) => x.requirement === "REQ-006").profile, "careful");
-    assert.equal(routes.find((x: { requirement: string }) => x.requirement === "REQ-004").profile, null);
+    assert.match(
+      read(p.dir, ".harness/profiles.yaml"),
+      /careful:[\s\S]*match:\s*\n\s+module: "ausleihe"/
+    );
+    const routes = JSON.parse(p.cli("harness", "doctor", "--no-probe", "--json").stdout).doctor
+      .routes;
+    assert.equal(
+      routes.find((x: { requirement: string }) => x.requirement === "REQ-006").profile,
+      "careful"
+    );
+    assert.equal(
+      routes.find((x: { requirement: string }) => x.requirement === "REQ-004").profile,
+      null
+    );
     const no = p.cli("config", "set", "profiles.careful.match.module", "pagos");
     assert.notEqual(no.status, 0);
     assert.match(out(no), /no module pagos: ausleihe, katalog/);
@@ -86,7 +107,12 @@ test("REQ-706 SCN-706a: a swarm in sbx set from the command line; an engine it d
     // The harness reads it: the doctor runs with it.
     assert.equal(p.cli("harness", "doctor", "--no-probe", "--json").status === null, false);
     assert.notEqual(p.cli("config", "set", "sandbox.engine", "lxc").status, 0);
-    assert.equal(JSON.parse(p.cli("config", "get", "sandbox.engine", "--json").stdout).config["sandbox.engine"], "sbx");
+    assert.equal(
+      JSON.parse(p.cli("config", "get", "sandbox.engine", "--json").stdout).config[
+        "sandbox.engine"
+      ],
+      "sbx"
+    );
   } finally {
     p.done();
   }
@@ -105,8 +131,12 @@ test("REQ-707 SCN-707a: careful removed — ausleihe back to the default agent; 
     const profiles = read(p.dir, ".harness/profiles.yaml");
     assert.doesNotMatch(profiles, /careful/);
     assert.match(profiles, /fast:/, "the other profile stays");
-    const routes = JSON.parse(p.cli("harness", "doctor", "--no-probe", "--json").stdout).doctor.routes;
-    assert.equal(routes.find((x: { requirement: string }) => x.requirement === "REQ-006").profile, null);
+    const routes = JSON.parse(p.cli("harness", "doctor", "--no-probe", "--json").stdout).doctor
+      .routes;
+    assert.equal(
+      routes.find((x: { requirement: string }) => x.requirement === "REQ-006").profile,
+      null
+    );
     // Not set: not an error.
     const again = p.cli("config", "unset", "profiles.careful", "--json");
     assert.equal(again.status, 0);

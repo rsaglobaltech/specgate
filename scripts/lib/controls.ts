@@ -17,7 +17,8 @@ import { fileHash, sealedAcceptance } from "./acceptance";
  * them, never written into the project.
  */
 
-const hash = (text: string) => (text ? `sha256:${createHash("sha256").update(text).digest("hex")}` : "");
+const hash = (text: string) =>
+  text ? `sha256:${createHash("sha256").update(text).digest("hex")}` : "";
 
 function read(file: string): string {
   try {
@@ -70,20 +71,29 @@ export function controlsOf(projectDir: string): ControlRecord {
     acceptance: Object.fromEntries(
       sealedAcceptance(projectDir).map((t) => {
         const text = read(path.join(projectDir, t.file));
-        return [t.file, text === "" && !fs.existsSync(path.join(projectDir, t.file)) ? "" : fileHash(text)];
+        return [
+          t.file,
+          text === "" && !fs.existsSync(path.join(projectDir, t.file)) ? "" : fileHash(text),
+        ];
       })
     ),
   };
 }
 
 /** What the session changed, against the reading of before it; the hook log's steps, when there is one. */
-export function sessionChanged(projectDir: string, before: ControlRecord, hookLogFile?: string): string[] {
+export function sessionChanged(
+  projectDir: string,
+  before: ControlRecord,
+  hookLogFile?: string
+): string[] {
   const log = hookLogFile ? stepLog(read(hookLogFile)) : [];
   return controlsChanged(before, controlsOf(projectDir), {
     log,
     now: {
       files: stepHashes(projectDir),
-      recorded: log.map((e) => e.requirement).filter((r) => fs.existsSync(stepRecordFile(projectDir, r))),
+      recorded: log
+        .map((e) => e.requirement)
+        .filter((r) => fs.existsSync(stepRecordFile(projectDir, r))),
     },
   });
 }
@@ -98,7 +108,8 @@ export function branchControls(
   projectDir: string,
   base: string
 ): { state: "checked"; changed: string[] } | { state: "skipped"; reason: string } {
-  const git = (args: string[]) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  const git = (args: string[]) =>
+    spawnSync("git", args, { cwd: projectDir, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   const met = git(["merge-base", "HEAD", base]);
   if (met.status !== 0) return { state: "skipped", reason: `no common history with '${base}'` };
   const at = met.stdout.trim();
@@ -106,7 +117,8 @@ export function branchControls(
   const listed = git(["ls-tree", "-r", "--name-only", at, "--", ".specgate", "docs/specs/changes"]);
   if (listed.status !== 0) return { state: "skipped", reason: `'${base}' cannot be read` };
   // An archived change's approvals too: the tests it sealed stay sealed (REQ-779).
-  const wanted = /^(\.specgate\/(gate\.yaml|config\.json|evidence\/[^/]+\/evidence\.json)|docs\/specs\/changes\/(?!archive\/)[^/]+\/(change\.yaml|approvals\.json)|docs\/specs\/changes\/archive\/[^/]+\/approvals\.json)$/;
+  const wanted =
+    /^(\.specgate\/(gate\.yaml|config\.json|evidence\/[^/]+\/evidence\.json)|docs\/specs\/changes\/(?!archive\/)[^/]+\/(change\.yaml|approvals\.json)|docs\/specs\/changes\/archive\/[^/]+\/approvals\.json)$/;
   const there = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-base-controls-"));
   try {
     for (const rel of listed.stdout.split("\n").filter((f) => wanted.test(f))) {

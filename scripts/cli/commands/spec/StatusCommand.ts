@@ -519,7 +519,8 @@ export function nextCommandPlain({
 }: NextInput): string {
   const first = (cats: string[]) => (items || []).find((it) => cats.includes(it.category));
   if (orphans.length > 0) return "specgate fix";
-  const waiting = (it: QueueItem | undefined) => Boolean(it && it.change && (unapproved || []).includes(it.change));
+  const waiting = (it: QueueItem | undefined) =>
+    Boolean(it && it.change && (unapproved || []).includes(it.change));
   const ready = first(["NEEDS_STATUS_UPDATE"]);
   if (ready && waiting(ready)) return `specgate change approve ${ready.change}`;
   if (ready) return `specgate apply ${ready.requirement}`;
@@ -566,7 +567,10 @@ function nextReasonOf({
 }: NextInput): string {
   if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
   const pendingChange = (items || []).find(
-    (it) => it.change && (unapproved || []).includes(it.change) && TODO_CATEGORIES.concat(["NEEDS_STATUS_UPDATE"]).includes(it.category)
+    (it) =>
+      it.change &&
+      (unapproved || []).includes(it.change) &&
+      TODO_CATEGORIES.concat(["NEEDS_STATUS_UPDATE"]).includes(it.category)
   )?.change;
   if (pendingChange)
     return `${pendingChange} waits for a person to approve it, at their terminal — apply delivers nothing before`;
@@ -808,7 +812,11 @@ function statusDocument(
       : ((have) =>
           new Set(
             summary.items
-              .filter((it) => ["Implemented", "Verified", "Released"].includes(String(it.status || "")) && have.has(it.requirement))
+              .filter(
+                (it) =>
+                  ["Implemented", "Verified", "Released"].includes(String(it.status || "")) &&
+                  have.has(it.requirement)
+              )
               .map((it) => it.requirement)
           ).size)(requirementsWithScenarios(projectDir)),
     requirements: summary.items.map((it) => ({

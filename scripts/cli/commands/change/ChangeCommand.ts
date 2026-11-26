@@ -562,7 +562,9 @@ function cmdNew(opts: ChangeOptions) {
 
   // REQ-673: a bug in a module lowers its trust level at once.
   const leak =
-    opts.kind === "bug" && namedCapability ? lowerOnLeak(projectDir, namedCapability, changeId) : null;
+    opts.kind === "bug" && namedCapability
+      ? lowerOnLeak(projectDir, namedCapability, changeId)
+      : null;
 
   emit(
     opts,
@@ -681,29 +683,52 @@ function cmdApprove(opts: ChangeOptions) {
   // The studio's Review approves through approveChange, not here.
   if (id && !process.stdin.isTTY && !process.env.SPECGATE_ASSUME_TTY) {
     return fail(opts, nullShape, [
-      error("approve_needs_person", `Approving ${id} is a person's act, and this is not a terminal. Nothing was recorded.`, {
-        target: id,
-        fix: `A person runs it in a terminal: specgate change approve ${id}${opts.layer ? ` --layer ${opts.layer}` : ""} — or approves it in the studio's Review.`,
-      }),
+      error(
+        "approve_needs_person",
+        `Approving ${id} is a person's act, and this is not a terminal. Nothing was recorded.`,
+        {
+          target: id,
+          fix: `A person runs it in a terminal: specgate change approve ${id}${opts.layer ? ` --layer ${opts.layer}` : ""} — or approves it in the studio's Review.`,
+        }
+      ),
     ]);
   }
   // sealed-acceptance REQ-757: the acceptance tests are approved as they are, and sealed.
   if (id && (layer as string) === "acceptance") {
     const a = sealAcceptance(projectDir, id, new Date().toISOString().slice(0, 10));
-    if (!a.ok) return fail(opts, nullShape, [error(a.code, a.message, { target: id, ...(a.fix ? { fix: a.fix } : {}) })]);
+    if (!a.ok)
+      return fail(opts, nullShape, [
+        error(a.code, a.message, { target: id, ...(a.fix ? { fix: a.fix } : {}) }),
+      ]);
     // guard-scope-and-seal-run REQ-794: run once, so the person sees why they fail before the code exists.
     const first = firstAcceptanceRun(projectDir, a.sealed);
-    return emit(opts, { approve: { ok: true, change: id, layers: ["acceptance"], sealed: a.sealed, firstRun: first } }, () =>
-      process.stdout.write(
-        ui.header("change approve", id) +
-          ui.ok(`Acceptance of ${id} approved and sealed — ${a.sealed.length} test(s).`) +
-          "\n" +
-          a.sealed.map((f) => `    🔒 ${f}\n`).join("") +
-          (first
-            ? `\n  Ran once — ${first.command}: ${first.passed ? "they pass already." : "they fail, as they should before the code exists. Read why: a test that fails for a file outside this change will never pass — if so, fix it and seal it again."}\n` +
-              (first.passed ? "" : first.output.split("\n").map((l) => `    ${l}\n`).join(""))
-            : "")
-      )
+    return emit(
+      opts,
+      {
+        approve: {
+          ok: true,
+          change: id,
+          layers: ["acceptance"],
+          sealed: a.sealed,
+          firstRun: first,
+        },
+      },
+      () =>
+        process.stdout.write(
+          ui.header("change approve", id) +
+            ui.ok(`Acceptance of ${id} approved and sealed — ${a.sealed.length} test(s).`) +
+            "\n" +
+            a.sealed.map((f) => `    🔒 ${f}\n`).join("") +
+            (first
+              ? `\n  Ran once — ${first.command}: ${first.passed ? "they pass already." : "they fail, as they should before the code exists. Read why: a test that fails for a file outside this change will never pass — if so, fix it and seal it again."}\n` +
+                (first.passed
+                  ? ""
+                  : first.output
+                      .split("\n")
+                      .map((l) => `    ${l}\n`)
+                      .join(""))
+              : "")
+        )
     );
   }
   const r = id

@@ -178,7 +178,11 @@ export function removeYamlValue(text: string, path: string[]): string {
     const indent = indentOf(first);
     let at = -1;
     for (let i = from; i < to; i += 1) {
-      if (content(lines[i]) && indentOf(lines[i]) === indent && keyRe(path[d]).test(lines[i].trim())) {
+      if (
+        content(lines[i]) &&
+        indentOf(lines[i]) === indent &&
+        keyRe(path[d]).test(lines[i].trim())
+      ) {
         at = i;
         break;
       }

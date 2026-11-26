@@ -291,7 +291,9 @@ test("REQ-276 SCN-276a: a Quarkus application that skips deploy still gets its b
   const r = sg(dir, "quality", "init", "--json");
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const { readHarnessConfig } = require("../../packages/core/src/infrastructure/HarnessConfigFile");
-  const sbom = readHarnessConfig(dir).quality.checks.find((c: { name: string }) => c.name === "sbom") as { run: string };
+  const sbom = readHarnessConfig(dir).quality.checks.find(
+    (c: { name: string }) => c.name === "sbom"
+  ) as { run: string };
   assert.ok(sbom, "no sbom check");
   assert.match(sbom.run, /-Dcyclonedx\.skipNotDeployed=false/);
 });

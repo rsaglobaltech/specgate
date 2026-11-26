@@ -204,7 +204,8 @@ export function inFlightView(projectDir: string): InFlightView | null {
   const problems: InFlightProblem[] = [];
   // REQ-744: read from the project — the copy is not a working tree.
   const open = listChangeIds(projectDir);
-  for (const d of scopeDiagnostics(projectDir, open).errors) problems.push({ ...d, change: open[0] ?? "" });
+  for (const d of scopeDiagnostics(projectDir, open).errors)
+    problems.push({ ...d, change: open[0] ?? "" });
   const repo = new DiskProjectRepository(dir);
   for (const change of listChangeIds(dir)) {
     // A delta nobody has written yet is not laid over: its placeholders
@@ -217,7 +218,8 @@ export function inFlightView(projectDir: string): InFlightView | null {
     // before the copy archives the change and its approvals with it.
     for (const d of sealDiagnostics(projectDir, change).errors) problems.push({ ...d, change });
     // sealed-acceptance REQ-758: the acceptance tests a person approved, as approved.
-    for (const d of acceptanceSealDiagnostics(projectDir, change).errors) problems.push({ ...d, change });
+    for (const d of acceptanceSealDiagnostics(projectDir, change).errors)
+      problems.push({ ...d, change });
     // Tasks and the draft checklist are the person's gate at archive; here only
     // the specification is laid over, so it can be judged.
     const plan = new ArchiveChangeUseCase(repo).execute(change, { force: true, draft: true });

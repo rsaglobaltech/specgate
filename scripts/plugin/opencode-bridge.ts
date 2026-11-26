@@ -58,21 +58,34 @@ function writtenFiles(tool: string, args: Record<string, unknown>): string[] {
  * session that began with it on keeps it on, whatever its project's config
  * comes to say; the next session reads the switch again.
  */
-function heldGuard(dir: string, env: Record<string, string | undefined>): Record<string, string | undefined> {
+function heldGuard(
+  dir: string,
+  env: Record<string, string | undefined>
+): Record<string, string | undefined> {
   return guardOff(dir, env) ? env : { ...env, SPECGATE_GUARD: "on" };
 }
 
 /** What the call writes, where its tool says: for the acts that are a person's (REQ-746). */
 function writtenText(args: Record<string, unknown>): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const [from, to] of [["content", "content"], ["newString", "new_string"], ["new_string", "new_string"], ["patchText", "patchText"]]) {
+  for (const [from, to] of [
+    ["content", "content"],
+    ["newString", "new_string"],
+    ["new_string", "new_string"],
+    ["patchText", "patchText"],
+  ]) {
     if (typeof args[from] === "string") out[to] = args[from] as string;
   }
   return out;
 }
 
 /** OpenCode's shell tool: `shell` in 2, `bash` in 1. Judged by the working tree (REQ-742), and by what it asks for (REQ-746). */
-function guardShell(tool: string, args: Record<string, unknown>, dir: string, env: Record<string, string | undefined>): void {
+function guardShell(
+  tool: string,
+  args: Record<string, unknown>,
+  dir: string,
+  env: Record<string, string | undefined>
+): void {
   if (tool !== "shell" && tool !== "bash") return;
   const command = typeof args.command === "string" ? { command: args.command } : {};
   const d = guardDecide({ cwd: dir, tool_name: "Bash", tool_input: command }, env);
@@ -103,10 +116,22 @@ export function createHooks(ctx: OpencodeContext, deps: BridgeDeps = {}) {
       guardShell(input.tool, output.args ?? {}, dir, env);
       for (const file of writtenFiles(input.tool, output.args ?? {})) {
         const d = guardDecide(
-          { cwd: dir, tool_name: "Write", tool_input: { file_path: file, ...writtenText(output.args ?? {}) } },
+          {
+            cwd: dir,
+            tool_name: "Write",
+            tool_input: { file_path: file, ...writtenText(output.args ?? {}) },
+          },
           env
         );
-        hookLog({ hook: "guard", decision: d.allow ? "allowed" : "refused", file, ...(d.allow ? {} : { reason: d.message }) }, env);
+        hookLog(
+          {
+            hook: "guard",
+            decision: d.allow ? "allowed" : "refused",
+            file,
+            ...(d.allow ? {} : { reason: d.message }),
+          },
+          env
+        );
         if (!d.allow) throw new Error(d.message);
       }
     },
@@ -126,7 +151,14 @@ export function createHooks(ctx: OpencodeContext, deps: BridgeDeps = {}) {
           told.add(k);
           return false;
         });
-        hookLog({ hook: "gate", decision: decision.block ? "blocked" : decision.message ? "told" : "passed", ...(decision.message ? { reason: decision.message } : {}) }, env);
+        hookLog(
+          {
+            hook: "gate",
+            decision: decision.block ? "blocked" : decision.message ? "told" : "passed",
+            ...(decision.message ? { reason: decision.message } : {}),
+          },
+          env
+        );
         if (decision.block) {
           await ctx.client.session.prompt({
             path: { id },
@@ -144,8 +176,14 @@ export function createHooks(ctx: OpencodeContext, deps: BridgeDeps = {}) {
 export interface OpencodeV2Context {
   location: { directory: string };
   session: {
-    hook(name: "context", fn: (event: { system: { type: "text"; text: string }[] }) => void | Promise<void>): Promise<unknown>;
-    hook(name: "prompt", fn: (event: { sessionID: string; messageID?: string }) => void | Promise<void>): Promise<unknown>;
+    hook(
+      name: "context",
+      fn: (event: { system: { type: "text"; text: string }[] }) => void | Promise<void>
+    ): Promise<unknown>;
+    hook(
+      name: "prompt",
+      fn: (event: { sessionID: string; messageID?: string }) => void | Promise<void>
+    ): Promise<unknown>;
     prompt(o: { sessionID: string; text: string }): Promise<unknown>;
   };
   tool: {
@@ -155,7 +193,9 @@ export interface OpencodeV2Context {
     ): Promise<unknown>;
   };
   event: {
-    subscribe(o: { signal: AbortSignal }): AsyncIterable<{ type: string; data?: { sessionID?: string } }>;
+    subscribe(o: {
+      signal: AbortSignal;
+    }): AsyncIterable<{ type: string; data?: { sessionID?: string } }>;
   };
 }
 
@@ -182,8 +222,23 @@ export async function setupV2(ctx: OpencodeV2Context, deps: BridgeDeps = {}): Pr
   await ctx.tool.hook("execute.before", (event) => {
     guardShell(event.tool, event.input ?? {}, dir, env);
     for (const file of writtenFiles(event.tool, event.input ?? {})) {
-      const d = guardDecide({ cwd: dir, tool_name: "Write", tool_input: { file_path: file, ...writtenText(event.input ?? {}) } }, env);
-      hookLog({ hook: "guard", decision: d.allow ? "allowed" : "refused", file, ...(d.allow ? {} : { reason: d.message }) }, env);
+      const d = guardDecide(
+        {
+          cwd: dir,
+          tool_name: "Write",
+          tool_input: { file_path: file, ...writtenText(event.input ?? {}) },
+        },
+        env
+      );
+      hookLog(
+        {
+          hook: "guard",
+          decision: d.allow ? "allowed" : "refused",
+          file,
+          ...(d.allow ? {} : { reason: d.message }),
+        },
+        env
+      );
       if (!d.allow) throw new Error(d.message);
     }
   });
@@ -202,7 +257,14 @@ export async function setupV2(ctx: OpencodeV2Context, deps: BridgeDeps = {}): Pr
         told.add(k);
         return false;
       });
-      hookLog({ hook: "gate", decision: decision.block ? "blocked" : decision.message ? "told" : "passed", ...(decision.message ? { reason: decision.message } : {}) }, env);
+      hookLog(
+        {
+          hook: "gate",
+          decision: decision.block ? "blocked" : decision.message ? "told" : "passed",
+          ...(decision.message ? { reason: decision.message } : {}),
+        },
+        env
+      );
       if (decision.block) await ctx.session.prompt({ sessionID: id, text: decision.message });
     } catch {
       // The gate never breaks a session.
@@ -213,7 +275,8 @@ export async function setupV2(ctx: OpencodeV2Context, deps: BridgeDeps = {}): Pr
   void (async () => {
     try {
       for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
-        if (event.type === "session.execution.succeeded" && event.data?.sessionID) await stopped(event.data.sessionID);
+        if (event.type === "session.execution.succeeded" && event.data?.sessionID)
+          await stopped(event.data.sessionID);
       }
     } catch {
       // The stream ends when the plugin unloads.

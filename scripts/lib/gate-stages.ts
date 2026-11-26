@@ -10,7 +10,15 @@
 import type { Diagnostic } from "./diagnostics";
 import { progress } from "./progress";
 
-export type StageName = "ids" | "changes" | "validate" | "architecture" | "tests" | "scenarios" | "acceptance" | "quality";
+export type StageName =
+  | "ids"
+  | "changes"
+  | "validate"
+  | "architecture"
+  | "tests"
+  | "scenarios"
+  | "acceptance"
+  | "quality";
 export type StageResult = "passed" | "failed" | "skipped" | "not run";
 
 export interface GateStage {

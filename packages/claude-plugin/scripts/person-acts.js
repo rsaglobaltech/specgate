@@ -18,7 +18,10 @@ const WRITES = /(?:^|[\s;&|(`$])(?:rm|mv|cp|unlink|truncate|rmdir|tee|chmod|touc
 const REDIRECT_TO_CONTROL = />>?\s*["']?(?:\.\/)?(?:[^\s"';|&]*\/)?(?:\.specgate(?:\/[^\s"';|&]*)?|approvals\.json)/;
 /** One command of a line: what `;`, `&&`, `||`, `|` and a new line separate. */
 function parts(command) {
-    return command.split(/\n|;|&&|\|\||\|/).map((p) => p.trim()).filter(Boolean);
+    return command
+        .split(/\n|;|&&|\|\||\|/)
+        .map((p) => p.trim())
+        .filter(Boolean);
 }
 /** The act of a person's a shell command does, or null. */
 function personActInShell(command) {
@@ -48,7 +51,9 @@ function personActInShell(command) {
 }
 /** The act of a person's writing this file is, or null. `text` is what the call writes, when it says. */
 function personActInWrite(relPath, text = "") {
-    const p = String(relPath || "").replace(/\\/g, "/").replace(/^\.\//, "");
+    const p = String(relPath || "")
+        .replace(/\\/g, "/")
+        .replace(/^\.\//, "");
     if (/^\.specgate\/(config\.json|gate\.yaml)$/.test(p) || /^\.specgate\/evidence\//.test(p))
         return { act: "controls-file", what: p };
     if (/(^|\/)docs\/specs\/changes\/[^/]+\/approvals\.json$/.test(p))

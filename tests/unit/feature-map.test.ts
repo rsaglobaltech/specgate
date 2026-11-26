@@ -52,7 +52,8 @@ function project(trace: string) {
   return dir;
 }
 
-const E2E = 'import { test } from "@playwright/test";\n// REQ-031\ntest("cancel", async ({ page }) => {\n  await page.goto("/orders/A-1");\n});\n';
+const E2E =
+  'import { test } from "@playwright/test";\n// REQ-031\ntest("cancel", async ({ page }) => {\n  await page.goto("/orders/A-1");\n});\n';
 
 type Entry = Record<string, unknown>;
 const mapOf = (dir: string, ...args: string[]): Entry[] => {
@@ -77,7 +78,11 @@ test("REQ-678 SCN-678a: the route from an end-to-end test", () => {
 
 test("REQ-678 SCN-678b: the route the trace gives, and a requirement still in its change", () => {
   const dir = project("route=/orders/:id");
-  w(dir, "docs/specs/changes/draft-pagos/change.yaml", "specgate_change_version: 1\nschema: layered\ncreated: 2026-11-23\nrigor: lite\n");
+  w(
+    dir,
+    "docs/specs/changes/draft-pagos/change.yaml",
+    "specgate_change_version: 1\nschema: layered\ncreated: 2026-11-23\nrigor: lite\n"
+  );
   w(
     dir,
     "docs/specs/changes/draft-pagos/specs/pagos/spec.md",
@@ -106,7 +111,10 @@ test("REQ-679 SCN-679a: the agent is told to open the requirement before and aft
   assert.match(prompt, /before you change anything, and again after/);
   // Nothing known, nothing said.
   const bare = project("");
-  assert.doesNotMatch(buildPrompt({ requirement: "REQ-031" }, bare, {}), /Where it lives in the app/);
+  assert.doesNotMatch(
+    buildPrompt({ requirement: "REQ-031" }, bare, {}),
+    /Where it lives in the app/
+  );
 });
 
 test("REQ-680 SCN-680a: apply keeps the evidence of a delivery, its screenshot out of git", () => {
@@ -117,7 +125,10 @@ test("REQ-680 SCN-680a: apply keeps the evidence of a delivery, its screenshot o
     "run-scenarios.js",
     'const fs=require("fs");fs.mkdirSync("test-results/cancel",{recursive:true});fs.writeFileSync("test-results/cancel/screenshot.png","PNG");console.log("1 scenario passed for "+process.argv[2]);\n'
   );
-  fs.appendFileSync(path.join(dir, "harness.config.yaml"), 'bdd_cmd: "node run-scenarios.js {tags}"\n');
+  fs.appendFileSync(
+    path.join(dir, "harness.config.yaml"),
+    'bdd_cmd: "node run-scenarios.js {tags}"\n'
+  );
   w(dir, "tests/cancel.test.ts", "// REQ-031\n");
   const r = sg(dir, "apply", "REQ-031");
   assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -127,8 +138,14 @@ test("REQ-680 SCN-680a: apply keeps the evidence of a delivery, its screenshot o
   assert.equal(evidence.scenarios.exitCode, 0);
   assert.equal(typeof evidence.scenarios.ms, "number");
   assert.match(read(dir, ".specgate/evidence/REQ-031/bdd.log"), /1 scenario passed for @REQ-031/);
-  assert.ok(fs.existsSync(path.join(dir, ".specgate/evidence/REQ-031/artifacts/cancel/screenshot.png")));
+  assert.ok(
+    fs.existsSync(path.join(dir, ".specgate/evidence/REQ-031/artifacts/cancel/screenshot.png"))
+  );
   assert.match(read(dir, ".specgate/evidence/.gitignore"), /^artifacts\/$|\*\/artifacts\//m);
-  const ignored = spawnSync("git", ["check-ignore", ".specgate/evidence/REQ-031/artifacts/cancel/screenshot.png"], { cwd: dir, encoding: "utf8" });
+  const ignored = spawnSync(
+    "git",
+    ["check-ignore", ".specgate/evidence/REQ-031/artifacts/cancel/screenshot.png"],
+    { cwd: dir, encoding: "utf8" }
+  );
   assert.equal(ignored.status, 0, "the screenshot is ignored by git");
 });

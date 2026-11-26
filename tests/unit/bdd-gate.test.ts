@@ -436,12 +436,29 @@ function gatedProject(bdd: Record<string, number>, gate = "preset: standard\nbdd
   git(p.dir, "add", "-A");
   git(p.dir, "commit", "-qm", "seed");
   const agent = path.join(path.dirname(p.dir), `agent-${path.basename(p.dir)}.js`);
-  fs.writeFileSync(agent, 'require("node:fs").writeFileSync("src/cancel.js", "// REQ-031\\nmodule.exports = 1;\\n");\n');
+  fs.writeFileSync(
+    agent,
+    'require("node:fs").writeFileSync("src/cancel.js", "// REQ-031\\nmodule.exports = 1;\\n");\n'
+  );
   madeDirs.push(agent);
   const harness = (...extra: string[]) =>
     spawnSync(
       process.execPath,
-      [CLI, "harness", "run", "--project-dir", p.dir, "--req", "REQ-031", "--agent", `"${process.execPath}" "${agent}" {prompt_file}`, "--skip-doctor", "--max-attempts", "1", ...extra],
+      [
+        CLI,
+        "harness",
+        "run",
+        "--project-dir",
+        p.dir,
+        "--req",
+        "REQ-031",
+        "--agent",
+        `"${process.execPath}" "${agent}" {prompt_file}`,
+        "--skip-doctor",
+        "--max-attempts",
+        "1",
+        ...extra,
+      ],
       { cwd: p.dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } }
     );
   return { ...p, harness };
@@ -454,7 +471,11 @@ test("REQ-733 SCN-733a: built to a test that says something else — the harness
   assert.match(said, /0 passed/, said);
   assert.match(said, /scenarios/, said);
   assert.match(said, /SCN-031/, "the scenario that failed is named");
-  assert.doesNotMatch(git(p.dir, "show", "harness/REQ-031:docs/specs/changes/draft-pedidos/specs/pedidos/spec.md").stdout, /status=Implemented/);
+  assert.doesNotMatch(
+    git(p.dir, "show", "harness/REQ-031:docs/specs/changes/draft-pedidos/specs/pedidos/spec.md")
+      .stdout,
+    /status=Implemented/
+  );
 });
 
 test("REQ-733 SCN-733b: its scenarios pass — the gate has the stage scenarios, and the requirement is delivered", () => {
@@ -482,14 +503,21 @@ function deliveredProject(after: Record<string, number>) {
   w(
     p.dir,
     "harness.config.yaml",
-    read(p.dir, "harness.config.yaml").replace(/^bdd_cmd:.*$/m, `bdd_cmd: "node -e \\"process.exit((${table})[process.argv[1]] ?? 3)\\" {tags}"`)
+    read(p.dir, "harness.config.yaml").replace(
+      /^bdd_cmd:.*$/m,
+      `bdd_cmd: "node -e \\"process.exit((${table})[process.argv[1]] ?? 3)\\" {tags}"`
+    )
   );
   return p;
 }
 
 test("REQ-734 SCN-734a: code changed after delivery — check fails at scenarios naming the requirement and the scenario", () => {
   const p = deliveredProject({ "@REQ-031": 1, "@SCN-031": 1, "@SCN-032": 0 });
-  const r = spawnSync(process.execPath, [CLI, "check", p.dir, "--json"], { cwd: p.dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+  const r = spawnSync(process.execPath, [CLI, "check", p.dir, "--json"], {
+    cwd: p.dir,
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "1" },
+  });
   assert.notEqual(r.status, 0, r.stdout);
   const doc = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
   const stage = doc.stages.find((s: { stage: string }) => s.stage === "scenarios");
@@ -503,7 +531,11 @@ test("REQ-734 SCN-734a: code changed after delivery — check fails at scenarios
 
 test("REQ-734: the delivered requirements' scenarios pass — check passes with the stage scenarios", () => {
   const p = deliveredProject({ "@REQ-031": 0, "@SCN-031": 0, "@SCN-032": 0 });
-  const r = spawnSync(process.execPath, [CLI, "check", p.dir, "--json"], { cwd: p.dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+  const r = spawnSync(process.execPath, [CLI, "check", p.dir, "--json"], {
+    cwd: p.dir,
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "1" },
+  });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const doc = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
   assert.equal(doc.stages.find((s: { stage: string }) => s.stage === "scenarios").result, "passed");
@@ -511,7 +543,11 @@ test("REQ-734: the delivered requirements' scenarios pass — check passes with 
 
 test("REQ-734 SCN-734b: --no-scenarios leaves the stage out at the Developer's word, and says so", () => {
   const p = deliveredProject({ "@REQ-031": 1, "@SCN-031": 1 });
-  const r = spawnSync(process.execPath, [CLI, "check", p.dir, "--no-scenarios", "--json"], { cwd: p.dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+  const r = spawnSync(process.execPath, [CLI, "check", p.dir, "--no-scenarios", "--json"], {
+    cwd: p.dir,
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "1" },
+  });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const doc = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
   const stage = doc.stages.find((s: { stage: string }) => s.stage === "scenarios");

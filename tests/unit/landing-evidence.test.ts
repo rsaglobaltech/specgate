@@ -8,7 +8,9 @@ import assert from "node:assert/strict";
 const fs = require("node:fs");
 const path = require("node:path");
 
-const ROOT_DIR = path.resolve(__dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, ""));
+const ROOT_DIR = path.resolve(
+  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
+);
 const EN = fs.readFileSync(path.join(ROOT_DIR, "docs", "index.html"), "utf8");
 const ES = fs.readFileSync(path.join(ROOT_DIR, "docs", "es", "index.html"), "utf8");
 
@@ -32,7 +34,10 @@ test("REQ-763 SCN-763a: named figures — the trust boundary with the outside ju
   const figures = [...EN.matchAll(/<figure[\s\S]*?<\/figure>/g)].map((m) => m[0]);
   const named = (re: RegExp) =>
     figures.find((f) => {
-      const label = (/role="img"[^>]*aria-label="([^"]+)"/.exec(f) || /aria-label="([^"]+)"[^>]*role="img"/.exec(f) || [])[1] || "";
+      const label =
+        (/role="img"[^>]*aria-label="([^"]+)"/.exec(f) ||
+          /aria-label="([^"]+)"[^>]*role="img"/.exec(f) ||
+          [])[1] || "";
       return re.test(label) && /<figcaption/.test(f);
     });
   const boundary = named(/trust boundary/i);
@@ -42,7 +47,10 @@ test("REQ-763 SCN-763a: named figures — the trust boundary with the outside ju
 });
 
 test("REQ-764 SCN-764a: both pages list C1 to C9, the Spanish one in Spanish", () => {
-  for (const [html, lang] of [[EN, "en"], [ES, "es"]] as const) {
+  for (const [html, lang] of [
+    [EN, "en"],
+    [ES, "es"],
+  ] as const) {
     for (let i = 1; i <= 9; i++) assert.match(html, new RegExp(`>C${i}<`), `${lang}: C${i}`);
   }
   assert.match(EN, /What an agent tried/);

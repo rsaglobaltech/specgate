@@ -325,9 +325,14 @@ export const SURFACE: Command[] = [
     help: {
       group: "core",
       icon: "🐞",
-      summary: "Open a bug that must be seen red first; run it red, kept as evidence, before the fix.",
+      summary:
+        "Open a bug that must be seen red first; run it red, kept as evidence, before the fix.",
     },
-    json: { key: "reproduce", gate: false, args: "<change-id> --capability <c> --title <t> | run <REQ>" },
+    json: {
+      key: "reproduce",
+      gate: false,
+      args: "<change-id> --capability <c> --title <t> | run <REQ>",
+    },
   },
   {
     name: "map",
@@ -337,7 +342,8 @@ export const SURFACE: Command[] = [
     help: {
       group: "core",
       icon: "🗺️",
-      summary: "Where each requirement lives: use case, route and address, feature, code and tests.",
+      summary:
+        "Where each requirement lives: use case, route and address, feature, code and tests.",
     },
     json: { key: "map", gate: false, args: "[<REQ>] [--capability <c>]" },
   },
@@ -349,7 +355,8 @@ export const SURFACE: Command[] = [
     help: {
       group: "core",
       icon: "🧪",
-      summary: "Examine a skill: fixed tasks, runs in parallel, correct by the gate, good by the review.",
+      summary:
+        "Examine a skill: fixed tasks, runs in parallel, correct by the gate, good by the review.",
     },
     json: { key: "eval", gate: false, args: "<skill> [--runs <n>]" },
   },
@@ -361,9 +368,14 @@ export const SURFACE: Command[] = [
     help: {
       group: "core",
       icon: "🧩",
-      summary: "The compatibility exam: each agent tool at each level of integration, judged by the gate.",
+      summary:
+        "The compatibility exam: each agent tool at each level of integration, judged by the gate.",
     },
-    json: { key: "compat", gate: false, args: "run|report [--tool <t>] [--level <L>] [--runs <n>]" },
+    json: {
+      key: "compat",
+      gate: false,
+      args: "run|report [--tool <t>] [--level <L>] [--runs <n>]",
+    },
   },
   {
     name: "learn",
@@ -373,7 +385,8 @@ export const SURFACE: Command[] = [
     help: {
       group: "core",
       icon: "🧭",
-      summary: "The lessons that keep coming back — review notes, failed gate stages — proposed as rules.",
+      summary:
+        "The lessons that keep coming back — review notes, failed gate stages — proposed as rules.",
     },
     json: { key: "learn", gate: false, args: "[promote <L> --title <rule>]" },
   },
@@ -958,7 +971,8 @@ export const SURFACE: Command[] = [
         help: {
           group: "harness",
           icon: "📦",
-          summary: "Each sandbox the harness made, the hosts it may reach; --prune removes the leftovers.",
+          summary:
+            "Each sandbox the harness made, the hosts it may reach; --prune removes the leftovers.",
         },
         json: { key: "sandboxes", gate: false },
       },
@@ -970,7 +984,8 @@ export const SURFACE: Command[] = [
         help: {
           group: "harness",
           icon: "🩺",
-          summary: "Which agent each requirement gets, and whether each one is installed and answers.",
+          summary:
+            "Which agent each requirement gets, and whether each one is installed and answers.",
         },
         json: { key: "doctor", gate: false },
       },

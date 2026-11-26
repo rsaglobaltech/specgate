@@ -82,7 +82,8 @@ export function featureMap(projectDir: string): MapEntry[] {
     }
 
     const byReq = new Map<string, typeof rows>();
-    for (const row of rows) byReq.set(row.requirement, [...(byReq.get(row.requirement) || []), row]);
+    for (const row of rows)
+      byReq.set(row.requirement, [...(byReq.get(row.requirement) || []), row]);
     const ids = [...new Set([...known.keys(), ...byReq.keys()])].sort((a, b) =>
       a.localeCompare(b, undefined, { numeric: true })
     );

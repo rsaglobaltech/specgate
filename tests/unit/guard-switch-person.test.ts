@@ -9,37 +9,49 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
-const ROOT_DIR = path.resolve(__dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, ""));
+const ROOT_DIR = path.resolve(
+  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
+);
 const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 
 const made: string[] = [];
 test.after(() => {
-  for (const d of made) fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  for (const d of made)
+    fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 });
 function project(): string {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "specgate-guard-switch-")));
   made.push(dir);
   spawnSync("git", ["init", "-q"], { cwd: dir });
   const r = spawnSync(process.execPath, [CLI, "adopt", "--no-ci", "--project-dir", dir], {
-    cwd: dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1", SPECGATE_SKIP_DOCTOR: "1" },
+    cwd: dir,
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "1", SPECGATE_SKIP_DOCTOR: "1" },
   });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   return dir;
 }
 const guard = (dir: string): string => {
   try {
-    return JSON.parse(fs.readFileSync(path.join(dir, ".specgate", "config.json"), "utf8")).agent_guard ?? "on";
+    return (
+      JSON.parse(fs.readFileSync(path.join(dir, ".specgate", "config.json"), "utf8")).agent_guard ??
+      "on"
+    );
   } catch {
     return "on";
   }
 };
 const set = (dir: string, value: string, person: boolean) =>
-  spawnSync(process.execPath, [CLI, "config", "set", "agent_guard", value, "--project-dir", dir, "--json"], {
-    cwd: dir,
-    encoding: "utf8",
-    stdio: ["pipe", "pipe", "pipe"],
-    env: { ...process.env, NO_COLOR: "1", SPECGATE_ASSUME_TTY: person ? "1" : "" },
-  });
+  spawnSync(
+    process.execPath,
+    [CLI, "config", "set", "agent_guard", value, "--project-dir", dir, "--json"],
+    {
+      cwd: dir,
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+      env: { ...process.env, NO_COLOR: "1", SPECGATE_ASSUME_TTY: person ? "1" : "" },
+    }
+  );
 
 test("REQ-768 SCN-768a: an agent's call — no terminal, the guard stays on", () => {
   const dir = project();

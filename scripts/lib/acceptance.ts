@@ -40,7 +40,8 @@ export interface AcceptanceLine {
   text: string;
 }
 
-const changeDir = (projectDir: string, id: string) => path.join(projectDir, "docs", "specs", "changes", id);
+const changeDir = (projectDir: string, id: string) =>
+  path.join(projectDir, "docs", "specs", "changes", id);
 
 function read(file: string): string | null {
   try {
@@ -122,7 +123,9 @@ function openIds(projectDir: string): string[] {
 function archivedIds(projectDir: string): string[] {
   try {
     return fs
-      .readdirSync(path.join(projectDir, "docs", "specs", "changes", "archive"), { withFileTypes: true })
+      .readdirSync(path.join(projectDir, "docs", "specs", "changes", "archive"), {
+        withFileTypes: true,
+      })
       .filter((e) => e.isDirectory())
       .map((e) => `archive/${e.name}`)
       .sort();
@@ -137,11 +140,18 @@ function archivedIds(projectDir: string): string[] {
  * newer seal of the same file replaces an older one. A test sealed by a
  * change that is now archived stays sealed (sealed-acceptance, 2026-11-26).
  */
-export function sealedAcceptance(projectDir: string): Array<{ change: string; file: string; hash: string; archived: boolean }> {
-  const byFile = new Map<string, { change: string; file: string; hash: string; archived: boolean }>();
+export function sealedAcceptance(
+  projectDir: string
+): Array<{ change: string; file: string; hash: string; archived: boolean }> {
+  const byFile = new Map<
+    string,
+    { change: string; file: string; hash: string; archived: boolean }
+  >();
   for (const change of [...archivedIds(projectDir), ...openIds(projectDir)]) {
     const archived = change.startsWith("archive/");
-    for (const [file, hash] of Object.entries(readAcceptanceSeals(projectDir, change)?.seals || {})) {
+    for (const [file, hash] of Object.entries(
+      readAcceptanceSeals(projectDir, change)?.seals || {}
+    )) {
       byFile.set(file, { change, file, hash, archived });
     }
   }
@@ -149,7 +159,10 @@ export function sealedAcceptance(projectDir: string): Array<{ change: string; fi
 }
 
 /** The sealed tests of archived changes that differ from their seal or are gone. */
-export function archivedAcceptanceDiagnostics(projectDir: string): { errors: Diagnostic[]; warnings: Diagnostic[] } {
+export function archivedAcceptanceDiagnostics(projectDir: string): {
+  errors: Diagnostic[];
+  warnings: Diagnostic[];
+} {
   const found: Diagnostic[] = [];
   for (const t of sealedAcceptance(projectDir).filter((x) => x.archived)) {
     const text = read(path.join(projectDir, t.file));
@@ -159,7 +172,10 @@ export function archivedAcceptanceDiagnostics(projectDir: string): { errors: Dia
       error(
         "acceptance_not_sealed",
         `${t.file}, an acceptance test a person approved and sealed (${t.change.replace(/^archive\//, "")}), ${what}. Restore it (git checkout -- ${t.file}), or open a change that lists it in its acceptance-tests.md and have a person approve it.`,
-        { target: t.file, fix: `git checkout -- ${t.file} — or specgate propose <change-id>, list it in acceptance-tests.md, and a person: specgate change approve <change-id> --layer acceptance` }
+        {
+          target: t.file,
+          fix: `git checkout -- ${t.file} — or specgate propose <change-id>, list it in acceptance-tests.md, and a person: specgate change approve <change-id> --layer acceptance`,
+        }
       )
     );
   }
@@ -208,7 +224,11 @@ export function sealAcceptance(
     const abs = path.resolve(projectDir, line.path);
     const rel = path.relative(projectDir, abs);
     if (rel.startsWith("..") || path.isAbsolute(rel)) {
-      return { ok: false, code: "acceptance_file_outside", message: `${line.path} is outside the project: ${line.text}` };
+      return {
+        ok: false,
+        code: "acceptance_file_outside",
+        message: `${line.path} is outside the project: ${line.text}`,
+      };
     }
     const text = read(abs);
     if (text === null) {
@@ -234,7 +254,11 @@ export function sealAcceptance(
   }
   const all = records(projectDir, id);
   all.push({ layer: ACCEPTANCE_LAYER, role: "tester", seals, by: who, at: today });
-  fs.writeFileSync(path.join(changeDir(projectDir, id), APPROVALS_FILE), `${JSON.stringify(all, null, 2)}\n`, "utf8");
+  fs.writeFileSync(
+    path.join(changeDir(projectDir, id), APPROVALS_FILE),
+    `${JSON.stringify(all, null, 2)}\n`,
+    "utf8"
+  );
   return { ok: true, change: id, sealed: Object.keys(seals) };
 }
 
@@ -252,7 +276,15 @@ const split = (found: Diagnostic[], level: string) =>
     ? { errors: [], warnings: [] }
     : level === "error"
       ? { errors: found, warnings: [] }
-      : { errors: [], warnings: found.map((d) => warning(d.code, d.message, { ...(d.target ? { target: d.target } : {}), ...(d.fix ? { fix: d.fix } : {}) })) };
+      : {
+          errors: [],
+          warnings: found.map((d) =>
+            warning(d.code, d.message, {
+              ...(d.target ? { target: d.target } : {}),
+              ...(d.fix ? { fix: d.fix } : {}),
+            })
+          ),
+        };
 
 /** REQ-758: each sealed acceptance test of the change that differs from its seal or is gone. */
 export function acceptanceSealDiagnostics(
@@ -270,7 +302,10 @@ export function acceptanceSealDiagnostics(
       error(
         "acceptance_not_sealed",
         `${file}, an acceptance test of ${id} a person approved, ${what}. Restore it (git checkout -- ${file}), or have a person approve the new version: specgate change approve ${id} --layer acceptance.`,
-        { target: file, fix: `git checkout -- ${file} — or a person: specgate change approve ${id} --layer acceptance` }
+        {
+          target: file,
+          fix: `git checkout -- ${file} — or a person: specgate change approve ${id} --layer acceptance`,
+        }
       )
     );
   }
@@ -314,7 +349,8 @@ export function acceptanceRun(projectDir: string): AcceptanceVerdict {
   if (sealed.length === 0 || level === "off") return none;
   // A sealed test of an archived change is still the contract.
   const archived = archivedAcceptanceDiagnostics(projectDir);
-  if (archived.errors.length) return { ...none, errors: archived.errors, warnings: archived.warnings };
+  if (archived.errors.length)
+    return { ...none, errors: archived.errors, warnings: archived.warnings };
   const files = [...new Set(sealed.map((s) => s.file))];
   const cmd = acceptanceCommand(projectDir);
   if (!cmd) {
@@ -335,7 +371,9 @@ export function acceptanceRun(projectDir: string): AcceptanceVerdict {
       ),
     };
   }
-  const command = cmd.includes("{files}") ? cmd.split("{files}").join(files.map(quote).join(" ")) : cmd;
+  const command = cmd.includes("{files}")
+    ? cmd.split("{files}").join(files.map(quote).join(" "))
+    : cmd;
   const started = Date.now();
   const run = spawnSync(forShell(command), {
     cwd: projectDir,
@@ -355,7 +393,10 @@ export function acceptanceRun(projectDir: string): AcceptanceVerdict {
         error(
           "acceptance_red",
           `The approved acceptance tests did not pass — ran ${command}${output ? `:\n${output}` : ""}`,
-          { target: "acceptance", fix: "Make the code do what the approved tests say: the tests are the contract, not the thing to change." }
+          {
+            target: "acceptance",
+            fix: "Make the code do what the approved tests say: the tests are the contract, not the thing to change.",
+          }
         ),
       ],
       level
@@ -375,7 +416,9 @@ export function firstAcceptanceRun(
 ): { command: string; passed: boolean; output: string } | null {
   const cmd = acceptanceCommand(projectDir);
   if (!cmd || files.length === 0) return null;
-  const command = cmd.includes("{files}") ? cmd.split("{files}").join(files.map(quote).join(" ")) : cmd;
+  const command = cmd.includes("{files}")
+    ? cmd.split("{files}").join(files.map(quote).join(" "))
+    : cmd;
   const run = spawnSync(forShell(command), {
     cwd: projectDir,
     encoding: "utf8",
@@ -385,7 +428,9 @@ export function firstAcceptanceRun(
   });
   const lines = `${run.stdout || ""}${run.stderr || ""}`.trim().split("\n");
   // The lines that say why — an error, a failure, a missing file — rather than a stack's tail.
-  const why = lines.filter((l) => /error|fail|cannot|not found|no such|✖|assert/i.test(l) && !/^\s+at\s/.test(l));
+  const why = lines.filter(
+    (l) => /error|fail|cannot|not found|no such|✖|assert/i.test(l) && !/^\s+at\s/.test(l)
+  );
   const output = (why.length ? why.slice(0, 10) : lines.slice(-15)).join("\n");
   return { command, passed: run.status === 0, output };
 }

@@ -39,8 +39,15 @@ export function stepLog(lines: string): StepLogEntry[] {
     if (!line.trim()) continue;
     try {
       const e = JSON.parse(line);
-      if (e && e.hook === "steps" && typeof e.requirement === "string" && e.files && typeof e.files === "object") {
-        if (!first.has(e.requirement)) first.set(e.requirement, { requirement: e.requirement, files: e.files });
+      if (
+        e &&
+        e.hook === "steps" &&
+        typeof e.requirement === "string" &&
+        e.files &&
+        typeof e.files === "object"
+      ) {
+        if (!first.has(e.requirement))
+          first.set(e.requirement, { requirement: e.requirement, files: e.files });
       }
     } catch {
       /* a line that is not a record is not one */
@@ -59,7 +66,8 @@ export function controlsChanged(
   if (before.guard === "on" && after.guard === "off") out.push("the guard was switched off");
   if (before.policy !== after.policy) out.push("the gate's policy (.specgate/gate.yaml) changed");
   for (const id of Object.keys(after.approvals).sort()) {
-    if ((before.approvals[id] ?? "") !== after.approvals[id]) out.push(`the approval of ${id} changed`);
+    if ((before.approvals[id] ?? "") !== after.approvals[id])
+      out.push(`the approval of ${id} changed`);
   }
   for (const id of Object.keys(before.approvals).sort()) {
     if (!(id in after.approvals) && before.approvals[id]) out.push(`the approval of ${id} is gone`);
@@ -68,7 +76,8 @@ export function controlsChanged(
     if (!after.evidence.includes(req)) out.push(`the evidence of ${req} was removed`);
   }
   for (const req of after.stepsReviewed) {
-    if (!before.stepsReviewed.includes(req)) out.push(`the steps of ${req} were said to be reviewed`);
+    if (!before.stepsReviewed.includes(req))
+      out.push(`the steps of ${req} were said to be reviewed`);
   }
   // sealed-acceptance REQ-760: a sealed test is the contract — changed by any road, it is named.
   const tests = before.acceptance ?? {};
@@ -80,7 +89,9 @@ export function controlsChanged(
   for (const entry of steps?.log ?? []) {
     const now = steps!.now;
     if (now.recorded.includes(entry.requirement)) continue;
-    const changed = Object.keys(now.files).filter((f) => entry.files[f] !== now.files[f]).sort();
+    const changed = Object.keys(now.files)
+      .filter((f) => entry.files[f] !== now.files[f])
+      .sort();
     if (changed.length)
       out.push(
         `the steps of ${entry.requirement} changed after its code began and their record was removed (${changed.join(", ")})`

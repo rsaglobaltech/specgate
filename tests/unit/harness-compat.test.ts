@@ -10,7 +10,9 @@ import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { cellOf, type CompatRun } from "../../packages/core/src/domain/Compat";
 
-const ROOT_DIR = path.resolve(__dirname.split(/[\\/]tests(?:[\\/]|$)/)[0]!.replace(/[\\/]dist$/, ""));
+const ROOT_DIR = path.resolve(
+  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0]!.replace(/[\\/]dist$/, "")
+);
 const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 
 /** A fake tool named `name` on a PATH of its own; it records what it saw in `record`. */
@@ -24,7 +26,9 @@ function fakeTool(name: string, behaviour: "implement" | "claim") {
     script,
     [
       'const fs = require("node:fs");',
-      'if (process.argv.includes("--version")) { console.log("' + name + ' 9.9.9"); process.exit(0); }',
+      'if (process.argv.includes("--version")) { console.log("' +
+        name +
+        ' 9.9.9"); process.exit(0); }',
       `fs.writeFileSync(${JSON.stringify(record)}, JSON.stringify({`,
       "  argv: process.argv.slice(2),",
       "  sawKey: process.env.OPENCODE_API_KEY !== undefined,",
@@ -45,7 +49,11 @@ function fakeTool(name: string, behaviour: "implement" | "claim") {
       "",
     ].join("\n")
   );
-  fs.writeFileSync(path.join(bin, name), `#!/bin/sh\nexec "${process.execPath}" "${script}" "$@"\n`, { mode: 0o755 });
+  fs.writeFileSync(
+    path.join(bin, name),
+    `#!/bin/sh\nexec "${process.execPath}" "${script}" "$@"\n`,
+    { mode: 0o755 }
+  );
   const project = path.join(parent, "home");
   fs.mkdirSync(project);
   return {
@@ -54,11 +62,20 @@ function fakeTool(name: string, behaviour: "implement" | "claim") {
     record: () => JSON.parse(fs.readFileSync(record, "utf8")),
     recorded: () => fs.existsSync(record),
     run: (args: string[], env: Record<string, string> = {}) =>
-      spawnSync(process.execPath, [CLI, "compat", "run", ...args, "--no-sandbox", "--project-dir", project], {
-        encoding: "utf8",
-        timeout: 300_000,
-        env: { ...process.env, ...env, PATH: `${bin}${path.delimiter}${process.env.PATH}`, NO_COLOR: "1" },
-      }),
+      spawnSync(
+        process.execPath,
+        [CLI, "compat", "run", ...args, "--no-sandbox", "--project-dir", project],
+        {
+          encoding: "utf8",
+          timeout: 300_000,
+          env: {
+            ...process.env,
+            ...env,
+            PATH: `${bin}${path.delimiter}${process.env.PATH}`,
+            NO_COLOR: "1",
+          },
+        }
+      ),
     runs: (): CompatRun[] =>
       fs
         .readFileSync(path.join(project, ".specgate", "compat", "runs.jsonl"), "utf8")
@@ -109,7 +126,13 @@ test("REQ-712 SCN-712a: at L0 the copy has AGENTS.md and no skills, commands, MC
     f.run(["--tool", "opencode", "--level", "L0", "--runs", "1"]);
     const seen = f.record();
     assert.deepEqual(
-      { agents: seen.agents, skills: seen.skills, commands: seen.commands, mcp: seen.mcp, plugin: seen.plugin },
+      {
+        agents: seen.agents,
+        skills: seen.skills,
+        commands: seen.commands,
+        mcp: seen.mcp,
+        plugin: seen.plugin,
+      },
       { agents: true, skills: false, commands: false, mcp: false, plugin: false }
     );
   } finally {
@@ -150,7 +173,10 @@ test("REQ-713 SCN-713a: mcp install --client opencode adds the server and keeps 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "compat-oc-"));
   try {
     fs.writeFileSync(path.join(dir, "opencode.json"), '{"model":"opencode/big-pickle"}\n');
-    const r = spawnSync(process.execPath, [CLI, "mcp", "install", "--client", "opencode"], { cwd: dir, encoding: "utf8" });
+    const r = spawnSync(process.execPath, [CLI, "mcp", "install", "--client", "opencode"], {
+      cwd: dir,
+      encoding: "utf8",
+    });
     assert.equal(r.status, 0, out(r));
     const doc = JSON.parse(fs.readFileSync(path.join(dir, "opencode.json"), "utf8"));
     assert.equal(doc.model, "opencode/big-pickle");
@@ -167,7 +193,10 @@ test("REQ-713: mcp install --client codex runs codex mcp add and says it is the 
     const r = spawnSync(process.execPath, [CLI, "mcp", "install", "--client", "codex"], {
       cwd: f.project,
       encoding: "utf8",
-      env: { ...process.env, PATH: `${path.join(f.parent, "bin")}${path.delimiter}${process.env.PATH}` },
+      env: {
+        ...process.env,
+        PATH: `${path.join(f.parent, "bin")}${path.delimiter}${process.env.PATH}`,
+      },
     });
     assert.equal(r.status, 0, out(r));
     assert.deepEqual(f.record().argv.slice(0, 4), ["mcp", "add", "specgate", "--"]);
@@ -183,8 +212,14 @@ test("REQ-713 SCN-713b: Codex at L2 gets the server on its command line, and COD
   try {
     f.run(["--tool", "codex", "--level", "L2", "--runs", "1"], { CODEX_HOME: home });
     const argv: string[] = f.record().argv;
-    assert.ok(argv.some((a) => a.startsWith("mcp_servers.specgate.command=")), argv.join(" "));
-    assert.ok(argv.some((a) => a.startsWith("mcp_servers.specgate.args=")), argv.join(" "));
+    assert.ok(
+      argv.some((a) => a.startsWith("mcp_servers.specgate.command=")),
+      argv.join(" ")
+    );
+    assert.ok(
+      argv.some((a) => a.startsWith("mcp_servers.specgate.args=")),
+      argv.join(" ")
+    );
     assert.deepEqual(fs.readdirSync(home), []);
   } finally {
     fs.rmSync(home, { recursive: true, force: true });
@@ -195,7 +230,9 @@ test("REQ-713 SCN-713b: Codex at L2 gets the server on its command line, and COD
 test("REQ-714 SCN-714a: the company key stays out of the run", () => {
   const f = fakeTool("opencode", "claim");
   try {
-    f.run(["--tool", "opencode", "--level", "L0", "--runs", "1"], { OPENCODE_API_KEY: "company-key" });
+    f.run(["--tool", "opencode", "--level", "L0", "--runs", "1"], {
+      OPENCODE_API_KEY: "company-key",
+    });
     assert.equal(f.record().sawKey, false);
   } finally {
     f.done();
@@ -205,9 +242,12 @@ test("REQ-714 SCN-714a: the company key stays out of the run", () => {
 test("REQ-714: --keep-env lets a named key through", () => {
   const f = fakeTool("opencode", "claim");
   try {
-    f.run(["--tool", "opencode", "--level", "L0", "--runs", "1", "--keep-env", "OPENCODE_API_KEY"], {
-      OPENCODE_API_KEY: "mine",
-    });
+    f.run(
+      ["--tool", "opencode", "--level", "L0", "--runs", "1", "--keep-env", "OPENCODE_API_KEY"],
+      {
+        OPENCODE_API_KEY: "mine",
+      }
+    );
     assert.equal(f.record().sawKey, true);
   } finally {
     f.done();
@@ -215,16 +255,23 @@ test("REQ-714: --keep-env lets a named key through", () => {
 });
 
 const run = (over: Partial<CompatRun>): CompatRun => ({
-  tool: "codex", level: "L1", version: "codex 1", model: "m", ran: true, check: true, hidden: true,
-  testNamesReq: true, seconds: 10, exit: 0, at: "2026-11-24T00:00:00Z", ...over,
+  tool: "codex",
+  level: "L1",
+  version: "codex 1",
+  model: "m",
+  ran: true,
+  check: true,
+  hidden: true,
+  testNamesReq: true,
+  seconds: 10,
+  exit: 0,
+  at: "2026-11-24T00:00:00Z",
+  ...over,
 });
 
 test("REQ-715 SCN-715a: two of three is amber", () => {
   const cell = cellOf([run({}), run({ hidden: false }), run({ seconds: 30 })]);
-  assert.deepEqual(
-    [cell.colour, cell.passed, cell.runs, cell.medianSeconds],
-    ["amber", 2, 3, 10]
-  );
+  assert.deepEqual([cell.colour, cell.passed, cell.runs, cell.medianSeconds], ["amber", 2, 3, 10]);
   assert.equal(cellOf([run({}), run({}), run({})]).colour, "green");
   assert.equal(cellOf([run({ check: false })]).colour, "red");
   assert.equal(cellOf([run({ ran: false })]).colour, "n/a");
@@ -239,11 +286,28 @@ test("REQ-716 SCN-716a: the matrix has a row per tool, four levels, today's date
     const lines = [
       run({ tool: "claude", version: "2.1.331", model: "haiku", level: "L0" }),
       run({ tool: "codex", version: "codex-cli 0.154.0", model: "gpt-5.6-luna", level: "L0" }),
-      run({ tool: "codex", version: "codex-cli 0.154.0", model: "gpt-5.6-luna", level: "L3", ran: false }),
-      run({ tool: "opencode", version: "v2.3.2", model: "opencode/big-pickle", level: "L2", hidden: false }),
+      run({
+        tool: "codex",
+        version: "codex-cli 0.154.0",
+        model: "gpt-5.6-luna",
+        level: "L3",
+        ran: false,
+      }),
+      run({
+        tool: "opencode",
+        version: "v2.3.2",
+        model: "opencode/big-pickle",
+        level: "L2",
+        hidden: false,
+      }),
     ];
-    fs.writeFileSync(path.join(dir, ".specgate", "compat", "runs.jsonl"), lines.map((l) => JSON.stringify(l)).join("\n") + "\n");
-    const r = spawnSync(process.execPath, [CLI, "compat", "report", "--project-dir", dir], { encoding: "utf8" });
+    fs.writeFileSync(
+      path.join(dir, ".specgate", "compat", "runs.jsonl"),
+      lines.map((l) => JSON.stringify(l)).join("\n") + "\n"
+    );
+    const r = spawnSync(process.execPath, [CLI, "compat", "report", "--project-dir", dir], {
+      encoding: "utf8",
+    });
     assert.equal(r.status, 0, out(r));
     const md = fs.readFileSync(path.join(dir, ".specgate", "compat", "matrix.md"), "utf8");
     assert.match(md, /\| claude \| 2\.1\.331 \| haiku \|/);
@@ -252,7 +316,11 @@ test("REQ-716 SCN-716a: the matrix has a row per tool, four levels, today's date
     assert.match(md, /\| L0 \| L1 \| L2 \| L3 \|/);
     assert.match(md, new RegExp(`Measured ${new Date().toISOString().slice(0, 10)}`));
     assert.deepEqual(fs.readdirSync(path.join(dir, "docs")), ["index.md"]);
-    const j = spawnSync(process.execPath, [CLI, "compat", "report", "--json", "--project-dir", dir], { encoding: "utf8" });
+    const j = spawnSync(
+      process.execPath,
+      [CLI, "compat", "report", "--json", "--project-dir", dir],
+      { encoding: "utf8" }
+    );
     assert.equal(JSON.parse(j.stdout).compat.rows.length, 3);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

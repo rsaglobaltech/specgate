@@ -48,11 +48,14 @@ const check = (dir: string) =>
   );
 type Finding = { code: string; message: string; fix?: string };
 /** Every finding of a check, its stages' and its verdict's. */
-const findings = (doc: { stages?: Array<{ findings: Finding[] }>; status?: Finding[] }): Finding[] => [
-  ...(doc.stages || []).flatMap((s) => s.findings),
-  ...(doc.status || []),
-];
-const codes = (doc: object) => findings(doc).map((f) => f.code).join("\n");
+const findings = (doc: {
+  stages?: Array<{ findings: Finding[] }>;
+  status?: Finding[];
+}): Finding[] => [...(doc.stages || []).flatMap((s) => s.findings), ...(doc.status || [])];
+const codes = (doc: object) =>
+  findings(doc)
+    .map((f) => f.code)
+    .join("\n");
 
 /** A capability spec with the requirements given, each Implemented. */
 function capability(dir: string, name: string, reqs: string[]) {
@@ -72,7 +75,11 @@ function capability(dir: string, name: string, reqs: string[]) {
       "",
     ].join("\n")
   );
-  w(dir, `docs/specs/capabilities/${name}/spec.md`, `# ${name}\n\n## Requirements\n\n${blocks.join("\n")}`);
+  w(
+    dir,
+    `docs/specs/capabilities/${name}/spec.md`,
+    `# ${name}\n\n## Requirements\n\n${blocks.join("\n")}`
+  );
 }
 
 /** An adopted project with pagos (REQ-040, REQ-041) and catalogo (REQ-050), and `trust` as its trust: line. */
@@ -130,7 +137,10 @@ test("REQ-671 SCN-671b: a confined module runs one named requirement, never in p
   assert.match(trust.harnessTrustRefusal(dir, "REQ-041", undefined, named), /needs 3/);
   const parallel = { named: [], concurrency: 2 };
   for (const id of ["REQ-040", "REQ-041"])
-    assert.match(trust.harnessTrustRefusal(dir, id, undefined, parallel), /level 2 \(confined\), and this run needs 4/);
+    assert.match(
+      trust.harnessTrustRefusal(dir, id, undefined, parallel),
+      /level 2 \(confined\), and this run needs 4/
+    );
   // The run's intent travels to its workers in the environment.
   assert.deepEqual(trust.runIntent({ SPECGATE_TRUST_RUN: JSON.stringify(named) }), named);
 });
@@ -155,7 +165,11 @@ test("REQ-672 SCN-672a: a level raised by hand fails the gate with trust_raised_
   const dir = project("trust: { catalogo: 3 }");
   check(dir);
   assert.deepEqual(
-    ledger(dir).map((l: { capability: string; to: number; reason: string }) => [l.capability, l.to, l.reason]),
+    ledger(dir).map((l: { capability: string; to: number; reason: string }) => [
+      l.capability,
+      l.to,
+      l.reason,
+    ]),
     [["catalogo", 3, "declared"]]
   );
   w(dir, ".specgate/gate.yaml", "preset: standard\ntrust: { catalogo: 4 }\n");
@@ -174,20 +188,35 @@ test("REQ-672 SCN-672b: promoted by an approved change", () => {
   const opened = run(dir, "trust", "promote", "catalogo", "--json");
   assert.equal(opened.status, 0, opened.stdout + opened.stderr);
   assert.equal(json(opened).trust.promote.change, "trust-catalogo-4");
-  assert.match(read(dir, "docs/specs/changes/trust-catalogo-4/discover.md"), /catalogo is at trust level 3/);
+  assert.match(
+    read(dir, "docs/specs/changes/trust-catalogo-4/discover.md"),
+    /catalogo is at trust level 3/
+  );
   assert.match(read(dir, ".specgate/gate.yaml"), /catalogo: 3/);
   const approved = run(dir, "change", "approve", "trust-catalogo-4", "--json");
   assert.equal(approved.status, 0, approved.stdout + approved.stderr);
   assert.match(read(dir, ".specgate/gate.yaml"), /^ {2}catalogo: 4$/m);
   assert.match(read(dir, ".specgate/gate.yaml"), /^ {2}promote_after: 1$/m);
   const last = ledger(dir).at(-1);
-  assert.deepEqual([last.reason, last.from, last.to, last.change], ["promotion", 3, 4, "trust-catalogo-4"]);
+  assert.deepEqual(
+    [last.reason, last.from, last.to, last.change],
+    ["promotion", 3, 4, "trust-catalogo-4"]
+  );
   assert.doesNotMatch(codes(check(dir)), /trust_/);
 });
 
 test("REQ-673 SCN-673a: a bug escaped from catalogo lowers it at once", () => {
   const dir = project("trust: { catalogo: 4 }");
-  const r = run(dir, "propose", "fix-precio", "--kind", "bug", "--capability", "catalogo", "--json");
+  const r = run(
+    dir,
+    "propose",
+    "fix-precio",
+    "--kind",
+    "bug",
+    "--capability",
+    "catalogo",
+    "--json"
+  );
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual(json(r).trust, { capability: "catalogo", from: 4, to: 3 });
   assert.match(read(dir, ".specgate/gate.yaml"), /trust: \{ catalogo: 3 \}/);
@@ -210,12 +239,16 @@ test("REQ-674 SCN-674a: ready for a promotion after ten green deliveries", () =>
     dir,
     ".specgate/applied.jsonl",
     ids
-      .map((req, i) => JSON.stringify({ req, capability: "catalogo", at: new Date(at - i * 1000).toISOString() }))
+      .map((req, i) =>
+        JSON.stringify({ req, capability: "catalogo", at: new Date(at - i * 1000).toISOString() })
+      )
       .join("\n") + "\n"
   );
   const r = run(dir, "trust", "--json");
   assert.equal(r.status, 0, r.stdout + r.stderr);
-  const row = json(r).trust.capabilities.find((c: { capability: string }) => c.capability === "catalogo");
+  const row = json(r).trust.capabilities.find(
+    (c: { capability: string }) => c.capability === "catalogo"
+  );
   assert.equal(row.level, 3);
   assert.equal(row.name, "verified");
   assert.equal(row.streak, 10);
@@ -231,10 +264,16 @@ test("REQ-674 SCN-674b: a leak resets the streak", () => {
   w(
     dir,
     ".specgate/applied.jsonl",
-    ids.map((req) => JSON.stringify({ req, capability: "catalogo", at: new Date(past).toISOString() })).join("\n") + "\n"
+    ids
+      .map((req) =>
+        JSON.stringify({ req, capability: "catalogo", at: new Date(past).toISOString() })
+      )
+      .join("\n") + "\n"
   );
   assert.equal(
-    json(run(dir, "trust", "--json")).trust.capabilities.find((c: { capability: string }) => c.capability === "catalogo").streak,
+    json(run(dir, "trust", "--json")).trust.capabilities.find(
+      (c: { capability: string }) => c.capability === "catalogo"
+    ).streak,
     7
   );
   run(dir, "propose", "fix-precio", "--kind", "bug", "--capability", "catalogo");
@@ -242,9 +281,21 @@ test("REQ-674 SCN-674b: a leak resets the streak", () => {
   assert.match(r.stdout, /catalogo\s+2 confined\s+\d+ applied · streak 0 · 1 leak\n/);
   assert.doesNotMatch(r.stdout, /ready/);
   // A failed harness attempt resets it too.
-  w(dir, ".harness/events/REQ-600.jsonl", JSON.stringify({ t: Date.now() / 1000, req: "REQ-600", type: "attempt", state: "end", result: "fail" }) + "\n");
+  w(
+    dir,
+    ".harness/events/REQ-600.jsonl",
+    JSON.stringify({
+      t: Date.now() / 1000,
+      req: "REQ-600",
+      type: "attempt",
+      state: "end",
+      result: "fail",
+    }) + "\n"
+  );
   assert.equal(
-    json(run(dir, "trust", "--json")).trust.capabilities.find((c: { capability: string }) => c.capability === "catalogo").streak,
+    json(run(dir, "trust", "--json")).trust.capabilities.find(
+      (c: { capability: string }) => c.capability === "catalogo"
+    ).streak,
     0
   );
 });

@@ -55,7 +55,11 @@ function library() {
     ["draft-ausleihe", "ausleihe", "REQ-006", "Borrow a book"],
   ]) {
     assert.equal(cli(dir, "propose", change, "--capability", cap).status, 0);
-    w(dir, `docs/specs/changes/${change}/specs/${cap}/spec.md`, `# Delta — ${cap}\n\n## ADDED Requirements\n\n${requirement(req, title)}`);
+    w(
+      dir,
+      `docs/specs/changes/${change}/specs/${cap}/spec.md`,
+      `# Delta — ${cap}\n\n## ADDED Requirements\n\n${requirement(req, title)}`
+    );
     assert.equal(cli(dir, "change", "approve", change).status, 0);
   }
   const log = path.join(parent, "who.log");
@@ -70,7 +74,7 @@ function library() {
         "const req = process.env.SPECGATE_REQ;",
         `fs.appendFileSync(${JSON.stringify(log)}, req + " ${name}\\n");`,
         'fs.mkdirSync("test", { recursive: true });',
-        'fs.writeFileSync(`lib/${req}.js`, `// ${req}\\nmodule.exports = 1;\\n`);',
+        "fs.writeFileSync(`lib/${req}.js`, `// ${req}\\nmodule.exports = 1;\\n`);",
         'fs.writeFileSync(`test/${req}.test.js`, `// ${req} SCN-${req.slice(4)}a\\nrequire("node:test")("ok", () => {});\\n`);',
       ].join("\n")
     );
@@ -83,7 +87,14 @@ function library() {
     git(dir, "add", "-A");
     git(dir, "commit", "-qm", "seed");
   };
-  return { parent, dir, log, agent, commit, done: () => fs.rmSync(parent, { recursive: true, force: true }) };
+  return {
+    parent,
+    dir,
+    log,
+    agent,
+    commit,
+    done: () => fs.rmSync(parent, { recursive: true, force: true }),
+  };
 }
 
 test("REQ-688 SCN-688a: ausleihe with its own agent — careful builds REQ-006, cheap builds REQ-004", () => {
@@ -106,7 +117,19 @@ test("REQ-688 SCN-688a: ausleihe with its own agent — careful builds REQ-006, 
       ].join("\n")
     );
     p.commit();
-    const r = cli(p.dir, "harness", "run", "--agent", p.agent("default"), "--max-attempts", "1", "--req", "REQ-004", "--req", "REQ-006");
+    const r = cli(
+      p.dir,
+      "harness",
+      "run",
+      "--agent",
+      p.agent("default"),
+      "--max-attempts",
+      "1",
+      "--req",
+      "REQ-004",
+      "--req",
+      "REQ-006"
+    );
     assert.match(out(r), /2 passed/, out(r));
     const who = fs.readFileSync(p.log, "utf8").trim().split("\n").sort();
     assert.deepEqual(who, ["REQ-004 cheap", "REQ-006 careful"]);
@@ -183,16 +206,26 @@ test("REQ-690 SCN-690a: one agent answers, careful's key has expired — the doc
   const p = library();
   try {
     const careful = talker(p.parent, "careful", "Error: This API key has expired", 1);
-    w(p.dir, ".harness/profiles.yaml", `profiles:\n  careful:\n    agent: '${careful}'\n    match:\n      module: ausleihe\n`);
-    w(p.dir, "harness.config.yaml", `test_cmd: "node pass.js"\nagent: '${talker(p.parent, "default", "OK")}'\n`);
+    w(
+      p.dir,
+      ".harness/profiles.yaml",
+      `profiles:\n  careful:\n    agent: '${careful}'\n    match:\n      module: ausleihe\n`
+    );
+    w(
+      p.dir,
+      "harness.config.yaml",
+      `test_cmd: "node pass.js"\nagent: '${talker(p.parent, "default", "OK")}'\n`
+    );
     const r = cli(p.dir, "harness", "doctor", "--json");
     assert.equal(r.status, 1, out(r));
     const d = JSON.parse(r.stdout).doctor;
-    const route = (id: string) => d.routes.find((x: { requirement: string }) => x.requirement === id);
+    const route = (id: string) =>
+      d.routes.find((x: { requirement: string }) => x.requirement === id);
     assert.equal(route("REQ-006").profile, "careful");
     assert.equal(route("REQ-006").module, "ausleihe");
     assert.equal(route("REQ-004").profile, null);
-    const agent = (name: string) => d.agents.find((a: { agent: string }) => a.agent.includes(`${name}.js`));
+    const agent = (name: string) =>
+      d.agents.find((a: { agent: string }) => a.agent.includes(`${name}.js`));
     assert.equal(agent("default").answered, true);
     assert.equal(agent("careful").answered, false);
     assert.match(agent("careful").reason, /This API key has expired/);
@@ -208,12 +241,25 @@ test("REQ-690 SCN-690b: not installed — nosuchagent named, and no agent run", 
   try {
     const ran = path.join(p.parent, "ran.log");
     const quiet = path.join(p.parent, "quiet.js");
-    fs.writeFileSync(quiet, `require("fs").appendFileSync(${JSON.stringify(ran)}, "ran\\n"); console.log("OK");\n`);
-    w(p.dir, ".harness/profiles.yaml", "profiles:\n  ghost:\n    agent: 'nosuchagent -p {prompt_file}'\n    match:\n      module: ausleihe\n");
-    w(p.dir, "harness.config.yaml", `test_cmd: "node pass.js"\nagent: '"${process.execPath}" "${quiet}" {prompt_file}'\n`);
+    fs.writeFileSync(
+      quiet,
+      `require("fs").appendFileSync(${JSON.stringify(ran)}, "ran\\n"); console.log("OK");\n`
+    );
+    w(
+      p.dir,
+      ".harness/profiles.yaml",
+      "profiles:\n  ghost:\n    agent: 'nosuchagent -p {prompt_file}'\n    match:\n      module: ausleihe\n"
+    );
+    w(
+      p.dir,
+      "harness.config.yaml",
+      `test_cmd: "node pass.js"\nagent: '"${process.execPath}" "${quiet}" {prompt_file}'\n`
+    );
     const r = cli(p.dir, "harness", "doctor", "--no-probe", "--json");
     assert.equal(r.status, 1, out(r));
-    const ghost = JSON.parse(r.stdout).doctor.agents.find((a: { agent: string }) => a.agent.startsWith("nosuchagent"));
+    const ghost = JSON.parse(r.stdout).doctor.agents.find((a: { agent: string }) =>
+      a.agent.startsWith("nosuchagent")
+    );
     assert.equal(ghost.installed, false);
     assert.equal(ghost.program, "nosuchagent");
     assert.match(ghost.reason, /nosuchagent is not installed/);
@@ -225,7 +271,10 @@ test("REQ-690 SCN-690b: not installed — nosuchagent named, and no agent run", 
 
 test("REQ-690: the program behind env and its options", () => {
   const { programOf } = require("../../scripts/harness/doctor");
-  assert.equal(programOf("env -u OPENCODE_API_KEY opencode run --auto -f {prompt_file}"), "opencode");
+  assert.equal(
+    programOf("env -u OPENCODE_API_KEY opencode run --auto -f {prompt_file}"),
+    "opencode"
+  );
   assert.equal(programOf("FOO=1 claude -p"), "claude");
   assert.equal(programOf('"/usr/bin/node" agent.js'), "/usr/bin/node");
 });
@@ -234,14 +283,22 @@ test("REQ-691 SCN-691a: ausleihe's agent is out of quota — the run refuses nam
   const p = library();
   try {
     const careful = talker(p.parent, "careful", "Free usage limit reached", 1);
-    w(p.dir, ".harness/profiles.yaml", `profiles:\n  careful:\n    agent: '${careful}'\n    match:\n      module: ausleihe\n`);
+    w(
+      p.dir,
+      ".harness/profiles.yaml",
+      `profiles:\n  careful:\n    agent: '${careful}'\n    match:\n      module: ausleihe\n`
+    );
     // The default agent answers the doctor, then builds.
     const builder = path.join(p.parent, "builder.js");
     fs.writeFileSync(
       builder,
       'const fs = require("node:fs"); if (/Reply with exactly: OK/.test(fs.readFileSync(process.argv[2], "utf8"))) { console.log("OK"); process.exit(0); }\n'
     );
-    w(p.dir, "harness.config.yaml", `test_cmd: "node pass.js"\nagent: '"${process.execPath}" "${builder}" {prompt_file}'\n`);
+    w(
+      p.dir,
+      "harness.config.yaml",
+      `test_cmd: "node pass.js"\nagent: '"${process.execPath}" "${builder}" {prompt_file}'\n`
+    );
     p.commit();
     const run = (...extra: string[]) =>
       spawnSync(process.execPath, [CLI, "harness", "run", "--max-attempts", "1", ...extra], {
@@ -269,7 +326,9 @@ test("REQ-691 SCN-691a: ausleihe's agent is out of quota — the run refuses nam
 test("REQ-690: an agent named as a person reads it — its program and model", () => {
   const { agentLabel } = require("../../scripts/harness/doctor");
   assert.equal(
-    agentLabel("env -u OPENCODE_API_KEY opencode run --auto -m opencode/big-pickle -f {prompt_file}"),
+    agentLabel(
+      "env -u OPENCODE_API_KEY opencode run --auto -m opencode/big-pickle -f {prompt_file}"
+    ),
     "opencode · big-pickle"
   );
   assert.equal(agentLabel("claude -p --model=sonnet"), "claude · sonnet");
@@ -280,8 +339,16 @@ test("REQ-690: a profile's agent is checked even when nothing pending goes to it
   const p = library();
   try {
     const idle = talker(p.parent, "idle", "Error: This API key has expired", 1);
-    w(p.dir, ".harness/profiles.yaml", `profiles:\n  spare:\n    agent: '${idle}'\n    match:\n      requirement: REQ-999\n`);
-    w(p.dir, "harness.config.yaml", `test_cmd: "node pass.js"\nagent: '${talker(p.parent, "default", "OK")}'\n`);
+    w(
+      p.dir,
+      ".harness/profiles.yaml",
+      `profiles:\n  spare:\n    agent: '${idle}'\n    match:\n      requirement: REQ-999\n`
+    );
+    w(
+      p.dir,
+      "harness.config.yaml",
+      `test_cmd: "node pass.js"\nagent: '${talker(p.parent, "default", "OK")}'\n`
+    );
     const d = JSON.parse(cli(p.dir, "harness", "doctor", "--json").stdout).doctor;
     const spare = d.agents.find((a: { agent: string }) => a.agent.includes("idle.js"));
     assert.equal(spare.answered, false);
@@ -291,46 +358,75 @@ test("REQ-690: a profile's agent is checked even when nothing pending goes to it
   }
 });
 
-test("REQ-691: a hung agent that ignores SIGTERM neither holds the doctor nor outlives it", { skip: process.platform === "win32" && "process groups are POSIX" }, () => {
-  const { checkAgent } = require("../../scripts/harness/doctor");
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-doctor-hang-"));
-  const marker = `specgate-doctor-hang-${process.pid}-${Date.now()}`;
-  const script = path.join(dir, "hung.js");
-  fs.writeFileSync(script, `process.on("SIGTERM", () => {}); setInterval(() => {}, 1000); setTimeout(() => process.exit(0), 300000); // ${marker}\n`);
-  try {
-    const t0 = Date.now();
-    const c = checkAgent(`"${process.execPath}" "${script}" ${marker} {prompt_file}`, dir, { probe: true, timeoutMs: 1500 });
-    assert.ok(Date.now() - t0 < 20000, `held the doctor for ${Date.now() - t0} ms`);
-    assert.equal(c.answered, false);
-    assert.match(c.reason, /did not answer within 2 s|did not answer within 1 s/);
-    assert.equal(spawnSync("pgrep", ["-f", marker], { encoding: "utf8" }).stdout.trim(), "", "the hung agent outlived the doctor");
-  } finally {
-    spawnSync("pkill", ["-9", "-f", marker]);
-    fs.rmSync(dir, { recursive: true, force: true });
+test(
+  "REQ-691: a hung agent that ignores SIGTERM neither holds the doctor nor outlives it",
+  { skip: process.platform === "win32" && "process groups are POSIX" },
+  () => {
+    const { checkAgent } = require("../../scripts/harness/doctor");
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-doctor-hang-"));
+    const marker = `specgate-doctor-hang-${process.pid}-${Date.now()}`;
+    const script = path.join(dir, "hung.js");
+    fs.writeFileSync(
+      script,
+      `process.on("SIGTERM", () => {}); setInterval(() => {}, 1000); setTimeout(() => process.exit(0), 300000); // ${marker}\n`
+    );
+    try {
+      const t0 = Date.now();
+      const c = checkAgent(`"${process.execPath}" "${script}" ${marker} {prompt_file}`, dir, {
+        probe: true,
+        timeoutMs: 1500,
+      });
+      assert.ok(Date.now() - t0 < 20000, `held the doctor for ${Date.now() - t0} ms`);
+      assert.equal(c.answered, false);
+      assert.match(c.reason, /did not answer within 2 s|did not answer within 1 s/);
+      assert.equal(
+        spawnSync("pgrep", ["-f", marker], { encoding: "utf8" }).stdout.trim(),
+        "",
+        "the hung agent outlived the doctor"
+      );
+    } finally {
+      spawnSync("pkill", ["-9", "-f", marker]);
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   }
-});
+);
 
-test("REQ-691: a run whose agent hangs is refused within its own deadline, and leaves nothing running", { skip: process.platform === "win32" && "process groups are POSIX" }, () => {
-  const p = library();
-  const marker = `specgate-run-hang-${process.pid}-${Date.now()}`;
-  const script = path.join(p.parent, "hung.js");
-  fs.writeFileSync(script, `process.on("SIGTERM", () => {}); setInterval(() => {}, 1000); setTimeout(() => process.exit(0), 300000); // ${marker}\n`);
-  try {
-    w(p.dir, "harness.config.yaml", `test_cmd: "node pass.js"\nagent: '"${process.execPath}" "${script}" ${marker} {prompt_file}'\n`);
-    p.commit();
-    const t0 = Date.now();
-    const r = spawnSync(process.execPath, [CLI, "harness", "run", "--req", "REQ-004", "--timeout", "3", "--max-attempts", "1"], {
-      cwd: p.dir,
-      encoding: "utf8",
-      timeout: 120000,
-      env: { ...process.env, SPECGATE_SKIP_DOCTOR: "", NO_COLOR: "1" },
-    });
-    assert.ok(Date.now() - t0 < 30000, `took ${Date.now() - t0} ms`);
-    assert.match(out(r), /harness_agent_unavailable/);
-    assert.match(out(r), /did not answer within 3 s/);
-    assert.equal(spawnSync("pgrep", ["-f", marker], { encoding: "utf8" }).stdout.trim(), "");
-  } finally {
-    spawnSync("pkill", ["-9", "-f", marker]);
-    p.done();
+test(
+  "REQ-691: a run whose agent hangs is refused within its own deadline, and leaves nothing running",
+  { skip: process.platform === "win32" && "process groups are POSIX" },
+  () => {
+    const p = library();
+    const marker = `specgate-run-hang-${process.pid}-${Date.now()}`;
+    const script = path.join(p.parent, "hung.js");
+    fs.writeFileSync(
+      script,
+      `process.on("SIGTERM", () => {}); setInterval(() => {}, 1000); setTimeout(() => process.exit(0), 300000); // ${marker}\n`
+    );
+    try {
+      w(
+        p.dir,
+        "harness.config.yaml",
+        `test_cmd: "node pass.js"\nagent: '"${process.execPath}" "${script}" ${marker} {prompt_file}'\n`
+      );
+      p.commit();
+      const t0 = Date.now();
+      const r = spawnSync(
+        process.execPath,
+        [CLI, "harness", "run", "--req", "REQ-004", "--timeout", "3", "--max-attempts", "1"],
+        {
+          cwd: p.dir,
+          encoding: "utf8",
+          timeout: 120000,
+          env: { ...process.env, SPECGATE_SKIP_DOCTOR: "", NO_COLOR: "1" },
+        }
+      );
+      assert.ok(Date.now() - t0 < 30000, `took ${Date.now() - t0} ms`);
+      assert.match(out(r), /harness_agent_unavailable/);
+      assert.match(out(r), /did not answer within 3 s/);
+      assert.equal(spawnSync("pgrep", ["-f", marker], { encoding: "utf8" }).stdout.trim(), "");
+    } finally {
+      spawnSync("pkill", ["-9", "-f", marker]);
+      p.done();
+    }
   }
-});
+);

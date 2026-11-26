@@ -9,11 +9,14 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
-const ROOT_DIR = path.resolve(__dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, ""));
+const ROOT_DIR = path.resolve(
+  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
+);
 const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 const made: string[] = [];
 test.after(() => {
-  for (const d of made) fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  for (const d of made)
+    fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 });
 const cli = (dir: string, args: string[]) =>
   spawnSync(process.execPath, [CLI, ...args, "--project-dir", dir], {
@@ -51,13 +54,27 @@ function draft(extra: boolean): string {
   const b = `REQ-${String(first + 1).padStart(3, "0")}`;
   fs.writeFileSync(
     delta,
-    ["# Delta — bookings", "", "## ADDED Requirements", "", ...req(a, "Book a court", false), ...req(b, "Cancel late", true)].join("\n")
+    [
+      "# Delta — bookings",
+      "",
+      "## ADDED Requirements",
+      "",
+      ...req(a, "Book a court", false),
+      ...req(b, "Cancel late", true),
+    ].join("\n")
   );
   const rows = [`| Q1 | How much is a late cancellation? | ${b} | A flat fee · nothing |`];
   if (extra) rows.push(`| Q2 | Can a member book two courts at once? | ${a} | yes · no |`);
   fs.writeFileSync(
     path.join(dir, "docs/specs/changes/bookings/questions.md"),
-    ["# Open questions", "", "| # | Question | Blocks | Options seen |", "|---|---|---|---|", ...rows, ""].join("\n")
+    [
+      "# Open questions",
+      "",
+      "| # | Question | Blocks | Options seen |",
+      "|---|---|---|---|",
+      ...rows,
+      "",
+    ].join("\n")
   );
   return dir;
 }
@@ -66,7 +83,10 @@ test("REQ-771 SCN-771a: the rest goes ahead — a question on a waiting requirem
   const dir = draft(false);
   const r = cli(dir, ["change", "approve", "bookings", "--json"]);
   assert.equal(r.status, 0, r.stdout + r.stderr);
-  assert.match(fs.readFileSync(path.join(dir, "docs/specs/changes/bookings/change.yaml"), "utf8"), /^approved:/m);
+  assert.match(
+    fs.readFileSync(path.join(dir, "docs/specs/changes/bookings/change.yaml"), "utf8"),
+    /^approved:/m
+  );
 });
 
 test("REQ-771 SCN-771b: a question on a decided requirement still blocks", () => {

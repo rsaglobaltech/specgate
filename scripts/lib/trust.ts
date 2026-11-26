@@ -86,8 +86,7 @@ export function readTrust(projectDir: string): TrustPolicy | null {
   }
   if (!doc || typeof doc !== "object" || !("trust" in (doc as object))) return null;
   const raw = (doc as Record<string, unknown>).trust;
-  const map =
-    typeof raw === "string" ? flowMap(raw) : raw && typeof raw === "object" ? raw : null;
+  const map = typeof raw === "string" ? flowMap(raw) : raw && typeof raw === "object" ? raw : null;
   const declared = new Map<string, unknown>();
   let promoteAfter = DEFAULT_PROMOTE_AFTER;
   for (const [k, v] of Object.entries((map || {}) as Record<string, unknown>)) {
@@ -166,20 +165,30 @@ export function trustFindings(projectDir: string, record = true): Diagnostic[] {
     }
     if (!known.includes(capability)) {
       out.push(
-        error("trust_unknown_capability", `trust: ${capability} is not a capability of this project.`, {
-          target: capability,
-          file: GATE_POLICY_FILE,
-          fix: known.length
-            ? `Use one of: ${known.join(", ")}.`
-            : "This project has no capability yet: `specgate propose <change-id> --capability <name>` opens one.",
-        })
+        error(
+          "trust_unknown_capability",
+          `trust: ${capability} is not a capability of this project.`,
+          {
+            target: capability,
+            file: GATE_POLICY_FILE,
+            fix: known.length
+              ? `Use one of: ${known.join(", ")}.`
+              : "This project has no capability yet: `specgate propose <change-id> --capability <name>` opens one.",
+          }
+        )
       );
       continue;
     }
     const last = lastLine(ledger, capability);
     if (!last) {
       if (record)
-        appendLedger(projectDir, { capability, from: null, to: level, reason: "declared", change: null });
+        appendLedger(projectDir, {
+          capability,
+          from: null,
+          to: level,
+          reason: "declared",
+          change: null,
+        });
     } else if (level > last.to) {
       out.push(
         error(
@@ -193,7 +202,13 @@ export function trustFindings(projectDir: string, record = true): Diagnostic[] {
         )
       );
     } else if (level < last.to && record) {
-      appendLedger(projectDir, { capability, from: last.to, to: level, reason: "lowered", change: null });
+      appendLedger(projectDir, {
+        capability,
+        from: last.to,
+        to: level,
+        reason: "lowered",
+        change: null,
+      });
     }
   }
   return out;
@@ -301,14 +316,16 @@ export function trustReport(projectDir: string): { declared: boolean; capabiliti
     for (const f of fs.readdirSync(eventsDir)) {
       if (!/^REQ-[\w-]+\.jsonl$/.test(f)) continue;
       for (const e of jsonLines(path.join(eventsDir, f))) {
-        if (e.type === "attempt" && e.state === "end" && (e.result === "pass" || e.result === "fail"))
+        if (
+          e.type === "attempt" &&
+          e.state === "end" &&
+          (e.result === "pass" || e.result === "fail")
+        )
           attempts.push({ req: String(e.req), at: Number(e.t) * 1000, pass: e.result === "pass" });
       }
     }
   }
-  const delivered = new Set(
-    [...caps.keys()].filter((id) => applied.some((a) => a.req === id))
-  );
+  const delivered = new Set([...caps.keys()].filter((id) => applied.some((a) => a.req === id)));
   const rows = names.map((capability) => {
     const level = trust ? trustLevel(trust, capability) : 1;
     const leaks = ledger.filter((l) => l.capability === capability && l.reason === "leak");
@@ -318,11 +335,15 @@ export function trustReport(projectDir: string): { declared: boolean; capabiliti
     const cutoff = Math.max(lastLeak, ...fails, 0);
     const since = new Set<string>();
     for (const a of applied) {
-      if (a.capability === capability && Date.parse(String(a.at)) > cutoff) since.add(String(a.req));
+      if (a.capability === capability && Date.parse(String(a.at)) > cutoff)
+        since.add(String(a.req));
     }
     for (const a of attempts) if (reqs.has(a.req) && a.pass && a.at > cutoff) since.add(a.req);
     const streak = since.size;
-    const ready = Boolean(trust) && level < MAX_LEVEL && streak >= (trust?.promoteAfter ?? DEFAULT_PROMOTE_AFTER);
+    const ready =
+      Boolean(trust) &&
+      level < MAX_LEVEL &&
+      streak >= (trust?.promoteAfter ?? DEFAULT_PROMOTE_AFTER);
     return {
       capability,
       level,
@@ -361,7 +382,13 @@ export function lowerOnLeak(
   const from = trustLevel(trust, capability);
   const to = Math.max(1, from - 1);
   if (!readLedger(projectDir).some((l) => l.capability === capability)) {
-    appendLedger(projectDir, { capability, from: null, to: from, reason: "declared", change: null });
+    appendLedger(projectDir, {
+      capability,
+      from: null,
+      to: from,
+      reason: "declared",
+      change: null,
+    });
   }
   writeTrustLevel(projectDir, capability, to);
   appendLedger(projectDir, { capability, from, to, reason: "leak", change });
@@ -418,7 +445,10 @@ export interface RunIntent {
 export function runIntent(env: NodeJS.ProcessEnv = process.env): RunIntent {
   try {
     const r = JSON.parse(env[TRUST_RUN_VAR] || "{}");
-    return { named: Array.isArray(r.named) ? r.named : [], concurrency: Number(r.concurrency) || 1 };
+    return {
+      named: Array.isArray(r.named) ? r.named : [],
+      concurrency: Number(r.concurrency) || 1,
+    };
   } catch {
     return { named: [], concurrency: 1 };
   }
@@ -501,7 +531,13 @@ export function applyLearnedRule(projectDir: string, change: string): boolean {
   }
   const file = path.join(projectDir, PRINCIPLES_FILE);
   const current = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
-  if (current && new RegExp(`^#{2,4}\\s+P\\d+\\s+—\\s+${rule.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "m").test(current))
+  if (
+    current &&
+    new RegExp(
+      `^#{2,4}\\s+P\\d+\\s+—\\s+${rule.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`,
+      "m"
+    ).test(current)
+  )
     return false;
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, withPrinciple(current, rule), "utf8");

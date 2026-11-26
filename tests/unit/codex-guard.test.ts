@@ -11,16 +11,23 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
-const ROOT_DIR = path.resolve(__dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, ""));
+const ROOT_DIR = path.resolve(
+  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
+);
 const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 
 const made: string[] = [];
 test.after(() => {
-  for (const d of made) fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  for (const d of made)
+    fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 });
 
 const run = (dir: string, args: string[]) =>
-  spawnSync(process.execPath, [CLI, ...args, "--project-dir", dir], { cwd: dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+  spawnSync(process.execPath, [CLI, ...args, "--project-dir", dir], {
+    cwd: dir,
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "1" },
+  });
 
 /** The exam's own fixture: draft-fees open with REQ-002, approved, and no test that names it. */
 function feesProject(): string {
@@ -41,7 +48,10 @@ test("REQ-751 SCN-751a: the hooks are written, and the scripts they run", () => 
   const r = run(dir, ["agents", "init", "--tool", "codex-hooks"]);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const doc = JSON.parse(fs.readFileSync(path.join(dir, ".codex", "hooks.json"), "utf8"));
-  const commands = (event: string) => doc.hooks[event].flatMap((h: { hooks: { command: string }[] }) => h.hooks.map((x) => x.command));
+  const commands = (event: string) =>
+    doc.hooks[event].flatMap((h: { hooks: { command: string }[] }) =>
+      h.hooks.map((x) => x.command)
+    );
   assert.deepEqual(commands("SessionStart"), ["node .codex/specgate/session-hook.cjs"]);
   assert.deepEqual(commands("PreToolUse"), ["node .codex/specgate/guard-hook.cjs"]);
   assert.equal(doc.hooks.PreToolUse[0].matcher, "Bash|apply_patch");
@@ -72,19 +82,31 @@ const patch = (dir: string, rel: string, body: string) =>
 test("REQ-751 SCN-751b: a patch to source code before its test is refused, exit code 2", () => {
   const dir = feesProject();
   assert.equal(run(dir, ["agents", "init", "--tool", "codex-hooks"]).status, 0);
-  const code = guard(dir, { tool_name: "apply_patch", tool_input: { command: patch(dir, "src/fees.js", "exports.lateFee = () => 0;") } });
+  const code = guard(dir, {
+    tool_name: "apply_patch",
+    tool_input: { command: patch(dir, "src/fees.js", "exports.lateFee = () => 0;") },
+  });
   assert.equal(code.status, 2, code.stdout + code.stderr);
   assert.match(code.stderr, /write the test for REQ-002 first/);
 
   // The test first is let through, and then the code.
-  const t = guard(dir, { tool_name: "apply_patch", tool_input: { command: patch(dir, "test/fees.test.js", "// REQ-002 SCN-002a") } });
+  const t = guard(dir, {
+    tool_name: "apply_patch",
+    tool_input: { command: patch(dir, "test/fees.test.js", "// REQ-002 SCN-002a") },
+  });
   assert.equal(t.status, 0, t.stderr);
   fs.writeFileSync(path.join(dir, "test", "fees.test.js"), "// REQ-002 SCN-002a\n");
-  const after = guard(dir, { tool_name: "apply_patch", tool_input: { command: patch(dir, "src/fees.js", "exports.lateFee = () => 0;") } });
+  const after = guard(dir, {
+    tool_name: "apply_patch",
+    tool_input: { command: patch(dir, "src/fees.js", "exports.lateFee = () => 0;") },
+  });
   assert.equal(after.status, 0, after.stderr);
 
   // A person's act in Codex's shell is refused as in Claude Code's.
-  const approve = guard(dir, { tool_name: "Bash", tool_input: { command: "specgate change approve draft-fees" } });
+  const approve = guard(dir, {
+    tool_name: "Bash",
+    tool_input: { command: "specgate change approve draft-fees" },
+  });
   assert.equal(approve.status, 2);
   assert.match(approve.stderr, /person's/);
 });

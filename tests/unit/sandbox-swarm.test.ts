@@ -54,7 +54,14 @@ function library(extraEnv: Record<string, string> = {}) {
     spawnSync(process.execPath, [CLI, ...args], {
       cwd: dir,
       encoding: "utf8",
-      env: { ...process.env, SPECGATE_SBX: sbx.bin, SPECGATE_SKIP_DOCTOR: "1", SPECGATE_PROFILE: "", NO_COLOR: "1", ...extraEnv },
+      env: {
+        ...process.env,
+        SPECGATE_SBX: sbx.bin,
+        SPECGATE_SKIP_DOCTOR: "1",
+        SPECGATE_PROFILE: "",
+        NO_COLOR: "1",
+        ...extraEnv,
+      },
     });
   w(dir, "package.json", '{"name":"app","version":"1.0.0"}\n');
   w(dir, "lib/index.js", "module.exports = {};\n");
@@ -62,7 +69,14 @@ function library(extraEnv: Record<string, string> = {}) {
   assert.equal(cli("init").status, 0);
   const changes: Array<[string, string, Array<[string, string]>]> = [
     ["draft-katalog", "katalog", [["REQ-004", "Add a book"]]],
-    ["draft-ausleihe", "ausleihe", [["REQ-006", "Borrow a book"], ["REQ-007", "Return a book"]]],
+    [
+      "draft-ausleihe",
+      "ausleihe",
+      [
+        ["REQ-006", "Borrow a book"],
+        ["REQ-007", "Return a book"],
+      ],
+    ],
   ];
   for (const [change, cap, reqs] of changes) {
     assert.equal(cli("propose", change, "--capability", cap).status, 0);
@@ -80,11 +94,15 @@ function library(extraEnv: Record<string, string> = {}) {
       'const fs = require("node:fs");',
       "const req = process.env.SPECGATE_REQ;",
       'fs.mkdirSync("test", { recursive: true });',
-      'fs.writeFileSync(`lib/${req}.js`, `// ${req}\\nmodule.exports = 1;\\n`);',
+      "fs.writeFileSync(`lib/${req}.js`, `// ${req}\\nmodule.exports = 1;\\n`);",
       'fs.writeFileSync(`test/${req}.test.js`, `// ${req} SCN-${req.slice(4)}a\\nrequire("node:test")("ok", () => {});\\n`);',
     ].join("\n")
   );
-  w(dir, "harness.config.yaml", `test_cmd: "node pass.js"\nagent: '"${process.execPath}" "${agent}" {prompt_file}'\n${SANDBOX}\n`);
+  w(
+    dir,
+    "harness.config.yaml",
+    `test_cmd: "node pass.js"\nagent: '"${process.execPath}" "${agent}" {prompt_file}'\n${SANDBOX}\n`
+  );
   git(dir, "init", "-q", "-b", "develop");
   git(dir, "config", "user.email", "swarm@example.com");
   git(dir, "config", "user.name", "Swarm Test");
@@ -112,7 +130,16 @@ function library(extraEnv: Record<string, string> = {}) {
 test("REQ-698 SCN-698a: two requirements of ausleihe, one sandbox — set up once, both agents in it", () => {
   const p = library();
   try {
-    const r = p.cli("harness", "run", "--max-attempts", "1", "--req", "REQ-006", "--req", "REQ-007");
+    const r = p.cli(
+      "harness",
+      "run",
+      "--max-attempts",
+      "1",
+      "--req",
+      "REQ-006",
+      "--req",
+      "REQ-007"
+    );
     assert.match(out(r), /2 passed/, out(r));
     const calls = p.sbx.calls();
     const creates = calls.filter((c) => c[0] === "create");
@@ -120,10 +147,17 @@ test("REQ-698 SCN-698a: two requirements of ausleihe, one sandbox — set up onc
     assert.ok(creates[0].includes("sg-draft-ausleihe-ausleihe"));
     assert.ok(creates[0].includes("opencode"));
     const execs = calls.filter((c) => c[0] === "exec");
-    assert.equal(execs.filter((c) => c.join(" ").includes("touch .installed")).length, 1, "setup ran once");
+    assert.equal(
+      execs.filter((c) => c.join(" ").includes("touch .installed")).length,
+      1,
+      "setup ran once"
+    );
     const agents = execs.filter((c) => c.join(" ").includes("agent.js"));
     assert.equal(agents.length, 2, "both agents ran in the sandbox");
-    for (const [req, c] of [["REQ-006", agents[0]], ["REQ-007", agents[1]]] as const) {
+    for (const [req, c] of [
+      ["REQ-006", agents[0]],
+      ["REQ-007", agents[1]],
+    ] as const) {
       const cwd = c[c.indexOf("-w") + 1];
       assert.match(cwd, new RegExp(`specgate-harness-${req}-`), "in its own worktree");
       assert.ok(c.includes("sg-draft-ausleihe-ausleihe"));
@@ -141,7 +175,11 @@ test("REQ-699 SCN-699a: two hosts opened for that sandbox alone, twenty-nine fro
   const p = library();
   try {
     const r = p.cli("harness", "run", "--max-attempts", "1", "--req", "REQ-006");
-    assert.match(out(r), /sg-draft-ausleihe-ausleihe may reach 31 hosts: 2 yours, 29 from the kit opencode/, out(r));
+    assert.match(
+      out(r),
+      /sg-draft-ausleihe-ausleihe may reach 31 hosts: 2 yours, 29 from the kit opencode/,
+      out(r)
+    );
     const allows = p.sbx.calls().filter((c) => c[0] === "policy" && c[1] === "allow");
     assert.deepEqual(
       allows.map((c) => [c[c.indexOf("--sandbox") + 1], c[c.length - 1]]),
@@ -151,8 +189,14 @@ test("REQ-699 SCN-699a: two hosts opened for that sandbox alone, twenty-nine fro
       ]
     );
     const [rec] = p.registry();
-    assert.deepEqual(rec.rules.map((x: { host: string }) => x.host), ["registry.npmjs.org", "opencode.ai"]);
-    assert.ok(rec.rules.every((x: { id: string }) => /^0{8}-/.test(x.id)), "the rules' ids are kept");
+    assert.deepEqual(
+      rec.rules.map((x: { host: string }) => x.host),
+      ["registry.npmjs.org", "opencode.ai"]
+    );
+    assert.ok(
+      rec.rules.every((x: { id: string }) => /^0{8}-/.test(x.id)),
+      "the rules' ids are kept"
+    );
     assert.equal(rec.kitHosts.length, 29);
   } finally {
     p.done();
@@ -162,12 +206,33 @@ test("REQ-699 SCN-699a: two hosts opened for that sandbox alone, twenty-nine fro
 test("REQ-700 SCN-700a: archiving draft-ausleihe removes its sandbox and its 2 rules; katalog's stays", () => {
   const p = library();
   try {
-    const run = p.cli("harness", "run", "--max-attempts", "1", "--req", "REQ-006", "--req", "REQ-007", "--req", "REQ-004");
+    const run = p.cli(
+      "harness",
+      "run",
+      "--max-attempts",
+      "1",
+      "--req",
+      "REQ-006",
+      "--req",
+      "REQ-007",
+      "--req",
+      "REQ-004"
+    );
     assert.match(out(run), /3 passed/, out(run));
     assert.equal(p.registry().length, 2);
     // ausleihe delivered: its branches merged by a person, then applied.
     for (const req of ["REQ-006", "REQ-007"]) {
-      const m = git(p.dir, "-c", "user.email=s@e", "-c", "user.name=s", "merge", "--no-edit", "-q", `harness/${req}`);
+      const m = git(
+        p.dir,
+        "-c",
+        "user.email=s@e",
+        "-c",
+        "user.name=s",
+        "merge",
+        "--no-edit",
+        "-q",
+        `harness/${req}`
+      );
       assert.equal(m.status, 0, m.stdout + m.stderr);
       const a = p.cli("apply", req);
       assert.equal(a.status, 0, out(a));
@@ -182,7 +247,10 @@ test("REQ-700 SCN-700a: archiving draft-ausleihe removes its sandbox and its 2 r
       ["sg-draft-katalog-katalog", "sg-draft-katalog-katalog"],
       "ausleihe's 2 rules are gone"
     );
-    assert.deepEqual(p.registry().map((x: { name: string }) => x.name), ["sg-draft-katalog-katalog"]);
+    assert.deepEqual(
+      p.registry().map((x: { name: string }) => x.name),
+      ["sg-draft-katalog-katalog"]
+    );
   } finally {
     p.done();
   }
@@ -191,24 +259,49 @@ test("REQ-700 SCN-700a: archiving draft-ausleihe removes its sandbox and its 2 r
 test("REQ-701 SCN-701a: one left behind, one stray — --prune removes both, the open change's stays", () => {
   const p = library();
   try {
-    assert.match(out(p.cli("harness", "run", "--max-attempts", "1", "--req", "REQ-004")), /1 passed/);
+    assert.match(
+      out(p.cli("harness", "run", "--max-attempts", "1", "--req", "REQ-004")),
+      /1 passed/
+    );
     // A sandbox of a change archived long ago, and one nobody recorded.
     const recs = p.registry();
-    const old = { ...recs[0], name: "sg-old-pagos", change: "old", module: "pagos", workspace: path.join(os.tmpdir(), "specgate-sbx-sg-old-pagos"), rules: [] };
-    fs.writeFileSync(path.join(p.dir, ".harness", "sandboxes.json"), JSON.stringify([...recs, old]));
+    const old = {
+      ...recs[0],
+      name: "sg-old-pagos",
+      change: "old",
+      module: "pagos",
+      workspace: path.join(os.tmpdir(), "specgate-sbx-sg-old-pagos"),
+      rules: [],
+    };
+    fs.writeFileSync(
+      path.join(p.dir, ".harness", "sandboxes.json"),
+      JSON.stringify([...recs, old])
+    );
     p.sbx.add("sg-old-pagos");
     p.sbx.add("sg-stray");
 
     const list = p.cli("harness", "sandboxes", "--json");
     assert.equal(list.status, 0, out(list));
     const doc = JSON.parse(list.stdout).sandboxes;
-    assert.deepEqual(doc.strays.map((s: { name: string }) => s.name), ["sg-stray"]);
-    assert.equal(doc.recorded.find((r: { name: string }) => r.name === "sg-old-pagos").changeOpen, false);
+    assert.deepEqual(
+      doc.strays.map((s: { name: string }) => s.name),
+      ["sg-stray"]
+    );
+    assert.equal(
+      doc.recorded.find((r: { name: string }) => r.name === "sg-old-pagos").changeOpen,
+      false
+    );
 
     const pruned = p.cli("harness", "sandboxes", "--prune", "--json");
-    assert.deepEqual(JSON.parse(pruned.stdout).sandboxes.removed.sort(), ["sg-old-pagos", "sg-stray"]);
+    assert.deepEqual(JSON.parse(pruned.stdout).sandboxes.removed.sort(), [
+      "sg-old-pagos",
+      "sg-stray",
+    ]);
     assert.deepEqual(Object.keys(p.sbx.state().sandboxes), ["sg-draft-katalog-katalog"]);
-    assert.deepEqual(p.registry().map((x: { name: string }) => x.name), ["sg-draft-katalog-katalog"]);
+    assert.deepEqual(
+      p.registry().map((x: { name: string }) => x.name),
+      ["sg-draft-katalog-katalog"]
+    );
   } finally {
     p.done();
   }
@@ -219,12 +312,18 @@ test("REQ-698: two requirements of one module at once — one sandbox made, both
   const p = library({ FAKE_SBX_CREATE_MS: "1500" });
   try {
     const gate = path.join(p.dir, ".specgate", "gate.yaml");
-    fs.writeFileSync(gate, `${fs.readFileSync(gate, "utf8").replace(/\n*$/, "\n")}trust: { ausleihe: 4, katalog: 4 }\n`);
+    fs.writeFileSync(
+      gate,
+      `${fs.readFileSync(gate, "utf8").replace(/\n*$/, "\n")}trust: { ausleihe: 4, katalog: 4 }\n`
+    );
     git(p.dir, "add", "-A");
     git(p.dir, "commit", "-qm", "trust");
     const r = p.cli("harness", "run", "--max-attempts", "1", "--concurrency", "2");
     assert.match(out(r), /3 passed/, out(r));
-    const creates = p.sbx.calls().filter((c) => c[0] === "create").map((c) => c[c.indexOf("--name") + 1]);
+    const creates = p.sbx
+      .calls()
+      .filter((c) => c[0] === "create")
+      .map((c) => c[c.indexOf("--name") + 1]);
     assert.deepEqual(creates.sort(), ["sg-draft-ausleihe-ausleihe", "sg-draft-katalog-katalog"]);
   } finally {
     p.done();
@@ -235,7 +334,11 @@ test("REQ-698: a sandbox that cannot be made is the requirement's reason, not a 
   const p = library({ FAKE_SBX_FAIL_CREATE: "Docker is not running" });
   try {
     const r = p.cli("harness", "run", "--max-attempts", "1", "--req", "REQ-006");
-    assert.match(out(r), /sandbox: sbx could not create the sandbox sg-draft-ausleihe-ausleihe: ERROR: Docker is not running/, out(r));
+    assert.match(
+      out(r),
+      /sandbox: sbx could not create the sandbox sg-draft-ausleihe-ausleihe: ERROR: Docker is not running/,
+      out(r)
+    );
     assert.doesNotMatch(out(r), /Worker produced no report/);
   } finally {
     p.done();
@@ -247,14 +350,34 @@ test("REQ-698: the setup is a script of the project — it runs once, in the fir
   try {
     w(p.dir, "scripts/sandbox-setup.sh", "echo set-up > .sandbox-ready\n");
     const cfg = path.join(p.dir, "harness.config.yaml");
-    fs.writeFileSync(cfg, fs.readFileSync(cfg, "utf8").replace('setup: "touch .installed"', 'setup: "sh scripts/sandbox-setup.sh"'));
+    fs.writeFileSync(
+      cfg,
+      fs
+        .readFileSync(cfg, "utf8")
+        .replace('setup: "touch .installed"', 'setup: "sh scripts/sandbox-setup.sh"')
+    );
     git(p.dir, "add", "-A");
     git(p.dir, "commit", "-qm", "a setup script");
-    const r = p.cli("harness", "run", "--max-attempts", "1", "--req", "REQ-006", "--req", "REQ-007");
+    const r = p.cli(
+      "harness",
+      "run",
+      "--max-attempts",
+      "1",
+      "--req",
+      "REQ-006",
+      "--req",
+      "REQ-007"
+    );
     assert.match(out(r), /2 passed/, out(r));
-    const setups = p.sbx.calls().filter((c) => c[0] === "exec" && c.join(" ").includes("sandbox-setup.sh"));
+    const setups = p.sbx
+      .calls()
+      .filter((c) => c[0] === "exec" && c.join(" ").includes("sandbox-setup.sh"));
     assert.equal(setups.length, 1, "once for the module");
-    assert.match(setups[0][setups[0].indexOf("-w") + 1], /specgate-harness-REQ-006-/, "in the first worktree");
+    assert.match(
+      setups[0][setups[0].indexOf("-w") + 1],
+      /specgate-harness-REQ-006-/,
+      "in the first worktree"
+    );
     assert.equal(p.registry()[0].setUp, true);
   } finally {
     p.done();

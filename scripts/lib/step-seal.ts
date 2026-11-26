@@ -30,11 +30,15 @@ function record(projectDir: string, requirement: string): Record<string, string>
 
 /** The files under `features/` git sees as new or changed that are not feature files. */
 function freshSteps(projectDir: string): string[] {
-  const r = spawnSync("git", ["status", "--porcelain", "--untracked-files=all", "-z", "--", "features"], {
-    cwd: projectDir,
-    encoding: "utf8",
-    timeout: 10_000,
-  });
+  const r = spawnSync(
+    "git",
+    ["status", "--porcelain", "--untracked-files=all", "-z", "--", "features"],
+    {
+      cwd: projectDir,
+      encoding: "utf8",
+      timeout: 10_000,
+    }
+  );
   if (r.status !== 0) return [];
   return (r.stdout || "")
     .split("\0")
@@ -50,7 +54,9 @@ export function stepsVerdict(projectDir: string, requirement: string): StepsVerd
   const now = stepHashes(projectDir);
   return {
     recorded: true,
-    changed: Object.keys(now).filter((f) => was[f] !== now[f]).sort(),
+    changed: Object.keys(now)
+      .filter((f) => was[f] !== now[f])
+      .sort(),
     fresh: [],
   };
 }
@@ -67,7 +73,12 @@ export function endStepRecord(projectDir: string, requirement: string): void {
 }
 
 /** Write into the requirement's evidence that a person reviewed these steps (SCN-743c). */
-export function keepStepsReview(projectDir: string, requirement: string, by: Identity, files: string[]): void {
+export function keepStepsReview(
+  projectDir: string,
+  requirement: string,
+  by: Identity,
+  files: string[]
+): void {
   const file = path.join(projectDir, ".specgate", "evidence", requirement, "evidence.json");
   let doc: Record<string, unknown> = { requirement, at: new Date().toISOString() };
   try {

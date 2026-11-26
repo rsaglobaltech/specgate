@@ -193,7 +193,12 @@ export function ownSpecification(projectDir: string): string | null {
     /* none */
   }
   if (withReqs === 0 && archived === 0) return null;
-  return [withReqs ? `${withReqs} capability spec(s)` : "", archived ? `${archived} archived change(s)` : ""].filter(Boolean).join(", ");
+  return [
+    withReqs ? `${withReqs} capability spec(s)` : "",
+    archived ? `${archived} archived change(s)` : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
 }
 
 export function renderStaticFiles(

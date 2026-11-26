@@ -135,7 +135,10 @@ const sealedMessage = (file: string) =>
   "Make the code pass it. If the test itself is wrong, say so and stop: changing it is a change of contract, and a person approves it again (specgate change approve <id> --layer acceptance). Reading it is allowed.";
 
 /** sealed-acceptance REQ-760: the call writes a sealed acceptance test — refused. */
-function sealedWrite(input: GuardInput, env: Record<string, string | undefined>): GuardDecision | null {
+function sealedWrite(
+  input: GuardInput,
+  env: Record<string, string | undefined>
+): GuardDecision | null {
   const cwd = input.cwd ?? process.cwd();
   const tool = input.tool_name ?? "";
   const args = (input.tool_input ?? {}) as Record<string, unknown>;
@@ -147,11 +150,15 @@ function sealedWrite(input: GuardInput, env: Record<string, string | undefined>)
     const command = args.command.replace(/\\/g, "/");
     for (const part of command.split(/\n|;|&&|\|\||\|/)) {
       const words = part.trim().split(/\s+/);
-      const named = (f: string, text: string) => text.includes(f) || text.includes(path.basename(f));
+      const named = (f: string, text: string) =>
+        text.includes(f) || text.includes(path.basename(f));
       // A redirect onto it.
-      file = sealed.find((f) => [...part.matchAll(/>>?\s*["']?([^\s"';|&]+)/g)].some((m) => named(f, m[1]!)));
+      file = sealed.find((f) =>
+        [...part.matchAll(/>>?\s*["']?([^\s"';|&]+)/g)].some((m) => named(f, m[1]!))
+      );
       // A copy, a link or an install writes its last word only: copying the test away reads it.
-      if (!file && /^(?:cp|install|ln)$/.test(words[0] ?? "")) file = sealed.find((f) => named(f, words[words.length - 1] ?? ""));
+      if (!file && /^(?:cp|install|ln)$/.test(words[0] ?? ""))
+        file = sealed.find((f) => named(f, words[words.length - 1] ?? ""));
       else if (!file && SHELL_WRITES.test(part)) file = sealed.find((f) => named(f, part));
       if (file) break;
     }
@@ -169,7 +176,10 @@ function sealedWrite(input: GuardInput, env: Record<string, string | undefined>)
 }
 
 /** outside-judge REQ-746: the call does what is a person's to do — refused, saying so. */
-function personAct(input: GuardInput, env: Record<string, string | undefined>): GuardDecision | null {
+function personAct(
+  input: GuardInput,
+  env: Record<string, string | undefined>
+): GuardDecision | null {
   const cwd = input.cwd ?? process.cwd();
   const tool = input.tool_name ?? "";
   const args = (input.tool_input ?? {}) as Record<string, unknown>;
@@ -182,7 +192,10 @@ function personAct(input: GuardInput, env: Record<string, string | undefined>): 
     const key = WRITERS[tool];
     const target = key ? args[key] : undefined;
     if (typeof target !== "string" || !target) return null;
-    const rel = path.relative(real(cwd), real(path.isAbsolute(target) ? target : path.join(cwd, target)));
+    const rel = path.relative(
+      real(cwd),
+      real(path.isAbsolute(target) ? target : path.join(cwd, target))
+    );
     if (rel.startsWith("..") || path.isAbsolute(rel)) return null;
     const text = ["content", "new_string", "newString", "patchText"]
       .map((k) => (typeof args[k] === "string" ? (args[k] as string) : ""))
@@ -197,10 +210,15 @@ function personAct(input: GuardInput, env: Record<string, string | undefined>): 
 /** A patch: the first of its files that is refused answers for it. */
 function patchDecision(input: GuardInput, env: Record<string, string | undefined>): GuardDecision {
   const args = (input.tool_input ?? {}) as Record<string, unknown>;
-  const patch = [args.command, args.patch, args.input, args.patchText].find((v) => typeof v === "string") as string | undefined;
+  const patch = [args.command, args.patch, args.input, args.patchText].find(
+    (v) => typeof v === "string"
+  ) as string | undefined;
   if (!patch) return ALLOW;
   for (const file of patchFiles(patch)) {
-    const d = decide({ cwd: input.cwd, tool_name: "Write", tool_input: { file_path: file, patchText: patch } }, env);
+    const d = decide(
+      { cwd: input.cwd, tool_name: "Write", tool_input: { file_path: file, patchText: patch } },
+      env
+    );
     if (!d.allow) return { ...d, file: d.file ?? file };
   }
   return ALLOW;
@@ -303,7 +321,8 @@ export function main(raw: string, env: Record<string, string | undefined> = proc
     String((input.tool_input as { file_path?: unknown } | undefined)?.file_path ?? "");
   if (decision.allow) {
     // A shell call that is let through is not a write: nothing to record.
-    if (!SHELLS.has(input.tool_name ?? "")) hookLog({ hook: "guard", decision: "allowed", file }, env);
+    if (!SHELLS.has(input.tool_name ?? ""))
+      hookLog({ hook: "guard", decision: "allowed", file }, env);
     return 0;
   }
   hookLog({ hook: "guard", decision: "refused", file, reason: decision.message }, env);

@@ -57,7 +57,8 @@ export const RULE_MEANING: Record<Rule, string> = {
     "every requirement names a use case of docs/specs/use-cases.md, and every use case is delivered (--strict-use-cases)",
   state_machines:
     "every state machine of docs/specs/state-machines/ starts somewhere, names states and requirements that exist, and takes no forbidden transition",
-  scope: "every new source file is named by the design of an approved change, where one names files",
+  scope:
+    "every new source file is named by the design of an approved change, where one names files",
   controls:
     "what the branch changes in the controls — the guard, the gate's policy, approvals, evidence — is named for the person who reviews it (--base)",
   acceptance:

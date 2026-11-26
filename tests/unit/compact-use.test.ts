@@ -614,7 +614,12 @@ test("REQ-116 SCN-116a: one loop, four verbs and an approval", () => {
         'const test = require("node:test");\nconst assert = require("node:assert");\n' +
         'test("greets", () => assert.equal(require("../lib/greet")("Ada"), "Hello, Ada"));\n'
     );
-    for (const args of [["status"], ["change", "approve", "add-greeting"], ["apply"], ["archive", "add-greeting"]]) {
+    for (const args of [
+      ["status"],
+      ["change", "approve", "add-greeting"],
+      ["apply"],
+      ["archive", "add-greeting"],
+    ]) {
       const r = cli(p.dir, ...args);
       assert.equal(r.status, 0, `${args.join(" ")}: ${out(r)}`);
     }
