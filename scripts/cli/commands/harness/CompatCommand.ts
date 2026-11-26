@@ -93,15 +93,17 @@ function tasks(): Task[] {
 function usage(): void {
   process.stdout.write(
     `
-  🧩 ${c.bold}specgate compat run${c.reset} [--tool claude,codex,opencode] [--level B,L0,L1,L2,L3,M] [--task <ids>] [--runs <n>]
+  🧩 ${c.bold}specgate compat run${c.reset} [--tool claude,codex,opencode] [--level B,L0,L1,L2,L3,L3a,M] [--task <ids>] [--runs <n>]
                        [--sandbox sbx [--use-sandbox specgate=<name>,bare=<name>] | --no-sandbox] [--auth-<tool>]
                        [--ladder] [--agent-<tool> "<cmd>"] [--model-<tool> <m>] [--keep-env <VAR>] [--timeout <s>]
      ${c.bold}specgate compat report${c.reset} [--json]
      ${c.bold}specgate compat check-release${c.reset}   was this Specgate examined with the real tools?
+     ${c.bold}specgate compat attack two-function${c.reset}   the recorded attack on a sealed step file, replayed with no model
 
   The compatibility exam: a small project and a task, handed to each tool at
   each level — B no Specgate at all, L0 the rules (AGENTS.md), L1 + skills or
-  commands, L2 + Specgate's MCP server, L3 + the plugin (Claude Code, OpenCode),
+  commands, L2 + Specgate's MCP server, L3 + the plugin or hooks (Claude Code, Codex, OpenCode), L3a L3 with acceptance
+  tests written first by another agent that sees no source, and sealed,
   M the rules and the server with no shell: the server as the only way to Specgate.
   A run passes by its task's verdicts: \`specgate check\`, a hidden check it never
   saw, the specification left as it was.

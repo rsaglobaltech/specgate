@@ -76,8 +76,15 @@ function usage(): void {
     3. your tests          from --test-cmd, or test_cmd: in harness.config.yaml
                            (2 and 3 run side by side; gate_parallel: false runs
                            them one after the other)
-    4. your quality checks checks: in harness.config.yaml — attempt and end;
+    4. your scenarios      with bdd: required in .specgate/gate.yaml, each delivered
+                           requirement's, through bdd_cmd (--no-scenarios skips)
+    5. sealed acceptance   the tests a person sealed, through acceptance_cmd
+    6. your quality checks checks: in harness.config.yaml — attempt and end;
                            --ci adds the ci ones, and a check that cannot run fails
+
+  Before them, open changes are judged as approved: a sealed requirement or
+  acceptance test that changed fails. With --base, what the branch changes in
+  the controls (guard, gate policy, approvals, evidence) is named.
 
   --affected runs the tests of what changed since the base: the matrix's
   tests of each requirement whose spec, feature, code or test changed, the
@@ -97,7 +104,7 @@ function usage(): void {
   before the merge. Skipped, and said, without git or a base to read.
 
   With --json, every answer lists the gate's stages — ids, changes, validate,
-  architecture, tests, each quality check — with its command, its result
+  architecture, tests, scenarios, acceptance, each quality check — with its command, its result
   (passed, failed, skipped, not run), its ms and its findings, and the
   selection of tests it ran: mode (affected or full), reason, base, changed,
   requirements, tests, cached and command. Each check keeps its result in the

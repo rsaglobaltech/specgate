@@ -204,19 +204,23 @@ export class DoneCommand extends BaseCommand {
           : "Deliver one requirement: its test first, then the gate marks it Implemented.\n\n") +
           "Usage:\n" +
           `  specgate ${verb} [<REQ-id> …] [--status <Status>] [--no-check]\n` +
-          '                       [--test-cmd "<command>"] [--project-dir <path>] [--json]\n\n' +
+          '                       [--test-cmd "<command>"] [--steps-reviewed] [--project-dir <path>] [--json]\n\n' +
           "Without an id, takes the next requirement `specgate status` names. Refused\n" +
           "while no test names the requirement. Marks it delivered when the gate\n" +
           "`specgate check` runs passes for it; nothing is written when it fails. A\n" +
           "requirement of an open change is judged as it will be after archive, and\n" +
           "its status is written in the change's delta. Several ids are checked one by\n" +
           "one and the project's tests run once for all of them.\n\n" +
+          "Refused for a change no person approved (`specgate change approve <id>`,\n" +
+          "at a terminal), and while a sealed acceptance test is not as approved.\n\n" +
           "Options:\n" +
           `  --status <Status>   Target status (default: Implemented).\n` +
           `                      One of: ${ALLOWED_STATUSES.join(", ")}\n` +
           "  --no-check          Write the status without running the gate (Implemented,\n" +
           "                      Verified and Released run it by default).\n" +
           "  --check, --strict   Run the gate for any status, Approved included.\n" +
+          "  --steps-reviewed    A person read the step definitions changed after the code\n" +
+          "                      began (steps_changed_after_code). Only at a terminal.\n" +
           '  --test-cmd "<cmd>"  Also run the project\'s tests and require them to pass.\n' +
           "                      Read from `test_cmd:` in harness.config.yaml when omitted.\n" +
           `                      Without one, \`${verb}\` says it checked the specification\n` +

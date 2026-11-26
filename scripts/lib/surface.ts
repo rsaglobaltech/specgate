@@ -627,7 +627,7 @@ export const SURFACE: Command[] = [
       group: "core",
       icon: "🔄",
       summary:
-        "Propose, review and archive a change (new · list · show · status · validate · archive).",
+        "Propose, approve, review and archive a change (new · list · show · status · approve · validate · archive).",
     },
     // Out of the short help: `propose` and `archive` are its daily verbs
     // (ADR-0035); `--help --all` lists the rest.
