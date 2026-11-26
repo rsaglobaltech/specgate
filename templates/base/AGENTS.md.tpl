@@ -30,13 +30,9 @@ Each step in detail: the `/specgate:*` commands, or
 edit a change's `ticket.md`; start every commit message with the ticket key
 (`KAN-13 REQ-007: …`), and never use Smart Commits (`#done`): they write to Jira.
 
-A red test of a requirement delivered before blocks every delivery: repair its
-code — never its test. That is within your change's scope, which judges new
-files only.
-
 ## Never
 
-- Edit `spec.md`, `features/`, `docs/specs/` or this file to make a test pass.
+- Edit `spec.md`, `features/`, `docs/specs/` or this file to make a test pass — nor a test: a red test of a requirement delivered before is repaired in its code, within your change.
 - Choose or replace the stack. If Stack or Testing above is TBD, stop and ask
   the person to run `specgate config set stack "<their stack>"` (and
   `testing`), or `specgate init --forja` to have an application generated.

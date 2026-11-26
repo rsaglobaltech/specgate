@@ -52,11 +52,15 @@ test("REQ-787 SCN-787a: REQ-001 is red while REQ-002 is delivered — apply name
     `#### Scenario: SCN-${id.slice(4)}a — Three days late`, "", "- GIVEN a book 3 days late", "- WHEN the fee is computed", "- THEN it is 1.50", ""].join("\n"));
   assert.equal(cli(["change", "approve", "fees"]).status, 0);
   fs.mkdirSync(path.join(dir, "test"), { recursive: true });
-  fs.writeFileSync(path.join(dir, "test/fees.test.js"), `const test = require("node:test");\ntest("${id} SCN-${id.slice(4)}a: three days late", () => {});\n`);
-  fs.writeFileSync(path.join(dir, "test/old.test.js"), `const test = require("node:test");\nconst assert = require("node:assert");\ntest("REQ-001: the project loads and names itself", () => { assert.equal(1, 2); });\n`);
-  fs.writeFileSync(path.join(dir, "package.json"), `{"name":"x","scripts":{"test":"node --test"}}\n`);
-  assert.equal(cli(["config", "set", "test_cmd", "node --test"]).status, 0);
-  const r = cli(["apply", id, "--json"]);
+  fs.writeFileSync(path.join(dir, "test/fees.test.js"), `// ${id} SCN-${id.slice(4)}a: three days late\n`);
+  // Not a nested `node --test`: under this runner it would exit 0 (NODE_TEST_CONTEXT).
+  // The suite as node's runner reports it: REQ-002 green, REQ-001 red.
+  fs.writeFileSync(
+    path.join(dir, "test/run.js"),
+    `console.log("✔ ${id} SCN-${id.slice(4)}a: three days late (1ms)");\nconsole.log("✖ REQ-001: the project loads and names itself (2ms)");\nprocess.exit(1);\n`
+  );
+  assert.equal(cli(["config", "set", "test_cmd", "node test/run.js"]).status, 0);
+  const r = cli(["apply", id]);
   assert.notEqual(r.status, 0);
   const all = r.stdout + r.stderr;
   assert.match(all, /done_tests_failed/);
@@ -66,5 +70,5 @@ test("REQ-787 SCN-787a: REQ-001 is red while REQ-002 is delivered — apply name
 
 test("REQ-787: the agents' instructions say the same", () => {
   const tpl = fs.readFileSync(path.join(ROOT_DIR, "templates", "base", "AGENTS.md.tpl"), "utf8");
-  assert.match(tpl, /requirement delivered before blocks every delivery: repair its\s+code — never its test/);
+  assert.match(tpl, /a red test of a requirement delivered before is repaired in its code, within your change/);
 });
