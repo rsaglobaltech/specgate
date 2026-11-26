@@ -323,6 +323,10 @@ function integrate(dir: string, tool: CompatTool, level: CompatLevel, scratch: s
       fs.mkdirSync(plugin, { recursive: true });
       cli(plugin, "agents", "init", "--tool", "claude-plugin", "--force");
       extra.push(`--plugin-dir ${q(plugin)}`);
+    } else if (tool === "codex") {
+      // codex-guard REQ-751: the project's hooks; the trust a person gives them, given in advance for this run only.
+      cli(dir, "agents", "init", "--tool", "codex-hooks", "--force");
+      extra.push("--dangerously-bypass-hook-trust");
     } else {
       cli(dir, "agents", "init", "--tool", "opencode-plugin", "--force");
     }

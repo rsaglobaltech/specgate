@@ -50,7 +50,6 @@ export interface LevelIntegration {
 export function integrationOf(tool: CompatTool, level: CompatLevel): LevelIntegration | null {
   if (level === "B") return { rules: false, agentsInit: [], skillsFor: null, mcp: false, plugin: false, shell: true };
   if (level === "M") return { rules: true, agentsInit: [], skillsFor: null, mcp: true, plugin: false, shell: false };
-  if (level === "L3" && tool === "codex") return null;
   const n = ["L0", "L1", "L2", "L3"].indexOf(level);
   return {
     rules: true,

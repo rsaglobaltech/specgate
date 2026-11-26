@@ -279,3 +279,12 @@ export function recordSteps(
     // A guard that breaks a session over a file it cannot write is worse than none.
   }
 }
+
+/** The files an `apply_patch` adds, updates or moves to: OpenCode's and Codex's patch format alike. */
+export function patchFiles(patchText: string): string[] {
+  const out: string[] = [];
+  for (const m of patchText.matchAll(/^\*\*\* (?:Add File|Update File|Move to): (.+)$/gm)) {
+    out.push(m[1].trim());
+  }
+  return out;
+}

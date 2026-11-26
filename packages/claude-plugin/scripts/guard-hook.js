@@ -155,8 +155,24 @@ function personAct(input, env) {
         return null;
     return { allow: false, file: file ?? found.what, message: (0, person_acts_1.personActMessage)(found) };
 }
+/** A patch: the first of its files that is refused answers for it. */
+function patchDecision(input, env) {
+    const args = (input.tool_input ?? {});
+    const patch = [args.command, args.patch, args.input, args.patchText].find((v) => typeof v === "string");
+    if (!patch)
+        return ALLOW;
+    for (const file of (0, project_state_1.patchFiles)(patch)) {
+        const d = decide({ cwd: input.cwd, tool_name: "Write", tool_input: { file_path: file, patchText: patch } }, env);
+        if (!d.allow)
+            return { ...d, file: d.file ?? file };
+    }
+    return ALLOW;
+}
 /** Allow or refuse one tool call. `env` is injected so tests do not depend on the shell. */
 function decide(input, env) {
+    // codex-guard REQ-751: Codex's patch is a write to each file it adds, updates or moves to.
+    if (input.tool_name === "apply_patch")
+        return patchDecision(input, env);
     try {
         const act = personAct(input, env);
         if (act)

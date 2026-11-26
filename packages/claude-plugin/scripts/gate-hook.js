@@ -122,7 +122,7 @@ function decide(input, runValidate, blockedAlready) {
     if (gate.ok)
         return { block: false, message: "" };
     const findings = renderFindings(gate.diagnostics);
-    if (blockedAlready(input.prompt_id ?? "")) {
+    if (blockedAlready(input.prompt_id ?? input.turn_id ?? "")) {
         // Told once already. Let the human see the answer rather than looping.
         return { block: false, message: findings };
     }

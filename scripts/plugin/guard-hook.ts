@@ -25,6 +25,7 @@ import {
   isTestFile,
   needsTest,
   openChanges,
+  patchFiles,
   hookLog,
   recordSteps,
 } from "./project-state";
@@ -144,8 +145,22 @@ function personAct(input: GuardInput, env: Record<string, string | undefined>): 
   return { allow: false, file: file ?? found.what, message: personActMessage(found) };
 }
 
+/** A patch: the first of its files that is refused answers for it. */
+function patchDecision(input: GuardInput, env: Record<string, string | undefined>): GuardDecision {
+  const args = (input.tool_input ?? {}) as Record<string, unknown>;
+  const patch = [args.command, args.patch, args.input, args.patchText].find((v) => typeof v === "string") as string | undefined;
+  if (!patch) return ALLOW;
+  for (const file of patchFiles(patch)) {
+    const d = decide({ cwd: input.cwd, tool_name: "Write", tool_input: { file_path: file, patchText: patch } }, env);
+    if (!d.allow) return { ...d, file: d.file ?? file };
+  }
+  return ALLOW;
+}
+
 /** Allow or refuse one tool call. `env` is injected so tests do not depend on the shell. */
 export function decide(input: GuardInput, env: Record<string, string | undefined>): GuardDecision {
+  // codex-guard REQ-751: Codex's patch is a write to each file it adds, updates or moves to.
+  if (input.tool_name === "apply_patch") return patchDecision(input, env);
   try {
     const act = personAct(input, env);
     if (act) return act;

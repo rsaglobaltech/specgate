@@ -56,6 +56,7 @@ exports.hookLog = hookLog;
 exports.stepRecordFile = stepRecordFile;
 exports.stepHashes = stepHashes;
 exports.recordSteps = recordSteps;
+exports.patchFiles = patchFiles;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
 const node_child_process_1 = require("node:child_process");
@@ -287,5 +288,13 @@ function recordSteps(root, requirement, env = process.env) {
     catch {
         // A guard that breaks a session over a file it cannot write is worse than none.
     }
+}
+/** The files an `apply_patch` adds, updates or moves to: OpenCode's and Codex's patch format alike. */
+function patchFiles(patchText) {
+    const out = [];
+    for (const m of patchText.matchAll(/^\*\*\* (?:Add File|Update File|Move to): (.+)$/gm)) {
+        out.push(m[1].trim());
+    }
+    return out;
 }
 //# sourceMappingURL=project-state.js.map

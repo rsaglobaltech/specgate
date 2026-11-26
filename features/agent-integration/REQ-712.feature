@@ -1,3 +1,4 @@
+@change:codex-guard
 Feature: Each level gives the tool exactly its integration
 
   @REQ-712 @SCN-712a
@@ -7,7 +8,7 @@ Feature: Each level gives the tool exactly its integration
     Then it has AGENTS.md, and no .agents/skills, no MCP configuration and no plugin
 
   @REQ-712 @SCN-712b
-  Scenario: No plugin for Codex
+  Scenario: Codex's hooks at L3
     Given `specgate compat run --tool codex --level L3`
     When the Developer runs it
-    Then runs.jsonl records codex at L3 as n/a and no agent was started
+    Then the copy has `.codex/hooks.json`, and Codex starts with `--dangerously-bypass-hook-trust`

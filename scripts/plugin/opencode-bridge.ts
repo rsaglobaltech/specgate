@@ -19,7 +19,9 @@ import {
   type GateDiagnostic,
 } from "./gate-hook";
 import { decide as guardDecide } from "./guard-hook";
-import { guardOff, hookLog, isSpecDriven } from "./project-state";
+import { guardOff, hookLog, isSpecDriven, patchFiles } from "./project-state";
+
+export { patchFiles };
 import { sessionContext } from "./session-hook";
 
 /** What the plugin needs from OpenCode's context. */
@@ -38,15 +40,6 @@ export interface OpencodeContext {
 export interface BridgeDeps {
   env?: Record<string, string | undefined>;
   runValidate?: (cwd: string) => { ok: boolean; diagnostics: GateDiagnostic[] };
-}
-
-/** The files an `apply_patch` adds, updates or moves to. */
-export function patchFiles(patchText: string): string[] {
-  const out: string[] = [];
-  for (const m of patchText.matchAll(/^\*\*\* (?:Add File|Update File|Move to): (.+)$/gm)) {
-    out.push(m[1].trim());
-  }
-  return out;
 }
 
 /** The files a tool call writes, or none for a tool that does not write. OpenCode 2 names the file `path`, OpenCode 1 `filePath`. */

@@ -33,6 +33,7 @@ function fakeTool(name: string, behaviour: "implement" | "claim") {
       '  commands: fs.existsSync(".opencode/commands"),',
       '  mcp: fs.existsSync("opencode.json") || fs.existsSync(".mcp.json"),',
       '  plugin: fs.existsSync(".opencode/plugins/specgate/index.js"),',
+      '  codexHooks: fs.existsSync(".codex/hooks.json") && fs.existsSync(".codex/specgate/guard-hook.cjs"),',
       "}));",
       behaviour === "implement"
         ? [
@@ -130,15 +131,16 @@ test("REQ-712: OpenCode at L3 has its commands, its MCP server and its plugin", 
   }
 });
 
-test("REQ-712 SCN-712b: Codex has no plugin — L3 is n/a and no agent starts", () => {
-  const f = fakeTool("codex", "implement");
+test("REQ-712 SCN-712b: Codex's hooks at L3 — the copy has them, and Codex starts trusting them", () => {
+  const f = fakeTool("codex", "claim");
   try {
-    const r = f.run(["--tool", "codex", "--level", "L3", "--runs", "3"]);
+    const r = f.run(["--tool", "codex", "--level", "L3", "--runs", "1"]);
     assert.equal(r.status, 0, out(r));
-    const runs = f.runs();
-    assert.equal(runs.length, 1);
-    assert.equal(runs[0]!.ran, false);
-    assert.equal(f.recorded(), false, "an agent was started");
+    const [run] = f.runs();
+    assert.equal(run!.ran, true);
+    const seen = f.record();
+    assert.equal(seen.codexHooks, true);
+    assert.ok(seen.argv.includes("--dangerously-bypass-hook-trust"), seen.argv.join(" "));
   } finally {
     f.done();
   }
