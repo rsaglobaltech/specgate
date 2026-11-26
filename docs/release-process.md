@@ -31,16 +31,12 @@ purpose. Public npm is the default; routing the scope with
 
 ## The Specgate rename — done, and what it left behind
 
-The package was renamed from `create-spec-driven-app` to
-`@rsaglobaltech/specgate` in
-[ADR-0024](specs/adr/0024-the-tool-is-renamed-the-format-is-not.md); the old
-package is deprecated, not unpublished. The unscoped name `specgate` is
-unavailable: npm compares names without punctuation, so it collides with
-`spec-gate` and answers `403`, which reads like a token problem and is not one.
-Docker images live at `ghcr.io/<owner>/specgate`. Since
-[ADR-0032](specs/adr/0032-one-name-everywhere.md) the format, cache and
-environment variables are all `specgate`; the package installs `specgate`, its
-short alias `sgate` (ADR-0042) and, for old links, `create-spec-driven-app`.
+`create-spec-driven-app` became `@rsaglobaltech/specgate`
+([ADR-0024](specs/adr/0024-the-tool-is-renamed-the-format-is-not.md)); the old
+package is deprecated, not unpublished. The unscoped `specgate` collides with
+`spec-gate` on npm (`403`, not a token problem). Images: `ghcr.io/<owner>/specgate`.
+Format, cache and variables are all `specgate` ([ADR-0032](specs/adr/0032-one-name-everywhere.md));
+the package installs `specgate`, `sgate` (ADR-0042) and `create-spec-driven-app`.
 
 ## Versioning
 
@@ -130,23 +126,13 @@ the CLI supports, so getting this backwards fails CI rather than users.
    carries the version it was made from and a test compares the two, so
    skipping this fails the build rather than shipping a page that claims the
    wrong release.
-4. Bump every page that pins the version. `grep -rn "<old version>" docs`
-   finds them; today they are:
-
-   | File | What pins it |
-   | --- | --- |
-   | `docs/index.html`, `docs/es/index.html` | The header, the eyebrow, "Recorded from" and the footer |
-   | `docs/gate/ci.md`, `docs/es/gate/ci.md` | `npx @rsaglobaltech/specgate@X.Y.Z` in the CI examples |
-   | `docs/gate/local.md`, `docs/es/gate/local.md` | The Docker image `ghcr.io/rsaglobaltech/specgate:X.Y.Z` |
-   | `docs/automation.md` | The Docker image, in the GitLab, Azure and Jenkins examples |
-   | `docs/validating.md` | `npx --yes @rsaglobaltech/specgate@X.Y.Z` in the CI example |
-   | `docs/existing-project-with-jira.md` | `npx @rsaglobaltech/specgate@X.Y.Z init` |
-   | `docs/tutorial.md` | The output of `specgate --version` |
-   | `docs/release-process.md` | The versions live on npm, GitHub Packages and ghcr.io, under [What gets published](#what-gets-published) |
-
-   Leave the pack schema alone: `schema_version` in this page's
-   [Compatibility windows](#compatibility-windows) and in `packs/*/pack.yaml`
-   moves only with `PACK_SCHEMA_VERSION`, not with a release.
+4. Bump every page that pins the version — `grep -rn "<old version>" docs`
+   finds them: the landing pages (header, eyebrow, "Recorded from", footer);
+   the `npx …@X.Y.Z` CI examples in `gate/ci.md`, `validating.md` and
+   `existing-project-with-jira.md`; the Docker image in `gate/local.md` and
+   `automation.md`; the Spanish twins; and `specgate --version` in `tutorial.md`.
+   Leave `schema_version` of the pack schema alone: it moves only with
+   `PACK_SCHEMA_VERSION`, not with a release.
 5. Check the release was examined with the real agent tools:
    `specgate compat check-release` fails with `compat_not_examined` until the
    compatibility exam ran this version (`specgate compat run --level L0 --task deliver`).
@@ -217,11 +203,9 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
 
 ## Pre-releases
 
-A version with a prerelease part (`1.0.0-rc.1`, cut from a candidate line such
-as 1.0's `next/1.0` — retired once 1.0.0 shipped from `main` — never from
-`main` itself) is tagged like any release: the workflows publish it under
-the dist-tag `next` and tag its image with the version only, never `latest`
-(REQ-281). Its GitHub release is created with `--prerelease`.
+A prerelease (`1.0.0-rc.1`, from a candidate line, never from `main`) is tagged
+like any release: published under the dist-tag `next`, its image tagged with
+the version only, never `latest` (REQ-281), its GitHub release `--prerelease`.
 
 ## Trusted publishing
 
@@ -265,8 +249,7 @@ unpublished packages, no coverage output.
 
 ## After the release
 
-Write the GitHub release notes from the changelog entry, leave an empty
-`## [Unreleased]` at the top of `CHANGELOG.md`, and open the next milestone.
+Write the release notes from the changelog, leave an empty `## [Unreleased]` at the top of `CHANGELOG.md`, open the next milestone.
 
 ## Deployment of the site
 

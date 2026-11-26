@@ -62,58 +62,80 @@
 <main id="main">
 
 <!-- ── Hero ─────────────────────────────────────────────────────────────── -->
-<section class="mx">
-  <div class="ed-wrap mx__grid">
-    <div class="mx__copy">
-      <p class="mx__eyebrow">[ v1.5.0 ] — A change, a brief or a Jira ticket, to proven requirements</p>
-      <h1 class="mx__title">No test,<br>no <span>done.</span></h1>
-      <p class="mx__lede">
-        Specgate turns a change you describe, a client's brief or a Jira story
-        into requirements and Gherkin scenarios, stops your agent from inventing
-        what the source never said, and refuses to call anything finished until
-        a test proves it — the same gate on your laptop and in CI.
-      </p>
-      <p class="ed-actions">
-        <a class="ed-btn ed-btn--primary" href="./start.html">Get started</a>
-        <a class="ed-btn" href="#studio">See the studio</a>
-        <a class="ed-btn" href="#projects">See it on six real products</a>
-      </p>
-      <p class="ed-actions">
-        <a class="ed-link" href="#why">New: from code already running to a signed handover →</a>
-        <a class="ed-link" href="./quality.html">Quality checks — Sonar, SpotBugs, coverage →</a>
-      </p>
-      <figure class="code ed-install" data-lang="bash">
-        <figcaption class="code__head"><span class="code__lang">Start in three commands</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
-        <pre><code class="language-bash">npm install --save-dev @rsaglobaltech/specgate
-npx specgate init     <span class="tok tok--c"># in your project: touches no code</span>
-npx specgate          <span class="tok tok--c"># where you stand, and what to run next</span></code></pre>
-      </figure>
+<section class="lx-hero" id="top" aria-labelledby="lx-h">
+  <div class="lx-wrap">
+    <p class="lx-eyebrow">v1.5.0 — spec-driven development, enforced</p>
+    <h1 class="lx-title" id="lx-h">Your coding agent should not grade <span>its own work.</span></h1>
+    <div class="lx-lede-row">
+      <p class="lx-lede">Agents write the code, the tests <i>and</i> the verdict. Specgate takes the verdict away: a person approves the requirement, a test names it before any code, and a gate the agent cannot edit decides when the work is done.</p>
+      <div class="lx-ctas"><a class="lx-btn lx-btn--brand" href="./start.html">Get started</a><a class="lx-btn" href="#evidence">Read the evidence</a></div>
     </div>
+    <div class="lx-scenes">
+<figure class="lx-scene" role="img" aria-label="Without Specgate: the agent writes the code, writes the tests and grades itself — 44% of exam runs met the specification (16 of 36).">
+<!-- Scene: without -->
+<div style="flex: 1 1 548px; max-width: 580px; min-width: 0; overflow-x: auto; background: #1c1d22; border: 1px solid #2f3036; border-radius: 16px;">
+<div style="position: relative; width: 548px; height: 460px; margin: 0 auto;">
+<svg aria-hidden="true" width="548" height="460" viewBox="0 0 548 460" style="position: absolute; left: 0px; top: 0px; width: 548px; height: 460px;">
+<circle cx="274" cy="214" r="104" fill="none" stroke="#4a4b52" stroke-width="2" stroke-dasharray="6 6"></circle>
+<path d="M -7 -6 L 7 0 L -7 6 Z" fill="#8d8a83" transform="translate(364 162) rotate(60)"></path>
+<path d="M -7 -6 L 7 0 L -7 6 Z" fill="#8d8a83" transform="translate(274 318) rotate(180)"></path>
+<path d="M -7 -6 L 7 0 L -7 6 Z" fill="#8d8a83" transform="translate(184 162) rotate(-60)"></path>
+<line x1="28" y1="364" x2="520" y2="364" stroke="#2f3036" stroke-width="1"></line>
+</svg>
+<div style="position: absolute; left: 28px; top: 24px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #8d8a83;">Without Specgate</div>
+<div style="position: absolute; left: 28px; top: 44px; font-family: Syne, sans-serif; font-weight: 700; font-size: 18px; color: #f3efe8;">A closed loop</div>
+<div style="position: absolute; left: 392px; top: 30px; padding: 6px 10px; border: 2px solid #ff5b1f; border-radius: 6px; color: #ff5b1f; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 12px; letter-spacing: 0.08em; transform: rotate(7deg);">SHIPPED · WRONG</div>
+<div style="position: absolute; left: 194px; top: 90px; width: 160px; height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; background: #26272d; border: 1px solid #4a4b52; border-radius: 999px; font-size: 13px; color: #e9e4da;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#bdb7ac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>writes the code</div>
+<div style="position: absolute; left: 284px; top: 246px; width: 160px; height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; background: #26272d; border: 1px solid #4a4b52; border-radius: 999px; font-size: 13px; color: #e9e4da;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#bdb7ac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31"></path><path d="M14 9.3V1.99"></path><path d="M8.5 2h7"></path><path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path></svg>writes the tests</div>
+<div style="position: absolute; left: 104px; top: 246px; width: 160px; height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; background: #26272d; border: 1px solid #4a4b52; border-radius: 999px; font-size: 13px; color: #e9e4da;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#bdb7ac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>grades itself</div>
+<div style="position: absolute; left: 194px; top: 150px; width: 160px; height: 84px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center;"><svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#bdb7ac" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg><span style="font-family: Syne, sans-serif; font-weight: 800; font-size: 18px; color: #7fc79b;">✓ all green</span><span style="font-size: 11px; color: #8d8a83;">its own verdict</span></div>
+<div style="position: absolute; left: 28px; top: 386px; display: flex; align-items: baseline; gap: 14px;"><span style="font-family: Syne, sans-serif; font-weight: 800; font-size: 44px; line-height: 1; color: #8d8a83;">44%</span><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; color: #e9e4da;">of runs met the specification</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8d8a83;">16 of 36 · 15 wrong or unrequested</span></span></div>
+</div>
+</div>
 
-    <div class="mx__art" role="img" aria-label="Four layers stacked between a piece of work and a shipped requirement: the source, the change checked against it, the tests that name each requirement, and the gate that marks it Implemented.">
-      <div class="iso" aria-hidden="true">
-        <div class="iso__stack">
-          <div class="iso__slab iso__slab--1"><div class="iso__top"></div><div class="iso__front"><span>01</span> change · brief · ticket</div><div class="iso__side"></div></div>
-          <div class="iso__slab iso__slab--2"><div class="iso__top"></div><div class="iso__front"><span>02</span> requirements · checked</div><div class="iso__side"></div></div>
-          <div class="iso__slab iso__slab--3"><div class="iso__top"></div><div class="iso__front"><span>03</span> test names REQ-007</div><div class="iso__side"></div></div>
-          <div class="iso__slab iso__slab--4"><div class="iso__top"><span>REQ-007</span> ✔ Implemented</div><div class="iso__front"><span>04</span> the gate</div><div class="iso__side"></div></div>
-        </div>
-      </div>
-      <ol class="iso__keys" aria-label="The four layers">
-        <li class="iso__key iso__key--1" tabindex="0"><b>01</b> The source <span>A change you describe, a brief, or a Jira ticket — kept as written.</span></li>
-        <li class="iso__key iso__key--2" tabindex="0"><b>02</b> The checked requirements <span>You or your agent write them; a value the brief or ticket never gave stops them.</span></li>
-        <li class="iso__key iso__key--3" tabindex="0"><b>03</b> The tests <span>A test that names REQ-007 is the link. Nothing to declare.</span></li>
-        <li class="iso__key iso__key--4" tabindex="0"><b>04</b> The gate <span>The specification, its links to tests, and your suite: Implemented only if all three pass.</span></li>
-      </ol>
+</figure>
+<figure class="lx-scene" role="img" aria-label="With Specgate: Claude Code, Codex and OpenCode meet a gate a person approves — sealed spec, test first, guard, outside judge — and shortcuts bounce back; 72% of runs met the specification (26 of 36, p = 0.031).">
+<!-- Scene: with -->
+<div style="flex: 1 1 548px; max-width: 580px; min-width: 0; overflow-x: auto; background: #1c1d22; border: 1px solid #ff5b1f; border-radius: 16px;">
+<div style="position: relative; width: 548px; height: 460px; margin: 0 auto;">
+<svg aria-hidden="true" width="548" height="460" viewBox="0 0 548 460" style="position: absolute; left: 0px; top: 0px; width: 548px; height: 460px;">
+<path d="M 150 146 H 176 V 254 H 150" fill="none" stroke="#4a4b52" stroke-width="2"></path>
+<line x1="150" y1="200" x2="176" y2="200" stroke="#4a4b52" stroke-width="2"></line>
+<line x1="176" y1="200" x2="206" y2="200" stroke="#bdb7ac" stroke-width="2"></line>
+<path d="M -6 -5 L 6 0 L -6 5 Z" fill="#bdb7ac" transform="translate(208 200)"></path>
+<path d="M 380 48 H 274 V 96" fill="none" stroke="#7fc79b" stroke-width="2"></path>
+<path d="M -6 -5 L 6 0 L -6 5 Z" fill="#7fc79b" transform="translate(274 98) rotate(90)"></path>
+<line x1="338" y1="200" x2="372" y2="200" stroke="#7fc79b" stroke-width="2"></line>
+<path d="M -6 -5 L 6 0 L -6 5 Z" fill="#7fc79b" transform="translate(374 200)"></path>
+<path d="M 274 304 V 326 H 85 V 278" fill="none" stroke="#ff8a5c" stroke-width="2" stroke-dasharray="5 5"></path>
+<path d="M -6 -5 L 6 0 L -6 5 Z" fill="#ff8a5c" transform="translate(85 276) rotate(-90)"></path>
+<line x1="28" y1="364" x2="520" y2="364" stroke="#2f3036" stroke-width="1"></line>
+</svg>
+<div style="position: absolute; left: 28px; top: 24px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #ff8a5c;">With Specgate</div>
+<div style="position: absolute; left: 28px; top: 44px; font-family: Syne, sans-serif; font-weight: 700; font-size: 18px; color: #f3efe8;">A gate it cannot edit</div>
+<div style="position: absolute; left: 380px; top: 28px; width: 148px; height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; background: #1f3b2b; border: 1px solid #7fc79b; border-radius: 999px; font-size: 13px; color: #e3eee6;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7fc79b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>person approves</div>
+<div style="position: absolute; left: 20px; top: 128px; width: 130px; height: 36px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: #26272d; border: 1px solid #4a4b52; border-radius: 10px; font-size: 13px; color: #e9e4da;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff8a5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>Claude Code</div>
+<div style="position: absolute; left: 20px; top: 182px; width: 130px; height: 36px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: #26272d; border: 1px solid #4a4b52; border-radius: 10px; font-size: 13px; color: #e9e4da;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff8a5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>Codex</div>
+<div style="position: absolute; left: 20px; top: 236px; width: 130px; height: 36px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: #26272d; border: 1px solid #4a4b52; border-radius: 10px; font-size: 13px; color: #e9e4da;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff8a5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>OpenCode</div>
+<div style="position: absolute; left: 214px; top: 104px; width: 124px; height: 200px; box-sizing: border-box; padding: 14px 12px; display: flex; flex-direction: column; gap: 12px; background: #26272d; border: 2px solid #ff5b1f; border-radius: 12px;">
+<span style="display: flex; align-items: center; gap: 7px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 13px; color: #ff8a5c;"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff5b1f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>specgate</span>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #e9e4da;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#bdb7ac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>sealed spec</span>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #e9e4da;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#bdb7ac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31"></path><path d="M14 9.3V1.99"></path><path d="M8.5 2h7"></path><path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path></svg>test first</span>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #e9e4da;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#bdb7ac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>guard</span>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #e9e4da;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#bdb7ac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="M7 21h10"></path><path d="M12 3v18"></path><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"></path></svg>outside judge</span>
+</div>
+<div style="position: absolute; left: 380px; top: 176px; width: 148px; height: 48px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; background: #1f3b2b; border: 1px solid #7fc79b; border-radius: 12px; font-size: 13px; font-weight: 600; color: #e3eee6;"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7fc79b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 2 2 4-4"></path><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"></path><path d="m7.5 4.27 9 5.15"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" x2="12" y1="22" y2="12"></line></svg>delivered</div>
+<div style="position: absolute; left: 388px; top: 244px; padding: 6px 10px; border: 2px solid #7fc79b; border-radius: 6px; color: #7fc79b; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 12px; letter-spacing: 0.08em; transform: rotate(-6deg);">MATCHES THE SPEC</div>
+<div style="position: absolute; left: 96px; top: 332px; width: 172px; font-size: 12px; line-height: 16px; color: #ff8a5c;">shortcuts bounce back</div>
+<div style="position: absolute; left: 28px; top: 386px; display: flex; align-items: baseline; gap: 14px;"><span style="font-family: Syne, sans-serif; font-weight: 800; font-size: 44px; line-height: 1; color: #ff5b1f;">72%</span><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; color: #f3efe8;">of runs met the specification</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #bdb7ac;">26 of 36 · 6 wrong or unrequested · p = 0.031</span></span></div>
+</div>
+</div>
+</figure>
     </div>
+    <p class="lx-note">Same four tasks, same agents — Claude Haiku, Claude Sonnet, Codex — graded by a hidden check the agent never saw. <a href="#evidence">How we measured</a>.</p>
   </div>
 </section>
 
-<div class="band" aria-hidden="true">
-  <p class="band__words">PROPOSE → TEST → APPLY → ARCHIVE → REVIEW → PROPOSE → TEST → APPLY → ARCHIVE → REVIEW → PROPOSE → TEST → APPLY → ARCHIVE</p>
-</div>
-
-<!-- ── Proof band ───────────────────────────────────────────────────────── -->
 <section class="pb" aria-label="Proven on real products">
   <div class="ed-wrap">
     <dl class="pb__stats">
@@ -260,76 +282,111 @@ npx specgate          <span class="tok tok--c"># where you stand, and what to ru
 </section>
 
 <!-- ── Strengths ────────────────────────────────────────────────────────── -->
-<section class="ed-band ed-band--paper" id="why">
-  <div class="ed-wrap">
-    <div class="ed-head reveal">
-      <p class="ed-eyebrow">Why teams pick it</p>
-      <h2 class="ed-h2">What it will not let slide.</h2>
-    </div>
-    <div class="sx sx--4">
-      <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="10" width="32" height="28" rx="4"/><path d="M8 18h32"/><path class="sx__no" d="m19 25 10 8m0-8-10 8"/></svg>
-        <h3>A gate that can't be talked round</h3>
-        <p><code>apply</code> writes nothing while the gate fails. An agent that
-           rewrites a scenario to pass its own test fails the attempt, with the
-           diff fed back.</p>
-      </article>
-      <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="16"/><path d="M19 19a5 5 0 1 1 6 5c-1 .4-1 1.4-1 3"/><circle class="sx__dot" cx="24" cy="33" r="1.4"/></svg>
-        <h3>Ambiguity becomes a question</h3>
-        <p>A draft from a brief or a Jira story lists every value nobody gave you.
-           What only the client can answer is asked, not guessed, and its
-           requirement waits for the answer. <a href="./from-a-brief.html">From a brief →</a></p>
-      </article>
-      <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 24h8l4-10 8 20 4-10h8"/></svg>
-        <h3>Traceability without bookkeeping</h3>
-        <p>A test that mentions <code>REQ-007</code> is the link. The matrix is
-           derived from what your tests say, so it cannot drift from them.</p>
-      </article>
-      <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="8" width="16" height="12" rx="2"/><rect x="26" y="8" width="16" height="12" rx="2"/><rect x="16" y="28" width="16" height="12" rx="2"/><path d="M14 20v4h20v-4M24 24v4"/></svg>
-        <h3>One repository or many, even code already running</h3>
-        <p>The gate runs the test command you already have; proven on Node,
-           Spring&nbsp;Boot and Quarkus. <code>specgate reverse</code> drafts
-           requirements from existing code; a workspace splits one story across
-           repositories and builds them in order. <a href="./workspace.html">Workspace →</a></p>
-      </article>
-      <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="36" r="4"/><circle cx="36" cy="24" r="4"/><path d="M12 16v16M16 12c10 0 16 4 16 8M16 36c10 0 16-4 16-8"/></svg>
-        <h3>Any agent, unattended</h3>
-        <p>The harness drives any CLI that takes a prompt, one git worktree per
-           requirement — optionally as a tester and an implementer, under a cost
-           cap per requirement. It merges only when you ask for a <code>--chain</code>.
-           <a href="./harness-roles.html">Roles →</a></p>
-      </article>
-      <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M12 6h18l8 8v28H12z"/><path d="M30 6v8h8"/><path d="m18 28 4 4 8-9"/></svg>
-        <h3>Decisions and words on record</h3>
-        <p>Numbered ADRs, what the agent may decide alone, the stack, a glossary
-           whose avoided words the gate reports, and business rules numbered
-           <code>BR-NNN</code>. <a href="./decisions.html">Decisions →</a></p>
-      </article>
-      <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="10" width="36" height="24" rx="3"/><path d="M18 40h12M24 34v6"/><circle cx="18" cy="22" r="3"/><path d="M26 20h10M26 25h7"/></svg>
-        <h3>Approved by whoever owns it</h3>
-        <p>A change has three layers — Discover, Design, Tasks — each approved by
-           whoever holds its role, and the harness waits for them.
-           <code>specgate review</code> gives the business one page to read.
-           <a href="./methodology.html">The method →</a></p>
-      </article>
-      <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M10 26l8 8 20-20"/><path d="M8 42h32"/></svg>
-        <h3>A handover a person signs</h3>
-        <p>Release notes grouped by bug and enhancement, an acceptance checklist
-           a person signs to move its requirements to Verified, and a user guide per
-           actor. <a href="./transition.html">Handing over →</a></p>
-      </article>
-    </div>
+<section class="lx-band" id="boundary" aria-labelledby="lx-bh">
+  <div class="lx-wrap">
+    <div class="lx-head"><h2 class="ed-h2" id="lx-bh">The judge sits outside the session</h2><p>An agent with a shell can reach every file in its folder, so no check that lives there is final. The guard and the gate work where the agent works; the verdict is taken where it cannot write.</p></div>
+    <figure class="lx-figure">
+      <div class="lx-plate" role="img" aria-label="The trust boundary: inside the agent's session, the coding agent, the guard hook, the working folder and the gate on stop; outside it, the person who approves and seals, and the outside judge, which reads the controls before the agent starts and compares when it stops, giving a verdict independent of the session.">
+<div style="overflow-x: auto; padding-bottom: 8px;">
+<div style="position: relative; width: 1136px; height: 600px; font-size: 14px; line-height: 20px;">
+<div style="position: absolute; left: 0px; top: 0px; width: 720px; height: 600px; box-sizing: border-box; background: #ebe6dc; border: 1px dashed #c4bcad; border-radius: 12px;"></div>
+<div style="position: absolute; left: 784px; top: 0px; width: 352px; height: 600px; box-sizing: border-box; background: #faf8f3; border: 1px solid #c4bcad; border-radius: 12px;"></div>
+<svg role="img" aria-label="From Coding agent to Guard hook, on every tool call" width="8" height="79" viewBox="0 0 8 79" preserveAspectRatio="none" style="position: absolute; left: 128px; top: 168px; width: 8px; height: 79px; overflow: visible; fill: none; stroke: #625f58; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-1" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#625f58" stroke="none" style="stroke: none; fill: #625f58; fill: context-stroke"/></marker></defs><path d="M 4 0 L 4 75" marker-end="url(#dc-arrow-head-filled-1)"></path></svg>
+<svg role="img" aria-label="From Guard hook to Working folder, when the call is allowed" width="79" height="8" viewBox="0 0 79 8" preserveAspectRatio="none" style="position: absolute; left: 232px; top: 312px; width: 79px; height: 8px; overflow: visible; fill: none; stroke: #625f58; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-2" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#625f58" stroke="none" style="stroke: none; fill: #625f58; fill: context-stroke"/></marker></defs><path d="M 0 4 L 75 4" marker-end="url(#dc-arrow-head-filled-2)"></path></svg>
+<svg role="img" aria-label="From Guard hook to Refused, when the call breaks a rule" width="8" height="71" viewBox="0 0 8 71" preserveAspectRatio="none" style="position: absolute; left: 128px; top: 384px; width: 8px; height: 71px; overflow: visible; fill: none; stroke: #b93d0b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-3" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#b93d0b" stroke="none" style="stroke: none; fill: #b93d0b; fill: context-stroke"/></marker></defs><path d="M 4 0 L 4 67" marker-end="url(#dc-arrow-head-filled-3)"></path></svg>
+<svg role="img" aria-label="From Coding agent to Gate on stop, when the agent says it is done" width="79" height="8" viewBox="0 0 79 8" preserveAspectRatio="none" style="position: absolute; left: 232px; top: 108px; width: 79px; height: 8px; overflow: visible; fill: none; stroke: #625f58; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-4" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#625f58" stroke="none" style="stroke: none; fill: #625f58; fill: context-stroke"/></marker></defs><path d="M 0 4 L 75 4" marker-end="url(#dc-arrow-head-filled-4)"></path></svg>
+<svg role="img" aria-label="From Gate on stop to Working folder, which it reads" width="8" height="63" viewBox="0 0 8 63" preserveAspectRatio="none" style="position: absolute; left: 496px; top: 168px; width: 8px; height: 63px; overflow: visible; fill: none; stroke: #625f58; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-5" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#625f58" stroke="none" style="stroke: none; fill: #625f58; fill: context-stroke"/></marker></defs><path d="M 4 0 L 4 59" marker-end="url(#dc-arrow-head-filled-5)"></path></svg>
+<svg aria-hidden="true" width="64" height="8" viewBox="0 0 64 8" preserveAspectRatio="none" style="position: absolute; left: 752px; top: 108px; width: 64px; height: 8px; overflow: visible; fill: none; stroke: #2c6b47; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="M 64 4 L 0 4"></path></svg>
+<svg aria-hidden="true" width="8" height="168" viewBox="0 0 8 168" preserveAspectRatio="none" style="position: absolute; left: 748px; top: 112px; width: 8px; height: 168px; overflow: visible; fill: none; stroke: #2c6b47; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="M 4 0 L 4 168"></path></svg>
+<svg role="img" aria-label="From Person at a terminal to Working folder: approvals and seals" width="63" height="8" viewBox="0 0 63 8" preserveAspectRatio="none" style="position: absolute; left: 689px; top: 276px; width: 63px; height: 8px; overflow: visible; fill: none; stroke: #2c6b47; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-6" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#2c6b47" stroke="none" style="stroke: none; fill: #2c6b47; fill: context-stroke"/></marker></defs><path d="M 63 4 L 4 4" marker-end="url(#dc-arrow-head-filled-6)"></path></svg>
+<svg role="img" aria-label="From Outside judge to Working folder: reads the controls before and after the run" width="127" height="8" viewBox="0 0 127 8" preserveAspectRatio="none" style="position: absolute; left: 689px; top: 348px; width: 127px; height: 8px; overflow: visible; fill: none; stroke: #625f58; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-7" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#625f58" stroke="none" style="stroke: none; fill: #625f58; fill: context-stroke"/></marker></defs><path d="M 127 4 L 4 4" marker-end="url(#dc-arrow-head-filled-7)"></path></svg>
+<svg role="img" aria-label="From Outside judge to the run's verdict" width="8" height="71" viewBox="0 0 8 71" preserveAspectRatio="none" style="position: absolute; left: 956px; top: 384px; width: 8px; height: 71px; overflow: visible; fill: none; stroke: #625f58; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-8" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#625f58" stroke="none" style="stroke: none; fill: #625f58; fill: context-stroke"/></marker></defs><path d="M 4 0 L 4 67" marker-end="url(#dc-arrow-head-filled-8)"></path></svg>
+<div style="position: absolute; left: 32px; top: 56px; width: 200px; height: 112px; box-sizing: border-box; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; text-align: center; background: #15161a; color: #f3efe8; border-radius: 10px;"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff8a5c" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg><span><b>Coding agent</b><br>Claude Code · Codex · OpenCode</span></div>
+<div style="position: absolute; left: 312px; top: 56px; width: 376px; height: 112px; box-sizing: border-box; padding: 10px 16px; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; text-align: center; background: #faf8f3; border: 1px solid #c4bcad; border-radius: 10px;"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#15161a" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg><span><b>Gate on stop</b> · specgate check<br>specs and links · sealed approval · design scope · approved changes only</span></div>
+<div style="position: absolute; left: 32px; top: 248px; width: 200px; height: 136px; box-sizing: border-box; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; text-align: center; background: #faf8f3; border: 1px solid #15161a; border-radius: 10px;"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#15161a" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg><span><b>Guard hook</b><br>test first · whole working tree · step record · a person's acts</span></div>
+<div style="position: absolute; left: 312px; top: 232px; width: 376px; height: 168px; box-sizing: border-box; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; text-align: center; background: #faf8f3; border: 1px solid #c4bcad; border-radius: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 13px;"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#15161a" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg><span><b style="font-family: 'IBM Plex Sans', sans-serif; font-size: 14px;">Working folder</b><br>src/ · tests/ · features/<br>docs/specs/ — the approved contract<br>approvals.json — seals by hash<br>.specgate/ — policy, evidence</span></div>
+<div style="position: absolute; left: 32px; top: 456px; width: 200px; height: 88px; box-sizing: border-box; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; text-align: center; background: #f8e1d4; border: 1px solid #b93d0b; border-radius: 10px;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b93d0b" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg><span><b>Refused</b><br>with the next step to take</span></div>
+<div style="position: absolute; left: 816px; top: 56px; width: 288px; height: 112px; box-sizing: border-box; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; text-align: center; background: #e3eee6; border: 1px solid #2c6b47; border-radius: 10px;"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2c6b47" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span><b>Person at a terminal</b><br>approves · seals · reviews steps</span></div>
+<div style="position: absolute; left: 816px; top: 248px; width: 288px; height: 136px; box-sizing: border-box; padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; text-align: center; background: #15161a; color: #f3efe8; border-radius: 10px;"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff8a5c" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="M7 21h10"></path><path d="M12 3v18"></path><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"></path></svg><span><b>Outside judge</b><br>reads the controls before the agent starts; compares when it stops</span></div>
+<div style="position: absolute; left: 816px; top: 456px; width: 288px; height: 88px; box-sizing: border-box; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; text-align: center; background: #faf8f3; border: 1px solid #c4bcad; border-radius: 10px;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15161a" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path><path d="m9 12 2 2 4-4"></path></svg><span><b>Verdict</b><br>independent of the session</span></div>
+<div style="position: absolute; left: 16px; top: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: #625f58;">The agent's session — inside the trust boundary</div>
+<div style="position: absolute; left: 800px; top: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: #625f58;">Outside the session</div>
+<div style="position: absolute; left: 144px; top: 199px; width: 64px; font-size: 12px; line-height: 16px; color: #625f58;">tool call</div>
+<div style="position: absolute; left: 240px; top: 288px; width: 64px; text-align: center; font-size: 12px; line-height: 16px; color: #625f58;">allowed</div>
+<div style="position: absolute; left: 144px; top: 411px; width: 64px; font-size: 12px; line-height: 16px; color: #b93d0b;">refused</div>
+<div style="position: absolute; left: 240px; top: 84px; width: 64px; text-align: center; font-size: 12px; line-height: 16px; color: #625f58;">on stop</div>
+<div style="position: absolute; left: 512px; top: 191px; width: 48px; font-size: 12px; line-height: 16px; color: #625f58;">reads</div>
+<div style="position: absolute; left: 764px; top: 188px; width: 48px; font-size: 12px; line-height: 16px; color: #2c6b47;">seals</div>
+<div style="position: absolute; left: 696px; top: 324px; width: 112px; text-align: center; font-size: 12px; line-height: 16px; color: #625f58;">before + after</div>
+<div style="position: absolute; left: 972px; top: 411px; width: 56px; font-size: 12px; line-height: 16px; color: #625f58;">verdict</div>
+</div>
+</div>
+      </div>
+      <figcaption>A tool with no hooks has no guard; the gate, the seals, the approval rule and the outside judge still hold. Without a harness or CI there is no outside judge.</figcaption>
+    </figure>
   </div>
 </section>
 
-<!-- ── Watch it ─────────────────────────────────────────────────────────── -->
+<section class="lx-band lx-band--soft" id="decide" aria-labelledby="lx-dh">
+  <div class="lx-wrap">
+    <div class="lx-head"><h2 class="ed-h2" id="lx-dh">No model judges a model</h2><p>Every verdict is a rule over files, hashes and exit codes — the same answer every time it runs.</p></div>
+    <figure class="lx-figure">
+      <div class="lx-plate" role="img" aria-label="The guard's decision on one tool call: a person's act is refused; a write to a sealed test is refused; a source file is allowed only when a changed or sealed test names its requirement, and its steps are then recorded; anything else is allowed.">
+<div style="overflow-x: auto; padding-bottom: 8px;">
+<div style="position: relative; width: 1080px; height: 336px; font-size: 13px; line-height: 18px;">
+<svg role="img" aria-label="From Tool call to A person's act?" width="47" height="8" viewBox="0 0 47 8" preserveAspectRatio="none" style="position: absolute; left: 152px; top: 164px; width: 47px; height: 8px; overflow: visible; fill: none; stroke: #625f58; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-9" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#625f58" stroke="none" style="stroke: none; fill: #625f58; fill: context-stroke"/></marker></defs><path d="M 0 4 L 43 4" marker-end="url(#dc-arrow-head-filled-9)"></path></svg>
+<svg role="img" aria-label="From A person's act? to Sealed test?, if no" width="47" height="8" viewBox="0 0 47 8" preserveAspectRatio="none" style="position: absolute; left: 376px; top: 164px; width: 47px; height: 8px; overflow: visible; fill: none; stroke: #625f58; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-10" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#625f58" stroke="none" style="stroke: none; fill: #625f58; fill: context-stroke"/></marker></defs><path d="M 0 4 L 43 4" marker-end="url(#dc-arrow-head-filled-10)"></path></svg>
+<svg role="img" aria-label="From Sealed test? to Source file?, if no" width="47" height="8" viewBox="0 0 47 8" preserveAspectRatio="none" style="position: absolute; left: 600px; top: 164px; width: 47px; height: 8px; overflow: visible; fill: none; stroke: #625f58; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-11" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#625f58" stroke="none" style="stroke: none; fill: #625f58; fill: context-stroke"/></marker></defs><path d="M 0 4 L 43 4" marker-end="url(#dc-arrow-head-filled-11)"></path></svg>
+<svg role="img" aria-label="From Source file? to A changed test names its requirement?, if yes" width="47" height="8" viewBox="0 0 47 8" preserveAspectRatio="none" style="position: absolute; left: 824px; top: 164px; width: 47px; height: 8px; overflow: visible; fill: none; stroke: #625f58; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-12" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#625f58" stroke="none" style="stroke: none; fill: #625f58; fill: context-stroke"/></marker></defs><path d="M 0 4 L 43 4" marker-end="url(#dc-arrow-head-filled-12)"></path></svg>
+<svg role="img" aria-label="From A person's act? to Refuse: a person's act, if yes" width="8" height="55" viewBox="0 0 8 55" preserveAspectRatio="none" style="position: absolute; left: 284px; top: 57px; width: 8px; height: 55px; overflow: visible; fill: none; stroke: #b93d0b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-13" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#b93d0b" stroke="none" style="stroke: none; fill: #b93d0b; fill: context-stroke"/></marker></defs><path d="M 4 55 L 4 4" marker-end="url(#dc-arrow-head-filled-13)"></path></svg>
+<svg role="img" aria-label="From Sealed test? to Refuse: the contract, if yes" width="8" height="55" viewBox="0 0 8 55" preserveAspectRatio="none" style="position: absolute; left: 508px; top: 57px; width: 8px; height: 55px; overflow: visible; fill: none; stroke: #b93d0b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-14" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#b93d0b" stroke="none" style="stroke: none; fill: #b93d0b; fill: context-stroke"/></marker></defs><path d="M 4 55 L 4 4" marker-end="url(#dc-arrow-head-filled-14)"></path></svg>
+<svg role="img" aria-label="From A changed test names its requirement? to Refuse: test first, if no" width="8" height="47" viewBox="0 0 8 47" preserveAspectRatio="none" style="position: absolute; left: 972px; top: 57px; width: 8px; height: 47px; overflow: visible; fill: none; stroke: #b93d0b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-15" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#b93d0b" stroke="none" style="stroke: none; fill: #b93d0b; fill: context-stroke"/></marker></defs><path d="M 4 47 L 4 4" marker-end="url(#dc-arrow-head-filled-15)"></path></svg>
+<svg role="img" aria-label="From Source file? to Allow, if no" width="8" height="55" viewBox="0 0 8 55" preserveAspectRatio="none" style="position: absolute; left: 732px; top: 224px; width: 8px; height: 55px; overflow: visible; fill: none; stroke: #2c6b47; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-16" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#2c6b47" stroke="none" style="stroke: none; fill: #2c6b47; fill: context-stroke"/></marker></defs><path d="M 4 0 L 4 51" marker-end="url(#dc-arrow-head-filled-16)"></path></svg>
+<svg role="img" aria-label="From A changed test names its requirement? to Allow and record the steps, if yes" width="8" height="47" viewBox="0 0 8 47" preserveAspectRatio="none" style="position: absolute; left: 972px; top: 232px; width: 8px; height: 47px; overflow: visible; fill: none; stroke: #2c6b47; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-17" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#2c6b47" stroke="none" style="stroke: none; fill: #2c6b47; fill: context-stroke"/></marker></defs><path d="M 4 0 L 4 43" marker-end="url(#dc-arrow-head-filled-17)"></path></svg>
+<div style="position: absolute; left: 0px; top: 136px; width: 152px; height: 64px; box-sizing: border-box; padding: 8px; display: flex; align-items: center; justify-content: center; text-align: center; background: #15161a; color: #f3efe8; border-radius: 10px;"><span><b>Tool call</b><br>Write · Edit · patch · shell</span></div>
+<div style="position: absolute; left: 200px; top: 112px; width: 176px; height: 112px; box-sizing: border-box; padding: 24px 40px; display: flex; align-items: center; justify-content: center; text-align: center; background: #eae4d9; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);">A person's act?</div>
+<div style="position: absolute; left: 424px; top: 112px; width: 176px; height: 112px; box-sizing: border-box; padding: 24px 40px; display: flex; align-items: center; justify-content: center; text-align: center; background: #eae4d9; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);">Sealed test?</div>
+<div style="position: absolute; left: 648px; top: 112px; width: 176px; height: 112px; box-sizing: border-box; padding: 24px 40px; display: flex; align-items: center; justify-content: center; text-align: center; background: #eae4d9; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);">Source file?</div>
+<div style="position: absolute; left: 872px; top: 104px; width: 208px; height: 128px; box-sizing: border-box; padding: 24px 44px; display: flex; align-items: center; justify-content: center; text-align: center; background: #eae4d9; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);">A changed test names its REQ?</div>
+<div style="position: absolute; left: 208px; top: 0px; width: 160px; height: 56px; box-sizing: border-box; padding: 6px 8px; display: flex; align-items: center; justify-content: center; text-align: center; background: #f8e1d4; border: 1px solid #b93d0b; border-radius: 10px;"><span><b>Refuse</b><br>it is a person's act</span></div>
+<div style="position: absolute; left: 432px; top: 0px; width: 160px; height: 56px; box-sizing: border-box; padding: 6px 8px; display: flex; align-items: center; justify-content: center; text-align: center; background: #f8e1d4; border: 1px solid #b93d0b; border-radius: 10px;"><span><b>Refuse</b><br>it is the contract</span></div>
+<div style="position: absolute; left: 896px; top: 0px; width: 160px; height: 56px; box-sizing: border-box; padding: 6px 8px; display: flex; align-items: center; justify-content: center; text-align: center; background: #f8e1d4; border: 1px solid #b93d0b; border-radius: 10px;"><span><b>Refuse</b><br>write the test first</span></div>
+<div style="position: absolute; left: 656px; top: 280px; width: 160px; height: 56px; box-sizing: border-box; padding: 6px 8px; display: flex; align-items: center; justify-content: center; text-align: center; background: #e3eee6; border: 1px solid #2c6b47; border-radius: 10px;"><b>Allow</b></div>
+<div style="position: absolute; left: 896px; top: 280px; width: 160px; height: 56px; box-sizing: border-box; padding: 6px 8px; display: flex; align-items: center; justify-content: center; text-align: center; background: #e3eee6; border: 1px solid #2c6b47; border-radius: 10px;"><span><b>Allow</b><br>and record the steps</span></div>
+<div style="position: absolute; left: 300px; top: 76px; width: 28px; text-align: center; font-size: 12px; line-height: 16px; color: #b93d0b;">yes</div>
+<div style="position: absolute; left: 524px; top: 76px; width: 28px; text-align: center; font-size: 12px; line-height: 16px; color: #b93d0b;">yes</div>
+<div style="position: absolute; left: 988px; top: 72px; width: 24px; text-align: center; font-size: 12px; line-height: 16px; color: #b93d0b;">no</div>
+<div style="position: absolute; left: 388px; top: 140px; width: 24px; text-align: center; font-size: 12px; line-height: 16px; color: #625f58;">no</div>
+<div style="position: absolute; left: 612px; top: 140px; width: 24px; text-align: center; font-size: 12px; line-height: 16px; color: #625f58;">no</div>
+<div style="position: absolute; left: 834px; top: 140px; width: 28px; text-align: center; font-size: 12px; line-height: 16px; color: #625f58;">yes</div>
+<div style="position: absolute; left: 748px; top: 244px; width: 24px; text-align: center; font-size: 12px; line-height: 16px; color: #2c6b47;">no</div>
+<div style="position: absolute; left: 988px; top: 248px; width: 28px; text-align: center; font-size: 12px; line-height: 16px; color: #2c6b47;">yes</div>
+</div>
+</div>
+      </div>
+      <figcaption>The guard runs before every write, edit, patch and shell call. A shell call is judged by the working tree, not by its words.</figcaption>
+    </figure>
+    <h3 class="lx-h3">The gate, on every delivery</h3>
+    <ol class="lx-stages"><li><code>ids</code><span>no id means two things</span></li><li><code>changes</code><span>seals intact</span></li><li><code>validate</code><span>every link real</span></li><li><code>architecture</code><span>your rules</span></li><li><code>tests</code><span>your runner</span></li><li><code>scenarios</code><span>each one runs</span></li><li><code>acceptance</code><span>sealed tests pass</span></li><li><code>quality</code><span>your checks</span></li></ol>
+  </div>
+</section>
+
+<section class="lx-band" id="evidence" aria-labelledby="lx-eh">
+  <div class="lx-wrap">
+    <div class="lx-head"><h2 class="ed-h2" id="lx-eh">Measured, not claimed</h2><p>72 runs · Claude Haiku, Claude Sonnet, Codex · the same four tasks with and without Specgate · graded by a hidden check · two-sided Fisher's exact test.</p></div>
+    <div class="lx-stats"><div class="lx-stat"><p class="lx-stat__n">44% <span>→ 72%</span></p><p class="lx-stat__l">met the specification</p><p class="lx-stat__s">16 → 26 of 36 · p = 0.031</p></div><div class="lx-stat"><p class="lx-stat__n">15 <span>→ 6</span></p><p class="lx-stat__l">delivered wrong or unrequested work</p><p class="lx-stat__s">of 36 · p = 0.037</p></div><div class="lx-stat"><p class="lx-stat__n">0/9 <span>→ 8/9</span></p><p class="lx-stat__l">stopped at work nobody asked for</p><p class="lx-stat__s">p = 0.0004</p></div><div class="lx-stat"><p class="lx-stat__n">12 <span>→ 17</span></p><p class="lx-stat__l">of 18 trap runs held, with sealed acceptance tests</p><p class="lx-stat__s">not significant at this size</p></div></div>
+    <p class="lx-limit">The limit: when a task hands the agent a wrong test, the gate alone cannot tell. Sealed acceptance tests — written by another hand, approved by a person — are how Specgate closes it.</p>
+  </div>
+</section>
+
+<section class="lx-band lx-band--soft" id="controls" aria-labelledby="lx-ch">
+  <div class="lx-wrap">
+    <div class="lx-head"><h2 class="ed-h2" id="lx-ch">Nine controls, each earned</h2><p>Each exists because an agent in the exam got past the one before it.</p></div>
+    <div class="lx-table-wrap"><table class="lx-table"><thead><tr><th scope="col"></th><th scope="col">Control</th><th scope="col">Refuses</th><th scope="col">What an agent tried</th></tr></thead><tbody><tr><th scope="row">C1</th><td>Test first</td><td>Writing source before a test names the requirement</td><td>—</td></tr><tr><th scope="row">C2</th><td>Gate</td><td>Delivery until spec, links, tests and scenarios agree</td><td>—</td></tr><tr><th scope="row">C3</th><td>Working tree</td><td>Any call while changed source has no naming test</td><td>Refused by the write tool, wrote the file through the shell</td></tr><tr><th scope="row">C4</th><td>Sealed approval</td><td>Building what is not what was approved</td><td>Rewrote the approved spec to match its code</td></tr><tr><th scope="row">C5</th><td>Step record</td><td>Step definitions changed after the code began</td><td>Rewrote the steps so wrong code passed</td></tr><tr><th scope="row">C6</th><td>Design scope</td><td>New files the approved design does not name</td><td>Added unrequested code under an unrelated requirement</td></tr><tr><th scope="row">C7</th><td>Approval first</td><td>Delivering a change no person approved</td><td>Wrote its own requirement and delivered it</td></tr><tr><th scope="row">C8</th><td>Reserved acts</td><td>Approving, switching the guard, faking a review</td><td>Switched the guard off; faked a review in a pseudo-terminal</td></tr><tr><th scope="row">C9</th><td>Outside judge</td><td>A run whose controls changed, however it was done</td><td>Deleted the step record — and still failed the run</td></tr></tbody></table></div>
+    <div class="lx-next"><h3>Sealed acceptance tests: whoever writes the code does not write the oracle.</h3><p>Another hand writes the acceptance tests from the spec, never the source, and lists them in <code>acceptance-tests.md</code>. A person approves them and each file is sealed by hash. The agent cannot touch them, and the gate runs them with your own command.</p><p class="lx-next__n">A replayed attack on a sealed step file: 8 of 8 roads refused or caught.</p></div>
+  </div>
+</section>
+
 <section class="ed-band ed-band--ink" id="watch">
   <div class="ed-wrap">
     <div class="ed-head">

@@ -22,17 +22,13 @@ the command line. Which agent, and how to call it, is on
    worktree on a branch called `harness/REQ-NNN`.
 2. The harness installs the project's dependencies in it, then gives the agent
    a prompt built from the requirement and its Gherkin scenario.
-3. The gate runs. First the outside judge: the harness read the controls —
-   guard switch, gate policy, approvals, evidence, sealed tests — before the
-   agent started, and any change to them fails the attempt. Then
-   `validate --strict`, with the change's approvals, its sealed acceptance
-   tests and its design scope still as a person approved them; a check that
-   the agent did not edit the specification; your architecture check; your
-   tests; the requirement's scenarios when `bdd: required`; the step record
-   (step definitions changed after the code fail it); the principles that
-   declare a check (`run=` in `docs/specs/principles.md`); then your
-   [quality checks](quality.md) — coverage of the lines it added, mutation,
-   SAST, secrets, Conventional Commits.
+3. The gate runs. First the outside judge: any change to the controls the
+   harness read before the agent started (guard, gate policy, approvals,
+   evidence, sealed tests) fails the attempt. Then `validate --strict`, with
+   approvals, sealed tests and design scope as approved; the specification
+   untouched; your architecture check and tests; the scenarios when
+   `bdd: required`; the step record; the principles with a `run=` check; your
+   [quality checks](quality.md).
 4. **Green:** `specgate apply` marks the requirement Implemented and the work
    is committed on its branch as `feat(REQ-NNN): …`.
 5. **Red:** the failures go into the next attempt, up to `max_attempts`
@@ -176,24 +172,16 @@ repeats.
 
 ## Parallel branches and capability specs
 
-With one change per ticket, two branches often archive into the same
-capability, `docs/specs/capabilities/<name>/spec.md`. Git would conflict on
-the whole file when the capability is new on both. `specgate harness init`
-also registers a driver for these files that merges **requirement by
-requirement**: requirements with different ids are united and sorted by id,
-and a requirement changed on one side only takes that side.
+Two branches often archive into the same capability spec. `specgate harness
+init` registers a merge driver for those files that merges **requirement by
+requirement**: different ids are united and sorted, and a requirement changed
+on one side only takes that side. It conflicts only when both rewrote the same
+requirement (`change_overlap` warned before): write it as it should read,
+delete the markers, run `specgate check`.
 
-It **conflicts** only when both branches rewrote the same requirement
-differently, the case `change_overlap` warned about before either branch was
-merged. Write the requirement as it should read once both changes hold,
-delete the marker lines, and run `specgate check`.
-
-**In a project without its own `node_modules`**, Maven for one, the drivers
-run this machine's copy of specgate. If that copy goes away (an `npx` cache
-cleared, a global install removed), the drivers say so and git merges these
-files by lines, with its usual conflict markers, and `specgate doctor` warns.
-Run `specgate harness init --merge-drivers` again to point them at the copy you
-have now.
+**Without a local `node_modules`** (Maven, say), the drivers run this
+machine's specgate. If that copy goes away, git falls back to line merges and
+`specgate doctor` warns; run `specgate harness init --merge-drivers` again.
 
 ## Run more than one requirement at a time
 

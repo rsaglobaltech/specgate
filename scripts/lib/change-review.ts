@@ -117,8 +117,9 @@ export function approvalBlockers(projectDir: string, id: string): Blocker[] {
   const reqsIn = (message: string) => [...new Set(message.match(/REQ-\d+/g) || [])];
   const questionWaits = (q: { blocks: string[] }) => onlyWaiting(q.blocks.flatMap((b) => b.match(/REQ-\d+/g) || []));
   const concernsOnlyWaiting = (message: string) => {
+    // An answered question is the next step, not a wait: it still asks to be confirmed and written out.
     const q = questions.find((x) => names(message, x.id));
-    if (q && !q.answered) return questionWaits(q);
+    if (q) return !q.answered && questionWaits(q);
     return onlyWaiting(reqsIn(message));
   };
   const r = draftReport(projectDir, id);

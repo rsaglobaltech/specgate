@@ -62,7 +62,7 @@ import { answer, reviewed } from "../../scripts/lib/clarification";
 import { questionsView } from "../../scripts/lib/studio-app";
 
 /** A project with draft-pedidos: Q1 open and Q2 answered by hand, both blocking a requirement. */
-function pedidos(questions: string): string {
+function pedidos(questions: string, waiting: string[] = ["REQ-031", "REQ-032"]): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "studio-unblock-"));
   const w = (rel: string, text: string) => {
     fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
@@ -84,7 +84,9 @@ function pedidos(questions: string): string {
       "- WHEN b",
       "- THEN c",
       "",
-      '<!-- specgate:trace status="Needs Clarification" actor=Cliente kind=functional -->',
+      waiting.includes(id)
+        ? '<!-- specgate:trace status="Needs Clarification" actor=Cliente kind=functional -->'
+        : "<!-- specgate:trace actor=Cliente kind=functional -->",
       "",
     ].join("\n");
   w(
@@ -179,11 +181,13 @@ test("REQ-206 SCN-206c: every blocker with its action, each question once and by
     "",
     "| # | Question | Blocks | Options seen | Answer | Status |",
     "|---|---|---|---|---|---|",
+    // approve-around-questions REQ-771: a question on a requirement that waits does not block; Q1 blocks a decided one.
     "| Q1 | ¿Desde qué importe se aprueba a mano? | REQ-031 |  |  | open |",
     "| Q10 | ¿Cuántos días para devolver? | REQ-032 |  | 30 días | answered |",
     "",
   ].join("\n");
-  const dir = pedidos(questions);
+  // approve-around-questions REQ-771: an open question on a requirement that waits does not block; REQ-031 is decided.
+  const dir = pedidos(questions, ["REQ-032"]);
   const blockers = approvalBlockers(dir, "draft-pedidos");
   const q1 = blockers.filter((b) => /\bQ1\b/.test(b.message));
   const q10 = blockers.filter((b) => /\bQ10\b/.test(b.message));
