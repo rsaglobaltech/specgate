@@ -164,6 +164,9 @@ test("REQ-811 SCN-811a: the requirement's slice as one UML class diagram", (t: T
   assert.match(text, /class Decision \{\n {4}<<enumeration>>\n {4}ALLOW\n {4}DENY\n/);
   assert.match(text, /class Classifier \{\n {4}<<interface>>/);
   assert.match(text, /OrderController --> "1" ReviewOrder : review/, "the type that holds it");
+  assert.match(text, /OrderController \.\.> OrderRequest/, "a nested type, by what uses it");
+  // Mermaid has no nesting arrow: `+--` stops the whole diagram from rendering.
+  assert.doesNotMatch(text, /\+--/);
   assert.deepEqual(requirementDiagrams(dir, "REQ-041"), d, "the same every time");
 });
 

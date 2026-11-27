@@ -96,11 +96,6 @@ export function umlClassDiagram(types: ReadonlyArray<UmlType>, changes?: SliceCh
       }
     }
   }
-  for (const t of types) {
-    if (t.outer && names.has(t.outer) && !associated.has(`${t.outer}>${t.name}`)) {
-      relate(`${t.outer} +-- ${t.name}`);
-    }
-  }
   for (const n of changes?.added || []) {
     if (names.has(n)) out.push(`  style ${n} fill:#e6f4ea,stroke:#2f7a45,stroke-width:2px`);
   }
