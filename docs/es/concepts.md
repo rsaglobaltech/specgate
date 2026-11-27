@@ -1,4 +1,4 @@
-<!-- translation-of: 2531e513b335 -->
+<!-- translation-of: 3a2f4bbfcbf9 -->
 # Cómo piensa Specgate
 
 Seis ideas explican todo lo que hace la CLI. Léelas una vez y cada comando,

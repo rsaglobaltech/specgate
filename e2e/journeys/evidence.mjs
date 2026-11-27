@@ -28,6 +28,14 @@ export default [
       );
       const usage = t.sg(dir, "evidence", "before", "checkout", "--json");
       t.expect(usage.status === 2 && /evidence_usage/.test(t.out(usage)), "a non-id refused", usage);
+      // REQ-807: the change's page, with what is missing.
+      t.ok(t.sg(dir, "propose", "checkout"), "propose checkout");
+      const page = t.sg(dir, "evidence", "checkout", "--json");
+      t.ok(page, "evidence <change>");
+      const text = t.read(dir, "docs/specs/changes/checkout/EVIDENCE.md");
+      t.expect(/^# Evidence — checkout/.test(text), "EVIDENCE.md written", page);
+      const missing = t.sg(dir, "evidence", "no-such-change", "--json");
+      t.expect(missing.status === 1 && /evidence_no_change/.test(t.out(missing)), "unknown change refused", missing);
     },
   },
 ];

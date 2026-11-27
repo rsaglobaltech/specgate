@@ -1,5 +1,7 @@
+import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
+import { writeEvidencePage } from "../../../lib/evidence-page";
 import { BaseCommand } from "../../../lib/command";
 import { agentIo, wantsJson } from "../../../lib/agent";
 import { error } from "../../../lib/diagnostics";
@@ -16,13 +18,22 @@ function usage(): void {
   process.stdout.write(
     `
   📸 ${c.bold}specgate evidence before${c.reset} <REQ>… [--project-dir <dir>] [--json]
+     ${c.bold}specgate evidence${c.reset} <change-id> [--project-dir <dir>] [--json]
 
-  What a flow did before the change (ADR-0047). Runs each requirement's
-  scenarios through bdd_cmd, with {tags} as @<REQ>, on the code as it is, and
-  keeps the run in .specgate/evidence/<REQ>/before/ — its command, exit code,
-  output, and what the runner wrote under test-results/ (screenshots, video,
-  traces; kept out of git). Take it once the test is written and before the
-  code: red is expected. apply keeps the after beside it.
+  What a flow did before the change, and what it does after (ADR-0047).
+
+  before   Runs each requirement's scenarios through bdd_cmd, with {tags} as
+           @<REQ>, on the code as it is, and keeps the run in
+           .specgate/evidence/<REQ>/before/ — its command, exit code, output,
+           and what the runner wrote under test-results/ (screenshots, video,
+           traces; kept out of git). Take it once the test is written and
+           before the code: red is expected. apply keeps the after beside it.
+
+  <change> Writes docs/specs/changes/<change>/EVIDENCE.md: each requirement's
+           last screenshot per test before and after, side by side (copied
+           beside the page under 300 KB), its sequence and class diagrams at
+           the base and now, where its videos and traces are, and what is
+           missing. Link it from the pull request.
 `
   );
 }
@@ -50,18 +61,50 @@ export class EvidenceCommand extends BaseCommand {
         ]);
     }
     const [sub, ...ids] = positional;
+    if (sub && sub !== "before" && ids.length === 0 && !REQ.test(sub)) {
+      return this.page(path.resolve(dirArg), sub, io);
+    }
     if (sub !== "before" || ids.length === 0 || !ids.every((id) => REQ.test(id))) {
       io.usage(NULL_SHAPE, [
         error(
           "evidence_usage",
           sub === "before"
             ? `evidence before takes requirement ids: ${ids.join(" ") || "none given"}.`
-            : "evidence takes `before <REQ>…`.",
-          { fix: "specgate evidence before REQ-031" }
+            : "evidence takes `before <REQ>…`, or a change id.",
+          { fix: "specgate evidence before REQ-031 — or specgate evidence <change-id>" }
         ),
       ]);
     }
     this.before(path.resolve(dirArg), ids, io);
+  }
+
+  /** REQ-807: the change's page — each requirement before and after, its diagrams, what is missing. */
+  private page(dir: string, changeId: string, io: ReturnType<typeof agentIo>): void {
+    const changeDir = path.join(dir, "docs", "specs", "changes", changeId);
+    if (changeId === "archive" || !fs.existsSync(path.join(changeDir, "change.yaml"))) {
+      io.fail(NULL_SHAPE, [
+        error("evidence_no_change", `${changeId} is not an open change of this project.`, {
+          target: changeId,
+          fix: "specgate change list — then specgate evidence <change-id>",
+        }),
+      ]);
+    }
+    const written = writeEvidencePage(dir, changeId);
+    io.emit({ evidence: { change: changeId, ...written } }, () => {
+      process.stdout.write(ui.header("evidence", changeId));
+      for (const r of written.requirements) {
+        const missing = [!r.before && "no before", !r.after && "not delivered"].filter(Boolean);
+        process.stdout.write(
+          (missing.length ? ui.warn : ui.ok)(
+            `${r.id}: ${r.screenshots} screenshot(s), ${r.sequences} sequence(s), ${r.classes} class diagram(s)` +
+              (missing.length ? ` — ${missing.join(", ")}` : "")
+          )
+        );
+      }
+      process.stdout.write(
+        `\n     ${ui.muted(`written to ${written.file} — link it from the pull request`)}\n`
+      );
+    });
   }
 
   /** REQ-803: each requirement's scenarios, run on the code as it is, kept as its before. */

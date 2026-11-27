@@ -15,4 +15,4 @@
 - [x] 2.2 REQ-804 — apply keeps the after beside it
 - [x] 2.3 REQ-805 — doctor says when Playwright keeps no pictures
 - [x] 2.4 REQ-806 — sequence and class diagrams, before and after
-- [ ] 2.5 REQ-807 — EVIDENCE.md for a change
+- [x] 2.5 REQ-807 — EVIDENCE.md for a change

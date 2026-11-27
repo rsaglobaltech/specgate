@@ -55,7 +55,7 @@ looks.
    agent may add its own diagrams beside them.
 5. **One page per change.** `specgate evidence <change>` writes
    `docs/specs/changes/<change>/EVIDENCE.md`: per requirement, before and
-   after side by side — the first and last screenshot of each scenario,
+   after side by side — the last screenshot of each test,
    copied next to the page under a size cap, the diagrams inline, the video and
    trace named by their path under `.specgate/evidence/`. It is committed with
    the change, archived with it, and the pull request links it.
@@ -67,8 +67,8 @@ looks.
 - A reviewer starts from EVIDENCE.md, and opens the code when it shows risk.
 - `.specgate/evidence/<REQ>/` gains `before/`; nothing that reads it today
   moves.
-- Screenshots in the repository: bounded by the cap, first and last of each
-  scenario only. Videos and traces stay out of git.
+- Screenshots in the repository: bounded by the cap, the last of each test
+  only. Videos and traces stay out of git.
 - A project without `bdd: required` gets diagrams and no pictures: its
   scenarios never run.
 

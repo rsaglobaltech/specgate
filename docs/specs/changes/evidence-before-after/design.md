@@ -26,7 +26,7 @@ AC-4 — `EvidenceDiagrams`:
 - `classesOf(file, source)`: one regex reader per language family for `class|interface|record|data class` and their public members and `extends`/`implements`/`: Base`; private members and bodies are skipped. Before from `git show <base>:<file>`, after from the working tree, for the files the requirement's code column links. Members added are marked `+`, removed `-`, in a note.
 - Both return Mermaid text; same input, same text.
 
-AC-5 — `specgate evidence <change>` writes `docs/specs/changes/<change>/EVIDENCE.md` and `evidence/` beside it: per requirement of the change, a two-column table of the first and last screenshot of each scenario (copied, each under 300 KB, else named and not copied), the diagrams, and the paths of video and trace under `.specgate/evidence/`. A requirement with no before, no after or no media gets a line saying which, and the command to get it. `archive` carries the page with the change.
+AC-5 — `specgate evidence <change>` writes `docs/specs/changes/<change>/EVIDENCE.md` and `evidence/` beside it: per requirement of the change, a two-column table of the last screenshot of each test (copied, each under 300 KB, else named and not copied), the diagrams, and the paths of video and trace under `.specgate/evidence/`. A requirement with no before, no after or no media gets a line saying which, and the command to get it. `archive` carries the page with the change.
 
 ## Channels
 

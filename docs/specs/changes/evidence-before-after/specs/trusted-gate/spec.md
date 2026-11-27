@@ -60,7 +60,7 @@ The system SHALL draw, as Mermaid, a sequence diagram of each scenario of a requ
 
 <!-- specgate:trace actor=Developer kind=functional -->
 
-The system SHALL write, on `specgate evidence <change>`, `docs/specs/changes/<change>/EVIDENCE.md`: per requirement of the change, its before and after side by side — the first and last screenshot of each scenario, copied beside the page when under 300 KB —, its diagrams, and the paths of its videos and traces; and, for a requirement with no before, no after or no pictures, a line saying which and the command that gets it.
+The system SHALL write, on `specgate evidence <change>`, `docs/specs/changes/<change>/EVIDENCE.md`: per requirement of the change, its before and after side by side — the last screenshot of each test, copied beside the page when under 300 KB —, its diagrams, and the paths of its videos and traces; and, for a requirement with no before, no after or no pictures, a line saying which and the command that gets it.
 
 #### Scenario: SCN-807a — One before, one missing
 

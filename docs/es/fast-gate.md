@@ -1,4 +1,4 @@
-<!-- translation-of: c6997e583e35 -->
+<!-- translation-of: 5b33e69318e1 -->
 # Un gate más rápido
 
 El gate cuesta lo que cuesta tu suite de tests, y la suite crece con cada

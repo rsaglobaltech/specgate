@@ -564,6 +564,17 @@ export const NAV: readonly NavSection[] = [
         },
       },
       {
+        slug: "evidence",
+        label: "Evidence before and after",
+        blurb:
+          "Each flow before the change and after it: screenshots side by side, video, sequence and class diagrams, one page per change.",
+        es: {
+          label: "Evidencia antes y después",
+          blurb:
+            "Cada flujo antes del change y después: capturas lado a lado, video, diagramas de secuencia y de clases, una página por change.",
+        },
+      },
+      {
         slug: "quality",
         label: "Quality: Sonar, SpotBugs, coverage",
         blurb:

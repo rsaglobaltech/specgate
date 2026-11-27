@@ -1,4 +1,4 @@
-<!-- translation-of: 35365f7e5dfa -->
+<!-- translation-of: d8dda2955c5a -->
 <!-- specgate:allow-placeholders — this guide quotes the {{VAR}} template syntax. -->
 
 # Resolución de problemas

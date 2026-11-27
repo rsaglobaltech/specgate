@@ -345,7 +345,7 @@ export const SURFACE: Command[] = [
       summary:
         "Keep a requirement's scenarios, run before its code, as its before: log, screenshots, video.",
     },
-    json: { key: "evidence", gate: false, args: "before <REQ>…" },
+    json: { key: "evidence", gate: false, args: "before <REQ>… | <change-id>" },
   },
   {
     name: "map",

@@ -1,4 +1,4 @@
-<!-- translation-of: cbab84bd27cd -->
+<!-- translation-of: 3e2d28ca8291 -->
 # Referencia de comandos
 
 Cada comando de Specgate, una línea cada uno, agrupados por la tarea que estás

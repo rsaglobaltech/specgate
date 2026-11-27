@@ -123,13 +123,27 @@ function sections(dir: string, id: string, base: string) {
   return { now, atBase };
 }
 
-/** The files the requirement's code column names. */
+/**
+ * The files the requirement's code column names. A requirement still in an
+ * open change's delta has no matrix row yet: its code is the source files
+ * that name it, by the matrix's own rule.
+ */
 function codeFiles(dir: string, id: string, stated: string): string[] {
+  const sources = stated ? null : readDerivationSources(dir);
+  const fromRows = sources
+    ? deriveRows(sources)
+        .filter((r) => r.requirement === id)
+        .map((r) => r.technicalArtifact || "")
+        .join(",")
+        .replace(/[`\s]|TBD|^-$/g, "")
+    : "";
+  const names = new RegExp(`(^|[^A-Za-z0-9])${escapeRegExp(id)}(?![A-Za-z0-9])`);
   const listed =
     stated ||
-    deriveRows(readDerivationSources(dir))
-      .filter((r) => r.requirement === id)
-      .map((r) => r.technicalArtifact || "")
+    fromRows ||
+    (sources?.code || [])
+      .filter((f) => names.test(f.source))
+      .map((f) => f.path)
       .join(",");
   return [
     ...new Set(
@@ -169,7 +183,7 @@ export function requirementDiagrams(dir: string, id: string, base = ""): Require
     const after = classDiagram(file, before, source);
     return after.trim() === "classDiagram"
       ? []
-      : [{ file, before: before === null ? null : classDiagram(file, null, before), after }];
+      : [{ file, before: before === null ? null : classDiagram(file, null, before, false), after }];
   });
   return { base: commit, sequences, classes };
 }

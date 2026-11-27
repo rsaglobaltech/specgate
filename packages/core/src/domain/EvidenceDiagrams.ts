@@ -240,8 +240,17 @@ export function classesOf(file: string, source: string): ClassShape[] {
   return out;
 }
 
-/** The classes now, their parents, and in a note what changed since the base (null: no base). */
-export function classDiagram(file: string, before: string | null, after: string): string {
+/**
+ * The classes now, their parents, and in a note what changed since the base
+ * (null: no base). `notes: false` draws the classes alone — the base's own
+ * view, where "new" would say the opposite of what it shows.
+ */
+export function classDiagram(
+  file: string,
+  before: string | null,
+  after: string,
+  notes = true
+): string {
   const now = classesOf(file, after);
   const then = before === null ? null : classesOf(file, before);
   const out = ["classDiagram"];
@@ -254,7 +263,7 @@ export function classDiagram(file: string, before: string | null, after: string)
       out.push(`  ${p.name} ${p.kind === "extends" ? "<|--" : "<|.."} ${c.name}`);
     }
   }
-  for (const c of now) {
+  for (const c of notes ? now : []) {
     const was = then?.find((x) => x.name === c.name);
     if (!was) {
       out.push(`  note for ${c.name} "new"`);
@@ -268,7 +277,7 @@ export function classDiagram(file: string, before: string | null, after: string)
     ];
     if (lines.length) out.push(`  note for ${c.name} "${lines.join("\\n")}"`);
   }
-  for (const c of then || []) {
+  for (const c of notes ? then || [] : []) {
     if (!now.some((x) => x.name === c.name)) out.push(`  %% removed since the base: ${c.name}`);
   }
   return out.join("\n") + "\n";

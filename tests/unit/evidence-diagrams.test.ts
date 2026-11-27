@@ -98,6 +98,7 @@ test("REQ-806 SCN-806b: a method added since the base is in a note", () => {
   assert.match(text, /note for Orders "added: refund\(\)"/);
   assert.doesNotMatch(classDiagram("src/orders.ts", before, before), /note for/);
   assert.match(classDiagram("src/orders.ts", null, after), /note for Orders "new"/);
+  assert.doesNotMatch(classDiagram("src/orders.ts", null, before, false), /note for/, "the base's own view");
 });
 
 test("REQ-806: Java, Kotlin, C# and Python, public members only", () => {
@@ -184,6 +185,21 @@ test("REQ-806 SCN-806a: the requirement drawn at the base and now", () => {
     );
     assert.match(d.classes[0].after, /note for Orders "added: refund\(\)"/);
     assert.deepEqual(requirementDiagrams(dir, "REQ-031", "main"), d, "the same every time");
+
+    // In an open change's delta, with no artifact= and no matrix row: the code that names it.
+    fs.writeFileSync(path.join(dir, "spec.md"), "# Spec\n");
+    const delta = path.join(dir, "docs", "specs", "changes", "pay", "specs", "orders");
+    fs.mkdirSync(delta, { recursive: true });
+    fs.writeFileSync(
+      path.join(delta, "spec.md"),
+      spec(steps).replace("# Spec", "## ADDED Requirements").replace(" artifact=src/orders.ts", "")
+    );
+    fs.writeFileSync(
+      path.join(dir, "src", "orders.ts"),
+      `// REQ-031\n${ORDERS_TS("  refund(): void {}\n")}`
+    );
+    const inFlight = requirementDiagrams(dir, "REQ-031", "main");
+    assert.deepEqual(inFlight.classes.map((c: { file: string }) => c.file), ["src/orders.ts"]);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
