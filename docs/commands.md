@@ -144,6 +144,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate trust`                        | Each module's trust level, its streak and its bugs; `promote` raises one.   | `specgate trust --help`                        |
 | `specgate map [<REQ>]`                  | Where each requirement lives: use case, route, feature, code, tests.        | `specgate map --help`                          |
 | `specgate reproduce <change>`           | Opens a bug that must be seen red before it is fixed.                       | `specgate reproduce --help`                    |
+| `specgate evidence before <REQ>`        | Keeps a requirement's scenarios, run before its code, as its before: log, screenshots, video. | `specgate evidence --help` |
 | `specgate learn [promote <L>]`          | Review notes and failures that keep coming back, turned into a rule.       | `specgate learn --help`                        |
 | `specgate eval <skill>` / `--list`      | Examines a skill on fixed tasks; `--list`: every exam, its texts, history and runs. | `specgate eval --help`                  |
 | `specgate harness events --from claude` | Turns Claude Code's stream into events for the live view.                   | [The harness](harness.md#watch-it-work)        |

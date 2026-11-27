@@ -9,7 +9,7 @@ import * as ui from "../../../lib/ui";
 import { c } from "../../../lib/ui";
 import { forShell } from "../../../lib/shell-command";
 import { featureMap } from "../../../lib/feature-map";
-import { keepRed, scenarioCommand } from "../../../lib/evidence";
+import { keepBefore, keepRed, scenarioCommand } from "../../../lib/evidence";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 
 const NULL_SHAPE = { reproduce: null };
@@ -293,6 +293,8 @@ export class ReproduceCommand extends BaseCommand {
       return;
     }
     const file = keepRed(dir, req, run);
+    // ADR-0047 REQ-803: the bug seen red is also the flow's before.
+    keepBefore(dir, req, run);
     io.emit(
       {
         reproduce: { requirement: req, red: true, command, exitCode: run.exitCode, evidence: file },

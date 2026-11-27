@@ -68,6 +68,7 @@ not run reports an `error` about itself.
 | `specgate check [dir] --json` | `check` | yes |
 | `specgate scenarios <REQ> --json` | `scenarios` | yes |
 | `specgate reproduce <change-id> --capability <c> --title <t> | run <REQ> --json` | `reproduce` | no |
+| `specgate evidence before <REQ>… --json` | `evidence` | no |
 | `specgate map [<REQ>] [--capability <c>] --json` | `map` | no |
 | `specgate eval <skill> [--runs <n>] --json` | `eval` | no |
 | `specgate compat run|report [--tool <t>] [--level <L>] [--runs <n>] --json` | `compat` | no |

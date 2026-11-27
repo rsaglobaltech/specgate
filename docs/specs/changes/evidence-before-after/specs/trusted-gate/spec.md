@@ -6,7 +6,7 @@
 
 <!-- specgate:trace actor=Developer kind=functional -->
 
-The system SHALL keep, as `.specgate/evidence/<REQ>/before/`, a run of the requirement's scenarios made before its code — when a person seals the acceptance tests in a project with `bdd: required`, when `specgate reproduce run` sees a bug red, and when the Developer runs `specgate evidence before <REQ>` — with the command, its exit code, its duration, the end of its output, and the files the runner wrote under `test-results/` during it; whether the run passed or failed.
+The system SHALL keep, as `.specgate/evidence/<REQ>/before/`, a run of the requirement's scenarios made before its code — when `specgate reproduce run` sees a bug red, and when the Developer runs `specgate evidence before <REQ>…` — with the command, its exit code, its duration, the end of its output, and the files the runner wrote under `test-results/` during it, those files kept out of git; whether the run passed or failed. The `apply` step every agent tool is given SHALL say to take it once the test is written and before the code.
 
 #### Scenario: SCN-803a — Before the code, red
 
@@ -18,25 +18,25 @@ The system SHALL keep, as `.specgate/evidence/<REQ>/before/`, a run of the requi
 
 <!-- specgate:trace actor=Developer kind=functional -->
 
-The system SHALL write the evidence `apply` keeps (REQ-680) to `.specgate/evidence/<REQ>/after/`, leave `before/` as it is, and read a requirement's evidence from `after/` first and then from the layout before this change.
+The system SHALL keep the evidence `apply` keeps (REQ-680) where it keeps it, leave `before/` as it is, and name the before — its command, exit code and time — in `evidence.json` when one was kept.
 
 #### Scenario: SCN-804a — Delivered after its before
 
 - GIVEN REQ-031 with a before
 - WHEN `specgate apply REQ-031` delivers it with its scenarios green
-- THEN `.specgate/evidence/REQ-031/after/run.json` has exit code 0, and `before/run.json` is unchanged
+- THEN `.specgate/evidence/REQ-031/evidence.json` has exit code 0 and names the before's exit code, and `before/run.json` is unchanged
 
 ### Requirement: REQ-805 — Doctor says when the runner keeps no pictures
 
 <!-- specgate:trace actor=Developer kind=functional -->
 
-The system SHALL warn, on `specgate doctor`, with `evidence_media_off` when `bdd_cmd` runs Playwright and its config does not set `screenshot` and `video` under `use`, the fix naming the lines to add; and SHALL say nothing of a runner it does not read.
+The system SHALL warn, on `specgate doctor`, with `doctor_evidence_media` when `bdd_cmd` runs Playwright and its config does not set `screenshot` and `video` under `use`, the fix naming the lines to add; and SHALL say nothing of a runner it does not read.
 
 #### Scenario: SCN-805a — Playwright without screenshots
 
 - GIVEN `bdd_cmd` runs `npx bddgen && npx playwright test`, and `playwright.config.ts` with no `screenshot:` under `use`
 - WHEN the Developer runs `specgate doctor`
-- THEN it warns `evidence_media_off`, its fix naming `screenshot: 'on'` and `video: 'on'`
+- THEN it warns `doctor_evidence_media`, its fix naming `screenshot: 'on'` and `video: 'on'`
 
 ### Requirement: REQ-806 — A requirement is drawn before and after, the same way every time
 

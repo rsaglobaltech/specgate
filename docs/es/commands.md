@@ -145,6 +145,7 @@ consulta [Desde un ticket de Jira](from-a-ticket.md) y
 | `specgate trust` | El nivel de confianza de cada módulo, su racha y sus bugs; `promote` sube uno. | `specgate trust --help` |
 | `specgate map [<REQ>]` | Dónde vive cada requisito: caso de uso, ruta, feature, código, tests. | `specgate map --help` |
 | `specgate reproduce <change>` | Abre un bug que hay que ver en rojo antes de corregirlo. | `specgate reproduce --help` |
+| `specgate evidence before <REQ>` | Guarda los escenarios de un requisito, ejecutados antes de su código, como su antes: log, capturas, video. | `specgate evidence --help` |
 | `specgate learn [promote <L>]` | Notas de revisión y fallos que se repiten, convertidos en una regla. | `specgate learn --help` |
 | `specgate eval <skill>` / `--list` | Examina una skill con tareas fijas; `--list`: cada examen, sus textos, historial y ejecuciones. | `specgate eval --help` |
 | `specgate harness events --from claude` | Convierte el stream de Claude Code en eventos para la vista en directo. | [El harness](harness.md) |

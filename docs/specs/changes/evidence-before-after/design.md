@@ -5,8 +5,8 @@
 
 ## Modules
 
-- `scripts/lib/evidence.ts` — the before and after folders, and reading the old layout.
-- `scripts/cli/commands/change/ChangeCommand.ts` — the seal-time run (REQ-794) kept as the before.
+- `scripts/lib/evidence.ts` — the before folder beside the after.
+- `scripts/agents/commands.ts` — the `apply` step: take the before after the test, before the code.
 - `scripts/cli/commands/spec/ReproduceCommand.ts` — the red run of a bug (REQ-682) kept as the before too.
 - `scripts/cli/commands/spec/EvidenceCommand.ts` (new) — `specgate evidence before <REQ>` and `specgate evidence <change>`.
 - `packages/core/src/domain/EvidenceDiagrams.ts` (new) — sequence and class diagrams, pure.
@@ -15,11 +15,11 @@
 
 ## Mechanisms
 
-AC-1 — `keepEvidence(projectDir, id, run, "before")` writes `.specgate/evidence/<REQ>/before/` — `run.json`, `run.log`, `artifacts/` — from the same `ScenarioRun` and `test-results/` scan as today. Callers: the acceptance seal's first run when `bdd: required` (the sealed files' requirements), `reproduce run` beside `red.json`, and `specgate evidence before <REQ>`, which runs `scenarioCommand(bdd_cmd, id)` on the working tree. A before is kept whether the run passed or failed; its exit code says which.
+AC-1 — `keepBefore(projectDir, id, run)` writes `.specgate/evidence/<REQ>/before/` — `run.json`, `run.log`, `artifacts/` — from the same `ScenarioRun` and `test-results/` scan as `keepEvidence`. Callers: `reproduce run` beside `red.json`, and `specgate evidence before <REQ>…`, which runs `scenarioCommand(bdd_cmd, id)` on the working tree for each. A before is kept whether the run passed or failed; its exit code says which. The `apply` step the agents get says to take it after the test and before the code. `.specgate/evidence/.gitignore` gains `*/before/artifacts/`, appended to a file an older Specgate wrote. Taking it when the acceptance tests are sealed is left for later: one run per requirement at a person's approval.
 
-AC-2 — `apply`'s call writes `after/`. A reader (`readEvidence`) takes `after/` first, then the old flat layout, for one minor release.
+AC-2 — `apply` keeps the after where REQ-680 keeps it — `evidence.json`, `bdd.log`, `artifacts/` at the folder's top, which `step-seal` and `controls` read — and no longer touches `before/`; `evidence.json` gains `before: { command, exitCode, at }` when one was kept.
 
-AC-3 — `doctor` reads `playwright.config.{ts,js,mjs}` when `bdd_cmd` names Playwright or playwright-bdd and finds `screenshot:` and `video:` under `use:` by pattern; `evidence_media_off` (a warning) gives the two lines to add. Any other runner: not judged.
+AC-3 — `doctor` reads `playwright.config.{ts,js,mjs}` when `bdd_cmd` names Playwright or playwright-bdd and finds `screenshot:` and `video:` under `use:` by pattern; `doctor_evidence_media` (a warning) gives the two lines to add. Any other runner: not judged.
 
 AC-4 — `EvidenceDiagrams`:
 - `sequenceOf(scenario, actor)`: participants are the actor, the system, and each `METHOD /path` a step names; GIVEN steps become a note, WHEN steps messages from the actor, THEN steps replies. Before: the requirement's scenarios in the spec at the base (`git show <base>:<spec file>`, the base resolved as `check --affected` does); after: now. A new requirement has no before.

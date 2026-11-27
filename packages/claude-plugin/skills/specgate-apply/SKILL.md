@@ -20,7 +20,8 @@ specgate apply <REQ-NNN> --json
 ## Guidance
 
 - One requirement at a time — `status` is the queue.
-- Write the test first and **name the requirement in it** (`REQ-007` in a comment or the test name). That mention is the link: no `req link`, no matrix edit.
+- Write the test first and **name the requirement in it** (`REQ-007` in the test's name; a comment counts only while `.specgate/gate.yaml` does not say `link: strict`). That mention is the link: no `req link`, no matrix edit.
+- With `bdd: required`, once the test is written and before the code, run `specgate evidence before REQ-NNN`: what the flow did before the change, kept beside what `apply` keeps after.
 - Mention the requirement in the code that implements it too, so its row points at the code.
 - Never change `spec.md`, a delta or a `.feature` to make a test pass.
 - `specgate apply` refuses a requirement no test names and runs the gate; a refusal changes nothing. Green, it records Implemented.

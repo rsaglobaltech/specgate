@@ -24,6 +24,7 @@ import {
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import * as ui from "../../../lib/ui";
 import { inOpenChange } from "../../../lib/bdd";
+import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 
 const RICH_HEADER =
   "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |";
@@ -652,6 +653,32 @@ export class DoctorCommand extends BaseCommand {
     }
   }
 
+  /**
+   * ADR-0047 REQ-805: the evidence's pictures are what the project's runner
+   * keeps. Playwright keeps no screenshot or video unless `use:` says so; any
+   * other runner is not read.
+   */
+  private checkEvidenceMedia(dir: string) {
+    const bddCmd = String(readHarnessConfig(dir)?.bddCmd || "");
+    if (!/playwright|bddgen/i.test(bddCmd)) return;
+    const config = ["playwright.config.ts", "playwright.config.js", "playwright.config.mjs"]
+      .map((f) => this.readIfExists(path.join(dir, f)))
+      .find((t): t is string => t !== null);
+    if (config === null || config === undefined) return;
+    const missing = ["screenshot", "video"].filter(
+      (key) => !new RegExp(`\\b${key}\\s*:\\s*["'](?!off["'])`).test(config)
+    );
+    if (missing.length === 0) {
+      this.ok("evidence media", "Playwright keeps screenshots and video for the evidence");
+      return;
+    }
+    this.warn(
+      "evidence media",
+      `Playwright keeps no ${missing.join(" or ")}: the evidence of a flow, before and after, has no pictures`,
+      "In playwright.config, under use: add screenshot: 'on' and video: 'on' (or 'retain-on-failure')."
+    );
+  }
+
   public execute() {
     const argv = this.args;
     const start = argv[0] === "doctor" ? 1 : 0;
@@ -702,6 +729,7 @@ export class DoctorCommand extends BaseCommand {
       this.checkArchitectureProfile(dir);
       this.checkSampleRequirement(dir);
       this.checkScenarioQuality(dir);
+      this.checkEvidenceMedia(dir);
     }
 
     const errors = this.findings.filter((f) => f.level === "error").length;

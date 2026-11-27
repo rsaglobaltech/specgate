@@ -31,9 +31,12 @@ looks.
    <REQ>` takes it on demand. On an existing screen it shows the screen as it
    was; on a new one, where the flow stopped. A second checkout of the base
    commit, installed and started, was rejected: it doubles the cost of every
-   delivery for a picture the red run already gives.
-2. **The after is what `apply` keeps today**, moved to `after/`, with the
-   scenario run's log and artifacts.
+   delivery for a picture the red run already gives. The agent's `apply` step
+   says to take it once the test is written and before the code; taking it
+   when the acceptance tests are sealed comes later.
+2. **The after is what `apply` keeps today**, where it keeps it: the folder's
+   `evidence.json`, `bdd.log` and `artifacts/`, which the steps review and the
+   outside judge's controls already read. `evidence.json` names the before.
 3. **Specgate does not drive the browser.** It keeps what the project's runner
    writes. Screenshots and video are the project's Playwright settings
    (`screenshot: 'on'`, `video: 'on'`); `specgate doctor` says when they are
@@ -62,8 +65,8 @@ looks.
 ## Consequences
 
 - A reviewer starts from EVIDENCE.md, and opens the code when it shows risk.
-- `.specgate/evidence/<REQ>/` gains `before/` and `after/`; the current files
-  move into `after/`, and readers of the old layout read both for a release.
+- `.specgate/evidence/<REQ>/` gains `before/`; nothing that reads it today
+  moves.
 - Screenshots in the repository: bounded by the cap, first and last of each
   scenario only. Videos and traces stay out of git.
 - A project without `bdd: required` gets diagrams and no pictures: its
