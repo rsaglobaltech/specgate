@@ -9,7 +9,7 @@ import * as ui from "../../../lib/ui";
 import { c } from "../../../lib/ui";
 import { forShell } from "../../../lib/shell-command";
 import { featureMap } from "../../../lib/feature-map";
-import { keepBefore, keepRed, scenarioCommand } from "../../../lib/evidence";
+import { keepBefore, keepRed, scenarioCommand, scenarioEnv } from "../../../lib/evidence";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 
 const NULL_SHAPE = { reproduce: null };
@@ -271,7 +271,12 @@ export class ReproduceCommand extends BaseCommand {
     }
     const command = scenarioCommand(bddCmd, req);
     const startedAt = Date.now();
-    const r = spawnSync(forShell(command), { cwd: dir, encoding: "utf8", shell: true });
+    const r = spawnSync(forShell(command), {
+        cwd: dir,
+        encoding: "utf8",
+        shell: true,
+        env: scenarioEnv(dir),
+      });
     const run = {
       command,
       exitCode: r.status ?? 1,

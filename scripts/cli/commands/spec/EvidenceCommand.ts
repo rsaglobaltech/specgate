@@ -8,7 +8,7 @@ import { error } from "../../../lib/diagnostics";
 import * as ui from "../../../lib/ui";
 import { c } from "../../../lib/ui";
 import { forShell } from "../../../lib/shell-command";
-import { keepBefore, scenarioCommand } from "../../../lib/evidence";
+import { keepBefore, scenarioCommand, scenarioEnv } from "../../../lib/evidence";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 
 const NULL_SHAPE = { evidence: null };
@@ -137,7 +137,12 @@ export class EvidenceCommand extends BaseCommand {
     const kept = ids.map((id) => {
       const command = scenarioCommand(bddCmd, id);
       const startedAt = Date.now();
-      const r = spawnSync(forShell(command), { cwd: dir, encoding: "utf8", shell: true });
+      const r = spawnSync(forShell(command), {
+        cwd: dir,
+        encoding: "utf8",
+        shell: true,
+        env: scenarioEnv(dir),
+      });
       const run = {
         command,
         exitCode: r.status ?? 1,

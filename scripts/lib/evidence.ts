@@ -244,6 +244,25 @@ export function mustReproduce(projectDir: string, id: string): boolean {
   return false;
 }
 
+/** Where a project records what its AI models decided during a run (REQ-817), under the runner's results. */
+export const AI_LOG = "test-results/specgate/ai-decisions.jsonl";
+
+/**
+ * The environment of a run of a requirement's scenarios: SPECGATE_AI_LOG,
+ * absolute, emptied first, so what the project writes there belongs to this
+ * run and is kept with its artifacts (REQ-817).
+ */
+export function scenarioEnv(projectDir: string): NodeJS.ProcessEnv {
+  const file = path.resolve(projectDir, AI_LOG);
+  try {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.rmSync(file, { force: true });
+  } catch {
+    /* an unwritable results folder: the run goes on without the record */
+  }
+  return { ...process.env, SPECGATE_AI_LOG: file };
+}
+
 /** The command that runs a requirement's scenarios, `{tags}` as `@<REQ>`. */
 export function scenarioCommand(bddCmd: string, id: string): string {
   return bddCmd.includes("{tags}") ? bddCmd.split("{tags}").join(`@${id}`) : `${bddCmd} @${id}`;

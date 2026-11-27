@@ -20,11 +20,12 @@ Playwright keeps no screenshot or video unless its config says so:
 ```ts
 // playwright.config.ts
 export default defineConfig({
-  use: { screenshot: "on", video: "on" },
+  use: { screenshot: "on", video: "on", trace: "on" },
 });
 ```
 
-`specgate doctor` warns (`doctor_evidence_media`) when they are off.
+`specgate doctor` warns (`doctor_evidence_media`) when any is off. A trace kept
+only on failure (`retain-on-failure`) keeps none of the after, which passes.
 
 ## The before
 
@@ -59,6 +60,16 @@ It writes `docs/specs/changes/draft-orders/EVIDENCE.md`. Per requirement:
   pictures are copied into `evidence/` beside the page, so they render in the
   pull request; one over 300 KB is named, not copied.
 - The paths of the videos and traces, under `.specgate/evidence/`.
+- **Scenarios**: a row per scenario the runner reported, on each side passed
+  (✓) or failed (✘), its time, and for a failure the step that failed with
+  its `Expected:` and `Received:`. Read from Playwright's list output.
+- **Calls to the service**: each call the tests made to `/api/...`, or through
+  their request context, read from each `trace.zip`: method, path and status
+  before and after, and the bodies of those whose answer changed. Headers are
+  not shown, and a JSON value whose key names a token, password, secret,
+  cookie or authorization is written `«hidden»`.
+- **AI decisions**: what the project's AI models decided during each run,
+  when the project records it (below).
 - Each scenario as a UML sequence diagram, numbered. When its WHEN calls an
   endpoint the code declares (Spring `@PostMapping`, JAX-RS `@Path`) — or it
   goes through a screen whose web code calls `/api/...` beside the
@@ -82,6 +93,21 @@ The base is the one `specgate check --affected` measures from;
 The diagrams are read from the spec and the code, not drawn by a model, so the
 page is the same every time it is written. Commit it with the change and link
 it from the pull request.
+
+## What the AI decided
+
+Specgate cannot see inside your server. When it runs a requirement's
+scenarios — `evidence before`, `apply`, `reproduce run` — it sets
+`SPECGATE_AI_LOG` to the absolute path of
+`test-results/specgate/ai-decisions.jsonl`, emptied first. Write one JSON line
+there per model call, and the page shows them, before and after:
+
+```json
+{"model": "llama3.2", "input": "Haz eso", "output": {"category": "C"}, "ms": 812}
+```
+
+Only when the variable is set: in production nothing is written. The server
+the tests start must inherit it — Playwright's `webServer` does.
 
 ## At archive
 

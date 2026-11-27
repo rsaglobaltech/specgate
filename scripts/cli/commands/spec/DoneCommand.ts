@@ -9,7 +9,7 @@ import {
 } from "../../../lib/step-seal";
 import { gitIdentity, missingApprovals } from "../../../lib/approvals";
 import { scenariosOf } from "./ScenariosCommand";
-import { keepEvidence, mustReproduce, readRed } from "../../../lib/evidence";
+import { keepEvidence, mustReproduce, readRed, scenarioEnv } from "../../../lib/evidence";
 import type { ScenarioRun } from "../../../lib/evidence";
 import { appendApplied } from "../../../lib/trust";
 import { resolveProjectDir } from "../../../lib/project-root";
@@ -1018,7 +1018,12 @@ function bddRefusal(
     ? bddCmd.split("{tags}").join(`@${id}`)
     : `${bddCmd} @${id}`;
   const startedAt = Date.now();
-  const run = spawnSync(forShell(cmd), { cwd: projectDir, encoding: "utf8", shell: true });
+  const run = spawnSync(forShell(cmd), {
+    cwd: projectDir,
+    encoding: "utf8",
+    shell: true,
+    env: scenarioEnv(projectDir),
+  });
   // REQ-680: what ran, kept for the evidence once the requirement is delivered.
   scenarioRuns.set(id, {
     command: cmd,

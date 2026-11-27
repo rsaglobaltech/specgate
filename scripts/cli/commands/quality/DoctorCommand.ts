@@ -678,17 +678,22 @@ export class DoctorCommand extends BaseCommand {
       .find((t): t is string => t !== null);
     if (config === null || config === undefined) return;
     if (!/playwright|bddgen/i.test(bddCmd) && !/playwright-bdd/.test(config)) return;
-    const missing = ["screenshot", "video"].filter(
-      (key) => !new RegExp(`\\b${key}\\s*:\\s*["'](?!off["'])`).test(config)
+    // REQ-816: a trace kept only on failure keeps none of the after, which passes.
+    const ONLY_ON_FAILURE = "|retain-on-failure|on-first-retry|retain-on-first-failure|on-all-retries";
+    const missing = ["screenshot", "video", "trace"].filter(
+      (key) =>
+        !new RegExp(
+          `\\b${key}\\s*:\\s*["'](?!(?:off${key === "trace" ? ONLY_ON_FAILURE : ""})["'])`
+        ).test(config)
     );
     if (missing.length === 0) {
-      this.ok("evidence media", "Playwright keeps screenshots and video for the evidence");
+      this.ok("evidence media", "Playwright keeps screenshots, video and traces for the evidence");
       return;
     }
     this.warn(
       "evidence media",
       `Playwright keeps no ${missing.join(" or ")}: the evidence of a flow, before and after, has no pictures`,
-      "In playwright.config, under use: add screenshot: 'on' and video: 'on' (or 'retain-on-failure')."
+      "In playwright.config, under use: add screenshot: 'on', video: 'on' (or 'retain-on-failure') and trace: 'on' — the after passes, and a trace kept only on failure keeps none of it."
     );
   }
 

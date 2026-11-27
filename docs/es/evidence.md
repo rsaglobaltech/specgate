@@ -1,4 +1,4 @@
-<!-- translation-of: bb6d74e79e25 -->
+<!-- translation-of: 2b8b4b3c7256 -->
 # Evidencia antes y después
 
 Al final de esta página cada requisito de un change tiene un antes y un
@@ -21,11 +21,13 @@ Playwright no guarda capturas ni video salvo que su configuración lo diga:
 ```ts
 // playwright.config.ts
 export default defineConfig({
-  use: { screenshot: "on", video: "on" },
+  use: { screenshot: "on", video: "on", trace: "on" },
 });
 ```
 
-`specgate doctor` avisa (`doctor_evidence_media`) cuando están apagados.
+`specgate doctor` avisa (`doctor_evidence_media`) cuando alguno está apagado.
+Un trace guardado solo al fallar (`retain-on-failure`) no guarda nada del
+después, que pasa.
 
 ## El antes
 
@@ -61,6 +63,16 @@ Escribe `docs/specs/changes/draft-orders/EVIDENCE.md`. Por requisito:
   imágenes se copian a `evidence/` junto a la página, para que se vean en el
   pull request; una de más de 300 KB se nombra, no se copia.
 - Las rutas de los videos y los traces, en `.specgate/evidence/`.
+- **Escenarios**: una fila por escenario que reportó el runner; en cada lado,
+  si pasó (✓) o falló (✘), su tiempo y, en un fallo, el paso que falló con su
+  `Expected:` y su `Received:`. Se lee de la salida list de Playwright.
+- **Llamadas al servicio**: cada llamada que los tests hicieron a `/api/...`, o
+  con su contexto de request, leída de cada `trace.zip`: método, ruta y estado
+  antes y después, y los cuerpos de las que cambiaron de respuesta. Las
+  cabeceras no se muestran, y un valor JSON cuya clave nombra un token, una
+  contraseña, un secreto, una cookie o una autorización se escribe `«hidden»`.
+- **Decisiones de la IA**: lo que decidieron los modelos de IA del proyecto en
+  cada ejecución, cuando el proyecto lo registra (abajo).
 - Cada escenario como diagrama de secuencia UML, numerado. Cuando su WHEN
   llama a un endpoint que declara el código (`@PostMapping` de Spring, `@Path`
   de JAX-RS) —o pasa por una pantalla cuyo código web llama a `/api/...` junto
@@ -83,6 +95,22 @@ La base es la que usa `specgate check --affected`; `--base <ref>` nombra otra,
 como el commit del requisito anterior. Los diagramas se leen del spec y del
 código, no los dibuja un modelo, así que la página sale igual cada vez que se
 escribe. Haz commit de ella con el change y enlázala desde el pull request.
+
+## Lo que decidió la IA
+
+Specgate no ve dentro de tu servidor. Cuando ejecuta los escenarios de un
+requisito —`evidence before`, `apply`, `reproduce run`— fija
+`SPECGATE_AI_LOG` con la ruta absoluta de
+`test-results/specgate/ai-decisions.jsonl`, vaciado antes. Escribe ahí una
+línea JSON por llamada al modelo y la página las muestra, antes y después:
+
+```json
+{"model": "llama3.2", "input": "Haz eso", "output": {"category": "C"}, "ms": 812}
+```
+
+Solo cuando la variable está fijada: en producción no se escribe nada. El
+servidor que arrancan los tests debe heredarla —el `webServer` de Playwright
+lo hace.
 
 ## Al archivar
 

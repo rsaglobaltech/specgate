@@ -10,6 +10,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { EVIDENCE_DIR } from "./evidence";
 import { requirementDiagrams } from "./evidence-diagrams";
+import { hideSecrets, httpCalls, type HttpCall } from "./trace-zip";
+import { scenarioOutcomes } from "../../packages/core/src/domain/ScenarioOutcomes";
 
 /** A picture larger than this is named on the page, not copied into the repository. */
 export const MAX_PICTURE_BYTES = 300 * 1024;
@@ -90,6 +92,108 @@ function lastPictures(artifacts: string[]): Map<string, string> {
 }
 
 const code = (p: string) => `\`${p}\``;
+
+/** A table cell: no pipe, no line break. */
+const cell = (s: string) => s.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
+
+interface Side {
+  name: string;
+  doc: { artifacts?: string[] } | null;
+  from: string;
+}
+
+/** What a side's runner printed: `before/run.log`, or the delivery's `bdd.log`. */
+function logOf(projectDir: string, side: Side): string {
+  const file = side.name === "before" ? "run.log" : "bdd.log";
+  try {
+    return fs.readFileSync(path.join(projectDir, side.from, file), "utf8");
+  } catch {
+    return "";
+  }
+}
+
+const filesOf = (side: Side, test: RegExp) => (side.doc?.artifacts || []).filter((a) => test.test(a)).sort();
+
+/**
+ * Why each scenario was red (REQ-815), what each call to the service answered
+ * (REQ-816) and what the AI model decided (REQ-817), before and after.
+ */
+function runDetails(projectDir: string, sides: Side[]): string[] {
+  const out: string[] = [];
+
+  // REQ-815: one row per scenario the runner reported.
+  const outcomes = sides.map((s) => scenarioOutcomes(logOf(projectDir, s)));
+  const scenarios = [...new Set(outcomes.flatMap((o) => o.map((r) => r.scenario)))];
+  if (scenarios.length) {
+    const shown = (i: number, name: string) => {
+      const r = outcomes[i].find((x) => x.scenario === name);
+      if (!r) return "—";
+      if (r.passed) return `✓ ${r.time}`.trim();
+      const why = [r.step && `${r.step.slice(0, 90)}${r.step.length > 90 ? "…" : ""}:`, r.reason.join(" · ")]
+        .filter(Boolean)
+        .join(" ");
+      return `✘ ${r.time}${why ? ` — ${why}` : ""}`.trim();
+    };
+    out.push("#### Scenarios", "", "| Scenario | Before | After |", "| --- | --- | --- |");
+    for (const name of scenarios) out.push(`| ${cell(name)} | ${cell(shown(0, name))} | ${cell(shown(1, name))} |`);
+    out.push("");
+  }
+
+  // REQ-816: the calls to the service, from each trace, paired by method and path.
+  const calls = sides.map((s) =>
+    filesOf(s, /trace\.zip$/).flatMap((a) => httpCalls(path.join(projectDir, s.from, a)))
+  );
+  const keys = [...new Set(calls.flatMap((c) => c.map((x) => `${x.method} ${x.path}`)))];
+  if (keys.length) {
+    const first = (i: number, key: string) => calls[i].find((x) => `${x.method} ${x.path}` === key);
+    const status = (x: HttpCall | undefined) => (x ? `${x.status} ${x.statusText}`.trim() : "—");
+    out.push("#### Calls to the service", "", "| Call | Before | After |", "| --- | --- | --- |");
+    for (const k of keys) out.push(`| ${code(k)} | ${cell(status(first(0, k)))} | ${cell(status(first(1, k)))} |`);
+    out.push("");
+    for (const k of keys) {
+      const [b, a] = [first(0, k), first(1, k)];
+      if (b && a && b.status === a.status && b.response === a.response) continue;
+      const block = (label: string, text: string) => (text ? [`${label}:`, "", "```json", text, "```", ""] : []);
+      out.push(
+        `<details><summary>${k} — bodies</summary>`,
+        "",
+        ...block("Request", (a || b)!.request),
+        ...block(`Before (${status(b)})`, b?.response || ""),
+        ...block(`After (${status(a)})`, a?.response || ""),
+        "</details>",
+        ""
+      );
+    }
+  }
+
+  // REQ-817: what the AI model decided, when the project records it.
+  const decisions = sides.map((s) =>
+    filesOf(s, /ai-decisions\.jsonl$/).flatMap((a) => {
+      try {
+        return fs
+          .readFileSync(path.join(projectDir, s.from, a), "utf8")
+          .split("\n")
+          .filter((l) => l.trim())
+          .map((l) => hideSecrets(JSON.parse(l)) as Record<string, unknown>);
+      } catch {
+        return [];
+      }
+    })
+  );
+  if (decisions.some((d) => d.length)) {
+    const text = (v: unknown) => (typeof v === "string" ? v : JSON.stringify(v ?? ""));
+    out.push("#### AI decisions", "", "| | Model | Input | Output | Time |", "| --- | --- | --- | --- | --- |");
+    decisions.forEach((list, i) => {
+      for (const d of list) {
+        out.push(
+          `| ${i === 0 ? "Before" : "After"} | ${cell(text(d.model))} | ${cell(text(d.input)).slice(0, 160)} | ${code(cell(text(d.output)).slice(0, 200))} | ${d.ms === undefined ? "" : `${cell(text(d.ms))} ms`} |`
+        );
+      }
+    });
+    out.push("");
+  }
+  return out;
+}
 
 /**
  * Writes the page. `base` is the ref its diagrams compare with (REQ-814);
@@ -179,6 +283,7 @@ export function writeEvidencePage(
     if ((before || after) && tests.length === 0)
       notes.push("- No screenshots: `specgate doctor` says how to have the runner keep them");
     if (notes.length) lines.push(...notes, "");
+    lines.push(...runDetails(projectDir, sides));
 
     // Diagrams: each scenario, then the code, now — and the base folded under it.
     const fence = (text: string) => ["```mermaid", text.trimEnd(), "```"];

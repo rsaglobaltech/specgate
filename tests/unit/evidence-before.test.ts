@@ -137,7 +137,7 @@ test("REQ-805 SCN-805a: doctor says when Playwright keeps no screenshots or vide
   assert.match(off.fix, /video: 'on'/);
   fs.writeFileSync(
     path.join(dir, "playwright.config.ts"),
-    "export default { use: { screenshot: 'on', video: 'retain-on-failure' } };\n"
+    "export default { use: { screenshot: 'on', video: 'retain-on-failure', trace: 'on' } };\n"
   );
   assert.equal(media(dir).severity, "info", "both set: fine");
 });
