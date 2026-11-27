@@ -401,18 +401,34 @@ export function codeSequence(input: CodeSequenceInput): string | null {
   );
 }
 
-/** The `METHOD /path` calls a web file makes near where it names the requirement, or all of them. */
+const PATH = /["'`](\/api\/[^"'`$]*)/;
+const METHOD = /method\s*:\s*["'`](\w+)["'`]/;
+
+/**
+ * The `METHOD /path` calls a web file makes: the first after each line that
+ * names the requirement, or all of them. The method is the one written with
+ * the call, up to the next call; else the one the helper it goes through
+ * sends with (`send("/api/x", form)` and `function send` posting); else GET.
+ */
 export function webCallsOf(source: string, id: string): string[] {
   const lines = source.split(/\r?\n/);
+  const helperVerb = (name: string) => {
+    const at = source.search(new RegExp(`function\\s+${name}\\b`));
+    return at < 0 ? "" : (METHOD.exec(source.slice(at, at + 1500)) || [])[1] || "";
+  };
   const all: Array<{ line: number; call: string }> = [];
   lines.forEach((l, i) => {
-    const path = /["'`](\/api\/[^"'`$]*)/.exec(l);
+    const path = PATH.exec(l);
     if (!path) return;
-    const near = lines.slice(Math.max(0, i - 1), i + 3).join(" ");
-    const verb = (/method\s*:\s*["'`](\w+)["'`]/.exec(near) || [])[1] || "GET";
+    const own: string[] = [l];
+    for (let j = i + 1; j < Math.min(lines.length, i + 4) && !PATH.test(lines[j]); j += 1) own.push(lines[j]);
+    const helper = (/([A-Za-z_$][\w$]*)\s*(?:<[^>()]*>)?\s*\(\s*["'`]\/api\//.exec(l) || [])[1];
+    const verb = (METHOD.exec(own.join(" ")) || [])[1] || (helper ? helperVerb(helper) : "") || "GET";
     all.push({ line: i, call: `${verb.toUpperCase()} ${path[1]}` });
   });
   const named = lines.map((l, i) => (l.includes(id) ? i : -1)).filter((i) => i >= 0);
-  const close = all.filter((c) => named.some((n) => c.line >= n && c.line - n <= 3));
+  const close = named
+    .map((n) => all.find((c) => c.line >= n && c.line - n <= 3))
+    .filter((c): c is { line: number; call: string } => c !== undefined);
   return [...new Set((close.length ? close : all).map((c) => c.call))];
 }

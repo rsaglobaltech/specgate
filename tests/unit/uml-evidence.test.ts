@@ -227,6 +227,27 @@ test("REQ-812: a screen's scenario starts at the web app, which calls what its c
   assert.match(seq, /P1-->>-A: the order is confirmed/);
 });
 
+test("REQ-812: the call beside the requirement, its method from the helper it goes through", () => {
+  const api = [
+    "async function send<T>(path: string, form: FormData): Promise<T> {",
+    "  const res = await fetch(`${API_URL}${path}`, { method: \"POST\", body: form });",
+    "  return res.json();",
+    "}",
+    "export const api = {",
+    "  /** UC-002: report an incident (REQ-002). */",
+    "  reportIncident: (form: FormData) =>",
+    '    send<ReportedIncident>("/api/incidents", form),',
+    '  myTasks: () => call<Task[]>("/api/tasks"),',
+    "  createTask: (title: string) =>",
+    '    call<Task>("/api/tasks", {',
+    '      method: "POST",',
+    "    }),",
+    "};",
+  ].join("\n");
+  assert.deepEqual(webCallsOf(api, "REQ-002"), ["POST /api/incidents"], "not the next call, and POST as send posts");
+  assert.deepEqual(webCallsOf(api, "REQ-999"), ["POST /api/incidents", "GET /api/tasks", "POST /api/tasks"]);
+});
+
 test("REQ-812 SCN-812b: a call no controller declares is drawn from the steps", (t: TestContext) => {
   const dir = project(t, ["GIVEN a cart", "WHEN the Customer sends POST /api/unknown", "THEN it is 404"]);
   const seq = requirementDiagrams(dir, "REQ-041").sequences[0].after;
