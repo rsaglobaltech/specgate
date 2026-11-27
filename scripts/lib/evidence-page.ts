@@ -152,7 +152,13 @@ function runDetails(projectDir: string, sides: Side[]): string[] {
     out.push("");
     for (const k of keys) {
       const [b, a] = [first(0, k), first(1, k)];
-      if (b && a && b.status === a.status && b.response === a.response) continue;
+      // A timestamp or an id differs on every run: not a change in what the service answers.
+      const steady = (s: string) =>
+        s
+          .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?/g, "<time>")
+          .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, "<id>")
+          .replace(/("(?:requestId|traceId|id)"\s*:\s*)"[^"]*"/g, '$1"<id>"');
+      if (b && a && b.status === a.status && steady(b.response) === steady(a.response)) continue;
       const block = (label: string, text: string) => (text ? [`${label}:`, "", "```json", text, "```", ""] : []);
       out.push(
         `<details><summary>${k} — bodies</summary>`,

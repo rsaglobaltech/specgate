@@ -117,13 +117,18 @@ function project(t: TestContext) {
     fs.writeFileSync(path.join(folder, json), JSON.stringify({ command: "bdd", exitCode: 0, artifacts: Object.keys(files) }));
     fs.writeFileSync(path.join(folder, json === "run.json" ? "run.log" : "bdd.log"), log);
   };
-  const session: [string, string, number, string] = ["POST", "http://127.0.0.1:8080/api/session", 201, '{"token":"abc","expiresAt":"x"}'];
+  const session = (at: string): [string, string, number, string] => [
+    "POST",
+    "http://127.0.0.1:8080/api/session",
+    201,
+    `{"token":"abc","expiresAt":"${at}"}`,
+  ];
   side("REQ-031/before", "run.json", BEFORE_LOG, {
-    "artifacts/paying/trace.zip": trace([session, ["POST", "http://127.0.0.1:8080/api/orders", 500, '{"title":"Internal Server Error"}']]),
+    "artifacts/paying/trace.zip": trace([session("2026-11-27T20:00:48.462Z"), ["POST", "http://127.0.0.1:8080/api/orders", 500, '{"title":"Internal Server Error"}']]),
     "artifacts/specgate/ai-decisions.jsonl": '{"model":"llama3.2","input":"Haz eso","output":{"category":"C"},"ms":812}\n',
   });
   side("REQ-031", "evidence.json", AFTER_LOG, {
-    "artifacts/paying/trace.zip": trace([session, ["POST", "http://127.0.0.1:8080/api/orders", 422, '{"code":"order_unclear","detail":"Another clue?"}']]),
+    "artifacts/paying/trace.zip": trace([session("2026-11-27T20:08:58.871Z"), ["POST", "http://127.0.0.1:8080/api/orders", 422, '{"code":"order_unclear","detail":"Another clue?"}']]),
   });
   return { dir, page: () => fs.readFileSync(path.join(change, "EVIDENCE.md"), "utf8") };
 }
@@ -176,7 +181,7 @@ test("REQ-816 SCN-816a: the page pairs each call before and after, with the bodi
   assert.match(text, /\| `POST \/api\/orders` \| 500 OK \| 422 Unprocessable Entity \|/);
   assert.match(text, /\| `POST \/api\/session` \| 201 OK \| 201 OK \|/);
   assert.match(text, /<summary>POST \/api\/orders — bodies<\/summary>[\s\S]*"code": "order_unclear"/);
-  assert.doesNotMatch(text, /<summary>POST \/api\/session/, "the same answer on both sides is not repeated");
+  assert.doesNotMatch(text, /<summary>POST \/api\/session/, "the same answer, its time aside, is not repeated");
   assert.doesNotMatch(text, /abc/, "no secret reaches the page");
 });
 
