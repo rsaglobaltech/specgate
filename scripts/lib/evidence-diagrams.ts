@@ -18,6 +18,7 @@ import { umlTypesOf, typeNames, type UmlType } from "../../packages/core/src/dom
 import {
   codeSequence,
   memberLines,
+  UML_THEME,
   umlClassDiagram,
   webCallsOf,
 } from "../../packages/core/src/domain/UmlDiagrams";
@@ -369,7 +370,7 @@ export function requirementDiagrams(dir: string, id: string, base = ""): Require
     const traced = types
       ? codeSequence({ scenario: sc, actor: s!.actor, types, webCalls: slice.webCalls })
       : null;
-    return traced || sequenceDiagram(sc, s!.actor);
+    return traced || `${UML_THEME}\n${sequenceDiagram(sc, s!.actor)}`;
   };
   const sequences = keys.map((key) => ({
     scenario: (now?.scenarios.find((s) => s.key === key) ||

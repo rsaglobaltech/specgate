@@ -58,8 +58,29 @@ function readJson(file: string): { artifacts?: string[] } | null {
   }
 }
 
-/** `artifacts/<test>/<file>` → the test's folder, the runner's one per test. */
-const testOf = (artifact: string) => artifact.split("/")[1] || "-";
+/** `artifacts/[<workspace>/]<test>/<file>` → the test's folder, the runner's one per test. */
+const testOf = (artifact: string) => artifact.split("/").slice(-2)[0] || "-";
+
+const slug = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+/**
+ * A test's folder as a reader names it: the scenario it ran, when the folder
+ * ends with that scenario's title — Playwright cuts the start of the title
+ * and adds its file, a hash and the project — or the folder without them.
+ */
+function testLabel(folder: string, titles: string[]): string {
+  const rest = folder.replace(/^.*?-[0-9a-f]{5}-+/, "");
+  const found = titles
+    .filter((t) => slug(t).length > 0 && slug(rest).includes(slug(t).slice(-24)))
+    .sort((a, b) => b.length - a.length)[0];
+  return found || rest.replace(/-/g, " ");
+}
 
 /** The last picture of each test, by its folder. */
 function lastPictures(artifacts: string[]): Map<string, string> {
@@ -95,6 +116,7 @@ export function writeEvidencePage(
       { name: "after", doc: after, from: `${EVIDENCE_DIR}/${id}` },
     ];
     lines.push(`## ${id} — ${title}`, "");
+    const d = requirementDiagrams(projectDir, id);
 
     // Screens: a row per test, its last picture on each side.
     const pictures = sides.map((s) => lastPictures(s.doc?.artifacts || []));
@@ -124,7 +146,8 @@ export function writeEvidencePage(
     };
     if (tests.length) {
       lines.push("| Test | Before | After |", "| --- | --- | --- |");
-      for (const t of tests) lines.push(`| ${t} | ${cell(0, t)} | ${cell(1, t)} |`);
+      const titles = d.sequences.map((s) => s.scenario);
+      for (const t of tests) lines.push(`| ${testLabel(t, titles)} | ${cell(0, t)} | ${cell(1, t)} |`);
       lines.push("");
     }
     for (const s of sides) {
@@ -153,7 +176,6 @@ export function writeEvidencePage(
     if (notes.length) lines.push(...notes, "");
 
     // Diagrams: each scenario, then the code, now — and the base folded under it.
-    const d = requirementDiagrams(projectDir, id);
     const fence = (text: string) => ["```mermaid", text.trimEnd(), "```"];
     const folded = (label: string, text: string) => [
       `<details><summary>${label}</summary>`,
