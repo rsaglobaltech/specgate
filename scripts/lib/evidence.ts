@@ -48,7 +48,7 @@ function filesChangedSince(root: string, since: number, rel = "", out: string[] 
 }
 
 /** What stays out of git under `.specgate/evidence/`; a line an older file lacks is added. */
-const IGNORED = ["*/artifacts/", "*/before/artifacts/"];
+const IGNORED = ["*/artifacts/", "*/before/artifacts/", "*/attempts/*/artifacts/"];
 
 function ignoreArtifacts(root: string): void {
   const ignore = path.join(root, ".gitignore");
@@ -100,6 +100,8 @@ export function keepBefore(
 ): string {
   const root = path.join(projectDir, EVIDENCE_DIR);
   const dir = path.join(root, id, "before");
+  // A new before starts a new cycle: the attempts after the old one go (REQ-819).
+  fs.rmSync(path.join(root, id, "attempts"), { recursive: true, force: true });
   fs.mkdirSync(dir, { recursive: true });
   ignoreArtifacts(root);
   const artifacts = keepArtifacts(projectDir, dir, run);
@@ -122,6 +124,61 @@ export function keepBefore(
     "utf8"
   );
   return path.relative(projectDir, file).split(path.sep).join("/");
+}
+
+export interface Attempt {
+  n: number;
+  command: string;
+  exitCode: number;
+  at: string;
+}
+
+/** The deliveries of a requirement whose scenarios failed, oldest first (REQ-819). */
+export function readAttempts(projectDir: string, id: string): Attempt[] {
+  const dir = path.join(projectDir, EVIDENCE_DIR, id, "attempts");
+  let names: string[] = [];
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return [];
+  }
+  return names
+    .filter((n) => /^\d+$/.test(n))
+    .map((n) => {
+      try {
+        const run = JSON.parse(fs.readFileSync(path.join(dir, n, "run.json"), "utf8"));
+        return { n: Number(n), command: run.command, exitCode: run.exitCode, at: run.at };
+      } catch {
+        return null;
+      }
+    })
+    .filter((a): a is Attempt => a !== null)
+    .sort((a, b) => a.n - b.n);
+}
+
+/**
+ * A delivery whose scenarios failed, kept as the next attempt (REQ-819):
+ * `attempts/<n>/run.json`, `run.log` and `artifacts/` — what the runner and
+ * the AI log wrote. Returns its folder, relative to the project.
+ */
+export function keepAttempt(projectDir: string, id: string, run: ScenarioRun, at = new Date()): string {
+  const root = path.join(projectDir, EVIDENCE_DIR);
+  const n = (readAttempts(projectDir, id).pop()?.n || 0) + 1;
+  const dir = path.join(root, id, "attempts", String(n));
+  fs.mkdirSync(dir, { recursive: true });
+  ignoreArtifacts(root);
+  const artifacts = keepArtifacts(projectDir, dir, run);
+  fs.writeFileSync(path.join(dir, "run.log"), tail(run.output), "utf8");
+  fs.writeFileSync(
+    path.join(dir, "run.json"),
+    JSON.stringify(
+      { requirement: id, attempt: n, at: at.toISOString(), command: run.command, exitCode: run.exitCode, ms: run.ms, artifacts },
+      null,
+      2
+    ) + "\n",
+    "utf8"
+  );
+  return path.relative(projectDir, dir).split(path.sep).join("/");
 }
 
 /** The before of a requirement, as `evidence.json` names it (REQ-804), or null. */
@@ -153,6 +210,7 @@ export function keepEvidence(
   fs.mkdirSync(dir, { recursive: true });
   const red = readRed(projectDir, id);
   const before = readBefore(projectDir, id);
+  const attempts = readAttempts(projectDir, id);
   ignoreArtifacts(root);
   const artifacts = keepArtifacts(projectDir, dir, run);
   fs.writeFileSync(path.join(dir, "bdd.log"), tail(run.output), "utf8");
@@ -166,6 +224,7 @@ export function keepEvidence(
         artifacts,
         ...(red ? { red } : {}),
         ...(before ? { before } : {}),
+        ...(attempts.length ? { attempts } : {}),
       },
       null,
       2

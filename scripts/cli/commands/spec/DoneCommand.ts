@@ -9,7 +9,7 @@ import {
 } from "../../../lib/step-seal";
 import { gitIdentity, missingApprovals } from "../../../lib/approvals";
 import { scenariosOf } from "./ScenariosCommand";
-import { keepEvidence, mustReproduce, readRed, scenarioEnv } from "../../../lib/evidence";
+import { keepAttempt, keepEvidence, mustReproduce, readRed, scenarioEnv } from "../../../lib/evidence";
 import type { ScenarioRun } from "../../../lib/evidence";
 import { appendApplied } from "../../../lib/trust";
 import { resolveProjectDir } from "../../../lib/project-root";
@@ -1025,20 +1025,28 @@ function bddRefusal(
     env: scenarioEnv(projectDir),
   });
   // REQ-680: what ran, kept for the evidence once the requirement is delivered.
-  scenarioRuns.set(id, {
+  const scenarioRun = {
     command: cmd,
     exitCode: run.status ?? 1,
     ms: Date.now() - startedAt,
     output: `${run.stdout || ""}${run.stderr || ""}`,
     startedAt,
-  });
+  };
+  scenarioRuns.set(id, scenarioRun);
   if (run.status === 0) return null;
+  // REQ-819: a red delivery is evidence too — of what failed on the way.
+  let attempt = "";
+  try {
+    attempt = keepAttempt(projectDir, id, scenarioRun);
+  } catch {
+    /* an unwritable evidence folder: the refusal stands without it */
+  }
   const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
   if (detail && !json)
     process.stderr.write(indent(detail.split("\n").slice(-30).join("\n")) + "\n\n");
   return {
     code: "apply_bdd_failed",
-    message: `its scenarios failed: ${cmd}`,
+    message: `its scenarios failed: ${cmd}${attempt ? ` — kept in ${attempt}` : ""}`,
     fix: `make its scenarios pass — the steps and the code — then run specgate apply ${id}`,
   };
 }

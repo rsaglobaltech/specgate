@@ -48,6 +48,16 @@ red run there too. The agents' `apply` step tells them to take it.
 `.specgate/evidence/REQ-031/`, and `evidence.json` names the before. Every
 `artifacts/` folder stays out of git.
 
+## The attempts on the way
+
+When `apply`'s scenarios fail, the run is kept as an attempt:
+`.specgate/evidence/REQ-031/attempts/1/`, then `2`, each with its log and what
+the runner and the AI log wrote; `apply_bdd_failed` names the folder. The
+delivery's `evidence.json` lists them and the page shows them under "Failed
+attempts": why each failed, and what the AI decided in it — a flaky scenario
+is what a reviewer most needs to see. A new `evidence before` starts again
+and removes them.
+
 ## The page
 
 ```bash

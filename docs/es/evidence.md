@@ -1,4 +1,4 @@
-<!-- translation-of: 3c14aeded5ed -->
+<!-- translation-of: 6431abd2d247 -->
 # Evidencia antes y después
 
 Al final de esta página cada requisito de un change tiene un antes y un
@@ -50,6 +50,16 @@ paso `apply` de los agentes les dice que lo tomen.
 `specgate apply REQ-031` guarda el después donde siempre, en
 `.specgate/evidence/REQ-031/`, y `evidence.json` nombra el antes. Toda carpeta
 `artifacts/` queda fuera de git.
+
+## Los intentos por el camino
+
+Cuando los escenarios de `apply` fallan, la ejecución se guarda como intento:
+`.specgate/evidence/REQ-031/attempts/1/`, luego `2`, cada uno con su log y lo
+que escribieron el runner y el registro de la IA; `apply_bdd_failed` nombra la
+carpeta. El `evidence.json` de la entrega los lista y la página los muestra en
+"Failed attempts": por qué falló cada uno y qué decidió la IA en él —un
+escenario inestable es lo que más necesita ver quien revisa—. Un
+`evidence before` nuevo empieza de cero y los borra.
 
 ## La página
 

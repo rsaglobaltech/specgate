@@ -11,7 +11,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { EVIDENCE_DIR } from "./evidence";
+import { EVIDENCE_DIR, readAttempts } from "./evidence";
 import { requirementDiagrams, type RequirementDiagrams } from "./evidence-diagrams";
 import { hideSecrets, httpCalls, type HttpCall } from "./trace-zip";
 import {
@@ -156,7 +156,52 @@ export interface RequirementEvidence {
   }>;
   readonly calls: ReadonlyArray<CallPair>;
   readonly ai: ReadonlyArray<{ side: "before" | "after"; decision: Record<string, unknown> }>;
+  /** Deliveries whose scenarios failed, oldest first: why, and what the AI decided (REQ-819). */
+  readonly attempts: ReadonlyArray<AttemptEvidence>;
   readonly diagrams: RequirementDiagrams;
+}
+
+export interface AttemptEvidence {
+  readonly n: number;
+  readonly failed: ReadonlyArray<ScenarioOutcome>;
+  readonly ai: ReadonlyArray<Record<string, unknown>>;
+}
+
+/** The AI log lines of one run folder, secrets hidden. */
+function decisionsIn(projectDir: string, from: string, artifacts: string[]): Array<Record<string, unknown>> {
+  return artifacts
+    .filter((a) => /ai-decisions\.jsonl$/.test(a))
+    .sort()
+    .flatMap((a) => {
+      try {
+        return fs
+          .readFileSync(path.join(projectDir, from, a), "utf8")
+          .split("\n")
+          .filter((l) => l.trim())
+          .map((l) => hideSecrets(JSON.parse(l)) as Record<string, unknown>);
+      } catch {
+        return [];
+      }
+    });
+}
+
+/** Each kept attempt of a requirement: its failed scenarios, its AI decisions. */
+function attemptsOf(projectDir: string, id: string): AttemptEvidence[] {
+  return readAttempts(projectDir, id).map((a) => {
+    const from = `${EVIDENCE_DIR}/${id}/attempts/${a.n}`;
+    const run = readJson(path.join(projectDir, from, "run.json"));
+    let log = "";
+    try {
+      log = fs.readFileSync(path.join(projectDir, from, "run.log"), "utf8");
+    } catch {
+      /* no log kept */
+    }
+    return {
+      n: a.n,
+      failed: scenarioOutcomes(log).filter((o) => !o.passed),
+      ai: decisionsIn(projectDir, from, run?.artifacts || []),
+    };
+  });
 }
 
 /** A timestamp or an id differs on every run: not a change in what the service answers. */
@@ -261,6 +306,7 @@ function gather(
     scenarios,
     calls,
     ai,
+    attempts: attemptsOf(projectDir, id),
     diagrams,
   };
 }
@@ -276,6 +322,14 @@ export function outcomeText(r: ScenarioOutcome | undefined): string {
     .join(" ");
   return `✘ ${r.time}${why ? ` — ${why}` : ""}`.trim();
 }
+
+/** Why an attempt failed: each failed scenario and its outcome. */
+export const attemptWhy = (a: AttemptEvidence) =>
+  a.failed.length ? a.failed.map((o) => `${o.scenario}: ${outcomeText(o)}`).join("; ") : "its scenarios failed";
+
+/** What the AI decided in an attempt: each input and its output. */
+export const attemptAi = (a: AttemptEvidence) =>
+  a.ai.map((d) => `${valueText(d.model)}: ${valueText(d.input)} → ${valueText(d.output)}`).join("; ") || "—";
 
 export const statusText = (x: HttpCall | undefined) => (x ? `${x.status} ${x.statusText}`.trim() : "—");
 export const valueText = (v: unknown) => (typeof v === "string" ? v : JSON.stringify(v ?? ""));
@@ -332,6 +386,12 @@ function markdownOf(r: RequirementEvidence): string[] {
         `| ${side === "before" ? "Before" : "After"} | ${cell(valueText(d.model))} | ${cell(valueText(d.input)).slice(0, 160)} | ${code(cell(valueText(d.output)).slice(0, 200))} | ${d.ms === undefined ? "" : `${cell(valueText(d.ms))} ms`} |`
       );
     }
+    lines.push("");
+  }
+
+  if (r.attempts.length) {
+    lines.push("#### Failed attempts", "", "| Attempt | Why it failed | AI decisions |", "| --- | --- | --- |");
+    for (const a of r.attempts) lines.push(`| ${a.n} | ${cell(attemptWhy(a))} | ${cell(attemptAi(a))} |`);
     lines.push("");
   }
 

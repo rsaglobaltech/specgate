@@ -11,6 +11,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import {
+  attemptAi,
+  attemptWhy,
   outcomeText,
   statusText,
   valueText,
@@ -128,6 +130,18 @@ function section(projectDir: string, r: RequirementEvidence): string {
       ...r.ai.map(
         ({ side, decision: d }) =>
           `<tr><td>${pill(side === "before" ? "bad" : "ok", side === "before" ? "Before" : "After")}</td><td>${esc(valueText(d.model))}</td><td>${esc(valueText(d.input))}</td><td><code>${esc(valueText(d.output))}</code></td><td class="num">${d.ms === undefined ? "" : `${esc(valueText(d.ms))} ms`}</td></tr>`
+      ),
+      "</tbody></table></div>"
+    );
+  }
+
+  if (r.attempts.length) {
+    out.push(
+      "<h3>Failed attempts</h3>",
+      '<div class="scroll"><table><thead><tr><th>Attempt</th><th>Why it failed</th><th>AI decisions</th></tr></thead><tbody>',
+      ...r.attempts.map(
+        (a) =>
+          `<tr><td>${pill("bad", `#${a.n}`)}</td><td>${inline(attemptWhy(a))}</td><td><code>${esc(attemptAi(a))}</code></td></tr>`
       ),
       "</tbody></table></div>"
     );
