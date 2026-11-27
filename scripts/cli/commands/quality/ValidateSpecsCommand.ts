@@ -82,7 +82,7 @@ import {
   unreadTraceLines,
 } from "../../../../packages/core/src/domain/DerivedMatrix";
 import { strayTraceWords } from "../../../../packages/core/src/domain/SpecParser";
-import { derivedMatrixFor } from "../spec/MatrixCommand";
+import { derivedMatrixFor, sameMatrix } from "../spec/MatrixCommand";
 import {
   declaredPaths,
   artifactFile,
@@ -1555,7 +1555,7 @@ export class ValidateSpecsCommand extends BaseCommand {
     // project only gets here by opting into generation (`matrix --migrate`).
     if (
       isDerivedMatrix(matrixOnDisk) &&
-      derivedMatrixFor(targetDir, matrixOnDisk) !== matrixOnDisk
+      !sameMatrix(derivedMatrixFor(targetDir, matrixOnDisk), matrixOnDisk)
     ) {
       const stale = error(
         "matrix_stale",

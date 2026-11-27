@@ -96,7 +96,7 @@ export function hasGherkinRunner(files: ProjectFiles): boolean {
   ]) {
     if (!files.exists(manifest)) continue;
     const source = files.read(manifest) || "";
-    if (/cucumber|behave|pytest-bdd|godog|specflow|reqnroll/i.test(source)) return true;
+    if (/cucumber|behave|pytest-bdd|godog|specflow|reqnroll|playwright-bdd/i.test(source)) return true;
   }
   return false;
 }

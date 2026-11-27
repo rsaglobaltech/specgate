@@ -1,4 +1,4 @@
-<!-- translation-of: 6659225e4ffe -->
+<!-- translation-of: 51d4e11a3794 -->
 # Evidencia antes y después
 
 Al final de esta página cada requisito de un change tiene un antes y un
@@ -14,8 +14,9 @@ diagramas, pero no las imágenes: los escenarios nunca se ejecutan.
 ## Que el runner guarde imágenes
 
 Specgate no maneja un navegador. Guarda lo que tu runner escribe en
-`test-results/` mientras ejecuta los escenarios de un requisito. Playwright no
-guarda capturas ni video salvo que su configuración lo diga:
+`test-results/` mientras ejecuta los escenarios de un requisito — en la raíz, y
+en cada workspace que declara tu `package.json` (`apps/web/test-results/`).
+Playwright no guarda capturas ni video salvo que su configuración lo diga:
 
 ```ts
 // playwright.config.ts

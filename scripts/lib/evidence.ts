@@ -10,6 +10,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { escapeRegExp } from "./escape";
+import { workspaceDirs } from "./workspaces";
 
 export const EVIDENCE_DIR = ".specgate/evidence";
 /** Where Playwright, and most browser runners, leave screenshots and traces. */
@@ -63,17 +64,25 @@ function ignoreArtifacts(root: string): void {
   fs.writeFileSync(ignore, `${text.trimEnd()}\n${missing.join("\n")}\n`, "utf8");
 }
 
-/** Copy what the runner wrote under `test-results/` since the run started into `<dir>/artifacts/`. */
+/**
+ * Copy what the runner wrote under `test-results/` since the run started into
+ * `<dir>/artifacts/`; a workspace's `test-results/` lands under
+ * `artifacts/<workspace>/` (REQ-809).
+ */
 function keepArtifacts(projectDir: string, dir: string, run: ScenarioRun): string[] {
   fs.rmSync(path.join(dir, "artifacts"), { recursive: true, force: true });
-  const results = path.join(projectDir, RESULTS_DIR);
-  const artifacts = filesChangedSince(results, run.startedAt);
-  for (const rel of artifacts) {
-    const to = path.join(dir, "artifacts", rel);
-    fs.mkdirSync(path.dirname(to), { recursive: true });
-    fs.copyFileSync(path.join(results, rel), to);
+  const kept: string[] = [];
+  for (const ws of ["", ...workspaceDirs(projectDir)]) {
+    const results = path.join(projectDir, ws, RESULTS_DIR);
+    for (const rel of filesChangedSince(results, run.startedAt)) {
+      const as = ws ? `${ws}/${rel}` : rel;
+      const to = path.join(dir, "artifacts", as);
+      fs.mkdirSync(path.dirname(to), { recursive: true });
+      fs.copyFileSync(path.join(results, rel), to);
+      kept.push(`artifacts/${as}`);
+    }
   }
-  return artifacts.map((a) => `artifacts/${a}`).sort();
+  return kept.sort();
 }
 
 const tail = (output: string) => output.split("\n").slice(-LOG_LINES).join("\n").trimEnd() + "\n";

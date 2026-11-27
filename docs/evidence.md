@@ -13,8 +13,9 @@ diagrams, but no pictures: the scenarios never run.
 ## Let the runner keep pictures
 
 Specgate does not drive a browser. It keeps what your runner writes under
-`test-results/` while it runs a requirement's scenarios. Playwright keeps no
-screenshot or video unless its config says so:
+`test-results/` while it runs a requirement's scenarios — at the root, and in
+each workspace your `package.json` declares (`apps/web/test-results/`).
+Playwright keeps no screenshot or video unless its config says so:
 
 ```ts
 // playwright.config.ts
