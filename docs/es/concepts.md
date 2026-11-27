@@ -186,7 +186,7 @@ está el proyecto para que tú o tu agente piensen con él; `specgate onboard
 | **Brief** | Tu plan para un producto, guardado como `docs/brief.md`, con un front matter corto que nombra el producto, sus actores, sus superficies y sus módulos. |
 | **Capacidad** (*capability*) | Un área del producto (pedidos, facturas, …). Sus requisitos viven en `docs/specs/capabilities/<capability>/spec.md`. |
 | **Change** | Una carpeta bajo `docs/specs/changes/<id>/` con trabajo en curso: una propuesta y un delta. Lo abre `propose` y lo cierra `archive`. |
-| **Reglas D** (*D-rules*) | La lista de comprobación de redacción (D1–D12) que debe pasar un borrador hecho a partir de un brief: un escenario por requisito y por superficie, valores con origen, preguntas abiertas que bloquean, y más. |
+| **Reglas D** (*D-rules*) | La lista de comprobación de redacción (D1–D17) que debe pasar un borrador hecho a partir de un brief: un escenario por requisito y por superficie, valores con origen, citas que el brief dice de verdad, preguntas abiertas que bloquean, y más. |
 | **Definition of Ready** | Las comprobaciones que debe pasar un ticket de Jira antes de convertirse en un change: las reglas T. |
 | **Entregado** | Un estado `Implemented`, `Verified` o `Released`. |
 | **Delta** | La parte de un change que dice qué se mueve: los requisitos y escenarios que añade, modifica o elimina. |

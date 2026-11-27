@@ -258,7 +258,7 @@ test("D8: a draft too large to review", () => {
 
 test("a rule that cannot run says so instead of passing", () => {
   const r = checkDraft({ deltas: delta(GOOD) });
-  assert.deepEqual(r.skipped.map((s) => s.rule).sort(), ["D3", "D6"]);
+  assert.deepEqual(r.skipped.map((s) => s.rule).sort(), ["D17", "D3", "D6"]);
   assert.equal(actorSurfaces("no front matter").size, 0);
 });
 
@@ -989,4 +989,48 @@ test("REQ-668: the project's language wins over a title's; one language througho
       "D16_scenario_language"
     )
   );
+});
+
+// ── REQ-799 ───────────────────────────────────────────────────────────────────
+
+const QUOTE_BRIEF =
+  BRIEF + "\nA member **recovers** access\nwith their email.\n<!-- e.g. Access is never recovered. -->\n";
+const quoting = (quote: string) =>
+  delta(
+    req(
+      "REQ-011",
+      "kind=functional",
+      `The system SHALL let a member recover access.\n\n> Brief: ${quote}`,
+      [["SCN-011", ["GIVEN a member", "WHEN they ask to recover access", "THEN they get an email"]]]
+    )
+  );
+const d17 = (r: DraftReport) => r.status.filter((d) => d.code === "D17_quote_not_in_brief");
+
+test("REQ-799 SCN-799a: a quote the brief never wrote is D17, at its line", () => {
+  const r = checkDraft({ deltas: quoting('"Access is never recovered."'), brief: QUOTE_BRIEF });
+  const [f] = d17(r);
+  assert.ok(f, JSON.stringify(r.status));
+  assert.equal(f.target, "REQ-011");
+  assert.equal(f.line, 9);
+  assert.match(f.message, /Access is never recovered/);
+  assert.match(f.fix || "", /quote/i);
+});
+
+test("REQ-799 SCN-799b: the brief's sentence, wrapped, emphasised and quoted, is no finding", () => {
+  for (const q of [
+    '"A member *recovers* access with their email"',
+    "“a member recovers access with their email.”",
+    "A member recovers access with their email.",
+    "'A member recovers access'",
+  ]) {
+    assert.deepEqual(d17(checkDraft({ deltas: quoting(q), brief: QUOTE_BRIEF })), [], q);
+  }
+});
+
+test("REQ-799: a template's comment is not the brief, and no brief skips the rule", () => {
+  const r = checkDraft({ deltas: quoting('"Access is never recovered."'), brief: QUOTE_BRIEF });
+  assert.equal(d17(r).length, 1, "the comment's text does not count");
+  const none = checkDraft({ deltas: quoting('"Access is never recovered."') });
+  assert.deepEqual(d17(none), []);
+  assert.ok(none.skipped.some((s: { rule: string }) => s.rule === "D17"));
 });

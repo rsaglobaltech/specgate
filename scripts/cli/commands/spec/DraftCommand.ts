@@ -180,8 +180,9 @@ function usage(): string {
     "  D4 a non-functional requirement is measured  D8 the draft is small enough to review\n" +
     "                                                D9 every scenario passes the harness gate's rules\n" +
     "                                                D10 no id the project already uses\n" +
-    "                                                D12 an actor can get the ids it acts on\n\n" +
-    "Without a brief, D3 and D6 cannot run, and the report says so.\n\n" +
+    "                                                D12 an actor can get the ids it acts on\n" +
+    "                                                D17 a brief quote is in the brief\n\n" +
+    "Without a brief, D3, D6 and D17 cannot run, and the report says so.\n\n" +
     "The brief rules (ADR-0038) — errors stop a draft, warnings are for you:\n" +
     "  B1 front matter fields in the shape Specgate reads   B5 a vague word in a rule\n" +
     "  B2 the brief, and each module section, says something B6 a promised quantity with no number\n" +

@@ -224,6 +224,14 @@ const norm = (s: string) =>
     .replace(/[,\s]+/g, " ")
     .trim();
 
+/** A quote and the brief, compared as text (REQ-799): no case, quote marks, emphasis or wrapping. */
+const quoteNorm = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/["'“”‘’«»*_]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
 const escapeRegExp = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 function inText(value: string, text: string): boolean {
@@ -707,6 +715,38 @@ export function checkDraft(files: DraftFiles): DraftReport {
           }
         }
       }
+    }
+  }
+
+  // D17 — a requirement's `> Brief:` quote is in the brief (REQ-799): the
+  // person reviewing trusts it as the link to what the client wrote.
+  if (!files.brief) {
+    skipped.push({ rule: "D17", why: "no brief given" });
+  } else {
+    const brief = quoteNorm(withoutComments(files.brief));
+    const sources = new Map(files.deltas.map((d) => [d.path, d.source.split(/\r?\n/)]));
+    for (const r of reqs) {
+      // `r.text` starts below the heading: the quote's line is found in the file.
+      const lines = sources.get(r.file) || [];
+      r.text.split("\n").forEach((line) => {
+        const q = /^\s*>\s*Brief:\s*(.+)$/i.exec(line);
+        if (!q) return;
+        const at = lines.indexOf(line, r.line - 1);
+        const quote = quoteNorm(q[1]).replace(/[.;:!?]+$/, "");
+        if (!quote || brief.includes(quote)) return;
+        status.push(
+          error(
+            "D17_quote_not_in_brief",
+            `${r.id} quotes the brief as ${q[1].trim()}, which the brief does not say.`,
+            {
+              file: r.file,
+              line: at < 0 ? r.line : at + 1,
+              target: r.id,
+              fix: "Quote the brief's own sentence, as it is written; if no sentence supports the requirement, it does not belong in this draft.",
+            }
+          )
+        );
+      });
     }
   }
 
