@@ -39,6 +39,7 @@ import { TraceRow, TraceabilityMatrix } from "./TraceabilityMatrix";
 import { MatrixRow, buildTraceabilityMarkdown, parseTraceabilityRows } from "./TraceabilityFormat";
 import { SpecNode, parseSpec, parseTraceComment } from "./SpecParser";
 import { specgateTagsByScenario } from "./GherkinTags";
+import { withoutCodeComments } from "./CodeComments";
 
 /** First line of a derived matrix. Its presence is what makes a project derived. */
 export const DERIVED_MARKER =
@@ -70,6 +71,11 @@ export interface DerivationSources {
    * follow, so the code column needs no `req link` either.
    */
   readonly code?: ReadonlyArray<SourceFile>;
+  /**
+   * `strict` when the gate policy says `link: strict` (REQ-800): a test file
+   * links what it names outside its comments. Absent, any mention links.
+   */
+  readonly links?: "strict";
 }
 
 export interface DerivedRequirement {
@@ -231,8 +237,12 @@ interface DerivationIndex {
 }
 
 function indexSources(sources: DerivationSources): DerivationIndex {
+  const tests =
+    sources.links === "strict"
+      ? sources.tests.map((f) => ({ path: f.path, source: withoutCodeComments(f.path, f.source) }))
+      : sources.tests;
   return {
-    tests: new MentionIndex(sources.tests),
+    tests: new MentionIndex(tests),
     code: new MentionIndex(sources.code || []),
     tags: new TagIndex(sources.features),
   };

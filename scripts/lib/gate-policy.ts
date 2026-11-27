@@ -119,6 +119,8 @@ export interface GatePolicy {
   readonly enforceFrom?: string;
   /** `required`: the scenarios are executable and the gate runs them (REQ-661); absent: not set up yet. */
   readonly bdd?: "required";
+  /** `strict`: a test links what it names outside its comments (REQ-800); absent: any mention. */
+  readonly link?: "strict";
   /** What is wrong with the file, each with its fix; empty when it reads. */
   readonly problems: ReadonlyArray<{ readonly message: string; readonly fix: string }>;
 }
@@ -151,10 +153,10 @@ export function parseGatePolicy(text: string): GatePolicy {
   }
 
   for (const key of Object.keys(doc)) {
-    if (!["preset", "rules", "enforce_from", "bdd", "trust"].includes(key)) {
+    if (!["preset", "rules", "enforce_from", "bdd", "link", "trust"].includes(key)) {
       problems.push({
         message: `\`${key}\` is not a key of the gate policy`,
-        fix: "The keys are preset, rules, enforce_from, bdd and trust.",
+        fix: "The keys are preset, rules, enforce_from, bdd, link and trust.",
       });
     }
   }
@@ -213,7 +215,27 @@ export function parseGatePolicy(text: string): GatePolicy {
   }
 
   const bdd = String(doc.bdd ?? "").trim() === "required" ? ("required" as const) : undefined;
-  return { source: "file", preset, rules, enforceFrom, ...(bdd ? { bdd } : {}), problems };
+  // REQ-801: how a test links a requirement — any mention, or outside its comments.
+  let link: "strict" | undefined;
+  if (doc.link !== undefined) {
+    const l = String(doc.link).trim();
+    if (l === "strict") link = "strict";
+    else if (l !== "mention") {
+      problems.push({
+        message: `link \`${l}\` is not mention or strict`,
+        fix: "Write `link: strict` (a comment naming a requirement does not link its test) or `link: mention`.",
+      });
+    }
+  }
+  return {
+    source: "file",
+    preset,
+    rules,
+    enforceFrom,
+    ...(bdd ? { bdd } : {}),
+    ...(link ? { link } : {}),
+    problems,
+  };
 }
 
 /** Today, as `YYYY-MM-DD`; `SPECGATE_TODAY` stands in for the clock in tests. */
@@ -268,6 +290,7 @@ export function gatePolicyTemplate(opts: { bdd?: boolean } = {}): string {
     opts.bdd
       ? "bdd: required"
       : "# bdd: required   # once a runner runs them: specgate migrate bdd",
+    "# link: strict   # a test links a requirement by its code, its name or a tag — not a comment",
     "",
   ];
   return lines.join("\n");

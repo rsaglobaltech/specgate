@@ -348,7 +348,11 @@ export class DoneCommand extends BaseCommand {
         io.fail(NULL_SHAPE, [
           error("apply_no_test", `${id} has no test that names it yet (TDD-1).`, {
             target: id,
-            fix: noTestFix(verb, id, opts.status, missing.scenario),
+            fix:
+              noTestFix(verb, id, opts.status, missing.scenario) +
+              (readGatePolicy(dir).link === "strict"
+                ? ` — a comment naming ${id} does not count under link: strict`
+                : ""),
           }),
         ]);
       }

@@ -29,6 +29,7 @@ rules:
   acceptance: error
 # enforce_from: 2026-12-31
 # bdd: required
+# link: strict
 ```
 
 Each rule is one of three levels:
@@ -106,6 +107,7 @@ preset to decide, or set each rule to the level you want.
 | `rules` | One level per rule, over the preset's |
 | `enforce_from` | A date, `YYYY-MM-DD`: until then every `error` is a warning (below) |
 | `bdd: required` | The scenarios are executable: the gate runs them with `bdd_cmd` of `harness.config.yaml` (the Scenarios stage). `specgate init` writes it when the project has a runner for its feature files; otherwise `specgate migrate bdd` |
+| `link: strict` | A test links a requirement, or a scenario, only where it names the id outside a comment: in a test's name, a tag, a string or the code. A comment saying `// REQ-007` no longer makes the file REQ-007's test, and `apply` says so when it refuses. `test=` in the trace still links. Without it, or with `link: mention`, any mention links |
 | `trust` | Each module's trust level, 1 to 5, for the harness: `trust: { payments: 2, catalog: 4 }`. Each key must be a capability under `docs/specs/capabilities/`; any other fails the gate (`payments is not a capability of this project`). `specgate trust` shows what each module has earned. A project with no `trust:` is untouched |
 
 Any other key fails the gate: on the terminal `check` names the key
