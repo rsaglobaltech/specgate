@@ -1,4 +1,4 @@
-<!-- translation-of: 2b8b4b3c7256 -->
+<!-- translation-of: 3c14aeded5ed -->
 # Evidencia antes y después
 
 Al final de esta página cada requisito de un change tiene un antes y un
@@ -95,6 +95,24 @@ La base es la que usa `specgate check --affected`; `--base <ref>` nombra otra,
 como el commit del requisito anterior. Los diagramas se leen del spec y del
 código, no los dibuja un modelo, así que la página sale igual cada vez que se
 escribe. Haz commit de ella con el change y enlázala desde el pull request.
+
+## Como página web
+
+```bash
+specgate evidence draft-orders --html     # also writes EVIDENCE.html
+specgate evidence draft-orders --open     # writes it and opens it in the browser
+```
+
+`EVIDENCE.html` es la misma evidencia en una sola página que se abre con
+doble clic, sin servidor: las capturas van dentro, antes y después lado a
+lado, y luego los escenarios, las llamadas, las decisiones de la IA, cada
+secuencia en la base y ahora lado a lado, y las clases. Está en inglés, clara
+u oscura según el sistema de quien la lee. Los diagramas los dibuja Mermaid,
+cargado desde una versión fijada en un CDN; sin conexión se ve su texto.
+
+Las capturas la hacen pesada: déjala fuera de git y súbela como artefacto del
+build para quien revisa. `--open` no abre ningún navegador en CI ni cuando
+`SPECGATE_NO_OPEN` está fijada.
 
 ## Lo que decidió la IA
 

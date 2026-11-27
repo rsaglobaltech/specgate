@@ -94,6 +94,24 @@ The diagrams are read from the spec and the code, not drawn by a model, so the
 page is the same every time it is written. Commit it with the change and link
 it from the pull request.
 
+## As a web page
+
+```bash
+specgate evidence draft-orders --html     # also writes EVIDENCE.html
+specgate evidence draft-orders --open     # writes it and opens it in the browser
+```
+
+`EVIDENCE.html` is the same evidence as one page that opens with a double
+click, with no server: the screens are inside it, before and after side by
+side, then the scenarios, the calls, the AI decisions, each sequence at the
+base and now side by side, and the classes. It is in English, light or dark
+as the reader's system is. The diagrams are drawn by Mermaid, loaded from a
+pinned CDN build; offline, their text is shown instead.
+
+The screens make it large, so keep it out of git and upload it as a build
+artifact for the reviewer. `--open` opens no browser in CI or when
+`SPECGATE_NO_OPEN` is set.
+
 ## What the AI decided
 
 Specgate cannot see inside your server. When it runs a requirement's

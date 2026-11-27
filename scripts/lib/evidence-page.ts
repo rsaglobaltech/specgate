@@ -4,14 +4,20 @@
  * and after it — the last screenshot of each test side by side, copied beside
  * the page under a size cap, its diagrams, and where its videos and traces
  * are. Written the same way every time: no clock, everything sorted.
+ *
+ * The evidence is gathered once into a model; the Markdown page and, on
+ * request, the HTML page (REQ-818) are two renderings of it.
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { EVIDENCE_DIR } from "./evidence";
-import { requirementDiagrams } from "./evidence-diagrams";
+import { requirementDiagrams, type RequirementDiagrams } from "./evidence-diagrams";
 import { hideSecrets, httpCalls, type HttpCall } from "./trace-zip";
-import { scenarioOutcomes } from "../../packages/core/src/domain/ScenarioOutcomes";
+import {
+  scenarioOutcomes,
+  type ScenarioOutcome,
+} from "../../packages/core/src/domain/ScenarioOutcomes";
 
 /** A picture larger than this is named on the page, not copied into the repository. */
 export const MAX_PICTURE_BYTES = 300 * 1024;
@@ -66,7 +72,7 @@ const testOf = (artifact: string) => artifact.split("/").slice(-2)[0] || "-";
 const slug = (s: string) =>
   s
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
@@ -97,7 +103,7 @@ const code = (p: string) => `\`${p}\``;
 const cell = (s: string) => s.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
 
 interface Side {
-  name: string;
+  name: "before" | "after";
   doc: { artifacts?: string[] } | null;
   from: string;
 }
@@ -114,91 +120,251 @@ function logOf(projectDir: string, side: Side): string {
 
 const filesOf = (side: Side, test: RegExp) => (side.doc?.artifacts || []).filter((a) => test.test(a)).sort();
 
-/**
- * Why each scenario was red (REQ-815), what each call to the service answered
- * (REQ-816) and what the AI model decided (REQ-817), before and after.
- */
-function runDetails(projectDir: string, sides: Side[]): string[] {
-  const out: string[] = [];
+// ── The model ────────────────────────────────────────────────────────────────
+
+/** One side's last picture of a test. */
+export interface Picture {
+  /** Where it is, from the project. */
+  readonly source: string;
+  /** Where the Markdown page copied it, from the change; empty when too big to copy. */
+  readonly copied: string;
+  readonly tooBig: boolean;
+}
+
+export interface CallPair {
+  /** `POST /api/orders`. */
+  readonly key: string;
+  readonly before?: HttpCall;
+  readonly after?: HttpCall;
+  /** Whether what the service answered changed, a timestamp or an id aside. */
+  readonly changed: boolean;
+}
+
+export interface RequirementEvidence {
+  readonly id: string;
+  readonly title: string;
+  readonly hasBefore: boolean;
+  readonly hasAfter: boolean;
+  readonly screens: ReadonlyArray<{ test: string; before: Picture | null; after: Picture | null }>;
+  readonly tooBig: ReadonlyArray<string>;
+  /** Videos and traces, from the project. */
+  readonly media: ReadonlyArray<string>;
+  readonly scenarios: ReadonlyArray<{
+    scenario: string;
+    before?: ScenarioOutcome;
+    after?: ScenarioOutcome;
+  }>;
+  readonly calls: ReadonlyArray<CallPair>;
+  readonly ai: ReadonlyArray<{ side: "before" | "after"; decision: Record<string, unknown> }>;
+  readonly diagrams: RequirementDiagrams;
+}
+
+/** A timestamp or an id differs on every run: not a change in what the service answers. */
+const steady = (s: string) =>
+  s
+    .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?/g, "<time>")
+    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, "<id>")
+    .replace(/("(?:requestId|traceId|id)"\s*:\s*)"[^"]*"/g, '$1"<id>"');
+
+/** A requirement's evidence, gathered: what both pages show. */
+function gather(
+  projectDir: string,
+  id: string,
+  title: string,
+  base: string
+): RequirementEvidence {
+  const root = path.join(projectDir, EVIDENCE_DIR, id);
+  const before = readJson(path.join(root, "before", "run.json"));
+  const after = readJson(path.join(root, "evidence.json"));
+  const sides: Side[] = [
+    { name: "before", doc: before, from: `${EVIDENCE_DIR}/${id}/before` },
+    { name: "after", doc: after, from: `${EVIDENCE_DIR}/${id}` },
+  ];
+  const diagrams = requirementDiagrams(projectDir, id, base);
+
+  // Screens: a row per test, its last picture on each side.
+  const pictures = sides.map((s) => lastPictures(s.doc?.artifacts || []));
+  const tests = [...new Set(pictures.flatMap((p) => [...p.keys()]))].sort();
+  const titles = diagrams.sequences.map((s) => s.scenario);
+  const picture = (i: number, test: string): Picture | null => {
+    const a = pictures[i].get(test);
+    if (!a) return null;
+    const source = `${sides[i].from}/${a}`;
+    let size = Infinity;
+    try {
+      size = fs.statSync(path.join(projectDir, source)).size;
+    } catch {
+      return null;
+    }
+    const tooBig = size > MAX_PICTURE_BYTES;
+    return {
+      source,
+      tooBig,
+      copied: tooBig ? "" : `evidence/${id}/${sides[i].name}/${a.replace(/^artifacts\//, "")}`,
+    };
+  };
+  const screens = tests.map((t) => ({ test: testLabel(t, titles), before: picture(0, t), after: picture(1, t) }));
+  const tooBig: string[] = [];
+  for (const s of sides) {
+    for (const a of filesOf(s, PICTURE)) {
+      try {
+        if (fs.statSync(path.join(projectDir, s.from, a)).size > MAX_PICTURE_BYTES)
+          tooBig.push(`${s.from}/${a}`);
+      } catch {
+        /* gone since the run */
+      }
+    }
+  }
+  const media = sides.flatMap((s) => filesOf(s, MEDIA).map((a) => `${s.from}/${a}`)).sort();
 
   // REQ-815: one row per scenario the runner reported.
   const outcomes = sides.map((s) => scenarioOutcomes(logOf(projectDir, s)));
-  const scenarios = [...new Set(outcomes.flatMap((o) => o.map((r) => r.scenario)))];
-  if (scenarios.length) {
-    const shown = (i: number, name: string) => {
-      const r = outcomes[i].find((x) => x.scenario === name);
-      if (!r) return "—";
-      if (r.passed) return `✓ ${r.time}`.trim();
-      const why = [r.step && `${r.step.slice(0, 90)}${r.step.length > 90 ? "…" : ""}:`, r.reason.join(" · ")]
-        .filter(Boolean)
-        .join(" ");
-      return `✘ ${r.time}${why ? ` — ${why}` : ""}`.trim();
-    };
-    out.push("#### Scenarios", "", "| Scenario | Before | After |", "| --- | --- | --- |");
-    for (const name of scenarios) out.push(`| ${cell(name)} | ${cell(shown(0, name))} | ${cell(shown(1, name))} |`);
-    out.push("");
-  }
+  const scenarios = [...new Set(outcomes.flatMap((o) => o.map((r) => r.scenario)))].map((scenario) => ({
+    scenario,
+    before: outcomes[0].find((x) => x.scenario === scenario),
+    after: outcomes[1].find((x) => x.scenario === scenario),
+  }));
 
   // REQ-816: the calls to the service, from each trace, paired by method and path.
-  const calls = sides.map((s) =>
+  const traced = sides.map((s) =>
     filesOf(s, /trace\.zip$/).flatMap((a) => httpCalls(path.join(projectDir, s.from, a)))
   );
-  const keys = [...new Set(calls.flatMap((c) => c.map((x) => `${x.method} ${x.path}`)))];
-  if (keys.length) {
-    const first = (i: number, key: string) => calls[i].find((x) => `${x.method} ${x.path}` === key);
-    const status = (x: HttpCall | undefined) => (x ? `${x.status} ${x.statusText}`.trim() : "—");
-    out.push("#### Calls to the service", "", "| Call | Before | After |", "| --- | --- | --- |");
-    for (const k of keys) out.push(`| ${code(k)} | ${cell(status(first(0, k)))} | ${cell(status(first(1, k)))} |`);
-    out.push("");
-    for (const k of keys) {
-      const [b, a] = [first(0, k), first(1, k)];
-      // A timestamp or an id differs on every run: not a change in what the service answers.
-      const steady = (s: string) =>
-        s
-          .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?/g, "<time>")
-          .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, "<id>")
-          .replace(/("(?:requestId|traceId|id)"\s*:\s*)"[^"]*"/g, '$1"<id>"');
-      if (b && a && b.status === a.status && steady(b.response) === steady(a.response)) continue;
-      const block = (label: string, text: string) => (text ? [`${label}:`, "", "```json", text, "```", ""] : []);
-      out.push(
-        `<details><summary>${k} — bodies</summary>`,
-        "",
-        ...block("Request", (a || b)!.request),
-        ...block(`Before (${status(b)})`, b?.response || ""),
-        ...block(`After (${status(a)})`, a?.response || ""),
-        "</details>",
-        ""
-      );
-    }
-  }
+  const keys = [...new Set(traced.flatMap((c) => c.map((x) => `${x.method} ${x.path}`)))];
+  const calls = keys.map((key) => {
+    const [b, a] = traced.map((list) => list.find((x) => `${x.method} ${x.path}` === key));
+    const changed = !(b && a && b.status === a.status && steady(b.response) === steady(a.response));
+    return { key, before: b, after: a, changed };
+  });
 
   // REQ-817: what the AI model decided, when the project records it.
-  const decisions = sides.map((s) =>
+  const ai = sides.flatMap((s) =>
     filesOf(s, /ai-decisions\.jsonl$/).flatMap((a) => {
       try {
         return fs
           .readFileSync(path.join(projectDir, s.from, a), "utf8")
           .split("\n")
           .filter((l) => l.trim())
-          .map((l) => hideSecrets(JSON.parse(l)) as Record<string, unknown>);
+          .map((l) => ({ side: s.name, decision: hideSecrets(JSON.parse(l)) as Record<string, unknown> }));
       } catch {
         return [];
       }
     })
   );
-  if (decisions.some((d) => d.length)) {
-    const text = (v: unknown) => (typeof v === "string" ? v : JSON.stringify(v ?? ""));
-    out.push("#### AI decisions", "", "| | Model | Input | Output | Time |", "| --- | --- | --- | --- | --- |");
-    decisions.forEach((list, i) => {
-      for (const d of list) {
-        out.push(
-          `| ${i === 0 ? "Before" : "After"} | ${cell(text(d.model))} | ${cell(text(d.input)).slice(0, 160)} | ${code(cell(text(d.output)).slice(0, 200))} | ${d.ms === undefined ? "" : `${cell(text(d.ms))} ms`} |`
-        );
-      }
-    });
-    out.push("");
+  return {
+    id,
+    title,
+    hasBefore: before !== null,
+    hasAfter: after !== null,
+    screens,
+    tooBig: tooBig.sort(),
+    media,
+    scenarios,
+    calls,
+    ai,
+    diagrams,
+  };
+}
+
+// ── The Markdown page ────────────────────────────────────────────────────────
+
+/** A scenario's outcome as one line: ✓ and its time, or ✘, its time and why. */
+export function outcomeText(r: ScenarioOutcome | undefined): string {
+  if (!r) return "—";
+  if (r.passed) return `✓ ${r.time}`.trim();
+  const why = [r.step && `${r.step.slice(0, 90)}${r.step.length > 90 ? "…" : ""}:`, r.reason.join(" · ")]
+    .filter(Boolean)
+    .join(" ");
+  return `✘ ${r.time}${why ? ` — ${why}` : ""}`.trim();
+}
+
+export const statusText = (x: HttpCall | undefined) => (x ? `${x.status} ${x.statusText}`.trim() : "—");
+export const valueText = (v: unknown) => (typeof v === "string" ? v : JSON.stringify(v ?? ""));
+
+function markdownOf(r: RequirementEvidence): string[] {
+  const lines = [`## ${r.id} — ${r.title}`, ""];
+  if (r.screens.length) {
+    const shot = (p: Picture | null, side: string) =>
+      !p ? "—" : p.tooBig ? `${code(path.basename(p.source))} (over 300 KB)` : `![${side}](${p.copied})`;
+    lines.push("| Test | Before | After |", "| --- | --- | --- |");
+    for (const s of r.screens) lines.push(`| ${s.test} | ${shot(s.before, "before")} | ${shot(s.after, "after")} |`);
+    lines.push("");
   }
-  return out;
+
+  const notes: string[] = [];
+  for (const p of r.tooBig) notes.push(`- ${code(p)} — over 300 KB, not copied`);
+  if (r.media.length) notes.push(`- Video and traces: ${r.media.map(code).join(", ")}`);
+  if (!r.hasBefore) notes.push(`- No before: \`specgate evidence before ${r.id}\``);
+  if (!r.hasAfter) notes.push(`- Not delivered yet: \`specgate apply ${r.id}\``);
+  if ((r.hasBefore || r.hasAfter) && r.screens.length === 0)
+    notes.push("- No screenshots: `specgate doctor` says how to have the runner keep them");
+  if (notes.length) lines.push(...notes, "");
+
+  if (r.scenarios.length) {
+    lines.push("#### Scenarios", "", "| Scenario | Before | After |", "| --- | --- | --- |");
+    for (const s of r.scenarios)
+      lines.push(`| ${cell(s.scenario)} | ${cell(outcomeText(s.before))} | ${cell(outcomeText(s.after))} |`);
+    lines.push("");
+  }
+
+  if (r.calls.length) {
+    lines.push("#### Calls to the service", "", "| Call | Before | After |", "| --- | --- | --- |");
+    for (const c of r.calls)
+      lines.push(`| ${code(c.key)} | ${cell(statusText(c.before))} | ${cell(statusText(c.after))} |`);
+    lines.push("");
+    for (const c of r.calls.filter((x) => x.changed)) {
+      const block = (label: string, text: string) => (text ? [`${label}:`, "", "```json", text, "```", ""] : []);
+      lines.push(
+        `<details><summary>${c.key} — bodies</summary>`,
+        "",
+        ...block("Request", (c.after || c.before)!.request),
+        ...block(`Before (${statusText(c.before)})`, c.before?.response || ""),
+        ...block(`After (${statusText(c.after)})`, c.after?.response || ""),
+        "</details>",
+        ""
+      );
+    }
+  }
+
+  if (r.ai.length) {
+    lines.push("#### AI decisions", "", "| | Model | Input | Output | Time |", "| --- | --- | --- | --- | --- |");
+    for (const { side, decision: d } of r.ai) {
+      lines.push(
+        `| ${side === "before" ? "Before" : "After"} | ${cell(valueText(d.model))} | ${cell(valueText(d.input)).slice(0, 160)} | ${code(cell(valueText(d.output)).slice(0, 200))} | ${d.ms === undefined ? "" : `${cell(valueText(d.ms))} ms`} |`
+      );
+    }
+    lines.push("");
+  }
+
+  // Diagrams: each scenario, then the code, now — and the base folded under it.
+  const fence = (text: string) => ["```mermaid", text.trimEnd(), "```"];
+  const folded = (label: string, text: string) => [
+    `<details><summary>${label}</summary>`,
+    "",
+    ...fence(text),
+    "",
+    "</details>",
+  ];
+  for (const s of r.diagrams.sequences) {
+    lines.push(`### ${s.scenario}`, "");
+    if (s.after) lines.push(...fence(s.after), "");
+    if (s.before === null) lines.push("New since the base.", "");
+    else if (s.after === null) lines.push(...folded("Removed — at the base", s.before), "");
+    else if (s.before === s.after) lines.push("Unchanged since the base.", "");
+    else lines.push(...folded("At the base", s.before), "");
+  }
+  for (const c of r.diagrams.classes) {
+    lines.push(`### Classes — ${c.file}`, "", ...fence(c.after), "");
+    if (c.legend) lines.push(c.legend, "");
+    if (c.before !== null) lines.push(...folded("At the base", c.before), "");
+    else lines.push("New since the base.", "");
+  }
+  return lines;
+}
+
+/** The change's evidence, gathered: what `writeEvidencePage` and the HTML page draw. */
+export function changeEvidence(projectDir: string, changeId: string, base = ""): RequirementEvidence[] {
+  const changeDir = path.join(projectDir, "docs", "specs", "changes", changeId);
+  return requirementsOf(changeDir).map(({ id, title }) => gather(projectDir, id, title, base));
 }
 
 /**
@@ -208,7 +374,8 @@ function runDetails(projectDir: string, sides: Side[]): string[] {
 export function writeEvidencePage(
   projectDir: string,
   changeId: string,
-  base = ""
+  base = "",
+  gathered: RequirementEvidence[] = changeEvidence(projectDir, changeId, base)
 ): { file: string; requirements: PageRequirement[] } {
   const changeDir = path.join(projectDir, "docs", "specs", "changes", changeId);
   const copies = path.join(changeDir, "evidence");
@@ -221,108 +388,25 @@ export function writeEvidencePage(
     "",
   ];
   const summary: PageRequirement[] = [];
-
-  for (const { id, title } of requirementsOf(changeDir)) {
-    const root = path.join(projectDir, EVIDENCE_DIR, id);
-    const before = readJson(path.join(root, "before", "run.json"));
-    const after = readJson(path.join(root, "evidence.json"));
-    const sides = [
-      { name: "before", doc: before, from: `${EVIDENCE_DIR}/${id}/before` },
-      { name: "after", doc: after, from: `${EVIDENCE_DIR}/${id}` },
-    ];
-    lines.push(`## ${id} — ${title}`, "");
-    const d = requirementDiagrams(projectDir, id, base);
-
-    // Screens: a row per test, its last picture on each side.
-    const pictures = sides.map((s) => lastPictures(s.doc?.artifacts || []));
-    const tests = [...new Set(pictures.flatMap((p) => [...p.keys()]))].sort();
-    const tooBig: string[] = [];
+  for (const r of gathered) {
     let copied = 0;
-    const cell = (i: number, test: string) => {
-      const a = pictures[i].get(test);
-      if (!a) return "—";
-      const source = path.join(projectDir, sides[i].from, a);
-      let size = Infinity;
-      try {
-        size = fs.statSync(source).size;
-      } catch {
-        return "—";
-      }
-      const shown = `${sides[i].from}/${a}`;
-      if (size > MAX_PICTURE_BYTES) {
-        tooBig.push(shown);
-        return `${code(path.basename(a))} (over 300 KB)`;
-      }
-      const rel = `evidence/${id}/${sides[i].name}/${a.replace(/^artifacts\//, "")}`;
-      fs.mkdirSync(path.dirname(path.join(changeDir, rel)), { recursive: true });
-      fs.copyFileSync(source, path.join(changeDir, rel));
-      copied += 1;
-      return `![${sides[i].name}](${rel})`;
-    };
-    if (tests.length) {
-      lines.push("| Test | Before | After |", "| --- | --- | --- |");
-      const titles = d.sequences.map((s) => s.scenario);
-      for (const t of tests) lines.push(`| ${testLabel(t, titles)} | ${cell(0, t)} | ${cell(1, t)} |`);
-      lines.push("");
-    }
-    for (const s of sides) {
-      for (const a of (s.doc?.artifacts || []).filter((x) => PICTURE.test(x)).sort()) {
-        const shown = `${s.from}/${a}`;
-        if (tooBig.includes(shown)) continue;
-        try {
-          if (fs.statSync(path.join(projectDir, shown)).size > MAX_PICTURE_BYTES)
-            tooBig.push(shown);
-        } catch {
-          /* gone since the run */
-        }
+    for (const s of r.screens) {
+      for (const p of [s.before, s.after]) {
+        if (!p || p.tooBig) continue;
+        fs.mkdirSync(path.dirname(path.join(changeDir, p.copied)), { recursive: true });
+        fs.copyFileSync(path.join(projectDir, p.source), path.join(changeDir, p.copied));
+        copied += 1;
       }
     }
-
-    const notes: string[] = [];
-    for (const p of tooBig.sort()) notes.push(`- ${code(p)} — over 300 KB, not copied`);
-    const media = sides.flatMap((s) =>
-      (s.doc?.artifacts || []).filter((a) => MEDIA.test(a)).map((a) => code(`${s.from}/${a}`))
-    );
-    if (media.length) notes.push(`- Video and traces: ${media.sort().join(", ")}`);
-    if (!before) notes.push(`- No before: \`specgate evidence before ${id}\``);
-    if (!after) notes.push(`- Not delivered yet: \`specgate apply ${id}\``);
-    if ((before || after) && tests.length === 0)
-      notes.push("- No screenshots: `specgate doctor` says how to have the runner keep them");
-    if (notes.length) lines.push(...notes, "");
-    lines.push(...runDetails(projectDir, sides));
-
-    // Diagrams: each scenario, then the code, now — and the base folded under it.
-    const fence = (text: string) => ["```mermaid", text.trimEnd(), "```"];
-    const folded = (label: string, text: string) => [
-      `<details><summary>${label}</summary>`,
-      "",
-      ...fence(text),
-      "",
-      "</details>",
-    ];
-    for (const s of d.sequences) {
-      lines.push(`### ${s.scenario}`, "");
-      if (s.after) lines.push(...fence(s.after), "");
-      if (s.before === null) lines.push("New since the base.", "");
-      else if (s.after === null) lines.push(...folded("Removed — at the base", s.before), "");
-      else if (s.before === s.after) lines.push("Unchanged since the base.", "");
-      else lines.push(...folded("At the base", s.before), "");
-    }
-    for (const c of d.classes) {
-      lines.push(`### Classes — ${c.file}`, "", ...fence(c.after), "");
-      if (c.legend) lines.push(c.legend, "");
-      if (c.before !== null) lines.push(...folded("At the base", c.before), "");
-      else lines.push("New since the base.", "");
-    }
-
+    lines.push(...markdownOf(r));
     summary.push({
-      id,
-      title,
-      before: before !== null,
-      after: after !== null,
+      id: r.id,
+      title: r.title,
+      before: r.hasBefore,
+      after: r.hasAfter,
       screenshots: copied,
-      sequences: d.sequences.length,
-      classes: d.classes.length,
+      sequences: r.diagrams.sequences.length,
+      classes: r.diagrams.classes.length,
     });
   }
 

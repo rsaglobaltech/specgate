@@ -1,7 +1,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { spawnSync } from "node:child_process";
-import { writeEvidencePage } from "../../../lib/evidence-page";
+import { spawn, spawnSync } from "node:child_process";
+import { changeEvidence, writeEvidencePage } from "../../../lib/evidence-page";
+import { writeEvidenceHtml } from "../../../lib/evidence-html";
 import { BaseCommand } from "../../../lib/command";
 import { agentIo, wantsJson } from "../../../lib/agent";
 import { error } from "../../../lib/diagnostics";
@@ -18,7 +19,7 @@ function usage(): void {
   process.stdout.write(
     `
   📸 ${c.bold}specgate evidence before${c.reset} <REQ>… [--project-dir <dir>] [--json]
-     ${c.bold}specgate evidence${c.reset} <change-id> [--base <ref>] [--project-dir <dir>] [--json]
+     ${c.bold}specgate evidence${c.reset} <change-id> [--base <ref>] [--html] [--open] [--project-dir <dir>] [--json]
 
   What a flow did before the change, and what it does after (ADR-0047).
 
@@ -36,8 +37,32 @@ function usage(): void {
            missing. Link it from the pull request. --base names the ref the
            diagrams compare with; without it, the base the gate measures from.
            archive writes it again, current, when the scenarios run.
+
+  --html   Also writes EVIDENCE.html: the same evidence as one web page, the
+           screens inside it — open it, or keep it as a CI artifact.
+  --open   Writes it and opens it in the browser (implies --html).
 `
   );
+}
+
+/**
+ * Opens a file in the person's browser, without waiting for it. Not in CI, and
+ * not when SPECGATE_NO_OPEN is set: tests and pipelines have no browser.
+ */
+function openInBrowser(file: string): boolean {
+  if (process.env.CI || process.env.SPECGATE_NO_OPEN) return false;
+  const [cmd, args] =
+    process.platform === "win32"
+      ? ["cmd", ["/c", "start", '""', `"${file}"`]]
+      : process.platform === "darwin"
+        ? ["open", [file]]
+        : ["xdg-open", [file]];
+  try {
+    spawn(cmd, args as string[], { detached: true, stdio: "ignore", windowsVerbatimArguments: true }).unref();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export class EvidenceCommand extends BaseCommand {
@@ -50,6 +75,8 @@ export class EvidenceCommand extends BaseCommand {
     const io = agentIo(wantsJson(argv));
     let dirArg = ".";
     let base = "";
+    let html = false;
+    let open = false;
     const positional: string[] = [];
     for (let i = 0; i < argv.length; i += 1) {
       const a = argv[i];
@@ -65,6 +92,8 @@ export class EvidenceCommand extends BaseCommand {
         }
       }
       else if (a === "--json") continue;
+      else if (a === "--html") html = true;
+      else if (a === "--open") open = html = true;
       else if (!a.startsWith("-")) positional.push(a);
       else
         io.usage(NULL_SHAPE, [
@@ -75,7 +104,7 @@ export class EvidenceCommand extends BaseCommand {
     }
     const [sub, ...ids] = positional;
     if (sub && sub !== "before" && ids.length === 0 && !REQ.test(sub)) {
-      return this.page(path.resolve(dirArg), sub, io, base);
+      return this.page(path.resolve(dirArg), sub, io, base, html, open);
     }
     if (sub !== "before" || ids.length === 0 || !ids.every((id) => REQ.test(id))) {
       io.usage(NULL_SHAPE, [
@@ -92,7 +121,14 @@ export class EvidenceCommand extends BaseCommand {
   }
 
   /** REQ-807: the change's page — each requirement before and after, its diagrams, what is missing. */
-  private page(dir: string, changeId: string, io: ReturnType<typeof agentIo>, base: string): void {
+  private page(
+    dir: string,
+    changeId: string,
+    io: ReturnType<typeof agentIo>,
+    base: string,
+    html: boolean,
+    open: boolean
+  ): void {
     const changeDir = path.join(dir, "docs", "specs", "changes", changeId);
     if (changeId === "archive" || !fs.existsSync(path.join(changeDir, "change.yaml"))) {
       io.fail(NULL_SHAPE, [
@@ -102,8 +138,12 @@ export class EvidenceCommand extends BaseCommand {
         }),
       ]);
     }
-    const written = writeEvidencePage(dir, changeId, base);
-    io.emit({ evidence: { change: changeId, ...written } }, () => {
+    const gathered = changeEvidence(dir, changeId, base);
+    const written = writeEvidencePage(dir, changeId, base, gathered);
+    // REQ-818: the same evidence as one web page, and opened when asked.
+    const page = html ? writeEvidenceHtml(dir, changeId, gathered) : null;
+    const opened = page && open ? openInBrowser(path.join(dir, page)) : false;
+    io.emit({ evidence: { change: changeId, ...written, html: page, opened } }, () => {
       process.stdout.write(ui.header("evidence", changeId));
       for (const r of written.requirements) {
         const missing = [!r.before && "no before", !r.after && "not delivered"].filter(Boolean);
@@ -115,7 +155,10 @@ export class EvidenceCommand extends BaseCommand {
         );
       }
       process.stdout.write(
-        `\n     ${ui.muted(`written to ${written.file} — link it from the pull request`)}\n`
+        `\n     ${ui.muted(`written to ${written.file} — link it from the pull request`)}\n` +
+          (page
+            ? `     ${ui.muted(`and ${page}${opened ? ", opened in the browser" : " — open it in a browser"}`)}\n`
+            : "")
       );
     });
   }
