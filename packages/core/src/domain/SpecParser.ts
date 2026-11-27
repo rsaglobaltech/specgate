@@ -129,6 +129,55 @@ export function parseTraceComment(raw: string): TraceComment {
   return trace;
 }
 
+/** An unquoted trace value cut at a space: what was read, and what was meant. */
+export interface StrayTraceWords {
+  line: number;
+  key: string;
+  read: string;
+  meant: string;
+}
+
+/**
+ * Every unquoted trace value followed by words with no `=` (REQ-798):
+ * `actor=Adulto responsable` is read as `actor=Adulto`, the rest dropped.
+ * Traces inside a code fence are examples, not traces.
+ */
+export function strayTraceWords(spec: string): StrayTraceWords[] {
+  const lines = String(spec || "")
+    .replace(/\r\n/g, "\n")
+    .split("\n");
+  const out: StrayTraceWords[] = [];
+  let fenced = false;
+  for (let i = 0; i < lines.length; i += 1) {
+    if (/^\s*(```|~~~)/.test(lines[i])) fenced = !fenced;
+    if (fenced || !RE_TRACE_OPEN.test(lines[i])) continue;
+    let end = i;
+    while (end < lines.length - 1 && !lines[end].includes("-->")) end += 1;
+    let body = lines
+      .slice(i, end + 1)
+      .join(" ")
+      .replace(/^[ \t]*<!--[ \t]*specgate:trace\b/, "")
+      .trim();
+    if (body.endsWith("-->")) body = body.slice(0, -3).trim();
+    // The same pairs `parseTraceComment` reads, and any other run of
+    // non-space as a word of its own.
+    const re = /\b([a-z_]+)[ \t]*=[ \t]*("[^"]*"|'[^']*'|[^\s"']+)|(\S+)/gi;
+    let last: StrayTraceWords | null = null;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(body)) !== null) {
+      if (m[3] === undefined) {
+        const quoted = m[2].startsWith('"') || m[2].startsWith("'");
+        last = quoted ? null : { line: i + 1, key: m[1].toLowerCase(), read: m[2], meant: m[2] };
+      } else if (last) {
+        if (last.meant === last.read) out.push(last);
+        last.meant += ` ${m[3]}`;
+      }
+    }
+    i = end;
+  }
+  return out;
+}
+
 /**
  * The AST every spec and delta parses into.
  *

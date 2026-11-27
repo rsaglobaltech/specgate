@@ -7,6 +7,7 @@
  */
 // The project's own YAML reader: js-yaml is a dev dependency, not shipped (found by the E2E journey).
 import { parseYamlLite } from "./YamlLite";
+import { parseTraceComment, type TraceComment } from "./SpecParser";
 
 export interface ViewFlow {
   actor: string | null;
@@ -172,13 +173,26 @@ export interface SpecUseCase {
   steps: Array<{ actor: string; text: string }>;
 }
 
+/**
+ * A block's first trace, read as the spec parser reads it (REQ-798): its own
+ * pattern took `actor="Adulto responsable"` for `"Adulto`. Found by index —
+ * a regex for the end of a comment is what CodeQL flags (see SpecParser).
+ */
+function traceOf(block: string): TraceComment | null {
+  const at = block.indexOf("specgate:trace");
+  if (at < 0) return null;
+  const end = block.indexOf("-->", at);
+  const start = block.lastIndexOf("<!--", at);
+  return parseTraceComment(block.slice(start < 0 ? at : start, end < 0 ? undefined : end + 3));
+}
+
 /** A capability's or a delta's requirements: their id, title, trace actor and scenarios. */
 export function requirementsOf(spec: string, module: string): SpecRequirement[] {
   const out: SpecRequirement[] = [];
   for (const block of spec.split(/\n(?=### Requirement: )/)) {
     const m = /^### Requirement: (REQ-\d+)\s+[—-]\s+(.+)$/m.exec(block);
     if (!m) continue;
-    const actor = /specgate:trace[^>]*\bactor=([^\s>]+)/.exec(block)?.[1] ?? null;
+    const actor = traceOf(block)?.actor ?? null;
     const scenarios = [...block.matchAll(/^#### Scenario: (?:SCN-[\w]+\s+[—-]\s+)?(.+)$/gm)].map(
       (s) => s[1]!.trim()
     );

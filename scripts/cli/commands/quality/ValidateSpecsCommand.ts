@@ -81,6 +81,7 @@ import {
   isDerivedMatrix,
   unreadTraceLines,
 } from "../../../../packages/core/src/domain/DerivedMatrix";
+import { strayTraceWords } from "../../../../packages/core/src/domain/SpecParser";
 import { derivedMatrixFor } from "../spec/MatrixCommand";
 import {
   declaredPaths,
@@ -285,9 +286,17 @@ export class ValidateSpecsCommand extends BaseCommand {
     for (const rel of files) {
       const full = path.join(targetDir, rel);
       if (!fs.existsSync(full)) continue;
-      for (const line of unreadTraceLines(fs.readFileSync(full, "utf8"))) {
+      const text = fs.readFileSync(full, "utf8");
+      const where = rel.split(path.sep).join("/");
+      for (const line of unreadTraceLines(text)) {
         this.logWarn(
-          `${rel.split(path.sep).join("/")}:${line}: this specgate:trace line is not inside a requirement section, so nothing reads it — move it under its \`## REQ-NNN\` heading.`
+          `${where}:${line}: this specgate:trace line is not inside a requirement section, so nothing reads it — move it under its \`## REQ-NNN\` heading.`
+        );
+      }
+      // REQ-798: a value cut at a space is read short, silently.
+      for (const s of strayTraceWords(text)) {
+        this.logWarn(
+          `${where}:${s.line}: ${s.key}=${s.meant} is read as ${s.key}=${s.read} — quote it: ${s.key}="${s.meant}".`
         );
       }
     }
