@@ -35,6 +35,9 @@ specgate check --affected
   `test_cmd` sigue siendo la suite completa. Un comando sin ninguno de los dos
   placeholders se ejecuta entero, y el hallazgo `affected_needs_files` dice
   cómo añadir `{files}`.
+- Cuando `apply` ejecutó la suite completa para un requisito y tardó dos
+  minutos o más, la entrega lo dice, con la línea `config set
+  test_cmd_affected` construida a partir de tu propio comando.
 
 ## Cuándo lo ejecuta todo
 

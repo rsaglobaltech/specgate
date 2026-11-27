@@ -375,6 +375,7 @@ export class DoneCommand extends BaseCommand {
       files: (testCmd || "").includes("{files}") ? requirementTestFiles(projectDir, [id]) : "",
     });
 
+    let testsMs = 0;
     for (const step of plan.steps) {
       // REQ-654: each stage tells when it starts and how it ends.
       const stageName =
@@ -399,7 +400,9 @@ export class DoneCommand extends BaseCommand {
           : step.stage === "arch"
             ? `Architecture    ${ui.muted(step.argv[0])}`
             : `Tests           ${ui.muted(step.argv[0])}`;
+      const startedAt = Date.now();
       const run = opts.json ? exec() : ui.task(label, exec, (r) => ({ ok: r.status === 0 }));
+      if (step.stage === "tests") testsMs = Date.now() - startedAt;
       progress({ stage: stageName, state: run.status === 0 ? "passed" : "failed" });
 
       if (run.status === 0) continue;
@@ -549,6 +552,7 @@ export class DoneCommand extends BaseCommand {
             scenariosOf(projectDir, id).length > 0
               ? `  ${ui.muted(`·  ${id} is delivered on a test that names it: its scenarios were not run. specgate migrate bdd makes the gate run them.`)}\n`
               : "") +
+            slowTestsNote(testsMs, testCmd) +
             (stepsSaid ? `  ${ui.muted(`·  ${stepsSaid}`)}\n` : "") +
             (plan.testsUnverified ? "" : nextAfter(queue().items, id, owner, view))
         )
@@ -830,6 +834,22 @@ function missingTest(dir: string, id: string): { scenario?: string } | null {
   };
   if (own.length === 0 || own.some(tested)) return null;
   return { scenario: own.map((r) => r.scenarioId).find((x) => x && x !== "-") };
+}
+
+/** Two minutes; `SPECGATE_SLOW_TESTS_MS` stands in for it in tests. */
+const SLOW_TESTS_MS = 120_000;
+
+/**
+ * slow-tests-hint REQ-802: the whole suite ran slowly for one requirement —
+ * the command that runs only its tests, said when the cost is paid. Empty
+ * when the run was quick or the command already takes `{files}` or `{req}`.
+ */
+function slowTestsNote(ms: number, testCmd: string | undefined): string {
+  const limit = Number(process.env.SPECGATE_SLOW_TESTS_MS) || SLOW_TESTS_MS;
+  const cmd = (testCmd || "").trim();
+  if (!cmd || ms < limit || /\{(files|req)\}/.test(cmd)) return "";
+  const took = ms >= 60_000 ? `${Math.round(ms / 60_000)} min` : `${(ms / 1000).toFixed(1)} s`;
+  return `  ${ui.muted(`·  the whole suite ran for one requirement (${took}). Only its tests: specgate config set test_cmd_affected "${cmd} {files}" — docs/fast-gate.md`)}\n`;
 }
 
 function noTestFix(verb: string, id: string, status: string, scenario?: string): string {

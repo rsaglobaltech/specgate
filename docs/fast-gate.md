@@ -33,6 +33,9 @@ specgate check --affected
   `test_cmd_affected:` is the command `--affected` and `apply` use, so
   `test_cmd` stays the whole suite. A command with neither placeholder runs
   whole, and the finding `affected_needs_files` says how to add `{files}`.
+- When `apply` ran the whole suite for one requirement and it took two
+  minutes or more, the delivery says so, with the `config set
+  test_cmd_affected` line built from your own command.
 
 ## When it runs everything
 

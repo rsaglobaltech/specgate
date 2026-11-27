@@ -20,8 +20,11 @@ Frictions a project reported after a full run, checked against 1.6.0, in the ord
 3. **A stricter gate (1.7.0).**
    - A requirement links to a test by `@REQ-NNN`, a test name or `test=`, not by any mention
      (`link: strict` in `gate.yaml`, the default in 2.0).
-   - `check` warns while scenarios exist and `bdd` is not `required`.
-   - `init` proposes `test_cmd_affected`; `apply` suggests it when a run is slow.
+   - `check` warns while scenarios exist and `bdd` is not `required`: it already does
+     (`bdd_not_set_up`, REQ-661; apply's note, REQ-735).
+   - `apply` suggests `test_cmd_affected` when the whole suite took two minutes or more (change
+     `slow-tests-hint`, REQ-802). `init` guessing `{files}` per runner was dropped: a wrong guess
+     runs the whole suite while looking scoped.
 4. **Evidence before and after (1.8.0, with an ADR).** Screenshots and video of the affected web scenarios
    on the base commit and on the change; a sequence or class diagram for a backend change; a summary for
    the pull request. Builds on `.specgate/evidence/`, which keeps only the after today.
