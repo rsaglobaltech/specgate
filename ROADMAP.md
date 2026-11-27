@@ -6,6 +6,29 @@ progress; its discussion stays on the issue, and it is reopened when work on it 
 In progress: [#493](https://github.com/rsaglobaltech/specgate/issues/493) (the rest of the brief) and [#546](https://github.com/rsaglobaltech/specgate/issues/546) (gate policy per branch,
 waivers, annotations/SARIF). Locally: the trust curve ([docs/specs/trust-curve.md](docs/specs/trust-curve.md)).
 
+## From a field run (2026-11-27)
+
+Frictions a project reported after a full run, checked against 1.6.0, in the order they are taken.
+
+1. **Small fixes (1.7.0: `--guide` adds to the public surface).**
+   - The `draft` skill names guides that exist: `propose --from-brief --guide setup|cards` prints them
+     (change `brief-guides`, REQ-796, REQ-797). The files were written only in some branches.
+   - A trace value cut at a space (`actor=Adulto responsable` stored as `Adulto`) is reported, from one
+     parser instead of three (`SpecParser`, `domain-docs`, `DomainView`).
+   - A `> Brief: "…"` quote is checked against the brief: today nothing reads it back.
+2. **List the plugin on agenticskills.io**, as one entry, with the npm CLI named as a prerequisite.
+3. **A stricter gate (1.7.0).**
+   - A requirement links to a test by `@REQ-NNN`, a test name or `test=`, not by any mention
+     (`link: strict` in `gate.yaml`, the default in 2.0).
+   - `check` warns while scenarios exist and `bdd` is not `required`.
+   - `init` proposes `test_cmd_affected`; `apply` suggests it when a run is slow.
+4. **Evidence before and after (1.8.0, with an ADR).** Screenshots and video of the affected web scenarios
+   on the base commit and on the change; a sequence or class diagram for a backend change; a summary for
+   the pull request. Builds on `.specgate/evidence/`, which keeps only the after today.
+5. **Later.** Vertical slices and an explicit stub state, so a fine-grained requirement needs no
+   temporary 501; a semantic review of a requirement against its brief quote, as an agent check outside
+   the deterministic gate; turning a written rule into a gate check. Risk per change is #504.
+
 ## Modelling
 
 - [#545](https://github.com/rsaglobaltech/specgate/issues/545) Business processes in BPMN 2.0 — each activity a use case, each path a scenario.
