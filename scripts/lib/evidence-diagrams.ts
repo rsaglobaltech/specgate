@@ -274,7 +274,14 @@ function commonPackage(pkgs: string[]): string {
   return out.join(".");
 }
 
-function sliceDiagrams(id: string, dir: string, seedFiles: string[], nowTypes: UmlType[], baseTypes: UmlType[] | null) {
+function sliceDiagrams(
+  id: string,
+  dir: string,
+  seedFiles: string[],
+  nowTypes: UmlType[],
+  baseTypes: UmlType[] | null,
+  sources: Map<string, string>
+) {
   const languages = new Set(seedFiles.map(languageOf).filter(Boolean));
   const now = { types: nowTypes };
   const atBase = baseTypes ? { types: baseTypes } : null;
@@ -286,7 +293,7 @@ function sliceDiagrams(id: string, dir: string, seedFiles: string[], nowTypes: U
     const slice = sliceOf(now.types.filter(inLanguage), seeds);
     const baseByName = new Map((atBase?.types || []).filter(inLanguage).map((t) => [t.name, t]));
     const added = new Set<string>();
-    const changed = new Map<string, { added: string[]; removed: string[] }>();
+    const changed = new Map<string, { added: string[]; removed: string[]; rewritten: string[] }>();
     for (const t of slice) {
       const was = baseByName.get(t.name);
       if (!was) {
@@ -297,7 +304,17 @@ function sliceDiagrams(id: string, dir: string, seedFiles: string[], nowTypes: U
       const b = memberLines(was);
       const plus = a.filter((x) => !b.includes(x));
       const minus = b.filter((x) => !a.includes(x));
-      if (plus.length || minus.length) changed.set(t.name, { added: plus, removed: minus });
+      // An operation whose signature stayed and whose body did not: what a reviewer opens first.
+      const flat = (s: string) => s.replace(/\s+/g, " ").trim();
+      const rewritten = t.members
+        .filter((m) => m.kind !== "field" && m.body)
+        .filter((m) => {
+          const old = was.members.find((o) => o.kind === m.kind && o.name === m.name && o.params.length === m.params.length);
+          return old !== undefined && flat(old.body) !== flat(m.body);
+        })
+        .map((m) => `${m.name}()`);
+      if (plus.length || minus.length || rewritten.length)
+        changed.set(t.name, { added: plus, removed: minus, rewritten });
     }
     const baseSlice = slice.map((t) => baseByName.get(t.name)).filter((t): t is UmlType => !!t);
     const pkgs = slice.map((t) => t.pkg).filter(Boolean);
@@ -308,7 +325,7 @@ function sliceDiagrams(id: string, dir: string, seedFiles: string[], nowTypes: U
         ([n, c]) =>
           `Changed: \`${n}\`${c.added.length ? ` — added ${c.added.map((x) => `\`${x}\``).join(", ")}` : ""}${
             c.removed.length ? ` — removed ${c.removed.map((x) => `\`${x}\``).join(", ")}` : ""
-          }.`
+          }${c.rewritten.length ? ` — ${c.rewritten.map((x) => `\`${x}\``).join(", ")} rewritten` : ""}.`
       ),
     ]
       .filter(Boolean)
@@ -320,29 +337,55 @@ function sliceDiagrams(id: string, dir: string, seedFiles: string[], nowTypes: U
       legend,
     });
   }
-  const webCalls = seedFiles
-    .filter((f) => /\.(ts|tsx|js|jsx|mjs)$/i.test(f))
-    .flatMap((f) => {
-      try {
-        return webCallsOf(fs.readFileSync(path.join(dir, f), "utf8"), id);
-      } catch {
-        return [];
-      }
+  return { classes, webCalls: webCallsFrom(dir, id, seedFiles, sources) };
+}
+
+/**
+ * What the requirement's web code calls: the `/api/...` its own files name,
+ * and the one each client function they call (`api.requestDrawing(...)`)
+ * names where it is declared in the project.
+ */
+function webCallsFrom(dir: string, id: string, seedFiles: string[], sources: Map<string, string>): string[] {
+  const web = seedFiles.filter((f) => /\.(ts|tsx|js|jsx|mjs)$/i.test(f));
+  const read = (f: string) => {
+    try {
+      return sources.get(f) ?? fs.readFileSync(path.join(dir, f), "utf8");
+    } catch {
+      return "";
+    }
+  };
+  const calls = web.flatMap((f) => webCallsOf(read(f), id));
+  if (calls.length) return [...new Set(calls)];
+  const called = new Set(web.flatMap((f) => [...read(f).matchAll(/\.\s*([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1])));
+  const out: string[] = [];
+  for (const [file, text] of sources) {
+    if (!/\.(ts|tsx|js|jsx|mjs)$/i.test(file)) continue;
+    const lines = text.split(/\r?\n/);
+    lines.forEach((l, i) => {
+      const decl = /^\s*(?:export\s+)?(?:async\s+)?(?:function\s+)?([A-Za-z_$][\w$]*)\s*[:=(]/.exec(l);
+      if (!decl || !called.has(decl[1])) return;
+      const near = lines.slice(i, i + 4).join("\n");
+      const p = /["'`](\/api\/[^"'`$]*)/.exec(near);
+      if (!p) return;
+      const verb = (/method\s*:\s*["'`](\w+)["'`]/.exec(near) || [])[1] || "GET";
+      out.push(`${verb.toUpperCase()} ${p[1]}`);
     });
-  return { classes, webCalls };
+  }
+  return [...new Set(out)];
 }
 
 /** Every source file of the languages the requirement's code is written in, Java as the backend's. */
 function backendTypes(dir: string, seedFiles: string[], commit: string) {
   const languages = new Set(["Java", ...seedFiles.map(languageOf).filter(Boolean)]);
   const files = sourceFiles(dir, languages);
-  const now = indexOf(files, (f) => {
+  const read = indexOf(files, (f) => {
     try {
       return fs.readFileSync(path.join(dir, f), "utf8");
     } catch {
       return null;
     }
-  }).types;
+  });
+  const now = read.types;
   const base = commit
     ? indexOf(
         (git(dir, ["ls-tree", "-r", "--name-only", commit]) || "")
@@ -351,7 +394,7 @@ function backendTypes(dir: string, seedFiles: string[], commit: string) {
         (f) => git(dir, ["show", `${commit}:./${f}`])
       ).types
     : null;
-  return { now, base };
+  return { now, base, sources: read.sources };
 }
 
 export function requirementDiagrams(dir: string, id: string, base = ""): RequirementDiagrams {
@@ -359,7 +402,7 @@ export function requirementDiagrams(dir: string, id: string, base = ""): Require
   const { now, atBase } = sections(dir, id, commit);
   const seedFiles = codeFiles(dir, id, now?.artifact || "");
   const code = backendTypes(dir, seedFiles, commit);
-  const slice = sliceDiagrams(id, dir, seedFiles, code.now, code.base);
+  const slice = sliceDiagrams(id, dir, seedFiles, code.now, code.base, code.sources);
   const keys = [
     ...new Set([...(now?.scenarios || []), ...(atBase?.scenarios || [])].map((s) => s.key)),
   ];

@@ -292,18 +292,50 @@ export function codeSequence(input: CodeSequenceInput): string | null {
   const back = (from: string, to: string, type: string) =>
     lines.push(type && type !== "void" ? `  ${from}-->>-${to}: ${text(type)}` : `  deactivate ${from}`);
 
-  const visit = (owner: UmlType, method: UmlMember, from: string, depth: number, stack: string[]) => {
+  // A scenario that ends in an error its THEN names — `422` and `idea_unclear` — follows the
+  // exception the code throws with that code, where it is thrown, back to the actor.
+  const outcome = then.join(" ");
+  const failStatus = (/\b([45]\d\d)\b/.exec(outcome) || [])[1] || "";
+  const failCode = (/`([a-z][a-z0-9_]*)`/.exec(outcome) || [])[1] || "";
+  // Or, through a screen, the message the child reads: an exception whose constructor writes it.
+  const quoted = (body: string) => [...body.matchAll(/"([^"\\]{2,})"/g)].map((q) => q[1]);
+  const failure =
+    failStatus && failCode
+      ? types.find((t) => t.members.some((m) => m.kind === "constructor" && m.body.includes(`"${failCode}"`)))
+      : types.find((t) =>
+          t.members.some(
+            (m) => m.kind === "constructor" && quoted(m.body).some((q) => q.length > 8 && outcome.includes(q))
+          )
+        );
+  const failLabel = failure
+    ? failStatus
+      ? `${failStatus} ${failCode}`
+      : quoted(failure.members.find((m) => m.kind === "constructor")?.body || "")[0] || failure.name
+    : "";
+  const raise = (from: string, to: string) => {
+    lines.push(`  ${from}--x${to}: ${text(`«exception» ${failure!.name}`)}`);
+    lines.push(`  deactivate ${from}`);
+  };
+
+  /** Draws the calls a method makes; true when it ends in the scenario's exception. */
+  const visit = (owner: UmlType, method: UmlMember, from: string, depth: number, stack: string[]): boolean => {
     const fields = new Map(owner.members.filter((m) => m.kind === "field").map((m) => [m.name, m.type]));
     const params = new Map(method.params.map((p) => [p.name, p.type]));
     const locals = localTypes(method.body);
+    const body = method.body.replace(/\bthis\s*\.\s*/g, "");
+    const throwAt = failure ? body.search(new RegExp(`\\bthrow\\s+new\\s+${failure.name}\\s*\\(`)) : -1;
     for (const c of callsIn(method.body)) {
+      if (throwAt >= 0 && c.at > throwAt) break;
       if (!c.receiver) {
         const self = owner.members.find((m) => m.kind === "method" && m.name === c.name);
         if (!self) continue;
         const key = `${owner.name}.${self.name}`;
         if (stack.includes(key)) continue;
         lines.push(`  ${from}->>+${from}: ${text(signature(self))}`);
-        if (depth < MAX_DEPTH) visit(owner, self, from, depth + 1, [...stack, key]);
+        if (depth < MAX_DEPTH && visit(owner, self, from, depth + 1, [...stack, key])) {
+          raise(from, from);
+          return true;
+        }
         back(from, from, self.type);
         continue;
       }
@@ -320,7 +352,10 @@ export function codeSequence(input: CodeSequenceInput): string | null {
         const to = lifeline(`:${runtime.name}`);
         const key = `${runtime.name}.${callee.name}`;
         lines.push(`  ${from}->>+${to}: ${text(signature(callee))}`);
-        if (depth < MAX_DEPTH && !stack.includes(key) && callee.body) visit(runtime, callee, to, depth + 1, [...stack, key]);
+        if (depth < MAX_DEPTH && !stack.includes(key) && callee.body && visit(runtime, callee, to, depth + 1, [...stack, key])) {
+          raise(to, from);
+          return true;
+        }
         back(to, from, callee.type);
       } else if (fields.has(c.receiver)) {
         // A collaborator outside the project — a client, a repository — drawn, not entered.
@@ -329,6 +364,7 @@ export function codeSequence(input: CodeSequenceInput): string | null {
         back(to, from, "");
       }
     }
+    return throwAt >= 0;
   };
 
   const route = entry.route;
@@ -338,18 +374,19 @@ export function codeSequence(input: CodeSequenceInput): string | null {
   } else {
     lines.push(`  A->>+${api}: ${text(route)}`);
   }
-  visit(entry.type, entry.method, api, 1, [`${entry.type.name}.${entry.method.name}`]);
+  const threw = visit(entry.type, entry.method, api, 1, [`${entry.type.name}.${entry.method.name}`]);
+  const status = threw ? failLabel : entry.status;
   if (viaWeb) {
-    lines.push(`  ${api}-->>-${web}: ${text(entry.status)}`);
+    lines.push(`  ${api}-->>-${web}: ${text(status)}`);
     lines.push(`  ${web}-->>-A: ${text(then.join("; "))}`);
   } else {
-    lines.push(`  ${api}-->>-A: ${text(entry.status)}`);
+    lines.push(`  ${api}-->>-A: ${text(status)}`);
   }
   const first = viaWeb ? web : api;
   const notes = [
     ...(given.length ? [`  Note over A,${first}: ${text(given.join("; "))}`] : []),
   ];
-  const outcome = !viaWeb && then.length ? [`  Note over A,${api}: ${text(then.join("; "))}`] : [];
+  const result = !viaWeb && then.length ? [`  Note over A,${api}: ${text(then.join("; "))}`] : [];
   return (
     [
       UML_THEME,
@@ -359,7 +396,7 @@ export function codeSequence(input: CodeSequenceInput): string | null {
       ...declared,
       ...notes,
       ...lines,
-      ...outcome,
+      ...result,
     ].join("\n") + "\n"
   );
 }

@@ -33,7 +33,10 @@ public final class ReviewOrder {
     return classifier.classify(text).map(d -> check(d));
   }
 
-  private Decision check(Decision d) { return d; }
+  private Decision check(Decision d) {
+    if (d == null) throw new UnclearOrder();
+    return d;
+  }
 }
 `,
   [`${JAVA}/app/Classifier.java`]: `package shop.app;
@@ -85,6 +88,19 @@ class OrderController {
   }
 }
 `,
+  [`${JAVA}/domain/UnclearOrder.java`]: `package shop.domain;
+
+public final class UnclearOrder extends DomainException {
+  public UnclearOrder() {
+    super("order_unclear", "Give us another clue, please");
+  }
+}
+`,
+  "web/app/actions.ts": `// REQ-041: the order goes through the review.
+export async function place(text: string) {
+  return api.placeOrder(text);
+}
+`,
   "web/lib/api.ts": `export const api = {
   /** REQ-041: place the order. */
   placeOrder: (text: string) =>
@@ -108,7 +124,7 @@ function project(t: TestContext, steps: string[]) {
       "",
       "## REQ-041 — An order is reviewed",
       "",
-      `<!-- specgate:trace actor=Customer artifact=${JAVA}/app/ReviewOrder.java,${JAVA}/domain/Decision.java -->`,
+      `<!-- specgate:trace actor=Customer artifact=${JAVA}/app/ReviewOrder.java,${JAVA}/domain/Decision.java,web/app/actions.ts -->`,
       "",
       "The system SHALL review the order.",
       "",
@@ -152,7 +168,11 @@ test("REQ-811: Java types with typed members, visibility, stereotypes and litera
 test("REQ-811 SCN-811a: the requirement's slice as one UML class diagram", (t: TestContext) => {
   const dir = project(t, ["GIVEN a cart", "WHEN the Customer sends POST /api/orders", "THEN it is 201"]);
   const d = requirementDiagrams(dir, "REQ-041");
-  assert.equal(d.classes.length, 1);
+  assert.deepEqual(
+    d.classes.map((c: { file: string }) => c.file.split(" ")[0]),
+    ["Java"],
+    "a web file that declares no type draws no class diagram"
+  );
   const java = d.classes[0];
   assert.match(java.file, /^Java — shop$/);
   const text = java.after;
@@ -212,4 +232,29 @@ test("REQ-812 SCN-812b: a call no controller declares is drawn from the steps", 
   const seq = requirementDiagrams(dir, "REQ-041").sequences[0].after;
   assert.match(seq, /participant S as System/);
   assert.match(seq, /A->>S: POST \/api\/unknown/);
+});
+
+test("REQ-812: a scenario that ends in an error follows the exception the code throws", (t: TestContext) => {
+  const dir = project(t, [
+    "GIVEN an empty cart",
+    "WHEN the Customer sends POST /api/orders",
+    "THEN it is 422 with `order_unclear`",
+  ]);
+  const seq = requirementDiagrams(dir, "REQ-041").sequences[0].after;
+  assert.match(seq, /P2--xP2: «exception» UnclearOrder/);
+  assert.match(seq, /P2--xP1: «exception» UnclearOrder/);
+  assert.match(seq, /P1-->>-A: 422 order_unclear/);
+  assert.doesNotMatch(seq, /201 Created/);
+});
+
+test("REQ-812: through a screen, the client function the web code calls names the endpoint", (t: TestContext) => {
+  const dir = project(t, [
+    "GIVEN an empty cart",
+    "WHEN the Customer presses Place",
+    'THEN they read "Give us another clue, please"',
+  ]);
+  const seq = requirementDiagrams(dir, "REQ-041").sequences[0].after;
+  assert.match(seq, /participant P1 as «boundary» Web app/);
+  assert.match(seq, /P1->>\+P2: POST \/api\/orders/);
+  assert.match(seq, /P2-->>-P1: order_unclear/, "the exception found by the message the person reads");
 });
