@@ -1,4 +1,4 @@
-<!-- translation-of: f8c2d23b7514 -->
+<!-- translation-of: bb6d74e79e25 -->
 # Evidencia antes y después
 
 Al final de esta página cada requisito de un change tiene un antes y un
@@ -79,10 +79,25 @@ Escribe `docs/specs/changes/draft-orders/EVIDENCE.md`. Por requisito:
 - Lo que falta, con el comando que lo obtiene: sin antes, sin entregar, sin
   capturas.
 
-La base es la que usa `specgate check --affected`. Los diagramas se leen del
-spec y del código, no los dibuja un modelo, así que la página sale igual cada
-vez que se escribe. Haz commit de ella con el change y enlázala desde el pull
-request; `archive` la lleva con el change.
+La base es la que usa `specgate check --affected`; `--base <ref>` nombra otra,
+como el commit del requisito anterior. Los diagramas se leen del spec y del
+código, no los dibuja un modelo, así que la página sale igual cada vez que se
+escribe. Haz commit de ella con el change y enlázala desde el pull request.
+
+## Al archivar
+
+Cuando el gate ejecuta los escenarios (`bdd: required`), `specgate archive`
+vuelve a escribir la página antes de mover el change, así que el change
+archivado la guarda al día. Un requisito entregado sin antes se nombra
+(`archive_no_before`) y el archive sigue. Un equipo que quiere todos los antes
+lo fija en `.specgate/gate.yaml`:
+
+```yaml
+evidence: required
+```
+
+Entonces `archive` rechaza un change con un requisito sin antes; `--force` lo
+archiva tal cual.
 
 ## Siguiente
 

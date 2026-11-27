@@ -1,4 +1,4 @@
-<!-- translation-of: 432907e47d03 -->
+<!-- translation-of: 87f90cd4c68b -->
 # Configurar el gate
 
 No todos los equipos quieren que cada regla haga fallar un pull request desde
@@ -31,6 +31,7 @@ rules:
 # enforce_from: 2026-12-31
 # bdd: required
 # link: strict
+# evidence: required
 ```
 
 Cada regla tiene uno de tres niveles:
@@ -111,6 +112,7 @@ quieras que decida el preset, o pon cada regla en el nivel que quieras.
 | `enforce_from` | Una fecha, `YYYY-MM-DD`: hasta entonces cada `error` es un warning (abajo) |
 | `bdd: required` | Los escenarios son ejecutables: el gate los ejecuta con `bdd_cmd` de `harness.config.yaml` (la etapa Scenarios). `specgate init` la escribe cuando el proyecto tiene un runner para sus archivos feature; si no, `specgate migrate bdd` |
 | `link: strict` | Un test vincula un requisito, o un escenario, solo donde nombra su id fuera de un comentario: en el nombre de un test, un tag, un string o el código. Un comentario `// REQ-007` ya no hace del archivo el test de REQ-007, y `apply` lo dice cuando lo rechaza. `test=` en la traza sigue vinculando. Sin ella, o con `link: mention`, cualquier mención vincula |
+| `evidence: required` | `specgate archive` rechaza un change con un requisito entregado sin antes (`archive_no_before`); `--force` lo archiva tal cual. Sin ella, o con `evidence: optional`, el archive nombra ese requisito y sigue. En ambos casos, cuando los escenarios se ejecutan, `archive` escribe el `EVIDENCE.md` del change ([Evidencia antes y después](../evidence.md)) |
 | `trust` | El nivel de confianza de cada módulo, de 1 a 5, para el harness: `trust: { pagos: 2, catalogo: 4 }`. Cada clave debe ser una capability de `docs/specs/capabilities/`; cualquier otra hace fallar el gate (`pagos is not a capability of this project`). `specgate trust` muestra lo que se ha ganado cada módulo. Un proyecto sin `trust:` no cambia |
 
 Cualquier otra clave hace fallar el gate: en la terminal `check` nombra la

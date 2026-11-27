@@ -18,7 +18,7 @@ function usage(): void {
   process.stdout.write(
     `
   📸 ${c.bold}specgate evidence before${c.reset} <REQ>… [--project-dir <dir>] [--json]
-     ${c.bold}specgate evidence${c.reset} <change-id> [--project-dir <dir>] [--json]
+     ${c.bold}specgate evidence${c.reset} <change-id> [--base <ref>] [--project-dir <dir>] [--json]
 
   What a flow did before the change, and what it does after (ADR-0047).
 
@@ -33,7 +33,9 @@ function usage(): void {
            last screenshot per test before and after, side by side (copied
            beside the page under 300 KB), its sequence and class diagrams at
            the base and now, where its videos and traces are, and what is
-           missing. Link it from the pull request.
+           missing. Link it from the pull request. --base names the ref the
+           diagrams compare with; without it, the base the gate measures from.
+           archive writes it again, current, when the scenarios run.
 `
   );
 }
@@ -47,10 +49,21 @@ export class EvidenceCommand extends BaseCommand {
     }
     const io = agentIo(wantsJson(argv));
     let dirArg = ".";
+    let base = "";
     const positional: string[] = [];
     for (let i = 0; i < argv.length; i += 1) {
       const a = argv[i];
       if (a === "--project-dir") dirArg = argv[++i] || ".";
+      else if (a === "--base") {
+        base = argv[++i] || "";
+        if (!base || base.startsWith("-")) {
+          io.usage(NULL_SHAPE, [
+            error("evidence_usage", "--base takes a git ref: a branch, a tag or a commit.", {
+              fix: "specgate evidence <change-id> --base main",
+            }),
+          ]);
+        }
+      }
       else if (a === "--json") continue;
       else if (!a.startsWith("-")) positional.push(a);
       else
@@ -62,7 +75,7 @@ export class EvidenceCommand extends BaseCommand {
     }
     const [sub, ...ids] = positional;
     if (sub && sub !== "before" && ids.length === 0 && !REQ.test(sub)) {
-      return this.page(path.resolve(dirArg), sub, io);
+      return this.page(path.resolve(dirArg), sub, io, base);
     }
     if (sub !== "before" || ids.length === 0 || !ids.every((id) => REQ.test(id))) {
       io.usage(NULL_SHAPE, [
@@ -79,7 +92,7 @@ export class EvidenceCommand extends BaseCommand {
   }
 
   /** REQ-807: the change's page — each requirement before and after, its diagrams, what is missing. */
-  private page(dir: string, changeId: string, io: ReturnType<typeof agentIo>): void {
+  private page(dir: string, changeId: string, io: ReturnType<typeof agentIo>, base: string): void {
     const changeDir = path.join(dir, "docs", "specs", "changes", changeId);
     if (changeId === "archive" || !fs.existsSync(path.join(changeDir, "change.yaml"))) {
       io.fail(NULL_SHAPE, [
@@ -89,7 +102,7 @@ export class EvidenceCommand extends BaseCommand {
         }),
       ]);
     }
-    const written = writeEvidencePage(dir, changeId);
+    const written = writeEvidencePage(dir, changeId, base);
     io.emit({ evidence: { change: changeId, ...written } }, () => {
       process.stdout.write(ui.header("evidence", changeId));
       for (const r of written.requirements) {

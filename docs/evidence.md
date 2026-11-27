@@ -77,10 +77,26 @@ It writes `docs/specs/changes/draft-orders/EVIDENCE.md`. Per requirement:
 - What is missing, with the command that gets it: no before, not delivered,
   no screenshots.
 
-The base is the one `specgate check --affected` measures from. The diagrams
-are read from the spec and the code, not drawn by a model, so the page is the
-same every time it is written. Commit it with the change, link it from the
-pull request; `archive` carries it with the change.
+The base is the one `specgate check --affected` measures from;
+`--base <ref>` names another, such as the commit of the requirement before.
+The diagrams are read from the spec and the code, not drawn by a model, so the
+page is the same every time it is written. Commit it with the change and link
+it from the pull request.
+
+## At archive
+
+When the gate runs the scenarios (`bdd: required`), `specgate archive` writes
+the page again before the change moves, so the archived change holds it
+current. A requirement delivered with no before is named (`archive_no_before`),
+and the archive goes on. A team that wants every before sets it in
+`.specgate/gate.yaml`:
+
+```yaml
+evidence: required
+```
+
+Then `archive` refuses a change with a requirement that has no before;
+`--force` archives it as it is.
 
 ## Next
 

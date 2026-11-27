@@ -45,6 +45,9 @@ import { ARTIFACTS, artifactState } from "../../../change/artifacts";
 import { parseDelta, renderRequirement } from "../../../../packages/core/src/domain/SpecParser";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { changeRequirements, DELIVERED } from "../../../lib/in-flight";
+import { readGatePolicy } from "../../../lib/gate-policy";
+import { readBefore } from "../../../lib/evidence";
+import { writeEvidencePage } from "../../../lib/evidence-page";
 import { ArchiveChangeUseCase } from "../../../../packages/core/src/application/ArchiveChangeUseCase";
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
 import {
@@ -1545,6 +1548,33 @@ function cmdArchive(opts: ChangeOptions) {
     ]);
   }
 
+  // REQ-813: the evidence closes with the change. Where the scenarios run, a
+  // requirement delivered with no before is named — refused under
+  // `evidence: required`, unless forced — and the page is written below,
+  // current, before the change moves.
+  const policy = readGatePolicy(projectDir);
+  const evidenceOn = (policy.bdd === "required" || policy.evidence === "required") && owned.length > 0;
+  const noBefore = evidenceOn ? owned.filter((r) => !readBefore(projectDir, r.id)).map((r) => r.id) : [];
+  const evidenceNotes: Diagnostic[] = [];
+  if (noBefore.length > 0) {
+    const required = policy.evidence === "required";
+    const message = `${noBefore.join(", ")} delivered with no before: the evidence shows only the after.`;
+    if (required && !opts.force) {
+      return fail(opts, nullShape, [
+        error("archive_no_before", message, {
+          target: changeId,
+          fix: "The before is taken once the test is written, before the code (`specgate evidence before REQ-NNN`). `.specgate/gate.yaml` sets evidence: required; to archive this change as it is, pass --force.",
+        }),
+      ]);
+    }
+    evidenceNotes.push(
+      warning("archive_no_before", message, {
+        target: changeId,
+        fix: "Next time, once the test is written and before the code: `specgate evidence before REQ-NNN`.",
+      })
+    );
+  }
+
   const repo = new DiskProjectRepository(projectDir);
   const useCase = new ArchiveChangeUseCase(repo);
   const plan = useCase.execute(changeId, {
@@ -1568,7 +1598,8 @@ function cmdArchive(opts: ChangeOptions) {
     totals: plan.totals,
     writes: plan.writes.map((w) => ({ file: rel(w.file), kind: w.kind })),
     deletes: plan.deletes.map((d) => ({ file: rel(d.file), reason: d.reason })),
-    warnings: plan.warnings,
+    warnings: [...plan.warnings, ...evidenceNotes],
+    evidence: evidenceOn ? { page: !opts.dryRun, noBefore } : null,
   };
 
   if (opts.dryRun) {
@@ -1593,6 +1624,20 @@ function cmdArchive(opts: ChangeOptions) {
       }
       process.stdout.write("\n");
     });
+  }
+
+  if (evidenceOn) {
+    try {
+      writeEvidencePage(projectDir, changeId);
+    } catch (err) {
+      summary.evidence = { page: false, noBefore };
+      summary.warnings.push(
+        warning("archive_evidence_page", `EVIDENCE.md could not be written: ${errorMessage(err)}`, {
+          target: changeId,
+          fix: `specgate evidence ${changeId}, then archive`,
+        })
+      );
+    }
   }
 
   try {
@@ -1670,7 +1715,10 @@ function cmdArchive(opts: ChangeOptions) {
               : "what each requirement still needs"
         )
     );
-    if (plan.warnings.length > 0) printDiagnostics(plan.warnings, process.stdout);
+    if (summary.evidence?.page) {
+      process.stdout.write(`  ${ui.muted(`📸  EVIDENCE.md written with the change: each requirement before and after`)}\n`);
+    }
+    if (summary.warnings.length > 0) printDiagnostics(summary.warnings, process.stdout);
   });
 }
 

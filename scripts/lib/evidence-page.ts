@@ -91,9 +91,14 @@ function lastPictures(artifacts: string[]): Map<string, string> {
 
 const code = (p: string) => `\`${p}\``;
 
+/**
+ * Writes the page. `base` is the ref its diagrams compare with (REQ-814);
+ * empty, the base `check --affected` uses.
+ */
 export function writeEvidencePage(
   projectDir: string,
-  changeId: string
+  changeId: string,
+  base = ""
 ): { file: string; requirements: PageRequirement[] } {
   const changeDir = path.join(projectDir, "docs", "specs", "changes", changeId);
   const copies = path.join(changeDir, "evidence");
@@ -116,7 +121,7 @@ export function writeEvidencePage(
       { name: "after", doc: after, from: `${EVIDENCE_DIR}/${id}` },
     ];
     lines.push(`## ${id} — ${title}`, "");
-    const d = requirementDiagrams(projectDir, id);
+    const d = requirementDiagrams(projectDir, id, base);
 
     // Screens: a row per test, its last picture on each side.
     const pictures = sides.map((s) => lastPictures(s.doc?.artifacts || []));

@@ -152,6 +152,8 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `approve_needs_person` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_change_name_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_draft_not_ready` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `archive_evidence_page` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `archive_no_before` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_requirements_pending` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_spec_update_failed` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_agent_failed` | `scripts/cli/commands/change/ChangeCommand.ts` |
