@@ -1,4 +1,4 @@
-<!-- translation-of: 51d4e11a3794 -->
+<!-- translation-of: f8c2d23b7514 -->
 # Evidencia antes y después
 
 Al final de esta página cada requisito de un change tiene un antes y un
@@ -61,12 +61,21 @@ Escribe `docs/specs/changes/draft-orders/EVIDENCE.md`. Por requisito:
   imágenes se copian a `evidence/` junto a la página, para que se vean en el
   pull request; una de más de 300 KB se nombra, no se copia.
 - Las rutas de los videos y los traces, en `.specgate/evidence/`.
-- Cada escenario como diagrama de secuencia: el actor, el sistema, un mensaje
-  por cada `POST /api/...` que nombran sus pasos. El de la base queda plegado
-  debajo, o la página dice que es nuevo o que no cambió.
-- Cada archivo del código del requisito como diagrama de clases —TypeScript,
-  JavaScript, Java, Kotlin, C# o Python— con una nota de los miembros
-  añadidos o quitados desde la base.
+- Cada escenario como diagrama de secuencia UML, numerado. Cuando su WHEN
+  llama a un endpoint que declara el código (`@PostMapping` de Spring, `@Path`
+  de JAX-RS) —o pasa por una pantalla cuyo código web llama a `/api/...` junto
+  al id del requisito—, sigue el código: una línea de vida por objeto, cada
+  llamada con sus parámetros y tipos, cada respuesta con lo que devuelve, del
+  controlador al caso de uso, la implementación del puerto y el cliente que
+  llama. Si no, el actor, el sistema y las llamadas que nombran sus pasos. El
+  de la base queda plegado debajo, o la página dice que es nuevo o que no cambió.
+- El código del requisito como un diagrama de clases UML por lenguaje: sus
+  tipos, lo que referencian, las implementaciones de sus interfaces y los tipos
+  que los contienen. Java y TypeScript muestran atributos y operaciones con
+  tipo y visibilidad, `«interface»`, `«record»`, `«enumeration»` con sus
+  literales, asociaciones con multiplicidad, dependencias y herencia; Kotlin,
+  C#, JavaScript y Python sus clases y miembros públicos. Los tipos nuevos desde
+  la base van en verde, los cambiados en ámbar, y la página nombra qué cambió.
 - Lo que falta, con el comando que lo obtiene: sin antes, sin entregar, sin
   capturas.
 

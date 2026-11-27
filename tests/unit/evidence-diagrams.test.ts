@@ -181,9 +181,10 @@ test("REQ-806 SCN-806a: the requirement drawn at the base and now", () => {
     assert.match(d.sequences[0].after, /actor A as Member/);
     assert.deepEqual(
       d.classes.map((c: { file: string }) => c.file),
-      ["src/orders.ts"]
+      ["TypeScript"]
     );
-    assert.match(d.classes[0].after, /note for Orders "added: refund\(\)"/);
+    assert.match(d.classes[0].after, /\+refund\(\)/);
+    assert.match(d.classes[0].legend, /Changed: `Orders` — added `\+refund\(\)`/);
     assert.deepEqual(requirementDiagrams(dir, "REQ-031", "main"), d, "the same every time");
 
     // In an open change's delta, with no artifact= and no matrix row: the code that names it.
@@ -199,7 +200,7 @@ test("REQ-806 SCN-806a: the requirement drawn at the base and now", () => {
       `// REQ-031\n${ORDERS_TS("  refund(): void {}\n")}`
     );
     const inFlight = requirementDiagrams(dir, "REQ-031", "main");
-    assert.deepEqual(inFlight.classes.map((c: { file: string }) => c.file), ["src/orders.ts"]);
+    assert.deepEqual(inFlight.classes.map((c: { file: string }) => c.file), ["TypeScript"]);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

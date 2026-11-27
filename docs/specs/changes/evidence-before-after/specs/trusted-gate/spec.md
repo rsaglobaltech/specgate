@@ -42,7 +42,7 @@ The system SHALL warn, on `specgate doctor`, with `doctor_evidence_media` when `
 
 <!-- specgate:trace actor=Developer kind=functional -->
 
-The system SHALL draw, as Mermaid, a sequence diagram of each scenario of a requirement — its actor and the system, its GIVEN steps as a note, a message from the actor for each `METHOD /path` a WHEN step names (or the step itself when it names none), and its THEN steps as replies — from the spec at the base and from the spec now, and a class diagram of the files its code column links — their classes, public members and parents, with the members added or removed since the base in a note — at the base and now, for TypeScript, JavaScript, Java, Kotlin, C# and Python; the same input giving the same text.
+The system SHALL draw, as Mermaid, a sequence diagram of each scenario of a requirement — its actor and the system, its GIVEN steps as a note, a message from the actor for each `METHOD /path` a WHEN step names (or the step itself when it names none), and its THEN steps as replies — from the spec at the base and from the spec now, and a class diagram of the files its code column links — their classes, public members and parents, with the members added or removed since the base in a note — at the base and now, for TypeScript, JavaScript, Java, Kotlin, C# and Python; the same input giving the same text. The evidence page draws the code as REQ-811 and REQ-812 say.
 
 #### Scenario: SCN-806a — A call added to a flow
 

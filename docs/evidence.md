@@ -59,12 +59,21 @@ It writes `docs/specs/changes/draft-orders/EVIDENCE.md`. Per requirement:
   pictures are copied into `evidence/` beside the page, so they render in the
   pull request; one over 300 KB is named, not copied.
 - The paths of the videos and traces, under `.specgate/evidence/`.
-- Each scenario as a sequence diagram: the actor, the system, a message for
-  each `POST /api/...` its steps name. The one at the base folds underneath,
-  or the page says it is new or unchanged.
-- Each file of the requirement's code as a class diagram — TypeScript,
-  JavaScript, Java, Kotlin, C# or Python — with a note of the members added
-  or removed since the base.
+- Each scenario as a UML sequence diagram, numbered. When its WHEN calls an
+  endpoint the code declares (Spring `@PostMapping`, JAX-RS `@Path`) — or it
+  goes through a screen whose web code calls `/api/...` beside the
+  requirement's id — it follows the code: one lifeline per object, each call
+  with its parameters and types, each reply with what it returns, from the
+  controller to the use case, the port's implementation and the client it
+  calls. Otherwise the actor, the system and the calls its steps name. The one
+  at the base folds underneath, or the page says it is new or unchanged.
+- The requirement's code as one UML class diagram per language: its types,
+  what they reference, the implementations of its interfaces and the types
+  that hold them. Java and TypeScript show typed attributes and operations with
+  their visibility, `«interface»`, `«record»`, `«enumeration»` with its literals,
+  associations with multiplicity, dependencies and inheritance; Kotlin, C#,
+  JavaScript and Python their classes and public members. Types new since the
+  base are green, changed ones amber, and the page names what changed.
 - What is missing, with the command that gets it: no before, not delivered,
   no screenshots.
 

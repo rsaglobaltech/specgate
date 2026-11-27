@@ -1,0 +1,386 @@
+/**
+ * A requirement's code drawn as standard UML (REQ-811, REQ-812), in Mermaid
+ * that GitHub renders: a class diagram of the slice the requirement touches —
+ * typed attributes and operations, visibility, stereotypes, associations and
+ * dependencies — and a sequence diagram per scenario that follows the code
+ * from the endpoint the scenario calls, object by object. Read from the code
+ * alone: the same code gives the same text.
+ */
+
+import type { ScenarioSteps } from "./EvidenceDiagrams";
+import { isMany, typeNames, type UmlMember, type UmlType } from "./UmlModel";
+
+/** The look: black on white, as a modelling tool prints UML. */
+export const UML_THEME = '%%{init: {"theme": "neutral"}}%%';
+
+/** Mermaid ends a statement at `;` and reads `#`, `<`, `>` as markup: each written as an entity. */
+const text = (s: string) =>
+  s
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[#;<>]/g, (ch) => ({ "#": "#35;", ";": "#59;", "<": "#lt;", ">": "#gt;" })[ch] as string);
+
+/** A type as a class member writes it: generics with `~`, no quotes. */
+const memberType = (t: string) => t.replace(/</g, "~").replace(/>/g, "~").replace(/"/g, "'").replace(/\s+/g, " ");
+
+const STEREOTYPE: Record<UmlType["kind"], string> = {
+  class: "",
+  abstract: "abstract",
+  interface: "interface",
+  record: "record",
+  enum: "enumeration",
+};
+
+function memberLine(m: UmlMember): string {
+  const suffix = m.isStatic ? "$" : m.isAbstract ? "*" : "";
+  if (m.kind === "field") return `${m.visibility}${m.name}${m.type ? " : " + memberType(m.type) : ""}${suffix}`;
+  const params = m.params.map((p) => (p.type ? `${p.name} : ${memberType(p.type)}` : p.name)).join(", ");
+  const ret = m.kind === "method" && m.type && m.type !== "void" ? " " + memberType(m.type) : "";
+  return `${m.visibility}${m.name}(${params})${suffix}${ret}`;
+}
+
+export interface SliceChanges {
+  /** Types that are not at the base. */
+  readonly added: ReadonlySet<string>;
+  /** Types whose members changed since the base: what was added and removed. */
+  readonly changed: ReadonlyMap<string, { added: string[]; removed: string[] }>;
+}
+
+/** The members a change compares: each as its UML line. */
+export const memberLines = (t: UmlType) => t.members.map(memberLine);
+
+/**
+ * The slice as a UML class diagram. Associations come from attributes,
+ * dependencies from operation signatures, generalizations and realizations
+ * from `extends` and `implements` — only between the types drawn.
+ */
+export function umlClassDiagram(types: ReadonlyArray<UmlType>, changes?: SliceChanges): string {
+  const names = new Set(types.map((t) => t.name));
+  const out = [UML_THEME, "classDiagram"];
+  for (const t of types) {
+    const lines = [
+      ...(STEREOTYPE[t.kind] ? [`<<${STEREOTYPE[t.kind]}>>`] : []),
+      ...t.literals,
+      ...t.members.filter((m) => m.kind === "field").map(memberLine),
+      ...t.members.filter((m) => m.kind !== "field").map(memberLine),
+    ];
+    if (lines.length === 0) out.push(`  class ${t.name}`);
+    else out.push(`  class ${t.name} {`, ...lines.map((l) => `    ${l}`), "  }");
+  }
+  const seen = new Set<string>();
+  const relate = (line: string) => {
+    if (!seen.has(line)) {
+      seen.add(line);
+      out.push(`  ${line}`);
+    }
+  };
+  for (const t of types) {
+    for (const p of t.parents) {
+      if (names.has(p.name)) relate(`${p.name} ${p.kind === "extends" ? "<|--" : "<|.."} ${t.name}`);
+    }
+  }
+  const associated = new Set<string>();
+  for (const t of types) {
+    for (const f of t.members.filter((m) => m.kind === "field" && !m.isStatic)) {
+      for (const n of typeNames(f.type).filter((n) => names.has(n) && n !== t.name)) {
+        associated.add(`${t.name}>${n}`);
+        relate(`${t.name} --> "${isMany(f.type) ? "0..*" : "1"}" ${n} : ${f.name}`);
+      }
+    }
+  }
+  for (const t of types) {
+    for (const m of t.members.filter((x) => x.kind !== "field")) {
+      const used = [m.type, ...m.params.map((p) => p.type)].flatMap(typeNames);
+      for (const n of used.filter((n) => names.has(n) && n !== t.name)) {
+        if (!associated.has(`${t.name}>${n}`)) relate(`${t.name} ..> ${n}`);
+      }
+    }
+  }
+  for (const t of types) {
+    if (t.outer && names.has(t.outer) && !associated.has(`${t.outer}>${t.name}`)) {
+      relate(`${t.outer} +-- ${t.name}`);
+    }
+  }
+  for (const n of changes?.added || []) {
+    if (names.has(n)) out.push(`  style ${n} fill:#e6f4ea,stroke:#2f7a45,stroke-width:2px`);
+  }
+  for (const n of changes?.changed.keys() || []) {
+    if (names.has(n)) out.push(`  style ${n} fill:#fff4d6,stroke:#b7791f,stroke-width:2px`);
+  }
+  return out.join("\n") + "\n";
+}
+
+// ── Sequences ────────────────────────────────────────────────────────────────
+
+export interface Endpoint {
+  readonly type: UmlType;
+  readonly method: UmlMember;
+  /** As the code declares it: `POST /api/orders/{id}`. */
+  readonly route: string;
+  /** The status its success answers, as `202 Accepted`. */
+  readonly status: string;
+}
+
+const HTTP = ["GET", "POST", "PUT", "PATCH", "DELETE"];
+const STATUS: Record<string, string> = {
+  OK: "200 OK",
+  CREATED: "201 Created",
+  ACCEPTED: "202 Accepted",
+  NO_CONTENT: "204 No Content",
+};
+
+function annotationPath(annotations: string, name: string): string | null {
+  const m = new RegExp(`@${name}\\b(?:\\s*\\(([^)]*)\\))?`).exec(annotations);
+  if (!m) return null;
+  const args = m[1] || "";
+  const quoted = /(?:^|\b(?:value|path)\s*=\s*\{?\s*)"([^"]*)"/.exec(args.trim()) || /"([^"]*)"/.exec(args);
+  return quoted ? quoted[1] : "";
+}
+
+const joinPath = (a: string, b: string) => `/${[a, b].join("/").split("/").filter(Boolean).join("/")}`;
+
+/** The HTTP endpoints the code declares: Spring's mappings and JAX-RS's paths. */
+export function endpointsOf(types: ReadonlyArray<UmlType>): Endpoint[] {
+  const out: Endpoint[] = [];
+  for (const t of types) {
+    if (!/@(?:Rest)?Controller\b|@Path\b/.test(t.annotations)) continue;
+    const base = annotationPath(t.annotations, "RequestMapping") ?? annotationPath(t.annotations, "Path") ?? "";
+    for (const m of t.members.filter((x) => x.kind === "method")) {
+      for (const verb of HTTP) {
+        const springName = `${verb[0]}${verb.slice(1).toLowerCase()}Mapping`;
+        let sub = annotationPath(m.annotations, springName);
+        if (sub === null && new RegExp(`@${verb}\\b`).test(m.annotations)) sub = annotationPath(m.annotations, "Path") ?? "";
+        if (
+          sub === null &&
+          new RegExp(`@RequestMapping\\b[^)]*RequestMethod\\.${verb}\\b`).test(m.annotations)
+        ) {
+          sub = annotationPath(m.annotations, "RequestMapping") ?? "";
+        }
+        if (sub === null) continue;
+        const code = (/@ResponseStatus\s*\(\s*(?:code\s*=\s*|value\s*=\s*)?HttpStatus\.(\w+)/.exec(m.annotations) || [])[1];
+        out.push({
+          type: t,
+          method: m,
+          route: `${verb} ${joinPath(base, sub)}`,
+          status: STATUS[code || (verb === "POST" && /Created/.test(m.type) ? "CREATED" : "OK")] || code,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/** The endpoint a call reaches: `POST /api/orders/12` matches `POST /api/orders/{id}`. */
+export function endpointFor(endpoints: ReadonlyArray<Endpoint>, call: string): Endpoint | null {
+  const [verb, path] = call.split(/\s+/);
+  for (const e of endpoints) {
+    const [ev, ep] = e.route.split(" ");
+    if (ev !== verb) continue;
+    const pattern = ep.replace(/[.*+?^$()|[\]\\]/g, "\\$&").replace(/\{[^/]+\}/g, "[^/]+");
+    if (new RegExp(`^${pattern}/?$`).test(path.replace(/[?#].*$/, ""))) return e;
+  }
+  return null;
+}
+
+interface Found {
+  at: number;
+  receiver: string;
+  name: string;
+  chain: string;
+}
+
+const KEYWORDS = new Set(["if", "for", "while", "switch", "catch", "return", "new", "throw", "super", "this", "synchronized"]);
+
+/** The calls a body makes, in the order written: `x.m(` on a name, and `m(` on itself. */
+function callsIn(body: string): Found[] {
+  const src = body.replace(/\bthis\s*\.\s*/g, "");
+  const out: Found[] = [];
+  const re = /(?<![\w$.])([A-Za-z_$][\w$]*)\s*\.\s*([A-Za-z_$][\w$]*)\s*\(|(?<![\w$.:])([a-z_$][\w$]*)\s*\(/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src)) !== null) {
+    if (m[3] && KEYWORDS.has(m[3])) continue;
+    if (m[3] && /\bnew\s+$/.test(src.slice(Math.max(0, m.index - 5), m.index))) continue;
+    // The chain that follows: `.user(…).call().entity(…)`.
+    let end = src.indexOf("(", m.index + m[0].length - 1);
+    let chain = `${m[2] || m[3]}()`;
+    let close = closeParen(src, end);
+    for (;;) {
+      const next = /^\s*\.\s*([A-Za-z_$][\w$]*)\s*\(/.exec(src.slice(close));
+      if (!next) break;
+      chain += `.${next[1]}()`;
+      end = close + next[0].length - 1;
+      close = closeParen(src, end);
+    }
+    out.push({ at: m.index, receiver: m[1] || "", name: m[2] || m[3], chain });
+  }
+  return out;
+}
+
+function closeParen(s: string, open: number): number {
+  let depth = 0;
+  for (let i = open; i < s.length; i += 1) {
+    if (s[i] === "(") depth += 1;
+    else if (s[i] === ")" && --depth === 0) return i + 1;
+  }
+  return s.length;
+}
+
+function localTypes(body: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const re = /\b([A-Z][\w$]*(?:<[^=;()]*>)?)\s+([a-z_$][\w$]*)\s*=/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(body)) !== null) out.set(m[2], m[1]);
+  return out;
+}
+
+export interface CodeSequenceInput {
+  readonly scenario: ScenarioSteps;
+  readonly actor: string;
+  readonly types: ReadonlyArray<UmlType>;
+  /** What the web app calls, for a scenario that goes through a screen: `POST /api/x`. */
+  readonly webCalls: ReadonlyArray<string>;
+}
+
+const STEP = /^(given|when|then|and|but)\b\s*/i;
+const CALL = /\b(GET|POST|PUT|PATCH|DELETE)\s+(\/[^\s;,)"'`]*)/;
+const MAX_DEPTH = 4;
+
+/**
+ * The scenario followed through the code, or null when its call reaches no
+ * endpoint the code declares. A scenario whose WHEN names a call starts at
+ * that endpoint; one that goes through a screen starts at the web app, which
+ * calls the endpoint the requirement's web code names.
+ */
+export function codeSequence(input: CodeSequenceInput): string | null {
+  const { scenario, actor, types } = input;
+  const given: string[] = [];
+  const when: string[] = [];
+  const then: string[] = [];
+  let kind = "given";
+  for (const raw of scenario.steps) {
+    const m = STEP.exec(raw.trim());
+    const word = m ? m[1].toLowerCase() : "";
+    if (word === "given" || word === "when" || word === "then") kind = word;
+    const t = raw.trim().slice(m ? m[0].length : 0);
+    if (t) (kind === "given" ? given : kind === "when" ? when : then).push(t);
+  }
+  const endpoints = endpointsOf(types);
+  const direct = when.map((w) => CALL.exec(w)).find(Boolean);
+  const viaWeb = !direct;
+  const call = direct ? `${direct[1]} ${direct[2]}` : input.webCalls.find((c) => endpointFor(endpoints, c));
+  const entry = call ? endpointFor(endpoints, call) : null;
+  if (!entry || !call) return null;
+
+  const byName = new Map(types.map((t) => [t.name, t]));
+  const aliases = new Map<string, string>();
+  const declared: string[] = [`  actor A as ${text(actor || "User")}`];
+  const lifeline = (label: string) => {
+    if (!aliases.has(label)) {
+      const alias = `P${aliases.size + 1}`;
+      aliases.set(label, alias);
+      declared.push(`  participant ${alias} as ${text(label)}`);
+    }
+    return aliases.get(label) as string;
+  };
+  const lines: string[] = [];
+  const web = viaWeb ? lifeline("«boundary» Web app") : "";
+  const api = lifeline(`:${entry.type.name}`);
+
+  const signature = (m: UmlMember) =>
+    `${m.name}(${m.params.map((p) => (p.type ? `${p.name} : ${p.type}` : p.name)).join(", ")})`;
+  const implementorOf = (iface: UmlType) => {
+    const impl = types.filter((t) => t.parents.some((p) => p.kind === "implements" && p.name === iface.name));
+    return impl.length === 1 ? impl[0] : null;
+  };
+
+  // A reply carries what the operation returns; a void one only ends the activation.
+  const back = (from: string, to: string, type: string) =>
+    lines.push(type && type !== "void" ? `  ${from}-->>-${to}: ${text(type)}` : `  deactivate ${from}`);
+
+  const visit = (owner: UmlType, method: UmlMember, from: string, depth: number, stack: string[]) => {
+    const fields = new Map(owner.members.filter((m) => m.kind === "field").map((m) => [m.name, m.type]));
+    const params = new Map(method.params.map((p) => [p.name, p.type]));
+    const locals = localTypes(method.body);
+    for (const c of callsIn(method.body)) {
+      if (!c.receiver) {
+        const self = owner.members.find((m) => m.kind === "method" && m.name === c.name);
+        if (!self) continue;
+        const key = `${owner.name}.${self.name}`;
+        if (stack.includes(key)) continue;
+        lines.push(`  ${from}->>+${from}: ${text(signature(self))}`);
+        if (depth < MAX_DEPTH) visit(owner, self, from, depth + 1, [...stack, key]);
+        back(from, from, self.type);
+        continue;
+      }
+      const declaredType = fields.get(c.receiver) ?? params.get(c.receiver) ?? locals.get(c.receiver);
+      if (!declaredType) continue;
+      const target = typeNames(declaredType).map((n) => byName.get(n)).find(Boolean);
+      if (target) {
+        if (target.kind === "record" || target.kind === "enum") continue;
+        const runtime = target.kind === "interface" ? implementorOf(target) || target : target;
+        const callee =
+          runtime.members.find((m) => m.kind === "method" && m.name === c.name) ||
+          target.members.find((m) => m.kind === "method" && m.name === c.name);
+        if (!callee) continue;
+        const to = lifeline(`:${runtime.name}`);
+        const key = `${runtime.name}.${callee.name}`;
+        lines.push(`  ${from}->>+${to}: ${text(signature(callee))}`);
+        if (depth < MAX_DEPTH && !stack.includes(key) && callee.body) visit(runtime, callee, to, depth + 1, [...stack, key]);
+        back(to, from, callee.type);
+      } else if (fields.has(c.receiver)) {
+        // A collaborator outside the project — a client, a repository — drawn, not entered.
+        const to = lifeline(`:${typeNames(declaredType)[0]}`);
+        lines.push(`  ${from}->>+${to}: ${text(c.chain)}`);
+        back(to, from, "");
+      }
+    }
+  };
+
+  const route = entry.route;
+  if (viaWeb) {
+    lines.push(`  A->>+${web}: ${text(when.join("; "))}`);
+    lines.push(`  ${web}->>+${api}: ${text(route)}`);
+  } else {
+    lines.push(`  A->>+${api}: ${text(route)}`);
+  }
+  visit(entry.type, entry.method, api, 1, [`${entry.type.name}.${entry.method.name}`]);
+  if (viaWeb) {
+    lines.push(`  ${api}-->>-${web}: ${text(entry.status)}`);
+    lines.push(`  ${web}-->>-A: ${text(then.join("; "))}`);
+  } else {
+    lines.push(`  ${api}-->>-A: ${text(entry.status)}`);
+  }
+  const first = viaWeb ? web : api;
+  const notes = [
+    ...(given.length ? [`  Note over A,${first}: ${text(given.join("; "))}`] : []),
+  ];
+  const outcome = !viaWeb && then.length ? [`  Note over A,${api}: ${text(then.join("; "))}`] : [];
+  return (
+    [
+      UML_THEME,
+      "sequenceDiagram",
+      `  title ${text(scenario.title)}`,
+      "  autonumber",
+      ...declared,
+      ...notes,
+      ...lines,
+      ...outcome,
+    ].join("\n") + "\n"
+  );
+}
+
+/** The `METHOD /path` calls a web file makes near where it names the requirement, or all of them. */
+export function webCallsOf(source: string, id: string): string[] {
+  const lines = source.split(/\r?\n/);
+  const all: Array<{ line: number; call: string }> = [];
+  lines.forEach((l, i) => {
+    const path = /["'`](\/api\/[^"'`$]*)/.exec(l);
+    if (!path) return;
+    const near = lines.slice(Math.max(0, i - 1), i + 3).join(" ");
+    const verb = (/method\s*:\s*["'`](\w+)["'`]/.exec(near) || [])[1] || "GET";
+    all.push({ line: i, call: `${verb.toUpperCase()} ${path[1]}` });
+  });
+  const named = lines.map((l, i) => (l.includes(id) ? i : -1)).filter((i) => i >= 0);
+  const close = all.filter((c) => named.some((n) => c.line >= n && c.line - n <= 3));
+  return [...new Set((close.length ? close : all).map((c) => c.call))];
+}

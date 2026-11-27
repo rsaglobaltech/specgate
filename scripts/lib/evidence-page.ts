@@ -171,8 +171,10 @@ export function writeEvidencePage(
       else lines.push(...folded("At the base", s.before), "");
     }
     for (const c of d.classes) {
-      lines.push(`### ${code(c.file)}`, "", ...fence(c.after), "");
+      lines.push(`### Classes — ${c.file}`, "", ...fence(c.after), "");
+      if (c.legend) lines.push(c.legend, "");
       if (c.before !== null) lines.push(...folded("At the base", c.before), "");
+      else lines.push("New since the base.", "");
     }
 
     summary.push({
