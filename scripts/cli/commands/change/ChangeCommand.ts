@@ -151,6 +151,8 @@ function verbUsage(sub: string) {
         `    ${c.cyan}specgate propose --from-brief${c.reset} [<module>]   ${c.dim}a module of docs/brief.md (see specgate draft --help)${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} --check | --new-brief | --agent <cmd>\n` +
         `                     ${c.dim}check the brief · write one to fill in · have your agent propose its fields or cards${c.reset}\n` +
+        `    ${c.cyan}specgate propose --from-brief${c.reset} --guide setup|cards\n` +
+        `                     ${c.dim}the guide an agent follows to propose the fields, or the cards · writes nothing${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} --form [<form.json> | -] [--brief <file>]\n` +
         `                     ${c.dim}the brief as a form, each field with its line · that form written back, every other byte kept${c.reset}\n` +
         `    ${c.cyan}specgate propose --use-cases${c.reset} [--agent <cmd>]\n` +

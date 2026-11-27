@@ -133,6 +133,8 @@ export interface DraftOptions {
   json: boolean;
   /** `--no-agent`: the drafting guide for your own agent, even with `draft_profile` (REQ-689). */
   noAgent?: boolean;
+  /** `--guide setup|cards`: print that guide for an agent, writing nothing (REQ-796). */
+  guide?: "setup" | "cards";
 }
 
 /** Where `specgate draft` looks for the plan when `--brief` is not given. */
@@ -158,7 +160,9 @@ function usage(): string {
     '  specgate draft --agent "claude -p"   have your agent propose the brief\'s front matter\n' +
     "  specgate draft --form [--json]       the brief as a form, each field with its line\n" +
     "  specgate draft --form <file|->       write a form — that JSON, values changed — back\n" +
-    "                                       into the brief; every other byte of it is kept\n\n" +
+    "                                       into the brief; every other byte of it is kept\n" +
+    "  specgate draft --guide setup|cards   print the guide an agent follows to propose the\n" +
+    "                                       front matter, or a section per module; writes nothing\n\n" +
     "  --brief <file>   Your plan or brief (default: docs/brief.md). Any markdown; a front\n" +
     "                   matter with modules, actors and surfaces lets the checklist do more.\n" +
     "  --reserve <n>    Requirement ids a new draft reserves (default 10, at most the --max-requirements).\n" +
@@ -223,6 +227,11 @@ export function parseArgs(argv: string[]): DraftOptions {
     else if (a === "--profile") o.profile = value();
     else if (a === "--no-agent") o.noAgent = true;
     else if (a === "--new-brief") o.newBrief = true;
+    else if (a === "--guide") {
+      const v = value();
+      if (v !== "setup" && v !== "cards") throw new Error(`--guide takes setup or cards, not ${v}`);
+      o.guide = v;
+    }
     else if (a === "--form") {
       // `--form` alone reads; `--form <file>` or `--form -` writes, as `--check [<id>]`.
       const next = argv[i + 1];
@@ -987,6 +996,7 @@ export class DraftCommand extends BaseCommand {
         ]);
       }
     }
+    if (opts.guide) return this.guide(opts);
     if (opts.form !== undefined) return this.form(opts);
     if (opts.checkBrief) return this.checkBrief(opts);
     if (opts.check) return this.check(opts);
@@ -1124,7 +1134,8 @@ export class DraftCommand extends BaseCommand {
           out.write(
             "\n" +
               ui.section("Or let your agent propose them") +
-              `  ${ui.cmd('specgate draft --agent "claude -p"')}  ${ui.muted("— then review what it wrote")}\n`
+              `  ${ui.cmd('specgate draft --agent "claude -p"')}  ${ui.muted("— then review what it wrote")}\n` +
+              `  ${ui.cmd("specgate propose --from-brief --guide setup")}  ${ui.muted("— the guide, for an agent you run yourself")}\n`
           );
           out.write(ui.next("specgate propose --from-brief", `once they are fixed in ${rel}`));
         }
@@ -1183,6 +1194,15 @@ export class DraftCommand extends BaseCommand {
             )
         );
       }
+      // REQ-797: no section yet — the guide the draft step sends the agent to.
+      if (modules.length > 0 && readBriefBody(brief.text).modules.length === 0) {
+        out.write(
+          "\n" +
+            ui.info(
+              `No \`## Module:\` sections yet ${ui.muted("— the guide to add them: specgate propose --from-brief --guide cards")}`
+            )
+        );
+      }
       out.write(
         pending
           ? ui.next(next)
@@ -1191,6 +1211,33 @@ export class DraftCommand extends BaseCommand {
               ui.next(next, "what to build first")
       );
     });
+  }
+
+  /**
+   * `--guide setup|cards` (REQ-796): the guide an agent follows, printed. The
+   * skill sends the agent here rather than to a file only `--agent` writes —
+   * one left behind is an untracked file the harness refuses (REQ-260).
+   */
+  private guide(opts: DraftOptions): void {
+    const io = agentIo(opts.json);
+    const projectDir = resolveProjectDir(opts.projectDir);
+    const brief = this.brief(projectDir, opts)!;
+    let text: string;
+    if (opts.guide === "setup") text = briefSetupGuide(brief.rel);
+    else {
+      const modules = briefModules(brief.text);
+      if (modules.length === 0) {
+        io.fail({ draft: null }, [
+          error("draft_guide_no_modules", `The front matter of ${brief.rel} lists no module.`, {
+            fix: "Propose the front matter first: `specgate propose --from-brief --guide setup`.",
+          }),
+        ]);
+      }
+      text = briefCardsGuide(brief.rel, modules);
+    }
+    io.emit({ draft: { brief: brief.rel, guide: { name: opts.guide, text } } }, () =>
+      process.stdout.write(text)
+    );
   }
 
   /** `--check`: the brief rules on the brief, writing nothing (ADR-0038). */

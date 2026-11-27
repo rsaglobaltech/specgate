@@ -95,6 +95,7 @@ cada una se explica en [Desde el brief de un cliente](from-a-brief.md#3-comprueb
 | --- | --- | --- |
 | `draft_no_brief` | No hay `docs/brief.md` | `specgate propose --from-brief --new-brief` escribe uno para rellenar |
 | `draft_module_not_in_brief` | El módulo no está listado en `modules:` del brief | Añádelo ahí |
+| `draft_guide_no_modules` | `--guide cards` sobre un brief cuyo front matter no lista ningún módulo | Primero `specgate propose --from-brief --guide setup` |
 | D6: un valor no está en el brief | El borrador usa un número o un nombre que su fuente no dice | Pregunta al cliente, o regístralo en `assumptions.md` |
 | D7: una pregunta abierta | Una pregunta que ningún requisito espera | Haz que el requisito que bloquea la espere, o respóndela |
 | `draft_agent_failed` | El comando del agente no se ejecutó o falló | Ejecuta antes el comando por separado; o pega el prompt en tu agente |

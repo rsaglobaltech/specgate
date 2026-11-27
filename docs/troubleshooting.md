@@ -94,6 +94,7 @@ drafting checklist that runs on it, D1 to D12; each is explained in
 | --------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------- |
 | `draft_no_brief`                                    | No `docs/brief.md`                                          | `specgate propose --from-brief --new-brief` writes one to fill in     |
 | `draft_module_not_in_brief`                         | The module is not listed under `modules:` in the brief      | Add it there                                                          |
+| `draft_guide_no_modules`                            | `--guide cards` on a brief whose front matter lists no module | `specgate propose --from-brief --guide setup` first                 |
 | D6: a value is not in the brief                     | The draft uses a number or a name its source does not state | Ask the client, or record it in `assumptions.md`                      |
 | D7: an open question                                | A question no requirement waits for                         | Make the requirement it blocks wait for it, or answer it              |
 | `draft_agent_failed`                                | The agent command did not run or failed                     | Run the command on its own first; or paste the prompt into your agent |

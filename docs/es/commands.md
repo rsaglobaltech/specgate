@@ -37,6 +37,7 @@ antes del pull request, para que el spec y el código se revisen juntos.
 | `specgate propose --from-brief --check` | Ejecuta las reglas del brief (B1–B15) sobre el brief. No escribe nada. | [Escribir el brief](start/write-the-brief.md#paso-9-compruebalo) |
 | `specgate propose --from-brief --agent "<cmd>"` | Tu agente propone los campos del brief y después una sección por módulo. | [Desde un brief](from-a-brief.md) |
 | `specgate propose --from-brief --form` | El brief como formulario, cada campo con su línea; `--form <file>` lo vuelve a escribir. | [Desde un brief](from-a-brief.md) |
+| `specgate propose --from-brief --guide setup` | Imprime la guía que sigue un agente para proponer el front matter; `cards`, las secciones por módulo. No escribe nada. | [Desde un brief](from-a-brief.md) |
 | `specgate propose --from-brief <module>` | Abre el change borrador de ese módulo, o lo comprueba si ya existe. | [Desde un brief](from-a-brief.md#2-redacta-un-modulo) |
 | `specgate propose --from-ticket <KEY>` | Abre un change a partir de un ticket de Jira, en una nueva rama `feature/<KEY>-<slug>`. | [Desde un ticket de Jira](from-a-ticket.md) |
 | `specgate propose --from-ticket <KEY> --check` | La Definition of Ready del ticket (reglas T1–T9). No escribe nada. | [Desde un ticket de Jira](from-a-ticket.md) |
