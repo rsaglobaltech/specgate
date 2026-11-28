@@ -143,6 +143,17 @@ export function bddFindings(projectDir: string, bddCmd: string | undefined): Dia
       ),
     ];
   const out: Diagnostic[] = [];
+  if (baselineUnskipped(projectDir) !== null)
+    out.push(
+      warning(
+        "bdd_baseline_runs",
+        "The adoption baseline is a scenario no step runs: a full run of the feature files fails on it.",
+        {
+          file: BASELINE,
+          fix: "specgate migrate bdd — it tags the baseline @skip; the test command the gate runs keeps that promise.",
+        }
+      )
+    );
   const approved = openChanges(projectDir).filter((id) => changeApprovals(projectDir, id).approved);
   // A runner is owed once there are approved scenarios to run; before, the gate reminds.
   if (!bddCmd?.trim()) {
@@ -241,6 +252,39 @@ export function requireBdd(projectDir: string): boolean {
     : `${text.replace(/\s*$/, "")}\n# The scenarios are feature files a runner checks, before any code (REQ-661).\nbdd: required\n`;
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, next, "utf8");
+  return true;
+}
+
+const BASELINE = "features/adoption/baseline.feature";
+const BASELINE_SCENARIO = /^([ \t]*)Scenario: Existing test suite stays green[ \t\r]*$/m;
+
+/**
+ * Adoption's baseline scenario, when a feature runner would run it (REQ-822):
+ * its steps belong to no runner — the test command the gate runs keeps its
+ * promise — so with executable scenarios a full run fails on it.
+ */
+function baselineUnskipped(projectDir: string): string | null {
+  const file = path.join(projectDir, BASELINE);
+  const text = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+  const m = BASELINE_SCENARIO.exec(text);
+  if (!m) return null;
+  const before = text.slice(0, m.index).split("\n").slice(-3).join("\n");
+  return /(^|\s)@skip\b/.test(before) ? null : text;
+}
+
+/** The baseline scenario tagged `@skip`, which playwright-bdd skips; true when it was written (REQ-822). */
+export function skipAdoptionBaseline(projectDir: string): boolean {
+  const text = baselineUnskipped(projectDir);
+  if (text === null) return false;
+  fs.writeFileSync(
+    path.join(projectDir, BASELINE),
+    text.replace(
+      BASELINE_SCENARIO,
+      (line, indent: string) =>
+        `${indent}# Kept by the test command the gate runs, not by a feature runner.\n${indent}@skip\n${line}`
+    ),
+    "utf8"
+  );
   return true;
 }
 

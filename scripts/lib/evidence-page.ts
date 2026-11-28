@@ -11,7 +11,9 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { spawnSync } from "node:child_process";
 import { EVIDENCE_DIR, readAttempts } from "./evidence";
+import { baseOf } from "./quality-run";
 import { requirementDiagrams, type RequirementDiagrams } from "./evidence-diagrams";
 import { hideSecrets, httpCalls, type HttpCall } from "./trace-zip";
 import {
@@ -424,7 +426,26 @@ function markdownOf(r: RequirementEvidence): string[] {
 /** The change's evidence, gathered: what `writeEvidencePage` and the HTML page draw. */
 export function changeEvidence(projectDir: string, changeId: string, base = ""): RequirementEvidence[] {
   const changeDir = path.join(projectDir, "docs", "specs", "changes", changeId);
-  return requirementsOf(changeDir).map(({ id, title }) => gather(projectDir, id, title, base));
+  const from = evidenceBase(projectDir, changeId, base);
+  return requirementsOf(changeDir).map(({ id, title }) => gather(projectDir, id, title, from));
+}
+
+/**
+ * The commit the diagrams compare with (REQ-821): the one named, else the
+ * gate's base — unless that is HEAD itself with the change already committed,
+ * as when the work is done on main: then the commit before the change was
+ * opened, so its code shows as new rather than "unchanged since the base".
+ */
+export function evidenceBase(projectDir: string, changeId: string, explicit = ""): string {
+  if (explicit) return explicit;
+  const git = (...args: string[]) => {
+    const r = spawnSync("git", ["-C", projectDir, ...args], { encoding: "utf8" });
+    return r.status === 0 ? (r.stdout || "").trim() : "";
+  };
+  const base = baseOf(projectDir);
+  if (!base || base !== git("rev-parse", "HEAD")) return base;
+  const opened = git("log", "--reverse", "--format=%H", "--", `docs/specs/changes/${changeId}`).split("\n")[0];
+  return (opened && git("rev-parse", "--verify", "--quiet", `${opened}^`)) || base;
 }
 
 /**

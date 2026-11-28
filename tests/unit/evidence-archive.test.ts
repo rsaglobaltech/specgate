@@ -147,3 +147,30 @@ test("REQ-814 SCN-814a: evidence --base draws the base the person names", (t: Te
   const bad = cli("evidence", "draft-orders", "--base", "--project-dir", dir, "--json");
   assert.equal(bad.status, 2);
 });
+
+test("REQ-821 SCN-821a: on main, the page compares with the commit before the change was opened", (t: TestContext) => {
+  const dir = project(t, "bdd: required\n");
+  const git = (...args: string[]) =>
+    spawnSync("git", ["-C", dir, "-c", "user.email=t@t", "-c", "user.name=t", ...args], { encoding: "utf8" });
+  const change = path.join(dir, "docs", "specs", "changes", "draft-orders");
+  const aside = `${dir}-change`;
+  fs.renameSync(change, aside);
+  fs.mkdirSync(path.join(dir, "src"), { recursive: true });
+  const order = (members: string) => `// REQ-031\nexport class Orders {\n${members}}\n`;
+  fs.writeFileSync(path.join(dir, "src", "orders.ts"), order("  pay(): void {}\n"));
+  git("init", "-q", "-b", "main");
+  git("add", "-A");
+  git("commit", "-q", "-m", "before the change");
+  fs.renameSync(aside, change);
+  git("add", "-A");
+  git("commit", "-q", "-m", "the change is opened");
+  fs.writeFileSync(path.join(dir, "src", "orders.ts"), order("  pay(): void {}\n  refund(): void {}\n"));
+  git("commit", "-qam", "delivered on main");
+  const r = cli("evidence", "draft-orders", "--project-dir", dir, "--json");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(
+    fs.readFileSync(path.join(change, "EVIDENCE.md"), "utf8"),
+    /Changed: `Orders` — added `\+refund\(\)`/,
+    "not \"unchanged since the base\""
+  );
+});

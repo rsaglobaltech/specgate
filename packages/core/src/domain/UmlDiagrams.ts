@@ -299,22 +299,43 @@ export function codeSequence(input: CodeSequenceInput): string | null {
   const failCode = (/`([a-z][a-z0-9_]*)`/.exec(outcome) || [])[1] || "";
   // Or, through a screen, the message the child reads: an exception whose constructor writes it.
   const quoted = (body: string) => [...body.matchAll(/"([^"\\]{2,})"/g)].map((q) => q[1]);
-  const failure =
+  const read = (q: string) => q.trim().length > 8 && outcome.includes(q.trim());
+  const ownType =
     failStatus && failCode
       ? types.find((t) => t.members.some((m) => m.kind === "constructor" && m.body.includes(`"${failCode}"`)))
-      : types.find((t) =>
-          t.members.some(
-            (m) => m.kind === "constructor" && quoted(m.body).some((q) => q.length > 8 && outcome.includes(q))
-          )
-        );
-  const failLabel = failure
-    ? failStatus
-      ? `${failStatus} ${failCode}`
-      : quoted(failure.members.find((m) => m.kind === "constructor")?.body || "")[0] || failure.name
-    : "";
+      : types.find((t) => t.members.some((m) => m.kind === "constructor" && quoted(m.body).some(read)));
+  // Else a generic exception, found where it is thrown with the code or the message:
+  // `throw new DomainException("too_many_photos", …, "Puedes adjuntar hasta " + MAX + " fotografías")`.
+  const thrown = (body: string) =>
+    [...body.matchAll(/(?:\bthrow\s+new|->\s*new)\s+([A-Z][\w$]*)\s*\(/g)].map((m) => {
+      const end = body.indexOf(";", m.index);
+      return { at: m.index as number, type: m[1], stmt: body.slice(m.index, end < 0 ? undefined : end) };
+    });
+  const matches = (stmt: string) =>
+    failStatus && failCode ? stmt.includes(`"${failCode}"`) : quoted(stmt).some(read);
+  const site = ownType
+    ? undefined
+    : types
+        .flatMap((t) => t.members)
+        .flatMap((m) => thrown(m.body || ""))
+        .find((s) => matches(s.stmt));
+  const failure = ownType ? { name: ownType.name } : site ? { name: site.type } : null;
+  const siteCode = site ? quoted(site.stmt).find((q) => /^[a-z][a-z0-9_]*$/.test(q)) || "" : "";
+  const failLabel = failStatus
+    ? `${failStatus} ${failCode}`
+    : ownType
+      ? quoted(ownType.members.find((m) => m.kind === "constructor")?.body || "")[0] || ownType.name
+      : siteCode || site?.type || "";
   const raise = (from: string, to: string) => {
-    lines.push(`  ${from}--x${to}: ${text(`«exception» ${failure!.name}`)}`);
+    const what = siteCode ? `${failure!.name}(${siteCode})` : failure!.name;
+    lines.push(`  ${from}--x${to}: ${text(`«exception» ${what}`)}`);
     lines.push(`  deactivate ${from}`);
+  };
+  /** Where a method throws the scenario's exception; -1 when it does not. */
+  const throwIn = (body: string) => {
+    if (!failure) return -1;
+    const at = thrown(body).find((s) => s.type === failure.name && (!site || matches(s.stmt)));
+    return at ? at.at : -1;
   };
 
   /** Draws the calls a method makes; true when it ends in the scenario's exception. */
@@ -323,7 +344,7 @@ export function codeSequence(input: CodeSequenceInput): string | null {
     const params = new Map(method.params.map((p) => [p.name, p.type]));
     const locals = localTypes(method.body);
     const body = method.body.replace(/\bthis\s*\.\s*/g, "");
-    const throwAt = failure ? body.search(new RegExp(`\\bthrow\\s+new\\s+${failure.name}\\s*\\(`)) : -1;
+    const throwAt = throwIn(body);
     for (const c of callsIn(method.body)) {
       if (throwAt >= 0 && c.at > throwAt) break;
       if (!c.receiver) {
@@ -340,16 +361,18 @@ export function codeSequence(input: CodeSequenceInput): string | null {
         continue;
       }
       const declaredType = fields.get(c.receiver) ?? params.get(c.receiver) ?? locals.get(c.receiver);
-      if (!declaredType) continue;
-      const target = typeNames(declaredType).map((n) => byName.get(n)).find(Boolean);
+      // `Incident.checkPhotos(…)`: a class's static operation, on the class's own lifeline.
+      const statics = declaredType ? undefined : byName.get(c.receiver);
+      if (!declaredType && !statics) continue;
+      const target = statics || typeNames(declaredType as string).map((n) => byName.get(n)).find(Boolean);
       if (target) {
-        if (target.kind === "record" || target.kind === "enum") continue;
+        if (!statics && (target.kind === "record" || target.kind === "enum")) continue;
         const runtime = target.kind === "interface" ? implementorOf(target) || target : target;
         const callee =
           runtime.members.find((m) => m.kind === "method" && m.name === c.name) ||
           target.members.find((m) => m.kind === "method" && m.name === c.name);
         if (!callee) continue;
-        const to = lifeline(`:${runtime.name}`);
+        const to = lifeline(statics ? runtime.name : `:${runtime.name}`);
         const key = `${runtime.name}.${callee.name}`;
         lines.push(`  ${from}->>+${to}: ${text(signature(callee))}`);
         if (depth < MAX_DEPTH && !stack.includes(key) && callee.body && visit(runtime, callee, to, depth + 1, [...stack, key])) {
@@ -359,7 +382,7 @@ export function codeSequence(input: CodeSequenceInput): string | null {
         back(to, from, callee.type);
       } else if (fields.has(c.receiver)) {
         // A collaborator outside the project — a client, a repository — drawn, not entered.
-        const to = lifeline(`:${typeNames(declaredType)[0]}`);
+        const to = lifeline(`:${typeNames(declaredType as string)[0]}`);
         lines.push(`  ${from}->>+${to}: ${text(c.chain)}`);
         back(to, from, "");
       }

@@ -100,6 +100,8 @@ It writes `docs/specs/changes/draft-orders/EVIDENCE.md`. Per requirement:
 
 The base is the one `specgate check --affected` measures from;
 `--base <ref>` names another, such as the commit of the requirement before.
+When that base is HEAD itself — the work was done and committed on main — the
+page compares with the commit before the change was opened.
 The diagrams are read from the spec and the code, not drawn by a model, so the
 page is the same every time it is written. Commit it with the change and link
 it from the pull request.

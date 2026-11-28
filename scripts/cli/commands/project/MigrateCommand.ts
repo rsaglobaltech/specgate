@@ -1,4 +1,9 @@
-import { bddCommandFor, requireBdd, syncApprovedChanges } from "../../../lib/bdd";
+import {
+  bddCommandFor,
+  requireBdd,
+  skipAdoptionBaseline,
+  syncApprovedChanges,
+} from "../../../lib/bdd";
 import {
   readHarnessConfig,
   writeHarnessCommand,
@@ -69,8 +74,19 @@ export class MigrateCommand extends BaseCommand {
       const had = (readHarnessConfig(dir)?.bddCmd || "").trim();
       if (!dryRun && cmd && !had) writeHarnessCommand(dir, "bdd_cmd", cmd);
       const features = dryRun ? [] : syncApprovedChanges(dir);
+      // REQ-822: the adoption baseline has no steps; the test command keeps it.
+      const baselineSkipped = dryRun ? false : skipAdoptionBaseline(dir);
       io.emit(
-        { migrate: { target: "bdd", dryRun, required: true, bddCmd: had || cmd, features } },
+        {
+          migrate: {
+            target: "bdd",
+            dryRun,
+            required: true,
+            bddCmd: had || cmd,
+            features,
+            baselineSkipped,
+          },
+        },
         () => {
           const out = (s: string) => process.stdout.write(s);
           out(ui.header("migrate", dryRun ? "bdd · dry run" : "bdd"));
@@ -85,6 +101,8 @@ export class MigrateCommand extends BaseCommand {
               : '  bdd_cmd: set it — specgate config set bdd_cmd "<runs the feature files, with {tags}>"\n'
           );
           for (const f of features) out(`  + ${f}\n`);
+          if (baselineSkipped)
+            out("  ~ features/adoption/baseline.feature — @skip: the test command the gate runs keeps it\n");
         }
       );
       return;

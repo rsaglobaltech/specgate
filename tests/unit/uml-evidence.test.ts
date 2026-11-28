@@ -268,6 +268,72 @@ test("REQ-812: a scenario that ends in an error follows the exception the code t
   assert.doesNotMatch(seq, /201 Created/);
 });
 
+test("REQ-812: a generic exception is followed to the throw that carries the code, through a static operation", () => {
+  const sources: Record<string, string> = {
+    "Incident.java": `package city.domain;
+public record Incident(String address) {
+  public static void checkPhotos(int count) {
+    if (count > 5) {
+      throw new DomainException("too_many_photos", Kind.INVALID, "Puedes adjuntar hasta " + 5 + " fotografías");
+    }
+  }
+}
+`,
+    "Category.java": `package city.domain;
+public enum Category {
+  LIGHTING;
+  public static Category of(String label) {
+    return find(label).orElseThrow(() -> new DomainException("invalid_category", Kind.INVALID, "Elige una categoría"));
+  }
+}
+`,
+    "ReportIncident.java": `package city.app;
+public final class ReportIncident {
+  public Incident execute(Command command) {
+    Category category = Category.of(command.category());
+    Incident.checkPhotos(command.photos().size());
+    return new Incident(command.address());
+  }
+}
+`,
+    "IncidentController.java": `package city.web;
+@RestController
+@RequestMapping("/api/incidents")
+class IncidentController {
+  private final ReportIncident report;
+  @PostMapping
+  Incident report(Command command) { return report.execute(command); }
+}
+`,
+  };
+  const types = Object.entries(sources).flatMap(([f, s]) => umlTypesOf(f, s));
+  const api = codeSequence({
+    scenario: {
+      title: "Six photos",
+      steps: ["GIVEN a report", "WHEN the Citizen sends POST /api/incidents", "THEN it is 422 with `too_many_photos`"],
+    },
+    actor: "Citizen",
+    types,
+    webCalls: [],
+  });
+  assert.match(api, /participant P3 as Category/, "a static operation, on the class's lifeline");
+  assert.match(api, /P2->>\+P4: checkPhotos\(count : int\)/);
+  assert.match(api, /P4--xP2: «exception» DomainException\(too_many_photos\)/);
+  assert.match(api, /P1-->>-A: 422 too_many_photos/);
+  assert.doesNotMatch(api, /invalid_category/, "not the other throw of the same type");
+  const web = codeSequence({
+    scenario: {
+      title: "Six photos on the web",
+      steps: ["GIVEN a report", 'WHEN the Citizen attaches 6 photos', 'THEN they read "Puedes adjuntar hasta 5 fotografías"'],
+    },
+    actor: "Citizen",
+    types,
+    webCalls: ["POST /api/incidents"],
+  });
+  assert.match(web, /--x.*«exception» DomainException\(too_many_photos\)/, "found by the message the person reads");
+  assert.match(web, /P2-->>-P1: too_many_photos/);
+});
+
 test("REQ-812: through a screen, the client function the web code calls names the endpoint", (t: TestContext) => {
   const dir = project(t, [
     "GIVEN an empty cart",

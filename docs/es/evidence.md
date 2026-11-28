@@ -1,4 +1,4 @@
-<!-- translation-of: 6431abd2d247 -->
+<!-- translation-of: d38a25fc657b -->
 # Evidencia antes y después
 
 Al final de esta página cada requisito de un change tiene un antes y un
@@ -102,7 +102,9 @@ Escribe `docs/specs/changes/draft-orders/EVIDENCE.md`. Por requisito:
   capturas.
 
 La base es la que usa `specgate check --affected`; `--base <ref>` nombra otra,
-como el commit del requisito anterior. Los diagramas se leen del spec y del
+como el commit del requisito anterior. Si esa base es el propio HEAD —el trabajo
+se hizo y se commiteó en main—, la página compara con el commit anterior a la
+apertura del change. Los diagramas se leen del spec y del
 código, no los dibuja un modelo, así que la página sale igual cada vez que se
 escribe. Haz commit de ella con el change y enlázala desde el pull request.
 

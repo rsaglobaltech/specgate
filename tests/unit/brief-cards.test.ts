@@ -567,6 +567,33 @@ Examples
   }
 });
 
+test('REQ-820 SCN-820a: "determina si" and "confirm if" ask whether', () => {
+  const base = `${FRONT.replace("modules: [courses, lessons]", "modules: [triage]")}
+${NOTES}
+## Module: triage
+
+Rules
+- RULE
+
+Examples
+- The one where the operator files a report.
+`;
+  const b11 = (rule: string) =>
+    checkBrief(base.replace("RULE", rule), "docs/brief.md").filter(
+      (d: { code: string }) => d.code === "B11_condition_last"
+    );
+  for (const rule of [
+    "El operador determina si el reporte corresponde a un servicio municipal.",
+    "El supervisor evalúa si la prioridad está justificada.",
+    "El técnico confirma si la incidencia quedó resuelta.",
+    "El sistema valida si la dirección existe.",
+    "The operator determines if the report belongs to the city.",
+    "The technician confirms if the incident is resolved.",
+  ])
+    assert.deepEqual(b11(rule), [], rule);
+  assert.equal(b11("La incidencia se cierra si el técnico la resuelve.").length, 1, "a condition still is one");
+});
+
 test("REQ-245 SCN-245a: ten modules and a driver on mobile, in a web project", () => {
   const modules = "[a, b, c, d, e, f, g, h, i, j]";
   const text = `---
