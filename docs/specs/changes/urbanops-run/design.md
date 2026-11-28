@@ -15,7 +15,7 @@ AC-2 — `skipAdoptionBaseline` puts `@skip` (which playwright-bdd skips) and a 
 
 AC-3 — `evidenceBase`: with no `--base`, when `baseOf` is HEAD, the parent of the first commit that touches `docs/specs/changes/<id>`; `changeEvidence` uses it, so `evidence` and `archive` both do (REQ-821).
 
-AC-4 — `codeSequence` finds the exception by its own type first, else by the throw statement (`throw new X(…)` or `-> new X(…)`) that carries the THEN's code or a quoted fragment of its message; only that throw ends the scenario. A call on a project type's name is a static operation, drawn on the class's lifeline (REQ-812).
+AC-4 — `codeSequence` finds the exception by its own type first, else by the throw statement (`throw new X(…)` or `-> new X(…)`) that carries the THEN's code or a quoted fragment of its message; only that throw ends the scenario. A call on a project type's name is a static operation, drawn on the class's lifeline (REQ-812). The sequence leaves out what is computation, not conversation: calls on the platform's value and utility types (`PLATFORM`: `String`, `Clock`, `List`…), a parameter hiding the field of the same name, a private helper that draws nothing and has no `throw`, and a builder's consecutive repeats (`sql().param().update()`).
 
 ## Decisions
 

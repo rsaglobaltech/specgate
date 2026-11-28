@@ -86,7 +86,10 @@ It writes `docs/specs/changes/draft-orders/EVIDENCE.md`. Per requirement:
   requirement's id — it follows the code: one lifeline per object, each call
   with its parameters and types, each reply with what it returns, from the
   controller to the use case, the port's implementation and the client it
-  calls. Otherwise the actor, the system and the calls its steps name. The one
+  calls; a scenario that ends in an error ends at the throw that carries its
+  code or message. Strings, dates, clocks and lists, quiet private helpers and
+  a builder's repeated calls are left out: computation, not conversation.
+  Otherwise the actor, the system and the calls its steps name. The one
   at the base folds underneath, or the page says it is new or unchanged.
 - The requirement's code as one UML class diagram per language: its types,
   what they reference, the implementations of its interfaces and the types

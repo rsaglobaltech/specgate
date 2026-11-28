@@ -1,4 +1,4 @@
-<!-- translation-of: d38a25fc657b -->
+<!-- translation-of: 3abab2b40529 -->
 # Evidencia antes y después
 
 Al final de esta página cada requisito de un change tiene un antes y un
@@ -89,7 +89,11 @@ Escribe `docs/specs/changes/draft-orders/EVIDENCE.md`. Por requisito:
   al id del requisito—, sigue el código: una línea de vida por objeto, cada
   llamada con sus parámetros y tipos, cada respuesta con lo que devuelve, del
   controlador al caso de uso, la implementación del puerto y el cliente que
-  llama. Si no, el actor, el sistema y las llamadas que nombran sus pasos. El
+  llama; un escenario que acaba en error termina en el `throw` que lleva su
+  código o su mensaje. Cadenas, fechas, relojes y listas, helpers privados que
+  no hablan con nadie y las llamadas repetidas de un builder quedan fuera: son
+  cálculo, no conversación. Si no, el actor, el sistema y las llamadas que
+  nombran sus pasos. El
   de la base queda plegado debajo, o la página dice que es nuevo o que no cambió.
 - El código del requisito como un diagrama de clases UML por lenguaje: sus
   tipos, lo que referencian, las implementaciones de sus interfaces y los tipos

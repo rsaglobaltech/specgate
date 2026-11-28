@@ -334,6 +334,45 @@ class IncidentController {
   assert.match(web, /P2-->>-P1: too_many_photos/);
 });
 
+test("REQ-812: no noise — platform types, a quiet private helper and a builder's repeats are left out", () => {
+  const sources: Record<string, string> = {
+    "Incidents.java": `package city.app;
+public final class Incidents {
+  private final Clock clock;
+  private final Database db;
+  private final String label;
+  public Incident report(String label) {
+    var now = clock.instant();
+    if (blank(label.strip())) return null;
+    db.sql("insert").param(1).param(2).param(3).update();
+    return new Incident(now);
+  }
+  private static boolean blank(String s) { return s == null || s.isBlank(); }
+}
+`,
+    "IncidentController.java": `package city.web;
+@RestController
+@RequestMapping("/api/incidents")
+class IncidentController {
+  private final Incidents incidents;
+  @PostMapping
+  Incident report(String label) { return incidents.report(label); }
+}
+`,
+  };
+  const types = Object.entries(sources).flatMap(([f, s]) => umlTypesOf(f, s));
+  const seq = codeSequence({
+    scenario: { title: "Reported", steps: ["WHEN the Citizen sends POST /api/incidents", "THEN it is 201"] },
+    actor: "Citizen",
+    types,
+    webCalls: [],
+  });
+  assert.doesNotMatch(seq, /:Clock|instant\(\)/, "a clock is how the code tells the time");
+  assert.doesNotMatch(seq, /:String|strip\(\)/, "the parameter, not the field of the same name — and a string either way");
+  assert.doesNotMatch(seq, /blank\(/, "a private helper that talks to no one");
+  assert.match(seq, /->>\+P\d: sql\(\)\.param\(\)\.update\(\)/, "a builder's repeats once");
+});
+
 test("REQ-812: through a screen, the client function the web code calls names the endpoint", (t: TestContext) => {
   const dir = project(t, [
     "GIVEN an empty cart",

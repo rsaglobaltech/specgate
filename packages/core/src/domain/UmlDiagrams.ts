@@ -239,6 +239,21 @@ export interface CodeSequenceInput {
 const STEP = /^(given|when|then|and|but)\b\s*/i;
 const CALL = /\b(GET|POST|PUT|PATCH|DELETE)\s+(\/[^\s;,)"'`]*)/;
 const MAX_DEPTH = 4;
+/**
+ * The platform's own value and utility types — a string, a date, a clock, a
+ * list: their operations are how the code computes, not who it talks to, so
+ * the sequence leaves them out.
+ */
+const PLATFORM = new Set([
+  "String", "Integer", "Long", "Double", "Float", "Short", "Byte", "Boolean", "Character",
+  "BigDecimal", "BigInteger", "Number", "Object", "Optional", "List", "Set", "Map", "Collection",
+  "Stream", "Collectors", "Arrays", "Objects", "Math", "StringBuilder", "Pattern", "Matcher",
+  "Instant", "LocalDate", "LocalDateTime", "LocalTime", "OffsetDateTime", "ZonedDateTime",
+  "Duration", "Period", "Clock", "ZoneId", "ZoneOffset", "UUID", "Random",
+  "string", "number", "boolean", "Array", "Promise", "Date", "JSON", "RegExp",
+]);
+/** `sql().param().param().update()` as `sql().param().update()`: a builder's repeats say nothing. */
+const chainOf = (chain: string) => chain.split(".").filter((s, i, all) => s !== all[i - 1]).join(".");
 
 /**
  * The scenario followed through the code, or null when its call reaches no
@@ -352,15 +367,20 @@ export function codeSequence(input: CodeSequenceInput): string | null {
         if (!self) continue;
         const key = `${owner.name}.${self.name}`;
         if (stack.includes(key)) continue;
-        lines.push(`  ${from}->>+${from}: ${text(signature(self))}`);
+        const call = lines.push(`  ${from}->>+${from}: ${text(signature(self))}`);
         if (depth < MAX_DEPTH && visit(owner, self, from, depth + 1, [...stack, key])) {
           raise(from, from);
           return true;
         }
+        if (self.visibility === "-" && lines.length === call && !/\bthrow\b/.test(self.body)) {
+          lines.pop();
+          continue;
+        }
         back(from, from, self.type);
         continue;
       }
-      const declaredType = fields.get(c.receiver) ?? params.get(c.receiver) ?? locals.get(c.receiver);
+      const declaredType = params.get(c.receiver) ?? locals.get(c.receiver) ?? fields.get(c.receiver);
+      if (declaredType && PLATFORM.has(typeNames(declaredType)[0] ?? "")) continue;
       // `Incident.checkPhotos(…)`: a class's static operation, on the class's own lifeline.
       const statics = declaredType ? undefined : byName.get(c.receiver);
       if (!declaredType && !statics) continue;
@@ -380,10 +400,10 @@ export function codeSequence(input: CodeSequenceInput): string | null {
           return true;
         }
         back(to, from, callee.type);
-      } else if (fields.has(c.receiver)) {
+      } else if (fields.has(c.receiver) && !params.has(c.receiver) && !locals.has(c.receiver)) {
         // A collaborator outside the project — a client, a repository — drawn, not entered.
         const to = lifeline(`:${typeNames(declaredType as string)[0]}`);
-        lines.push(`  ${from}->>+${to}: ${text(c.chain)}`);
+        lines.push(`  ${from}->>+${to}: ${text(chainOf(c.chain))}`);
         back(to, from, "");
       }
     }
