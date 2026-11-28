@@ -218,3 +218,13 @@ test("REQ-824 SCN-824a: the server's record, inside the scenario's window, check
     "a call outside the window is not this scenario's"
   );
 });
+
+test("REQ-824: the same call twice in a scenario is two numbered rows, the second answer kept", (t: TestContext) => {
+  const twice = project(t, [
+    { at: 1_001_000, status: 201 },
+    { at: 1_002_000, status: 409 },
+  ]);
+  assert.equal(cli("evidence", "draft-orders", "--project-dir", twice.dir).status, 0);
+  assert.match(twice.page(), /\| `POST \/api\/orders \(1\)` \| — \| 201 \|/);
+  assert.match(twice.page(), /\| `POST \/api\/orders \(2\)` \| — \| 409 \|/);
+});

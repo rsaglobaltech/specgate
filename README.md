@@ -10,14 +10,23 @@
 [![Docs](https://img.shields.io/badge/docs-github_pages-0e8078)](https://rsaglobaltech.github.io/specgate/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](#-license)
 
+<img src="docs/assets/img/readme-from-a-brief.gif" width="860" alt="specgate in a terminal: a client's four-sentence brief becomes a draft of requirements; the drafting checklist catches a fee the agent invented and turns it into a question for the client">
+
 </div>
 
-Specgate keeps what your product must do in the repository, as numbered
-requirements with Gherkin scenarios, next to the code and the tests that prove
-them. A test that mentions a requirement's id (`REQ-007`) is the link, and the
-traceability matrix is generated from those mentions. The gate, `specgate check`,
-fails a pull request when a delivered requirement has no scenario or no test
-that names it, or when your test suite fails.
+**The problem:** what the client asked for, what was built and what was tested drift apart — fastest
+when an AI agent writes the code. Specgate ties the three together and fails the build when they disagree.
+
+- **A gate in CI** — `specgate check` fails a pull request when a delivered requirement has no scenario, no test that names it, or a red suite.
+- **From the client's brief** — requirements and Gherkin scenarios drafted from the brief; a value it never gave becomes a question, not a guess.
+- **Evidence before and after** — each requirement's run before its code and after it: screenshots, why it was red, the calls to the service, the code drawn as UML and checked against the run.
+- **Guardrails for coding agents** — test first, approved scope, sealed approvals: a person approves, the agent delivers. Claude Code, Codex and OpenCode.
+- **Traceability for free** — the matrix is generated from the tests that name each requirement.
+
+<p align="center"><img src="docs/assets/img/readme-evidence-before-after.webp" width="49%" alt="Evidence page: a requirement's screen before its code and after it, and its scenario red, then green"> <img src="docs/assets/img/readme-evidence-sequence.webp" width="49%" alt="Evidence page: a refused booking drawn as a UML sequence through the code, marked as matching the run's 409"></p>
+
+Requirements live in the repository as numbered `REQ-NNN` with Gherkin scenarios, next to the code;
+a test that mentions a requirement's id (`REQ-007`) is the link.
 
 ## ⚡ Install
 
@@ -32,20 +41,15 @@ Without installing it (an empty folder, a Java or Python project), prefix each
 command with `npx @rsaglobaltech/specgate@latest` instead of `npx specgate`.
 With Docker and no Node.js: `docker run --rm -v "$PWD:/workspace" ghcr.io/rsaglobaltech/specgate check`.
 
-**1.0 is released.** Coming from 0.x, `specgate migrate 1.0` moves a project
-in one command — [what is new](docs/whats-new-1.0.md) · [migrating](docs/migrating-to-1.0.md)
-· [what 1.0 promises](docs/compatibility.md): within 1.x nothing you rely on is removed.
+Coming from 0.x? `specgate migrate 1.0` — [migrating](docs/migrating-to-1.0.md) · [what 1.x promises](docs/compatibility.md).
 
 Then run `init` once:
 
 - **In a repository that has code** (`package.json`, `pom.xml`, `go.mod`, …),
   `specgate init` adopts it in place: it adds `spec.md`, `features/` and
   `docs/specs/`, and changes no source file.
-- **In an empty folder**, `npx @rsaglobaltech/specgate@latest init` scaffolds a
-  new specification project. A wizard asks for the project's name, type, stack
-  and test toolchain, then creates it in a new sub-folder named after the
-  project, for example `./my-spec-driven-app/`. `--yes` takes every default
-  without asking. It writes the specification files, not application code.
+- **In an empty folder**, `npx @rsaglobaltech/specgate@latest init` asks for the name, stack and test
+  toolchain and scaffolds a specification project in a new sub-folder (`--yes` takes the defaults).
 
 Step by step, with every output shown: [Getting started](docs/getting-started.md).
 

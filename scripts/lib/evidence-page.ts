@@ -345,11 +345,30 @@ function gather(projectDir: string, id: string, title: string, base: string): Re
     ];
   });
   const several = new Set(sided.flat().map((x) => x.scenario)).size > 1;
-  const keyOf = (x: { scenario: string; call: HttpCall }) =>
+  const baseOf = (x: { scenario: string; call: HttpCall }) =>
     `${x.call.method} ${routeOf(x.call.path)}${several && x.scenario ? ` · ${x.scenario}` : ""}`;
-  const keys = [...new Set(sided.flatMap((c) => c.map(keyOf)))];
+  // The same call twice in a scenario — a GIVEN that books, then the WHEN that is refused —
+  // is two rows, numbered in the order made, so the second answer is not lost.
+  const numbered = sided.map((list) => {
+    const seen = new Map<string, number>();
+    return list.map((x) => {
+      const base = baseOf(x);
+      const n = (seen.get(base) || 0) + 1;
+      seen.set(base, n);
+      return { ...x, base, n };
+    });
+  });
+  const repeated = new Set(
+    numbered
+      .flat()
+      .filter((x) => x.n > 1)
+      .map((x) => x.base)
+  );
+  const keyOf = (x: { base: string; n: number }) =>
+    repeated.has(x.base) ? `${x.base} (${x.n})` : x.base;
+  const keys = [...new Set(numbered.flatMap((c) => c.map(keyOf)))];
   const calls = keys.map((key) => {
-    const [b, a] = sided.map((list) => list.find((x) => keyOf(x) === key)?.call);
+    const [b, a] = numbered.map((list) => list.find((x) => keyOf(x) === key)?.call);
     const changed = !(b && a && b.status === a.status && steady(b.response) === steady(a.response));
     return { key, before: b, after: a, changed };
   });
@@ -459,7 +478,10 @@ function markdownOf(r: RequirementEvidence): string[] {
         `| ${code(c.key)} | ${cell(statusText(c.before))} | ${cell(statusText(c.after))} |`
       );
     lines.push("");
-    for (const c of r.calls.filter((x) => x.changed)) {
+    // A call with no body on either side — one the server recorded — has nothing to unfold.
+    const bodied = (x: CallPair) =>
+      [x.before?.request, x.before?.response, x.after?.request, x.after?.response].some(Boolean);
+    for (const c of r.calls.filter((x) => x.changed && bodied(x))) {
       const block = (label: string, text: string) =>
         text ? [`${label}:`, "", "```json", text, "```", ""] : [];
       lines.push(

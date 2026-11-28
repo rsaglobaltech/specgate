@@ -518,6 +518,7 @@
     "code:title_required",
     "code:tool_unknown",
     "code:tour_failed",
+    "code:trace_value_cut",
     "code:traceability_not_found",
     "code:traceability_unrecognized",
     "code:traceability_upgraded",

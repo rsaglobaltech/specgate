@@ -196,6 +196,8 @@ export function endpointFor(endpoints: ReadonlyArray<Endpoint>, call: string): E
 
 interface Found {
   at: number;
+  /** Where its own arguments close: an argument's call is made before the call it is passed to. */
+  done: number;
   receiver: string;
   name: string;
   chain: string;
@@ -215,7 +217,10 @@ const KEYWORDS = new Set([
   "synchronized",
 ]);
 
-/** The calls a body makes, in the order written: `x.m(` on a name, and `m(` on itself. */
+/**
+ * The calls a body makes, in the order they are made: `x.m(` on a name, and
+ * `m(` on itself — `Response.of(use.execute(…))` makes `execute` first.
+ */
 function callsIn(body: string): Found[] {
   const src = body.replace(/\bthis\s*\.\s*/g, "");
   const out: Found[] = [];
@@ -229,6 +234,7 @@ function callsIn(body: string): Found[] {
     let end = src.indexOf("(", m.index + m[0].length - 1);
     let chain = `${m[2] || m[3]}()`;
     let close = closeParen(src, end);
+    const done = close;
     for (;;) {
       const next = /^\s*\.\s*([A-Za-z_$][\w$]*)\s*\(/.exec(src.slice(close));
       if (!next) break;
@@ -236,9 +242,9 @@ function callsIn(body: string): Found[] {
       end = close + next[0].length - 1;
       close = closeParen(src, end);
     }
-    out.push({ at: m.index, receiver: m[1] || "", name: m[2] || m[3], chain });
+    out.push({ at: m.index, done, receiver: m[1] || "", name: m[2] || m[3], chain });
   }
-  return out;
+  return out.sort((a, b) => a.done - b.done);
 }
 
 function closeParen(s: string, open: number): number {
@@ -458,7 +464,7 @@ export function codeSequence(input: CodeSequenceInput): string | null {
     const body = method.body.replace(/\bthis\s*\.\s*/g, "");
     const throwAt = throwIn(body);
     for (const c of callsIn(method.body)) {
-      if (throwAt >= 0 && c.at > throwAt) break;
+      if (throwAt >= 0 && c.at > throwAt) continue;
       if (!c.receiver) {
         const self = owner.members.find((m) => m.kind === "method" && m.name === c.name);
         if (!self) continue;
@@ -480,7 +486,9 @@ export function codeSequence(input: CodeSequenceInput): string | null {
         params.get(c.receiver) ?? locals.get(c.receiver) ?? fields.get(c.receiver);
       if (declaredType && PLATFORM.has(typeNames(declaredType)[0] ?? "")) continue;
       // `Incident.checkPhotos(…)`: a class's static operation, on the class's own lifeline.
-      const statics = declaredType ? undefined : byName.get(c.receiver);
+      // A record nested in another type is its transport — `BookingResponse.of(…)` — not a collaborator.
+      const named = declaredType ? undefined : byName.get(c.receiver);
+      const statics = named && !(named.kind === "record" && named.outer) ? named : undefined;
       if (!declaredType && !statics) continue;
       const target =
         statics ||

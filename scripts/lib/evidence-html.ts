@@ -17,6 +17,7 @@ import {
   outcomeText,
   statusText,
   valueText,
+  type CallPair,
   type Picture,
   type RequirementEvidence,
 } from "./evidence-page";
@@ -121,7 +122,10 @@ function section(projectDir: string, r: RequirementEvidence): string {
       ),
       "</tbody></table></div>"
     );
-    for (const c of r.calls.filter((x) => x.changed)) {
+    // A call with no body on either side — one the server recorded — has nothing to unfold.
+    const bodied = (x: CallPair) =>
+      [x.before?.request, x.before?.response, x.after?.request, x.after?.response].some(Boolean);
+    for (const c of r.calls.filter((x) => x.changed && bodied(x))) {
       const body = (label: string, text: string) =>
         text
           ? `<div><p class="label">${esc(label)}</p><pre class="json">${esc(text)}</pre></div>`
@@ -169,6 +173,9 @@ function section(projectDir: string, r: RequirementEvidence): string {
       out.push(`<p class="check-${check.state}">${checkMark(check)} ${inline(check.text)}</p>`);
     if (s.before !== null && s.before === s.after) {
       out.push(mermaid(s.after as string), `<p class="muted">Unchanged since the base.</p>`);
+    } else if (s.before === null && s.after) {
+      // Nothing to compare with: the diagram takes the whole width, not half beside a blank.
+      out.push(`<p class="muted">New since the base.</p>`, mermaid(s.after));
     } else {
       out.push(
         `<div class="pair">${side("At the base", "bad", s.before, "New since the base.")}${side("Now", "ok", s.after, "Removed.")}</div>`

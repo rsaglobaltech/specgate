@@ -439,3 +439,40 @@ test("REQ-812: through a screen, the client function the web code calls names th
     "the exception found by the message the person reads"
   );
 });
+
+test("REQ-812: a call passed as an argument is made first; a nested record's factory is transport, not drawn", () => {
+  const sources: Record<string, string> = {
+    "BookCourt.java": `package club.app;
+public final class BookCourt {
+  public Booking execute(int court) { return null; }
+}
+`,
+    "BookingController.java": `package club.web;
+@RestController
+@RequestMapping("/api/bookings")
+class BookingController {
+  record BookingResponse(String number) {
+    static BookingResponse of(Booking b) { return new BookingResponse(b.number()); }
+  }
+  private final BookCourt bookCourt;
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  BookingResponse book(BookRequest request) {
+    return BookingResponse.of(bookCourt.execute(request.court()));
+  }
+}
+`,
+  };
+  const types = Object.entries(sources).flatMap(([f, s]) => umlTypesOf(f, s));
+  const seq = codeSequence({
+    scenario: {
+      title: "Booked",
+      steps: ["WHEN the Member sends POST /api/bookings", "THEN it is 201"],
+    },
+    actor: "Member",
+    types,
+    webCalls: [],
+  });
+  assert.match(seq, /P1->>\+P2: execute\(court : int\)/);
+  assert.doesNotMatch(seq, /BookingResponse|of\(b : Booking\)/);
+});
