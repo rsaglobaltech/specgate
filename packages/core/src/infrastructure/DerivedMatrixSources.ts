@@ -136,7 +136,28 @@ export function readDerivationSources(projectDir: string): DerivationSources {
     /* no capability specs: a spec.md-only project */
   }
 
-  return { spec, features, tests, capabilities, code };
+  return {
+    spec,
+    features,
+    tests,
+    capabilities,
+    code,
+    ...(strictLinks(projectDir) ? { links: "strict" as const } : {}),
+  };
+}
+
+/**
+ * `link: strict` in `.specgate/gate.yaml` (REQ-800). Read here, as one line,
+ * so every derivation follows it; the policy's other keys, and what is wrong
+ * with them, are the gate's to read (scripts/lib/gate-policy).
+ */
+function strictLinks(projectDir: string): boolean {
+  try {
+    const text = fs.readFileSync(path.join(projectDir, ".specgate", "gate.yaml"), "utf8");
+    return /^link:[ \t]*["']?strict["']?[ \t]*(#.*)?$/m.test(text);
+  } catch {
+    return false;
+  }
 }
 
 /**

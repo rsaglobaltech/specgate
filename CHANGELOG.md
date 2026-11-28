@@ -9,6 +9,20 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-11-28
+
+### Added
+
+- **Evidence before and after**: `specgate evidence before <REQ>` keeps the red run, `apply` the green one; `specgate evidence <change> [--html] [--open]` writes the page — screenshots, why each scenario failed, the calls to the service, the AI's decisions, failed attempts (REQ-803–805, REQ-807, REQ-815–819).
+- The code drawn as standard UML: a class diagram per language and a sequence per scenario, each sequence checked against the run (`SPECGATE_HTTP_LOG` for server-side calls) (REQ-806, REQ-811, REQ-812, REQ-824).
+- `archive` writes the evidence page; `evidence: required` refuses a requirement with no before (REQ-813, REQ-814).
+- `propose --from-brief --guide setup|cards`; `D17_quote_not_in_brief`; `link: strict`; a hint after a slow delivery; `apply` shows its scenarios stage (REQ-796–802, REQ-823).
+
+### Fixed
+
+- Trace values cut at a space, in specs and in a change's deltas; CRLF matrices; workspace runners in monorepos (REQ-798, REQ-825, REQ-808–810).
+- B11 on "determina si…"; evidence of work done on `main`; the adoption baseline under `bdd: required` is tagged `@skip` (REQ-820–822).
+
 ## [1.6.0] — 2026-11-26
 
 ### Added

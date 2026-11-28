@@ -1,0 +1,13 @@
+{
+  "requirement": "REQ-811",
+  "at": "2026-11-28T13:01:22.710Z",
+  "scenarios": {
+    "command": "node scripts/scenarios.mjs @REQ-811",
+    "exitCode": 0,
+    "ms": 979,
+    "tags": [
+      "@REQ-811"
+    ]
+  },
+  "artifacts": []
+}

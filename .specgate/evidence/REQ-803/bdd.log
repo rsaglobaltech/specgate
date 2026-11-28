@@ -1,0 +1,14 @@
+▶ dist/tests/unit/evidence-before.test.js
+✔ REQ-803 SCN-803a: evidence before keeps the red run and what the runner wrote (1261.5929ms)
+✔ REQ-803: evidence before needs a runner, and a requirement id (1591.5719ms)
+✔ REQ-803: an older Specgate's .gitignore gains the before's artifacts (12.7021ms)
+✔ REQ-803: the apply step says to take the before after the test, before the code (0.2755ms)
+✔ REQ-803: a requirement already met is delivered as it is, and before says so (1252.755ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4269.6716

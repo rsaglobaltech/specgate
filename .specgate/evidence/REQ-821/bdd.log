@@ -1,0 +1,10 @@
+▶ dist/tests/unit/evidence-archive.test.js
+✔ REQ-821 SCN-821a: on main, the page compares with the commit before the change was opened (2706.388ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2826.6358

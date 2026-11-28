@@ -1,0 +1,11 @@
+▶ dist/tests/unit/bdd-gate.test.js
+✔ REQ-822 SCN-822a: the adoption baseline, tagged @skip by migrate bdd, the gate warning until then (6080.5179ms)
+✔ REQ-822: an adoption whose gate requires the scenarios writes the baseline already skipped (652.1437ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6871.719

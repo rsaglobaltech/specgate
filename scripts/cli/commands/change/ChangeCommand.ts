@@ -42,9 +42,16 @@ import { agentIo } from "../../../lib/agent";
 import type { AgentDocument } from "../../../lib/agent";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { ARTIFACTS, artifactState } from "../../../change/artifacts";
-import { parseDelta, renderRequirement } from "../../../../packages/core/src/domain/SpecParser";
+import {
+  parseDelta,
+  renderRequirement,
+  strayTraceWords,
+} from "../../../../packages/core/src/domain/SpecParser";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { changeRequirements, DELIVERED } from "../../../lib/in-flight";
+import { readGatePolicy } from "../../../lib/gate-policy";
+import { readBefore } from "../../../lib/evidence";
+import { writeEvidencePage } from "../../../lib/evidence-page";
 import { ArchiveChangeUseCase } from "../../../../packages/core/src/application/ArchiveChangeUseCase";
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
 import {
@@ -151,6 +158,8 @@ function verbUsage(sub: string) {
         `    ${c.cyan}specgate propose --from-brief${c.reset} [<module>]   ${c.dim}a module of docs/brief.md (see specgate draft --help)${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} --check | --new-brief | --agent <cmd>\n` +
         `                     ${c.dim}check the brief · write one to fill in · have your agent propose its fields or cards${c.reset}\n` +
+        `    ${c.cyan}specgate propose --from-brief${c.reset} --guide setup|cards\n` +
+        `                     ${c.dim}the guide an agent follows to propose the fields, or the cards · writes nothing${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} --form [<form.json> | -] [--brief <file>]\n` +
         `                     ${c.dim}the brief as a form, each field with its line · that form written back, every other byte kept${c.reset}\n` +
         `    ${c.cyan}specgate propose --use-cases${c.reset} [--agent <cmd>]\n` +
@@ -1365,6 +1374,22 @@ function notApprovable(projectDir: string, id: string): Diagnostic[] {
  * Archiving lays one feature file per requirement, so the second replaced the
  * first's scenarios and `check` failed far from the cause (truck-flote, MS-9).
  */
+/**
+ * A delta's trace value cut at a space (REQ-825): `actor=Product owner` reads
+ * `actor=Product` — and archive writes the short one into the spec.
+ */
+function cutTraceValues(projectDir: string, id: string): Diagnostic[] {
+  return listDeltas(projectDir, id).flatMap((d) =>
+    strayTraceWords(fs.readFileSync(d.file, "utf8")).map((s) =>
+      warning(
+        "trace_value_cut",
+        `${path.relative(projectDir, d.file).split(path.sep).join("/")}:${s.line}: ${s.key}=${s.meant} is read as ${s.key}=${s.read}.`,
+        { target: id, fix: `Quote it: ${s.key}="${s.meant}".` }
+      )
+    )
+  );
+}
+
 function sharedFeatureFiles(projectDir: string, id: string): Diagnostic[] {
   const byFile = new Map<string, string[]>();
   for (const d of listDeltas(projectDir, id)) {
@@ -1424,6 +1449,7 @@ function cmdValidate(opts: ChangeOptions) {
     if (rewritten) result.diagnostics.push(rewritten);
     result.diagnostics.push(
       ...sharedFeatureFiles(projectDir, id),
+      ...cutTraceValues(projectDir, id),
       ...notApprovable(projectDir, id),
       ...contractCitationWarnings(projectDir, id)
     );
@@ -1543,6 +1569,36 @@ function cmdArchive(opts: ChangeOptions) {
     ]);
   }
 
+  // REQ-813: the evidence closes with the change. Where the scenarios run, a
+  // requirement delivered with no before is named — refused under
+  // `evidence: required`, unless forced — and the page is written below,
+  // current, before the change moves.
+  const policy = readGatePolicy(projectDir);
+  const evidenceOn =
+    (policy.bdd === "required" || policy.evidence === "required") && owned.length > 0;
+  const noBefore = evidenceOn
+    ? owned.filter((r) => !readBefore(projectDir, r.id)).map((r) => r.id)
+    : [];
+  const evidenceNotes: Diagnostic[] = [];
+  if (noBefore.length > 0) {
+    const required = policy.evidence === "required";
+    const message = `${noBefore.join(", ")} delivered with no before: the evidence shows only the after.`;
+    if (required && !opts.force) {
+      return fail(opts, nullShape, [
+        error("archive_no_before", message, {
+          target: changeId,
+          fix: "The before is taken once the test is written, before the code (`specgate evidence before REQ-NNN`). `.specgate/gate.yaml` sets evidence: required; to archive this change as it is, pass --force.",
+        }),
+      ]);
+    }
+    evidenceNotes.push(
+      warning("archive_no_before", message, {
+        target: changeId,
+        fix: "Next time, once the test is written and before the code: `specgate evidence before REQ-NNN`.",
+      })
+    );
+  }
+
   const repo = new DiskProjectRepository(projectDir);
   const useCase = new ArchiveChangeUseCase(repo);
   const plan = useCase.execute(changeId, {
@@ -1566,7 +1622,8 @@ function cmdArchive(opts: ChangeOptions) {
     totals: plan.totals,
     writes: plan.writes.map((w) => ({ file: rel(w.file), kind: w.kind })),
     deletes: plan.deletes.map((d) => ({ file: rel(d.file), reason: d.reason })),
-    warnings: plan.warnings,
+    warnings: [...plan.warnings, ...evidenceNotes],
+    evidence: evidenceOn ? { page: !opts.dryRun, noBefore } : null,
   };
 
   if (opts.dryRun) {
@@ -1591,6 +1648,20 @@ function cmdArchive(opts: ChangeOptions) {
       }
       process.stdout.write("\n");
     });
+  }
+
+  if (evidenceOn) {
+    try {
+      writeEvidencePage(projectDir, changeId);
+    } catch (err) {
+      summary.evidence = { page: false, noBefore };
+      summary.warnings.push(
+        warning("archive_evidence_page", `EVIDENCE.md could not be written: ${errorMessage(err)}`, {
+          target: changeId,
+          fix: `specgate evidence ${changeId}, then archive`,
+        })
+      );
+    }
   }
 
   try {
@@ -1668,7 +1739,12 @@ function cmdArchive(opts: ChangeOptions) {
               : "what each requirement still needs"
         )
     );
-    if (plan.warnings.length > 0) printDiagnostics(plan.warnings, process.stdout);
+    if (summary.evidence?.page) {
+      process.stdout.write(
+        `  ${ui.muted(`📸  EVIDENCE.md written with the change: each requirement before and after`)}\n`
+      );
+    }
+    if (summary.warnings.length > 0) printDiagnostics(summary.warnings, process.stdout);
   });
 }
 

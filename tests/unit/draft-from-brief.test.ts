@@ -619,7 +619,7 @@ test("--agent on a complete front matter with its module sections does nothing",
 
 test("/specgate:draft writes only the front matter, then stops for the person", () => {
   const body = slashCommandBody(STEPS.find((s: { name: string }) => s.name === "draft"));
-  assert.match(body, /follow `docs\/specs\/BRIEF-SETUP\.md`/);
+  assert.match(body, /follow the guide `specgate propose --from-brief --guide setup` prints/);
   assert.match(body, /never a word below it/);
   assert.match(body, /\*\*stop\*\* and show the front matter to the person/);
   assert.match(body, /specgate propose --from-brief --new-brief/);

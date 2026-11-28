@@ -1,0 +1,12 @@
+▶ dist/tests/unit/sequence-check.test.js
+✔ REQ-824: a sequence matches the run, differs from it, or says why it was not checked (1.9157ms)
+✔ REQ-824: when a test ran, from its trace; what the server recorded, from its log (7.8494ms)
+✔ REQ-824 SCN-824a: the server's record, inside the scenario's window, checks the sequence (1735.658ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1870.124

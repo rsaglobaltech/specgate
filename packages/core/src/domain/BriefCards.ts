@@ -472,10 +472,11 @@ const LATE_CONDITION = /\s(if|when|whenever|unless|while|once|cuando|si|mientras
 
 /**
  * "si" and "if" after a verb of saying, checking or deciding mean "whether":
- * "el sistema dice en menos de 1 s si cabe" states no condition (REQ-244).
+ * "el sistema dice en menos de 1 s si cabe" states no condition (REQ-244), nor
+ * "el operador determina si corresponde" (REQ-820).
  */
 const WHETHER =
-  /\b(dice|dicen|decir|indica|indican|comprueba|comprueban|comprobar|decide|deciden|decidir|sabe|saber|pregunta|preguntar|responde|muestra|calcula|verifica|says|say|tells|tell|checks|check|decides|decide|asks|ask|knows|know|shows|show)\b([^.;:]{0,40}?)\s(si|if)\s/giu;
+  /\b(dice|dicen|decir|indica|indican|comprueba|comprueban|comprobar|decide|deciden|decidir|sabe|saber|pregunta|preguntar|responde|muestra|calcula|verifica|verifican|determina|determinan|determinar|evalúa|evalúan|evaluar|confirma|confirman|confirmar|valida|validan|validar|revisa|revisan|averigua|averiguar|consulta|says|say|tells|tell|checks|check|decides|decide|asks|ask|knows|know|shows|show|determines|determine|evaluates|evaluate|confirms|confirm|verifies|verify|validates|validate|finds out|find out)\b([^.;:]{0,40}?)\s(si|if)\s/giu;
 const withoutWhether = (text: string) =>
   text.replace(WHETHER, (_m, verb: string, between: string) => `${verb}${between} whether `);
 

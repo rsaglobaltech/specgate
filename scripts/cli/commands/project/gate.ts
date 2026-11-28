@@ -1,4 +1,4 @@
-import { bddCommandFor } from "../../../lib/bdd";
+import { bddCommandFor, skipAdoptionBaseline } from "../../../lib/bdd";
 import {
   readHarnessConfig,
   writeHarnessCommand,
@@ -91,5 +91,7 @@ function installPolicy(projectDir: string, opts: { dryRun: boolean }) {
   }
   const runner = !!set || !!bddCommandFor(projectDir);
   fs.writeFileSync(file, gatePolicyTemplate({ bdd: runner }), "utf8");
+  // REQ-822: the adoption baseline is no runner's scenario once they run.
+  if (runner) skipAdoptionBaseline(projectDir);
   logInfo(`🚦 Policy: ${GATE_POLICY_FILE} — the standard preset; edit a rule to change what fails`);
 }

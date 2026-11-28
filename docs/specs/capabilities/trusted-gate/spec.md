@@ -1426,3 +1426,337 @@ The system SHALL end `specgate check` with `check_approved_changed`, and the fix
 - THEN it fails with `acceptance_not_sealed` and `check_approved_changed`, and not with `check_change_invalid`
 
 <!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-780.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-800 — With `link: strict`, a comment does not link a test
+
+The system SHALL, when `.specgate/gate.yaml` says `link: strict`, link a test file to a requirement or a scenario only when it names its id outside a comment — in a test's name, a tag, a string or the code — where a comment is `//`, `/* … */` or `#` to the end of the line, as the file's language writes it, and never inside a string; SHALL leave a `test=` in the trace and the code column as they are; and SHALL, without `link:` or with `link: mention`, link as before.
+
+> Reported on 2026-11-27: a test file whose comment said "REQ-007" was REQ-007's test, and `apply` judged only that the suite passed.
+
+#### Scenario: SCN-800a — A comment is not a link
+
+- GIVEN `link: strict`, and `tests/login.test.js` whose only mention of REQ-007 is `// REQ-007: covered elsewhere`
+- WHEN the matrix is derived
+- THEN REQ-007 has no test, and `specgate apply REQ-007` is refused with `apply_no_test`, its fix saying a comment does not count under `link: strict`
+
+#### Scenario: SCN-800b — A test's name is a link
+
+- GIVEN `link: strict`, and `tests/login.test.js` with `test("REQ-007: a locked account is refused", …)`, and `const url = "http://x/REQ-008"` under a `// REQ-009` comment
+- WHEN the matrix is derived
+- THEN REQ-007 and REQ-008 are linked to `tests/login.test.js`, and REQ-009 is not
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-800.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-801 — The gate policy reads `link`
+
+The system SHALL accept `link: mention` and `link: strict` in `.specgate/gate.yaml`, report any other value as a problem of the policy with the two values to use, and write in the file `specgate init` creates a commented `link: strict` line that says what it does.
+
+#### Scenario: SCN-801a — A value the policy does not know
+
+- GIVEN `.specgate/gate.yaml` with `link: tags`
+- WHEN the policy is read
+- THEN it has the problem "link `tags` is not mention or strict", and the fix names `link: strict`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-801.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-802 — A slow delivery names the faster command
+
+The system SHALL, when `specgate apply` delivers a requirement and its test command took two minutes or more, while that command has neither `{files}` nor `{req}`, say after the delivery that the whole suite ran for one requirement, how long it took, and the command that runs only its tests: `specgate config set test_cmd_affected "<the test command> {files}"`, naming `docs/fast-gate.md`; and SHALL say nothing of it when the run was quicker or the command already takes `{files}` or `{req}`.
+
+> Reported on 2026-11-27: each apply ran the whole suite with Testcontainers, several minutes per requirement; the project did not know `test_cmd_affected` existed.
+
+#### Scenario: SCN-802a — The whole suite, slowly
+
+- GIVEN `test_cmd` is `node slow.js`, which takes longer than the limit, and no `test_cmd_affected`
+- WHEN the Developer runs `specgate apply REQ-001`
+- THEN REQ-001 is Implemented, and the output names `specgate config set test_cmd_affected "node slow.js {files}"` and `docs/fast-gate.md`
+
+#### Scenario: SCN-802b — Already scoped
+
+- GIVEN the same slow command, as `test_cmd_affected` with `{files}`
+- WHEN the Developer runs `specgate apply REQ-001`
+- THEN the output does not name `test_cmd_affected`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-802.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-808 — A matrix checked out with CRLF is current
+
+The system SHALL treat `docs/specs/traceability.md` as current when it differs from the matrix Specgate would generate only in its line endings (`\r\n` for `\n`), in `validate` and wherever the matrix is compared, without rewriting it; and SHALL still report `matrix_stale` when any other character differs.
+
+> Reported on 2026-11-27: a fresh Windows worktree (`core.autocrlf=true`) failed `validate` with a current matrix.
+
+#### Scenario: SCN-808a — CRLF, same rows
+
+- GIVEN a project whose generated matrix is current, rewritten with CRLF line endings
+- WHEN the Developer runs `specgate validate`
+- THEN no `matrix_stale` is reported
+
+#### Scenario: SCN-808b — CRLF, a row changed
+
+- GIVEN the same matrix with CRLF line endings and one row's status changed
+- WHEN the Developer runs `specgate validate`
+- THEN `matrix_stale` is reported
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-808.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-809 — The evidence keeps what a workspace's runner wrote
+
+The system SHALL, when it keeps the evidence of a requirement's scenarios (`apply`, `evidence before`, `reproduce run`), copy the files written during that run under `test-results/` and under the `test-results/` of each workspace the root `package.json` declares, a workspace's files under `artifacts/<workspace>/`.
+
+> Reported on 2026-11-27: Playwright ran in `apps/web` and wrote `apps/web/test-results/`; the evidence kept nothing.
+
+#### Scenario: SCN-809a — A screenshot in a workspace
+
+- GIVEN a project whose `package.json` declares the workspace `apps/*`, and a `bdd_cmd` that writes `apps/web/test-results/flow/test-finished-1.png`
+- WHEN the Developer runs `specgate evidence before REQ-001`
+- THEN `.specgate/evidence/REQ-001/before/artifacts/apps/web/flow/test-finished-1.png` exists, and `run.json` lists it
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-809.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-810 — Doctor sees a workspace's runner and its Playwright config
+
+The system SHALL, in `specgate doctor`, count the scenarios as executed when `bdd_cmd` is set or the root or a declared workspace has a Gherkin runner (playwright-bdd among them); and SHALL check for screenshots and video the Playwright config at the root or, when there is none, in a declared workspace, whenever `bdd_cmd` names Playwright or that config uses playwright-bdd.
+
+> Reported on 2026-11-27: with playwright-bdd in `apps/web` and `bdd_cmd` set to an npm script, doctor said nothing executes the scenarios, and never named the missing screenshots.
+
+#### Scenario: SCN-810a — playwright-bdd in a workspace
+
+- GIVEN a project with `bdd_cmd: npm run test:bdd -- --grep "{tags}"`, the workspace `apps/web` whose `playwright.config.ts` uses playwright-bdd with no `screenshot` or `video`, and a well-formed feature file
+- WHEN the Developer runs `specgate doctor`
+- THEN the scenarios line does not say "no Gherkin runner", and `doctor_evidence_media` is reported
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-810.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-803 — A requirement's run before its code is kept as its before
+
+The system SHALL keep, as `.specgate/evidence/<REQ>/before/`, a run of the requirement's scenarios made before its code — when `specgate reproduce run` sees a bug red, and when the Developer runs `specgate evidence before <REQ>…` — with the command, its exit code, its duration, the end of its output, and the files the runner wrote under `test-results/` during it, those files kept out of git; whether the run passed or failed. The `apply` step every agent tool is given SHALL say to take it once the test is written and before the code.
+
+#### Scenario: SCN-803a — Before the code, red
+
+- GIVEN `bdd: required`, a `bdd_cmd` whose run for REQ-031 fails and writes `test-results/checkout/screenshot.png`
+- WHEN the Developer runs `specgate evidence before REQ-031`
+- THEN `.specgate/evidence/REQ-031/before/run.json` holds the command with `@REQ-031` and a non-zero exit code, and `before/artifacts/checkout/screenshot.png` exists
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-803.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-804 — A delivery keeps its after beside its before
+
+The system SHALL keep the evidence `apply` keeps (REQ-680) where it keeps it, leave `before/` as it is, and name the before — its command, exit code and time — in `evidence.json` when one was kept.
+
+#### Scenario: SCN-804a — Delivered after its before
+
+- GIVEN REQ-031 with a before
+- WHEN `specgate apply REQ-031` delivers it with its scenarios green
+- THEN `.specgate/evidence/REQ-031/evidence.json` has exit code 0 and names the before's exit code, and `before/run.json` is unchanged
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-804.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-805 — Doctor says when the runner keeps no pictures
+
+The system SHALL warn, on `specgate doctor`, with `doctor_evidence_media` when `bdd_cmd` runs Playwright and its config does not set `screenshot` and `video` under `use`, the fix naming the lines to add; and SHALL say nothing of a runner it does not read.
+
+#### Scenario: SCN-805a — Playwright without screenshots
+
+- GIVEN `bdd_cmd` runs `npx bddgen && npx playwright test`, and `playwright.config.ts` with no `screenshot:` under `use`
+- WHEN the Developer runs `specgate doctor`
+- THEN it warns `doctor_evidence_media`, its fix naming `screenshot: 'on'` and `video: 'on'`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-805.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-806 — A requirement is drawn before and after, the same way every time
+
+The system SHALL draw, as Mermaid, a sequence diagram of each scenario of a requirement — its actor and the system, its GIVEN steps as a note, a message from the actor for each `METHOD /path` a WHEN step names (or the step itself when it names none), and its THEN steps as replies — from the spec at the base and from the spec now, and a class diagram of the files its code column links — their classes, public members and parents, with the members added or removed since the base in a note — at the base and now, for TypeScript, JavaScript, Java, Kotlin, C# and Python; the same input giving the same text. The evidence page draws the code as REQ-811 and REQ-812 say.
+
+#### Scenario: SCN-806a — A call added to a flow
+
+- GIVEN REQ-031 whose scenario at the base sends `POST /api/orders`, and now also `POST /api/payments`
+- WHEN its diagrams are drawn
+- THEN the before has one call and the after two, both from the actor to the system
+
+#### Scenario: SCN-806b — A method added to a class
+
+- GIVEN `src/orders.ts`, linked to REQ-031, whose class `Orders` has `place()` at the base and `place()` and `refund()` now
+- WHEN its diagrams are drawn
+- THEN the after's class `Orders` lists `refund()`, marked as added
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-806.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-807 — One page shows a change's evidence
+
+The system SHALL write, on `specgate evidence <change>`, `docs/specs/changes/<change>/EVIDENCE.md`: per requirement of the change, its before and after side by side — the last screenshot of each test, copied beside the page when under 300 KB —, its diagrams, and the paths of its videos and traces; and, for a requirement with no before, no after or no pictures, a line saying which and the command that gets it.
+
+#### Scenario: SCN-807a — One before, one missing
+
+- GIVEN draft-orders with REQ-031, which has a before and an after with screenshots, and REQ-032, delivered with no before
+- WHEN the Developer runs `specgate evidence draft-orders`
+- THEN EVIDENCE.md shows REQ-031's two screenshots side by side, and says REQ-032 has no before with `specgate evidence before REQ-032`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-807.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-811 — The requirement's code as a UML class diagram
+
+The system SHALL draw on the evidence page, per language of a requirement's code, one Mermaid class diagram of the slice the requirement touches — the types of its files, the types they reference up to two steps away, the implementations of its interfaces, and the types that hold one of its types as an attribute — with, for Java and TypeScript, each attribute and operation typed and with its visibility, the stereotypes `interface`, `record`, `enumeration` (with its literals) and `abstract`, associations named by the attribute with multiplicity `1` or `0..*`, dependencies from operation signatures, generalizations and realizations; and SHALL colour the types not at the base and those whose members changed, naming them under the diagram; the same code giving the same text.
+
+#### Scenario: SCN-811a — A use case and its port
+
+- GIVEN `ReviewOrder.java`, which names REQ-041, holding a `private final Classifier classifier` and `public Mono<Decision> execute(String text)`, `Classifier` an interface implemented by `AiClassifier`, and `Decision` an enum `ALLOW, DENY`
+- WHEN the evidence diagrams of REQ-041 are drawn
+- THEN the class diagram shows `ReviewOrder --> "1" Classifier : classifier`, `Classifier <|.. AiClassifier`, `+execute(text : String) Mono~Decision~` and `Decision` as `<<enumeration>>` with `ALLOW` and `DENY`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-811.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-812 — A scenario followed through the code as a UML sequence
+
+The system SHALL draw a scenario whose WHEN names `METHOD /path`, or that goes through a screen whose web code calls `/api/...` beside the requirement's id, as a numbered Mermaid sequence diagram from the code: the actor, the web app when through a screen, and one lifeline per object from the endpoint the code declares (Spring `@*Mapping`, JAX-RS `@Path`) — each call with its parameters and types, each reply with the type it returns or its HTTP status, with activations — following the calls on attributes, parameters and locals into the project's types, an interface's only implementation in its place, up to four levels, drawing a collaborator from outside the project without entering it, and a class's static operation on the class's own lifeline — leaving out the platform's value and utility types (a string, a date, a clock, a list), a private helper that calls no one and throws nothing, and a builder's repeated calls; SHALL end a scenario whose THEN names an error at the exception the code throws with that code or that message — its own type, or a generic type at the one throw that carries them — drawn back to the actor; and SHALL draw from the steps a scenario that reaches no declared endpoint.
+
+#### Scenario: SCN-812a — From the endpoint to the port
+
+- GIVEN `OrderController` mapped to `POST /api/orders` with `@ResponseStatus(HttpStatus.CREATED)`, calling `review.execute(text)`, and `ReviewOrder.execute` calling `classifier.classify(text)`
+- WHEN REQ-041's scenario that sends `POST /api/orders` is drawn
+- THEN the sequence has lifelines `:OrderController`, `:ReviewOrder` and `:AiClassifier`, the messages `execute(text : String)` and `classify(text : String)` in that order, and the reply `201 Created` to the actor
+
+#### Scenario: SCN-812b — No endpoint in the code
+
+- GIVEN a scenario that sends `POST /api/unknown`, which no controller declares
+- WHEN it is drawn
+- THEN the diagram is the one from its steps, with `participant S as System`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-812.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-813 — Archive closes the change's evidence
+
+The system SHALL, on `specgate archive <change>` in a project whose gate policy has `bdd: required` or `evidence: required`, write the change's `EVIDENCE.md` before the change moves, so the archived change holds it current; SHALL name each requirement of the change delivered with no before (`archive_no_before`), as a warning, or, under `evidence: required`, as an error that refuses the archive unless `--force` is passed; and SHALL accept `evidence: required` or `evidence: optional` in `.specgate/gate.yaml`.
+
+#### Scenario: SCN-813a — The page goes with the change
+
+- GIVEN draft-orders, whose REQ-031 is Implemented with a before and an after, in a project with `bdd: required`
+- WHEN the Developer runs `specgate archive draft-orders`
+- THEN the archived change holds EVIDENCE.md with REQ-031's section
+
+#### Scenario: SCN-813b — No before, required
+
+- GIVEN the same change with REQ-032 Implemented with no before, and `evidence: required`
+- WHEN the Developer runs `specgate archive draft-orders`
+- THEN it is refused with `archive_no_before` naming REQ-032; with `--force` it is archived
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-813.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-814 — The evidence page compares with the base the person names
+
+The system SHALL accept `--base <ref>` on `specgate evidence <change>` and draw the page's diagrams at the base against that ref; without it, the base `check --affected` uses.
+
+#### Scenario: SCN-814a — The base named
+
+- GIVEN a change whose code changed since the commit `base-tag`
+- WHEN the Developer runs `specgate evidence draft-orders --base base-tag`
+- THEN the diagrams at the base are those of `base-tag`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-814.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-815 — The page says why each scenario was red
+
+The system SHALL show on the evidence page, per requirement, one row per scenario its runner reported, read from Playwright's list output kept with the before and the after: on each side whether it passed or failed, its time, and for a failure the step that failed and its `Error:`, `Expected:` and `Received:` lines.
+
+#### Scenario: SCN-815a — Red before, green after
+
+- GIVEN REQ-031 whose before log has `✘ … › Paying @REQ-031 (18.7s)` failing at `Then the response is 422` with `Expected: 422` and `Received: 500`, and whose after log has `✓ … › Paying @REQ-031 (10.5s)`
+- WHEN the Developer runs `specgate evidence draft-orders`
+- THEN the page's row for Paying shows ✘ 18.7s with `Expected: 422 · Received: 500` before, and ✓ 10.5s after
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-815.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-816 — The page shows each call to the service, before and after
+
+The system SHALL read each Playwright `trace.zip` kept with a requirement's before and after and show on the page each call its tests made to the project's service — a path under `/api/` or a call made through the test's request context — with its method, path, status and its request and response bodies, paired before and after by method and path — a path segment that is a record's number (digits, a UUID, `INC-2026-000007`) read as `{id}`, and a body that differs only in such a number not shown as changed —, every JSON value whose key names a token, password, secret, cookie or authorization replaced by `«hidden»`; and `specgate doctor` SHALL ask for `trace: 'on'` beside screenshots and video.
+
+#### Scenario: SCN-816a — 500 then 422
+
+- GIVEN REQ-031's before trace with `POST /api/orders` answered 500, and its after trace with the same call answered 422 `{"code":"order_unclear"}`, and a `POST /api/session` answered `{"token":"abc"}`
+- WHEN the Developer runs `specgate evidence draft-orders`
+- THEN the page shows `POST /api/orders` with 500 before and 422 after, the after's body with `order_unclear`, and the session's token as `«hidden»`, never `abc`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-816.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-817 — The page shows what the AI model decided
+
+The system SHALL set `SPECGATE_AI_LOG` to the absolute path of `test-results/specgate/ai-decisions.jsonl`, emptied first, on every run of a requirement's scenarios it makes (`evidence before`, `apply`, `reproduce run`), keep that file with the run's artifacts, and show its lines on the evidence page, before and after: each line's `model`, `input`, `output` and `ms`.
+
+#### Scenario: SCN-817a — The model's verdict
+
+- GIVEN a `bdd_cmd` that writes `{"model":"llama3.2","input":"Haz eso","output":{"category":"C"},"ms":812}` to `$SPECGATE_AI_LOG`
+- WHEN the Developer runs `specgate evidence before REQ-031`, then `specgate evidence draft-orders`
+- THEN the page shows, before, `llama3.2`, `Haz eso`, `{"category":"C"}` and `812 ms`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-817.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-818 — The evidence as one web page
+
+The system SHALL, on `specgate evidence <change> --html`, write `docs/specs/changes/<change>/EVIDENCE.html` beside `EVIDENCE.md`: one HTML document in English that opens with no server, holding the same evidence — each requirement's screens before and after as images inside the page (each up to 2 MB, a larger one named), its scenarios, calls to the service and AI decisions, each sequence diagram at the base and now side by side, its class diagrams — with Mermaid loaded from a pinned CDN build; and, on `--open`, which implies `--html`, SHALL open it in the browser, except when `CI` or `SPECGATE_NO_OPEN` is set.
+
+#### Scenario: SCN-818a — One page, pictures inside
+
+- GIVEN draft-orders whose REQ-031 has a before and an after, each with a screenshot
+- WHEN the Developer runs `specgate evidence draft-orders --html`
+- THEN EVIDENCE.html exists beside EVIDENCE.md, holds both screenshots as `data:image/png;base64` and REQ-031's title, loads Mermaid from `cdn.jsdelivr.net/npm/mermaid@`, and names no file it needs beside it
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-818.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-819 — A failed delivery is kept as an attempt
+
+The system SHALL, when `specgate apply` runs a requirement's scenarios and they fail, keep the run as `.specgate/evidence/<REQ>/attempts/<n>/` — `run.json`, `run.log` and the artifacts the run wrote, out of git, `n` counting from 1 — and name it in `apply_bdd_failed`; SHALL list the attempts in the delivery's `evidence.json` and on the evidence page, each with the scenarios that failed and why, and what the AI model decided in it; and SHALL remove them when a new before is taken.
+
+#### Scenario: SCN-819a — Flaky, then delivered
+
+- GIVEN REQ-031 whose scenarios fail twice — the AI log saying `{"category":"A"}` — and then pass
+- WHEN the Developer runs `specgate apply REQ-031` three times, then `specgate evidence draft-orders`
+- THEN attempts 1 and 2 are kept, the first refusal names `attempts/1`, `evidence.json` lists both, and the page's "Failed attempts" shows each with `Received: 202` and `{"category":"A"}`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-819.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-821 — On main, the evidence compares with the commit before the change
+
+The system SHALL, when `specgate evidence` or `specgate change archive` is given no `--base` and the base the gate measures from is HEAD itself, compare the evidence's diagrams with the parent of the first commit that holds the change's folder; and SHALL keep the gate's base when the change is not committed yet or a `--base` is named.
+
+#### Scenario: SCN-821a — Delivered on main
+
+- GIVEN a project on `main` whose change `draft-orders` was committed, then `Orders.refund()` added in a later commit
+- WHEN the Developer runs `specgate evidence draft-orders`
+- THEN EVIDENCE.md says "Changed: `Orders` — added `+refund()`", not "Unchanged since the base"
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-821.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-822 — The adoption baseline is not a feature runner's scenario
+
+The system SHALL, on `specgate migrate bdd` — and on `specgate adopt` or `specgate init` when they write `bdd: required` —, tag the adoption baseline scenario ("Existing test suite stays green") `@skip` once, with a comment that the test command the gate runs keeps it, and report it; and SHALL warn `bdd_baseline_runs` on the gate while `bdd: required` and the baseline scenario is not tagged `@skip`.
+
+#### Scenario: SCN-822a — Migrated with the baseline
+
+- GIVEN a project with `features/adoption/baseline.feature` untagged and `bdd: required`
+- WHEN the Developer runs `specgate check`, then `specgate migrate bdd`, then `specgate check` again
+- THEN the first check warns `bdd_baseline_runs`, the migration tags the scenario `@skip` and says so, and the second check does not warn
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-822.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-823 — apply shows the scenarios as a stage
+
+The system SHALL, when `specgate apply` runs a requirement's scenarios on a terminal, show them as a stage after the tests — `Scenarios` and the command it ran, passed or failed — as it shows the specification, the architecture and the tests.
+
+#### Scenario: SCN-823a — Delivered with its scenarios
+
+- GIVEN REQ-031 approved, with `bdd: required` and a `bdd_cmd` that passes for `@REQ-031`
+- WHEN the Developer runs `specgate apply REQ-031`
+- THEN the output shows `Scenarios` and the command after `Tests`, and REQ-031 is delivered
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-823.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-824 — Each sequence says whether the run agrees
+
+The system SHALL, under each scenario's sequence on the evidence page, say whether it matches the run — the run called the endpoint the diagram draws and ended the same way, success or error — or differs from it, naming what the run called and answered; SHALL read the run's calls from the scenario's Playwright trace and from what the project's server recorded in `SPECGATE_HTTP_LOG` (one JSON line per call: `at`, `method`, `path`, `status`, `ms`) during the scenario's time in its trace; SHALL set `SPECGATE_HTTP_LOG`, emptied first, for every run of the scenarios; SHALL say when a sequence could not be checked, and when it was drawn from the steps alone; and SHALL list the server's calls in the calls table, paired within each scenario.
+
+#### Scenario: SCN-824a — A refusal the code reading missed
+
+- GIVEN a screen's scenario whose sequence, read from the code, ends in `201 Created`, and the server's log recording `POST /api/orders` answered 422 during the scenario
+- WHEN the Developer runs `specgate evidence draft-orders`
+- THEN under the sequence the page says "Read from the code, and the run differs: it ends in `201 Created`; `POST /api/orders` answered 422."
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-824.feature kind=functional status=Implemented -->

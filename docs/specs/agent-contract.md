@@ -68,6 +68,7 @@ not run reports an `error` about itself.
 | `specgate check [dir] --json` | `check` | yes |
 | `specgate scenarios <REQ> --json` | `scenarios` | yes |
 | `specgate reproduce <change-id> --capability <c> --title <t> | run <REQ> --json` | `reproduce` | no |
+| `specgate evidence before <REQ>… | <change-id> --json` | `evidence` | no |
 | `specgate map [<REQ>] [--capability <c>] --json` | `map` | no |
 | `specgate eval <skill> [--runs <n>] --json` | `eval` | no |
 | `specgate compat run|report [--tool <t>] [--level <L>] [--runs <n>] --json` | `compat` | no |
@@ -151,6 +152,8 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `approve_needs_person` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_change_name_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_draft_not_ready` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `archive_evidence_page` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `archive_no_before` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_requirements_pending` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_spec_update_failed` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_agent_failed` | `scripts/cli/commands/change/ChangeCommand.ts` |
@@ -175,6 +178,7 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `layer_discover_rewritten` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `modify_already_open` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `modify_requirement_not_found` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `trace_value_cut` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `value_drift_already_matches` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `value_drift_id_not_declared` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `value_drift_no_code_value` | `scripts/cli/commands/change/ChangeCommand.ts` |

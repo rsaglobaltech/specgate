@@ -1,0 +1,12 @@
+▶ dist/tests/unit/evidence-details.test.js
+✔ REQ-816: the trace's calls to the service, bodies kept, secrets hidden, assets left out (11.4343ms)
+✔ REQ-816 SCN-816a: the page pairs each call before and after, with the bodies that changed (592.3363ms)
+✔ REQ-816: doctor asks for a trace that a passing test keeps (1948.4457ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2665.9559

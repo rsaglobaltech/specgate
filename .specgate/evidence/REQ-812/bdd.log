@@ -1,0 +1,17 @@
+▶ dist/tests/unit/uml-evidence.test.js
+✔ REQ-812 SCN-812a: from the endpoint to the port, object by object (226.1873ms)
+✔ REQ-812: a screen's scenario starts at the web app, which calls what its code names (4.5158ms)
+✔ REQ-812: the call beside the requirement, its method from the helper it goes through (0.6337ms)
+✔ REQ-812 SCN-812b: a call no controller declares is drawn from the steps (290.2018ms)
+✔ REQ-812: a scenario that ends in an error follows the exception the code throws (210.5637ms)
+✔ REQ-812: a generic exception is followed to the throw that carries the code, through a static operation (2.4115ms)
+✔ REQ-812: no noise — platform types, a quiet private helper and a builder's repeats are left out (1.1342ms)
+✔ REQ-812: through a screen, the client function the web code calls names the endpoint (191.3243ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1102.8101

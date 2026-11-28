@@ -1,0 +1,15 @@
+▶ dist/tests/unit/evidence-diagrams.test.js
+✔ REQ-806: a scenario as a sequence: GIVEN a note, each call a message, THEN a reply (1.5222ms)
+✔ REQ-806: a WHEN that names no call is the message itself (0.266ms)
+✔ REQ-806: TypeScript classes, their public members and parents (2.5368ms)
+✔ REQ-806 SCN-806b: a method added since the base is in a note (1.6954ms)
+✔ REQ-806: Java, Kotlin, C# and Python, public members only (2.0905ms)
+✔ REQ-806 SCN-806a: the requirement drawn at the base and now (1156.1131ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1324.1548

@@ -65,6 +65,12 @@ function projectNameOf(content: string | null): string | undefined {
   return m ? m[1].trim() : undefined;
 }
 
+/** The same matrix, whatever line endings git wrote it with (REQ-808). */
+export function sameMatrix(a: string | null, b: string | null): boolean {
+  const lf = (s: string | null) => (s === null ? null : s.replace(/\r\n/g, "\n"));
+  return lf(a) === lf(b);
+}
+
 export function derivedMatrixFor(projectDir: string, existing: string | null): string {
   const rows = deriveRows(readDerivationSources(projectDir));
   return renderDerivedMatrix(rows, projectNameOf(existing));
@@ -112,7 +118,7 @@ export function refreshDerivedMatrix(projectDir: string): boolean {
   const existing = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
   if (!isDerivedMatrix(existing)) return false;
   const next = derivedMatrixFor(projectDir, existing);
-  if (next === existing) return false;
+  if (sameMatrix(next, existing)) return false;
   fs.writeFileSync(file, next, "utf8");
   ensureUnionMerge(projectDir);
   return true;
@@ -366,7 +372,7 @@ export class MatrixCommand extends BaseCommand {
     }
 
     const next = derivedMatrixFor(projectDir, existing);
-    const stale = next !== existing;
+    const stale = !sameMatrix(next, existing);
 
     if (argv.includes("--check")) {
       if (!stale) {

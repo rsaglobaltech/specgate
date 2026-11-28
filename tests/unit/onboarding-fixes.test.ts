@@ -11,6 +11,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { runCli } from "../helpers/cli";
+import { AGENT_COMMANDS } from "../../scripts/cli/commands/project/readiness";
 
 /** A local Node project with four areas and tests under one of them, committed. */
 function shop(): string {
@@ -35,13 +36,15 @@ function pathWith(claude: boolean): string {
     fs.writeFileSync(file, process.platform === "win32" ? "@echo off\r\n" : "#!/bin/sh\n");
     fs.chmodSync(file, 0o755);
   }
-  // Only what node and git need: no real agent CLI leaks in.
+  // Only what node and git need: no real agent CLI leaks in — in whatever form
+  // it is installed (`claude.exe` from WinGet, `claude.cmd` from npm, `claude`).
+  const forms = process.platform === "win32" ? ["", ".exe", ".cmd", ".bat", ".ps1"] : [""];
   const system = (process.env.PATH ?? "")
     .split(path.delimiter)
     .filter(
       (p) =>
-        !["claude", "codex"].some((a) =>
-          fs.existsSync(path.join(p, process.platform === "win32" ? `${a}.cmd` : a))
+        !Object.keys(AGENT_COMMANDS).some((a) =>
+          forms.some((ext) => fs.existsSync(path.join(p, `${a}${ext}`)))
         )
     );
   return [bin, ...system].join(path.delimiter);

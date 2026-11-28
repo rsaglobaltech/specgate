@@ -1,0 +1,43 @@
+[
+  {
+    "layer": "discover",
+    "by": {
+      "name": "Raul Alejandro Salas",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "product",
+    "hash": "sha256:9a7337f60c1b8749a39226abea86a3a9302cbdc1d43e3c94e28fa8e0e8c502d1",
+    "at": "2026-11-28"
+  },
+  {
+    "layer": "design",
+    "by": {
+      "name": "Raul Alejandro Salas",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "architect",
+    "hash": "sha256:b848fddb58a18d0d2482f124164469ff01e26adb7d8e58757645772527ae2d4f",
+    "at": "2026-11-28"
+  },
+  {
+    "layer": "tasks",
+    "by": {
+      "name": "Raul Alejandro Salas",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "developer",
+    "hash": "sha256:8ea3e3ccbd8706f54c33b8824a6f11cdba191603d21a4b38b26775f491d591a9",
+    "at": "2026-11-28"
+  },
+  {
+    "layer": "requirements",
+    "seals": {
+      "REQ-819": "sha256:4e23cdef9b2abb04fa758c37649990ecf5a4e19dbf50935e7a88777a920ed8ba"
+    },
+    "by": {
+      "name": "Raul Alejandro Salas",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "at": "2026-11-28"
+  }
+]

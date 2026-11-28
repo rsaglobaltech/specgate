@@ -29,7 +29,7 @@ import { checkDeclaredArtifacts } from "../../../packages/core/src/domain/Declar
 import { isTestFile } from "../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import type { HarnessRole } from "../../../packages/core/src/domain/HarnessRun";
 import type { HarnessSettings } from "../../../packages/core/src/infrastructure/HarnessConfigFile";
-import { derivedMatrixFor } from "../../cli/commands/spec/MatrixCommand";
+import { derivedMatrixFor, sameMatrix } from "../../cli/commands/spec/MatrixCommand";
 import { isDerivedProject } from "../../lib/derived-writes";
 import { citedOperation, conformanceWarnings, memberCitations } from "../../lib/contracts";
 import { workspaceMemberDirs } from "../../lib/story-part";
@@ -135,7 +135,7 @@ export function isRegeneratedMatrix(worktreeDir: string, rel: string): boolean {
   if (rel !== "docs/specs/traceability.md" || !isDerivedProject(worktreeDir)) return false;
   try {
     const current = fs.readFileSync(path.join(worktreeDir, rel), "utf8");
-    return derivedMatrixFor(worktreeDir, current) === current;
+    return sameMatrix(derivedMatrixFor(worktreeDir, current), current);
   } catch {
     return false;
   }

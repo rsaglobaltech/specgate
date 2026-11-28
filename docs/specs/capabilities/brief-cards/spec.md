@@ -381,7 +381,7 @@ The system SHALL, on `specgate brief export [--out <dir>]`, write the project's 
 - WHEN the Developer runs `specgate brief export` and imports the boards it wrote into an empty project
 - THEN the three canvases, the Event Storming board and the story are written, and read back they give the same three contexts, 26 flows and the 26 activities in order
 
-<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-659.feature artifact='packages/core/src/domain/DddToolboxExport.ts, scripts/brief_export.ts, templates/ddd-toolbox/records.json' actor=Developer kind=functional -->
+<!-- specgate:trace actor=Developer artifact="packages/core/src/domain/DddToolboxExport.ts, scripts/brief_export.ts, templates/ddd-toolbox/records.json" feature=features/brief-cards/REQ-659.feature kind=functional status=Implemented -->
 
 ### Requirement: REQ-655 — A DDD workshop's boards become the brief's modules
 
@@ -445,7 +445,7 @@ The system SHALL read an actor's name written in double or single quotes in the 
 - WHEN the form is written back to the brief
 - THEN the line reads `- { name: "Padre, madre o tutor", surfaces: [web] }`, and reading it back gives the same actor
 
-<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-622.feature artifact=packages/core/src/domain/DraftChecklist.ts actor=Developer kind=functional -->
+<!-- specgate:trace actor=Developer artifact=packages/core/src/domain/DraftChecklist.ts feature=features/brief-cards/REQ-622.feature kind=functional status=Implemented -->
 
 ### Requirement: REQ-486 — The brief read as a form, each field with its line
 
@@ -572,3 +572,59 @@ The system SHALL, while `specgate propose --from-brief <module> --agent` runs it
 - THEN draft-a's draft is what it wrote, draft-b's files are as last written, draft-c's file is undone, and draft-a's mark says when its agent ran without showing in git's status
 
 <!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-652.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-796 — The brief's guides are printed on request
+
+The system SHALL, when `specgate propose --from-brief --guide setup` runs, print the guide an agent follows to propose the brief's front matter, and when `--guide cards` runs, the guide to propose a section per module, naming the modules of the brief's front matter — writing no file, so the working tree stays as it was; SHALL refuse `--guide cards` with `draft_guide_no_modules` while the front matter lists no module; and SHALL refuse any other value as a usage error.
+
+> Reported on 2026-11-27: the `draft` skill sent the agent to `docs/specs/BRIEF-CARDS.md`, which only `--agent` writes, and to `docs/specs/BRIEF-SETUP.md`, which is not written while the front matter has problems; the agent read Specgate's source to learn the format.
+
+#### Scenario: SCN-796a — The cards guide
+
+- GIVEN `docs/brief.md` whose front matter lists `courses` and `lessons`, and no `## Module:` section
+- WHEN `specgate propose --from-brief --guide cards` runs
+- THEN it prints the guide to propose the module sections, naming `courses` and `lessons`, and `docs/specs/BRIEF-CARDS.md` does not exist
+
+#### Scenario: SCN-796b — The setup guide while the front matter has problems
+
+- GIVEN `docs/brief.md` whose front matter lists no module
+- WHEN `specgate propose --from-brief --guide setup` runs
+- THEN it prints the guide to propose the front matter, and `docs/specs/BRIEF-SETUP.md` does not exist
+
+#### Scenario: SCN-796c — No module to write cards for
+
+- GIVEN `docs/brief.md` whose front matter lists no module
+- WHEN `specgate propose --from-brief --guide cards --json` runs
+- THEN it fails with `draft_guide_no_modules`, whose fix names `--guide setup`
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-796.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-797 — The draft skill sends the agent to a guide that exists
+
+The system SHALL, in the `draft` step every agent tool is given, send the agent to `specgate propose --from-brief --guide setup` when the front matter is missing or needs fixes, and to `--guide cards` when the brief has no `## Module:` section, instead of a file Specgate may not have written; and SHALL name the same command where `specgate propose --from-brief` reports those two states.
+
+#### Scenario: SCN-797a — The step names the command
+
+- GIVEN the `draft` step as `specgate agents init` writes it
+- WHEN an agent reads it
+- THEN it names `specgate propose --from-brief --guide setup` and `--guide cards`, and neither `docs/specs/BRIEF-SETUP.md` nor `docs/specs/BRIEF-CARDS.md`
+
+#### Scenario: SCN-797b — The overview names the cards guide
+
+- GIVEN `docs/brief.md` with a complete front matter listing `courses` and `lessons`, and no `## Module:` section
+- WHEN `specgate propose --from-brief` runs
+- THEN its output names `specgate propose --from-brief --guide cards`
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-797.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-820 — Determining whether is no condition
+
+The system SHALL not read "si" after a verb of determining, evaluating, confirming, validating or reviewing ("determina si", "evalúa si", "confirma si", "valida si", "revisa si") — nor "if" after "determine", "evaluate", "confirm", "verify", "validate" or "find out" — as a condition placed last (B11); and SHALL still warn under B11 for a rule whose condition follows what must happen.
+
+#### Scenario: SCN-820a — The operator determines whether
+
+- GIVEN a module whose rule is "El operador determina si el reporte corresponde a un servicio municipal."
+- WHEN the Product owner runs `specgate propose --from-brief --check`
+- THEN no `B11_condition_last` is listed for it, and "La incidencia se cierra si el técnico la resuelve." still has one
+
+<!-- specgate:trace actor="Product owner" feature=features/brief-cards/REQ-820.feature kind=functional status=Implemented -->

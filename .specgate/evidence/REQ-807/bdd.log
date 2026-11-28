@@ -1,0 +1,12 @@
+▶ dist/tests/unit/evidence-page.test.js
+✔ REQ-807 SCN-807a: one before, one missing (741.2333ms)
+✔ REQ-807: the page is written the same twice, and the change still validates (1826.8343ms)
+✔ REQ-807: a change that does not exist is refused (235.7893ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2913.0721

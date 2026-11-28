@@ -39,7 +39,7 @@
 
 <header class="top">
   <a class="top__brand" href="./"><span aria-hidden="true">⬡</span> Specgate</a>
-  <span class="top__version">v1.6.0</span>
+  <span class="top__version">v1.7.0</span>
   <button class="top__search" id="search" type="button" aria-label="Search documentation"
           aria-keyshortcuts="Meta+K Control+K">
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -64,7 +64,7 @@
 <!-- ── Hero ─────────────────────────────────────────────────────────────── -->
 <section class="lx-hero" id="top" aria-labelledby="lx-h">
   <div class="lx-wrap">
-    <p class="lx-eyebrow">v1.6.0 — spec-driven development, enforced</p>
+    <p class="lx-eyebrow">v1.7.0 — spec-driven development, enforced</p>
     <h1 class="lx-title" id="lx-h">Agent-written code that <span>does what the spec says.</span></h1>
     <div class="lx-lede-row">
       <p class="lx-lede">A person approves the requirement, a test names it before any code, and a gate the agent cannot edit decides when it is done. Measured: 16 of 36 jobs on their own, 33 of 36 with Specgate.</p>
@@ -513,8 +513,8 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
     ○ REQ-004  A member cancels a booking  an answer to Q1
     Questions: Q1 (docs/specs/changes/draft-bookings/questions.md)
 
-  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
-… 4 more lines
+  ·  No agent set for the harness and the studio's Build: specgate config set agent &quot;claude -p &lt; {prompt_file}&quot;
+… 6 more lines
 </code></pre>
 <!-- specgate:terminal-brief:end -->
         </figure>
@@ -638,7 +638,7 @@ c5da000 invoices 1.4: refunds
     + docs/specs/traceability.md
     + docs/specs/adr/README.md
     + docs/specs/glossary.md
-… 34 more lines
+… 33 more lines
 
 ~/invoices $ git status --short
 ?? .gitattributes
@@ -727,7 +727,7 @@ TESTING: node:test
   ℹ  🛠️ Applying project type template: backend
   ℹ  🧩 No optional modules selected. Generating base + project-type features only.
   ℹ  🚦 Policy: .specgate/gate.yaml — the standard preset; edit a rule to change what fails
-  ℹ  🚦 CI: .github/workflows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks
+  ℹ  🚦 CI: .github.flows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks
 
   Summary ────────────────────────────────────────────────
     · Project: Smart Parking
@@ -806,7 +806,7 @@ max_attempts: 1
     </div>
 
     <p class="term__meta">
-      Recorded from <strong>v1.6.0</strong>. <a href="./reverse.html">An existing repository →</a> <a href="./tutorial.html">The harness run, explained →</a>
+      Recorded from <strong>v1.7.0</strong>. <a href="./reverse.html">An existing repository →</a> <a href="./tutorial.html">The harness run, explained →</a>
     </p>
   </div>
 </section>
@@ -1012,7 +1012,7 @@ npx specgate propose --from-brief</code></pre>
       <a href="./release-process.html">Releases</a>
     </nav>
   </div>
-  <p class="ed-wrap ed-foot__note">Documentation for v1.6.0. Every number on this page is checked against the repository by a test.</p>
+  <p class="ed-wrap ed-foot__note">Documentation for v1.7.0. Every number on this page is checked against the repository by a test.</p>
 </footer>
 
 <div class="palette" id="palette" hidden>

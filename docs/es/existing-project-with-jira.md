@@ -1,4 +1,4 @@
-<!-- translation-of: 7f94b77efa0f -->
+<!-- translation-of: c19426a0a23e -->
 # Un código existente, con el trabajo en Jira
 
 Esta página es para un equipo con un código que tiene años y trabajo que llega
@@ -44,12 +44,12 @@ En un repositorio sin él, como un proyecto puro de Maven o Gradle, no añadas u
 usa la misma versión en CI:
 
 ```bash
-npx @rsaglobaltech/specgate@1.6.0 init --dry-run
-npx @rsaglobaltech/specgate@1.6.0 init
+npx @rsaglobaltech/specgate@1.7.0 init --dry-run
+npx @rsaglobaltech/specgate@1.7.0 init
 ```
 
 Los comandos de abajo escriben `npx specgate`; en un repositorio sin
-`package.json`, léelo como `npx @rsaglobaltech/specgate@1.6.0`.
+`package.json`, léelo como `npx @rsaglobaltech/specgate@1.7.0`.
 
 En un repositorio que ya tiene un `pom.xml`, `build.gradle`, `package.json` o
 similar, `specgate init` adopta el proyecto en el sitio; es lo mismo que

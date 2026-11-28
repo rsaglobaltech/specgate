@@ -3,6 +3,8 @@ Feature: Existing behaviour is preserved
   written. This baseline scenario pins the adoption invariant: nothing
   that worked before adoption may silently break after it.
 
+  # Kept by the test command the gate runs, not by a feature runner.
+  @skip
   Scenario: Existing test suite stays green
     Given the project is built from a clean checkout
     When the full test suite runs

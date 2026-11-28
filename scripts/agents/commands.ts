@@ -45,8 +45,8 @@ export const STEPS: AgentStep[] = [
     run: ["specgate propose --from-brief", "specgate propose --from-brief <module>"],
     guidance: [
       "No `docs/brief.md`: show the person what `specgate propose --from-brief` prints about a brief, and stop — the brief is theirs to write (`specgate propose --from-brief --new-brief` gives them one to fill in).",
-      "If `specgate propose --from-brief` says the brief has no front matter, or that it needs fixes: follow `docs/specs/BRIEF-SETUP.md`. Write or fix only the front matter at the top of `docs/brief.md` — never a word below it — run `specgate propose --from-brief` again, then **stop** and show the front matter to the person to review. Draft no module in the same turn.",
-      "If the front matter is complete and the brief has no `## Module:` sections: follow `docs/specs/BRIEF-CARDS.md`. Add one section per module — Rules, Examples, Questions — from the brief's own text, keep every line already there, then **stop** and show the sections to the person.",
+      "If `specgate propose --from-brief` says the brief has no front matter, or that it needs fixes: follow the guide `specgate propose --from-brief --guide setup` prints. Write or fix only the front matter at the top of `docs/brief.md` — never a word below it — run `specgate propose --from-brief` again, then **stop** and show the front matter to the person to review. Draft no module in the same turn.",
+      "If the front matter is complete and the brief has no `## Module:` sections: follow the guide `specgate propose --from-brief --guide cards` prints. Add one section per module — Rules, Examples, Questions — from the brief's own text, keep every line already there, then **stop** and show the sections to the person.",
       "Before a module is drafted, `specgate propose --from-brief --check` must report no error: it checks the brief's fields, a section per module, and rules with examples. Its warnings are for the person to judge.",
       "Without a module, `specgate propose --from-brief` lists the brief's modules and names the next one. Draft that one.",
       "`specgate propose --from-brief <module>` opens the draft and writes `DRAFTING.md` inside it. Follow it exactly: it has the module's section of the brief, the values to use, the reserved ids, the actors and surfaces, and every format the checklist reads.",
@@ -95,7 +95,8 @@ export const STEPS: AgentStep[] = [
     ],
     guidance: [
       "One requirement at a time — `status` is the queue.",
-      "Write the test first and **name the requirement in it** (`REQ-007` in a comment or the test name). That mention is the link: no `req link`, no matrix edit.",
+      "Write the test first and **name the requirement in it** (`REQ-007` in the test's name; a comment counts only while `.specgate/gate.yaml` does not say `link: strict`). That mention is the link: no `req link`, no matrix edit.",
+      "With `bdd: required`, once the test is written and before the code, run `specgate evidence before REQ-NNN`: what the flow did before the change, kept beside what `apply` keeps after.",
       "Mention the requirement in the code that implements it too, so its row points at the code.",
       "Never change `spec.md`, a delta or a `.feature` to make a test pass.",
       "`specgate apply` refuses a requirement no test names and runs the gate; a refusal changes nothing. Green, it records Implemented.",

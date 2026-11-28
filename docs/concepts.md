@@ -182,7 +182,7 @@ whole loop on a temporary copy of your repository.
 | **Brief** | Your plan for a product, saved as `docs/brief.md`, with a short front matter naming the product, its actors, their surfaces and its modules. |
 | **Capability** | One area of the product (orders, invoices, …). Its requirements live in `docs/specs/capabilities/<capability>/spec.md`. |
 | **Change** | A folder under `docs/specs/changes/<id>/` holding work in progress: a proposal and a delta. Opened by `propose`, closed by `archive`. |
-| **D-rules** | The drafting checklist (D1–D12) a draft from a brief must pass: a scenario per requirement and per surface, values with a source, open questions that block, and more. |
+| **D-rules** | The drafting checklist (D1–D17) a draft from a brief must pass: a scenario per requirement and per surface, values with a source, quotes the brief really says, open questions that block, and more. |
 | **Definition of Ready** | The checks a Jira ticket must pass before it becomes a change: the T-rules. |
 | **Delivered** | A status of `Implemented`, `Verified` or `Released`. |
 | **Delta** | The part of a change that says what moves: the requirements and scenarios it adds, modifies or removes. |

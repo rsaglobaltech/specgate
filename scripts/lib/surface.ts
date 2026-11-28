@@ -335,6 +335,19 @@ export const SURFACE: Command[] = [
     },
   },
   {
+    name: "evidence",
+    // ADR-0047 REQ-803: what a flow did before the change, kept beside what apply keeps after.
+    mcp: false,
+    script: ["evidence.js"],
+    help: {
+      group: "core",
+      icon: "📸",
+      summary:
+        "Keep a requirement's scenarios, run before its code, as its before: log, screenshots, video.",
+    },
+    json: { key: "evidence", gate: false, args: "before <REQ>… | <change-id>" },
+  },
+  {
     name: "map",
     // REQ-678: where each requirement lives, for a person and for an agent.
     mcp: false,

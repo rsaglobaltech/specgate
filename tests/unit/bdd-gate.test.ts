@@ -574,3 +574,67 @@ test("REQ-735: where the scenarios are run, apply does not say they were not", (
   const s = p.cli("status", "--json");
   assert.equal(JSON.parse(s.stdout.slice(s.stdout.indexOf("{"))).deliveredWithoutScenarios, 0);
 });
+
+test("REQ-822 SCN-822a: the adoption baseline, tagged @skip by migrate bdd, the gate warning until then", () => {
+  const { dir, sg } = initialised({
+    name: "app",
+    scripts: { test: "node --test" },
+    devDependencies: { "@playwright/test": "~1.63.0" },
+  });
+  const baseline = [
+    "Feature: Existing behaviour is preserved",
+    "",
+    "  Scenario: Existing test suite stays green",
+    "    Given the project is built from a clean checkout",
+    "    When the full test suite runs",
+    "    Then every existing test passes",
+    "",
+  ].join("\n");
+  w(dir, "features/adoption/baseline.feature", baseline);
+  w(dir, ".specgate/gate.yaml", "preset: standard\nbdd: required\n");
+  assert.match(sg("check", "--json").stdout, /bdd_baseline_runs/);
+  const r = sg("migrate", "bdd", "--json");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(JSON.parse(r.stdout.slice(r.stdout.indexOf("{"))).migrate.baselineSkipped, true);
+  assert.match(
+    read(dir, "features/adoption/baseline.feature"),
+    /\n {2}@skip\n {2}Scenario: Existing test suite stays green/
+  );
+  assert.doesNotMatch(sg("check", "--json").stdout, /bdd_baseline_runs/);
+  const again = sg("migrate", "bdd", "--json");
+  assert.equal(
+    JSON.parse(again.stdout.slice(again.stdout.indexOf("{"))).migrate.baselineSkipped,
+    false,
+    "once"
+  );
+});
+
+test("REQ-822: an adoption whose gate requires the scenarios writes the baseline already skipped", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-adopt-bdd-"));
+  madeDirs.push(dir);
+  w(
+    dir,
+    "package.json",
+    JSON.stringify({ name: "app", devDependencies: { "@playwright/test": "~1.63.0" } })
+  );
+  git(dir, "init", "-q");
+  const r = spawnSync(process.execPath, [CLI, "adopt", "--no-capabilities", "--yes"], {
+    cwd: dir,
+    encoding: "utf8",
+  });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(read(dir, ".specgate/gate.yaml"), /^bdd: required$/m);
+  assert.match(
+    read(dir, "features/adoption/baseline.feature"),
+    /@skip\n {2}Scenario: Existing test suite stays green/
+  );
+});
+
+test("REQ-823 SCN-823a: apply shows the scenarios as a stage, as it shows the tests", () => {
+  const p = applyProject(0);
+  const r = p.cli("apply", "REQ-031");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const tests = r.stdout.indexOf("Tests ");
+  const scenarios = r.stdout.search(/Scenarios {7}node -e/);
+  assert.ok(tests >= 0 && scenarios > tests, r.stdout);
+});

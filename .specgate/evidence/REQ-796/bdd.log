@@ -1,0 +1,14 @@
+▶ dist/tests/unit/brief-cards.test.js
+✔ REQ-796 SCN-796a: --guide cards prints the guide and writes nothing (1747.4948ms)
+✔ REQ-796 SCN-796b: --guide setup prints the guide while the front matter has problems (1176.7428ms)
+✔ REQ-796 SCN-796c: --guide cards with no module names --guide setup (1139.9688ms)
+✔ REQ-796: --guide with --json answers the guide under draft.guide (1073.1818ms)
+✔ REQ-796: --guide takes only setup or cards (1713.6718ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7123.7852

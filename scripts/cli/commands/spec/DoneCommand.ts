@@ -9,7 +9,13 @@ import {
 } from "../../../lib/step-seal";
 import { gitIdentity, missingApprovals } from "../../../lib/approvals";
 import { scenariosOf } from "./ScenariosCommand";
-import { keepEvidence, mustReproduce, readRed } from "../../../lib/evidence";
+import {
+  keepAttempt,
+  keepEvidence,
+  mustReproduce,
+  readRed,
+  scenarioEnv,
+} from "../../../lib/evidence";
 import type { ScenarioRun } from "../../../lib/evidence";
 import { appendApplied } from "../../../lib/trust";
 import { resolveProjectDir } from "../../../lib/project-root";
@@ -348,7 +354,11 @@ export class DoneCommand extends BaseCommand {
         io.fail(NULL_SHAPE, [
           error("apply_no_test", `${id} has no test that names it yet (TDD-1).`, {
             target: id,
-            fix: noTestFix(verb, id, opts.status, missing.scenario),
+            fix:
+              noTestFix(verb, id, opts.status, missing.scenario) +
+              (readGatePolicy(dir).link === "strict"
+                ? ` — a comment naming ${id} does not count under link: strict`
+                : ""),
           }),
         ]);
       }
@@ -371,6 +381,7 @@ export class DoneCommand extends BaseCommand {
       files: (testCmd || "").includes("{files}") ? requirementTestFiles(projectDir, [id]) : "",
     });
 
+    let testsMs = 0;
     for (const step of plan.steps) {
       // REQ-654: each stage tells when it starts and how it ends.
       const stageName =
@@ -395,7 +406,9 @@ export class DoneCommand extends BaseCommand {
           : step.stage === "arch"
             ? `Architecture    ${ui.muted(step.argv[0])}`
             : `Tests           ${ui.muted(step.argv[0])}`;
+      const startedAt = Date.now();
       const run = opts.json ? exec() : ui.task(label, exec, (r) => ({ ok: r.status === 0 }));
+      if (step.stage === "tests") testsMs = Date.now() - startedAt;
       progress({ stage: stageName, state: run.status === 0 ? "passed" : "failed" });
 
       if (run.status === 0) continue;
@@ -545,6 +558,7 @@ export class DoneCommand extends BaseCommand {
             scenariosOf(projectDir, id).length > 0
               ? `  ${ui.muted(`·  ${id} is delivered on a test that names it: its scenarios were not run. specgate migrate bdd makes the gate run them.`)}\n`
               : "") +
+            slowTestsNote(testsMs, testCmd) +
             (stepsSaid ? `  ${ui.muted(`·  ${stepsSaid}`)}\n` : "") +
             (plan.testsUnverified ? "" : nextAfter(queue().items, id, owner, view))
         )
@@ -828,6 +842,22 @@ function missingTest(dir: string, id: string): { scenario?: string } | null {
   return { scenario: own.map((r) => r.scenarioId).find((x) => x && x !== "-") };
 }
 
+/** Two minutes; `SPECGATE_SLOW_TESTS_MS` stands in for it in tests. */
+const SLOW_TESTS_MS = 120_000;
+
+/**
+ * slow-tests-hint REQ-802: the whole suite ran slowly for one requirement —
+ * the command that runs only its tests, said when the cost is paid. Empty
+ * when the run was quick or the command already takes `{files}` or `{req}`.
+ */
+function slowTestsNote(ms: number, testCmd: string | undefined): string {
+  const limit = Number(process.env.SPECGATE_SLOW_TESTS_MS) || SLOW_TESTS_MS;
+  const cmd = (testCmd || "").trim();
+  if (!cmd || ms < limit || /\{(files|req)\}/.test(cmd)) return "";
+  const took = ms >= 60_000 ? `${Math.round(ms / 60_000)} min` : `${(ms / 1000).toFixed(1)} s`;
+  return `  ${ui.muted(`·  the whole suite ran for one requirement (${took}). Only its tests: specgate config set test_cmd_affected "${cmd} {files}" — docs/fast-gate.md`)}\n`;
+}
+
 function noTestFix(verb: string, id: string, status: string, scenario?: string): string {
   const again =
     status === "Implemented"
@@ -994,22 +1024,40 @@ function bddRefusal(
     ? bddCmd.split("{tags}").join(`@${id}`)
     : `${bddCmd} @${id}`;
   const startedAt = Date.now();
-  const run = spawnSync(forShell(cmd), { cwd: projectDir, encoding: "utf8", shell: true });
+  const exec = () =>
+    spawnSync(forShell(cmd), {
+      cwd: projectDir,
+      encoding: "utf8",
+      shell: true,
+      env: scenarioEnv(projectDir),
+    });
+  // REQ-823: the scenarios are a stage like the others, on the screen too.
+  const run = json
+    ? exec()
+    : ui.task(`Scenarios       ${ui.muted(cmd)}`, exec, (r) => ({ ok: r.status === 0 }));
   // REQ-680: what ran, kept for the evidence once the requirement is delivered.
-  scenarioRuns.set(id, {
+  const scenarioRun = {
     command: cmd,
     exitCode: run.status ?? 1,
     ms: Date.now() - startedAt,
     output: `${run.stdout || ""}${run.stderr || ""}`,
     startedAt,
-  });
+  };
+  scenarioRuns.set(id, scenarioRun);
   if (run.status === 0) return null;
+  // REQ-819: a red delivery is evidence too — of what failed on the way.
+  let attempt = "";
+  try {
+    attempt = keepAttempt(projectDir, id, scenarioRun);
+  } catch {
+    /* an unwritable evidence folder: the refusal stands without it */
+  }
   const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
   if (detail && !json)
     process.stderr.write(indent(detail.split("\n").slice(-30).join("\n")) + "\n\n");
   return {
     code: "apply_bdd_failed",
-    message: `its scenarios failed: ${cmd}`,
+    message: `its scenarios failed: ${cmd}${attempt ? ` — kept in ${attempt}` : ""}`,
     fix: `make its scenarios pass — the steps and the code — then run specgate apply ${id}`,
   };
 }

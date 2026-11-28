@@ -1,0 +1,47 @@
+[
+  {
+    "layer": "discover",
+    "by": {
+      "name": "Raul Alejandro Salas",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "product",
+    "hash": "sha256:b7813c41a883397579b2fed5ff69f6e420bb5c6e72d6eaaa750a218620fa6e44",
+    "at": "2026-11-28"
+  },
+  {
+    "layer": "design",
+    "by": {
+      "name": "Raul Alejandro Salas",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "architect",
+    "hash": "sha256:6b0e58ad3e3130eb0bca297cfffe95cbdbd7c14696c53fe13283ac06f8153d62",
+    "at": "2026-11-28"
+  },
+  {
+    "layer": "tasks",
+    "by": {
+      "name": "Raul Alejandro Salas",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "developer",
+    "hash": "sha256:5aa4e87b4281e02c9827e01d0a0bf524039e8d568b704d74655e6206bec1f7ec",
+    "at": "2026-11-28"
+  },
+  {
+    "layer": "requirements",
+    "seals": {
+      "REQ-820": "sha256:7d46f54cb41db9d1d258d30ce123b7027355b098b182aefaba4fb142d66693ec",
+      "REQ-821": "sha256:4a6c074cbb4a12133849ac1df395dba8590178526187c4ee74fd494f8c0d81cb",
+      "REQ-822": "sha256:7030db953328b253d9c63943a62c58cf3a0f6d607aa87823947009b9506435cc",
+      "REQ-823": "sha256:1245e9311ee05ceae997016abc1807ba1c50f9226b0ffd22fa4c892d0d10daca",
+      "REQ-824": "sha256:e94775617585f1183005ab717623291317766af708dcdc2b1dac07acd75bb0c4"
+    },
+    "by": {
+      "name": "Raul Alejandro Salas",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "at": "2026-11-28"
+  }
+]

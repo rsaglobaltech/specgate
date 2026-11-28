@@ -36,6 +36,7 @@ the pull request, so the spec and the code are reviewed together.
 | `specgate propose --from-brief --check`         | Runs the brief rules (B1–B15) on the brief. Writes nothing.                     | [Write the brief](start/write-the-brief.md#step-9-check-it)      |
 | `specgate propose --from-brief --agent "<cmd>"` | Your agent proposes the brief's fields, then a section per module.              | [From a brief](from-a-brief.md)                                  |
 | `specgate propose --from-brief --form`          | The brief as a form, each field with its line; `--form <file>` writes it back.  | [From a brief](from-a-brief.md)                                  |
+| `specgate propose --from-brief --guide setup`   | Prints the guide an agent follows to propose the front matter; `cards`, the module sections. Writes nothing. | [From a brief](from-a-brief.md)                                  |
 | `specgate propose --from-brief <module>`        | Opens that module's draft change, or checks it once it exists.                  | [From a brief](from-a-brief.md#2-draft-one-module)               |
 | `specgate propose --from-ticket <KEY>`          | Opens a change from a Jira ticket, on a new `feature/<KEY>-<slug>` branch.      | [From a Jira ticket](from-a-ticket.md)                           |
 | `specgate propose --from-ticket <KEY> --check`  | The ticket's Definition of Ready (rules T1–T9). Writes nothing.                 | [From a Jira ticket](from-a-ticket.md#is-the-ticket-ready)       |
@@ -143,6 +144,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate trust`                        | Each module's trust level, its streak and its bugs; `promote` raises one.   | `specgate trust --help`                        |
 | `specgate map [<REQ>]`                  | Where each requirement lives: use case, route, feature, code, tests.        | `specgate map --help`                          |
 | `specgate reproduce <change>`           | Opens a bug that must be seen red before it is fixed.                       | `specgate reproduce --help`                    |
+| `specgate evidence before <REQ>`        | Keeps a requirement's scenarios, run before its code, as its before: log, screenshots, video. | `specgate evidence --help` |
 | `specgate learn [promote <L>]`          | Review notes and failures that keep coming back, turned into a rule.       | `specgate learn --help`                        |
 | `specgate eval <skill>` / `--list`      | Examines a skill on fixed tasks; `--list`: every exam, its texts, history and runs. | `specgate eval --help`                  |
 | `specgate harness events --from claude` | Turns Claude Code's stream into events for the live view.                   | [The harness](harness.md#watch-it-work)        |

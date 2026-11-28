@@ -567,6 +567,37 @@ Examples
   }
 });
 
+test('REQ-820 SCN-820a: "determina si" and "confirm if" ask whether', () => {
+  const base = `${FRONT.replace("modules: [courses, lessons]", "modules: [triage]")}
+${NOTES}
+## Module: triage
+
+Rules
+- RULE
+
+Examples
+- The one where the operator files a report.
+`;
+  const b11 = (rule: string) =>
+    checkBrief(base.replace("RULE", rule), "docs/brief.md").filter(
+      (d: { code: string }) => d.code === "B11_condition_last"
+    );
+  for (const rule of [
+    "El operador determina si el reporte corresponde a un servicio municipal.",
+    "El supervisor evalúa si la prioridad está justificada.",
+    "El técnico confirma si la incidencia quedó resuelta.",
+    "El sistema valida si la dirección existe.",
+    "The operator determines if the report belongs to the city.",
+    "The technician confirms if the incident is resolved.",
+  ])
+    assert.deepEqual(b11(rule), [], rule);
+  assert.equal(
+    b11("La incidencia se cierra si el técnico la resuelve.").length,
+    1,
+    "a condition still is one"
+  );
+});
+
 test("REQ-245 SCN-245a: ten modules and a driver on mobile, in a web project", () => {
   const modules = "[a, b, c, d, e, f, g, h, i, j]";
   const text = `---
@@ -756,4 +787,85 @@ Examples
     "utf8"
   );
   assert.match(guide, /scenarios' steps[^\n]*Spanish/);
+});
+
+// ── REQ-796, REQ-797 ──────────────────────────────────────────────────────────
+
+const { STEPS } = require("../../scripts/agents/commands");
+const { slashCommandBody } = require("../../scripts/agents/init");
+
+const NO_MODULES = FRONT.replace("modules: [courses, lessons]\n", "") + NOTES;
+const guideFile = (dir: string, name: string) =>
+  fs.existsSync(path.join(dir, "docs", "specs", name));
+
+test("REQ-796 SCN-796a: --guide cards prints the guide and writes nothing", (t: TestContext) => {
+  const { dir, cli } = project(t, FRONT + NOTES);
+  const r = cli("propose", "--from-brief", "--guide", "cards");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /^# Propose the brief's module sections/m);
+  assert.match(r.stdout, /`courses`, `lessons`/);
+  assert.match(r.stdout, /## Module: courses/);
+  assert.ok(!guideFile(dir, "BRIEF-CARDS.md"));
+  assert.equal(git(dir, "status", "--porcelain"), "", "the tree is as it was");
+});
+
+test("REQ-796 SCN-796b: --guide setup prints the guide while the front matter has problems", (t: TestContext) => {
+  const { dir, cli } = project(t, NO_MODULES);
+  const r = cli("propose", "--from-brief", "--guide", "setup");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /^# Propose the brief's front matter/m);
+  assert.match(r.stdout, /Read `docs\/brief\.md`/);
+  assert.ok(!guideFile(dir, "BRIEF-SETUP.md"));
+});
+
+test("REQ-796 SCN-796c: --guide cards with no module names --guide setup", (t: TestContext) => {
+  const { json } = project(t, NO_MODULES);
+  const { status, doc } = json("propose", "--from-brief", "--guide", "cards");
+  assert.equal(status, 1);
+  assert.deepEqual(codes(doc), ["draft_guide_no_modules"]);
+  assert.match(doc.status[0].fix, /specgate propose --from-brief --guide setup/);
+});
+
+test("REQ-796: --guide with --json answers the guide under draft.guide", (t: TestContext) => {
+  const { json } = project(t, FRONT + NOTES);
+  const { status, doc } = json("propose", "--from-brief", "--guide", "setup");
+  assert.equal(status, 0);
+  assert.equal(doc.draft.guide.name, "setup");
+  assert.match(doc.draft.guide.text, /^# Propose the brief's front matter/);
+});
+
+test("REQ-796: --guide takes only setup or cards", (t: TestContext) => {
+  const { json } = project(t, FRONT + NOTES);
+  const { status, doc } = json("propose", "--from-brief", "--guide", "front");
+  assert.equal(status, 2);
+  assert.deepEqual(codes(doc), ["draft_usage"]);
+  assert.match(doc.status[0].message, /setup or cards/);
+});
+
+test("REQ-797 SCN-797a: the draft step names --guide, not a file", () => {
+  const body = slashCommandBody(STEPS.find((s: { name: string }) => s.name === "draft"));
+  assert.match(body, /specgate propose --from-brief --guide setup/);
+  assert.match(body, /specgate propose --from-brief --guide cards/);
+  assert.doesNotMatch(body, /BRIEF-SETUP\.md|BRIEF-CARDS\.md/);
+});
+
+test("REQ-797 SCN-797b: the overview names the cards guide while no section exists", (t: TestContext) => {
+  const { cli } = project(t, FRONT + NOTES);
+  const r = cli("propose", "--from-brief");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /specgate propose --from-brief --guide cards/);
+});
+
+test("REQ-797: the overview names the setup guide while the front matter needs fixes", (t: TestContext) => {
+  const { cli } = project(t, NO_MODULES);
+  const r = cli("propose", "--from-brief");
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /specgate propose --from-brief --guide setup/);
+});
+
+test("REQ-797: a brief with its sections is not sent to the cards guide", (t: TestContext) => {
+  const { cli } = project(t, COURSES);
+  const r = cli("propose", "--from-brief");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.doesNotMatch(r.stdout, /--guide cards/);
 });

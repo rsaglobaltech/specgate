@@ -1,4 +1,4 @@
-<!-- translation-of: 35365f7e5dfa -->
+<!-- translation-of: d8dda2955c5a -->
 <!-- specgate:allow-placeholders — this guide quotes the {{VAR}} template syntax. -->
 
 # Resolución de problemas
@@ -95,7 +95,9 @@ cada una se explica en [Desde el brief de un cliente](from-a-brief.md#3-comprueb
 | --- | --- | --- |
 | `draft_no_brief` | No hay `docs/brief.md` | `specgate propose --from-brief --new-brief` escribe uno para rellenar |
 | `draft_module_not_in_brief` | El módulo no está listado en `modules:` del brief | Añádelo ahí |
+| `draft_guide_no_modules` | `--guide cards` sobre un brief cuyo front matter no lista ningún módulo | Primero `specgate propose --from-brief --guide setup` |
 | D6: un valor no está en el brief | El borrador usa un número o un nombre que su fuente no dice | Pregunta al cliente, o regístralo en `assumptions.md` |
+| D17: una cita no está en el brief | La línea `> Brief:` de un requisito cita palabras que el brief no tiene | Cita la frase del propio brief, o quita el requisito |
 | D7: una pregunta abierta | Una pregunta que ningún requisito espera | Haz que el requisito que bloquea la espere, o respóndela |
 | `draft_agent_failed` | El comando del agente no se ejecutó o falló | Ejecuta antes el comando por separado; o pega el prompt en tu agente |
 | Studio: una respuesta dijo "Saved" y no cambió nada (0.27 y anteriores) | `questions.md` no tenía columna `Answer` | Actualiza a 0.28.1, o añade las columnas `Answer` y `Status` a la tabla |

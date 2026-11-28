@@ -1,0 +1,13 @@
+▶ dist/tests/unit/strict-links.test.js
+✔ REQ-800: comments are blanked by the file's language, strings kept (2.1185ms)
+✔ REQ-800 SCN-800b: under link: strict, a name and a string link; a comment does not (2.2917ms)
+✔ REQ-800: an explicit test= is kept under link: strict (0.2639ms)
+✔ REQ-800 SCN-800a: apply refuses a requirement whose only link is a comment, and says why (1832.4114ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2273.3529

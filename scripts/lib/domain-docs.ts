@@ -29,6 +29,7 @@ import { frontMatter } from "../draft/brief-setup";
 import { ACTOR_NAME, actorName } from "../../packages/core/src/domain/DraftChecklist";
 import { readDerivationSources } from "../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { parseTraceabilityRows } from "../../packages/core/src/domain/TraceabilityFormat";
+import { parseTraceComment } from "../../packages/core/src/domain/SpecParser";
 import {
   ACTORS_FILE,
   AGGREGATES_FILE,
@@ -228,12 +229,11 @@ function actorRequirements(dir: string): ActorRequirement[] {
         current = { id: h[1], title: (h[2] || "").trim() };
         continue;
       }
+      // REQ-798: read as the spec parser reads it, not by a pattern of its own.
       const a =
-        current && line.includes("specgate:trace")
-          ? /\bactor=(?:"([^"]*)"|'([^']*)'|([^\s>]+))/.exec(line)
-          : null;
-      if (current && a) {
-        out.push({ ...current, capability, actor: (a[1] ?? a[2] ?? a[3] ?? "").trim() });
+        current && line.includes("specgate:trace") ? parseTraceComment(line).actor : undefined;
+      if (current && a !== undefined) {
+        out.push({ ...current, capability, actor: a.trim() });
         current = null;
       }
     }

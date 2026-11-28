@@ -24,6 +24,8 @@ import {
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import * as ui from "../../../lib/ui";
 import { inOpenChange } from "../../../lib/bdd";
+import { workspaceDirs } from "../../../lib/workspaces";
+import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 
 const RICH_HEADER =
   "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |";
@@ -574,16 +576,21 @@ export class DoctorCommand extends BaseCommand {
       // that "runnable" contradicted the harness prompt, which in the same
       // project said nothing executes a `.feature` here. One of the two was
       // describing the file and calling it the run.
-      const runner = hasGherkinRunner({
-        exists: (rel: string) => fs.existsSync(path.join(dir, rel)),
-        read: (rel: string) => {
-          try {
-            return fs.readFileSync(path.join(dir, rel), "utf8");
-          } catch {
-            return null;
-          }
-        },
-      });
+      // `bdd_cmd` runs them, or a runner is at the root or in a workspace (REQ-810).
+      const runner =
+        Boolean(readHarnessConfig(dir)?.bddCmd) ||
+        ["", ...workspaceDirs(dir)].some((ws) =>
+          hasGherkinRunner({
+            exists: (rel: string) => fs.existsSync(path.join(dir, ws, rel)),
+            read: (rel: string) => {
+              try {
+                return fs.readFileSync(path.join(dir, ws, rel), "utf8");
+              } catch {
+                return null;
+              }
+            },
+          })
+        );
       this.ok(
         "scenarios",
         `${files.length} feature file(s), every scenario well-formed` +
@@ -652,6 +659,45 @@ export class DoctorCommand extends BaseCommand {
     }
   }
 
+  /**
+   * ADR-0047 REQ-805: the evidence's pictures are what the project's runner
+   * keeps. Playwright keeps no screenshot or video unless `use:` says so; any
+   * other runner is not read. The config is the root's, or else a
+   * workspace's (REQ-810).
+   */
+  private checkEvidenceMedia(dir: string) {
+    const bddCmd = String(readHarnessConfig(dir)?.bddCmd || "");
+    if (!bddCmd) return;
+    const config = ["", ...workspaceDirs(dir)]
+      .flatMap((ws) =>
+        ["playwright.config.ts", "playwright.config.js", "playwright.config.mjs"].map((f) =>
+          path.join(dir, ws, f)
+        )
+      )
+      .map((f) => this.readIfExists(f))
+      .find((t): t is string => t !== null);
+    if (config === null || config === undefined) return;
+    if (!/playwright|bddgen/i.test(bddCmd) && !/playwright-bdd/.test(config)) return;
+    // REQ-816: a trace kept only on failure keeps none of the after, which passes.
+    const ONLY_ON_FAILURE =
+      "|retain-on-failure|on-first-retry|retain-on-first-failure|on-all-retries";
+    const missing = ["screenshot", "video", "trace"].filter(
+      (key) =>
+        !new RegExp(
+          `\\b${key}\\s*:\\s*["'](?!(?:off${key === "trace" ? ONLY_ON_FAILURE : ""})["'])`
+        ).test(config)
+    );
+    if (missing.length === 0) {
+      this.ok("evidence media", "Playwright keeps screenshots, video and traces for the evidence");
+      return;
+    }
+    this.warn(
+      "evidence media",
+      `Playwright keeps no ${missing.join(" or ")}: the evidence of a flow, before and after, has no pictures`,
+      "In playwright.config, under use: add screenshot: 'on', video: 'on' (or 'retain-on-failure') and trace: 'on' — the after passes, and a trace kept only on failure keeps none of it."
+    );
+  }
+
   public execute() {
     const argv = this.args;
     const start = argv[0] === "doctor" ? 1 : 0;
@@ -702,6 +748,7 @@ export class DoctorCommand extends BaseCommand {
       this.checkArchitectureProfile(dir);
       this.checkSampleRequirement(dir);
       this.checkScenarioQuality(dir);
+      this.checkEvidenceMedia(dir);
     }
 
     const errors = this.findings.filter((f) => f.level === "error").length;

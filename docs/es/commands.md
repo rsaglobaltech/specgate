@@ -1,4 +1,4 @@
-<!-- translation-of: cbab84bd27cd -->
+<!-- translation-of: 3e2d28ca8291 -->
 # Referencia de comandos
 
 Cada comando de Specgate, una línea cada uno, agrupados por la tarea que estás
@@ -37,6 +37,7 @@ antes del pull request, para que el spec y el código se revisen juntos.
 | `specgate propose --from-brief --check` | Ejecuta las reglas del brief (B1–B15) sobre el brief. No escribe nada. | [Escribir el brief](start/write-the-brief.md#paso-9-compruebalo) |
 | `specgate propose --from-brief --agent "<cmd>"` | Tu agente propone los campos del brief y después una sección por módulo. | [Desde un brief](from-a-brief.md) |
 | `specgate propose --from-brief --form` | El brief como formulario, cada campo con su línea; `--form <file>` lo vuelve a escribir. | [Desde un brief](from-a-brief.md) |
+| `specgate propose --from-brief --guide setup` | Imprime la guía que sigue un agente para proponer el front matter; `cards`, las secciones por módulo. No escribe nada. | [Desde un brief](from-a-brief.md) |
 | `specgate propose --from-brief <module>` | Abre el change borrador de ese módulo, o lo comprueba si ya existe. | [Desde un brief](from-a-brief.md#2-redacta-un-modulo) |
 | `specgate propose --from-ticket <KEY>` | Abre un change a partir de un ticket de Jira, en una nueva rama `feature/<KEY>-<slug>`. | [Desde un ticket de Jira](from-a-ticket.md) |
 | `specgate propose --from-ticket <KEY> --check` | La Definition of Ready del ticket (reglas T1–T9). No escribe nada. | [Desde un ticket de Jira](from-a-ticket.md) |
@@ -144,6 +145,7 @@ consulta [Desde un ticket de Jira](from-a-ticket.md) y
 | `specgate trust` | El nivel de confianza de cada módulo, su racha y sus bugs; `promote` sube uno. | `specgate trust --help` |
 | `specgate map [<REQ>]` | Dónde vive cada requisito: caso de uso, ruta, feature, código, tests. | `specgate map --help` |
 | `specgate reproduce <change>` | Abre un bug que hay que ver en rojo antes de corregirlo. | `specgate reproduce --help` |
+| `specgate evidence before <REQ>` | Guarda los escenarios de un requisito, ejecutados antes de su código, como su antes: log, capturas, video. | `specgate evidence --help` |
 | `specgate learn [promote <L>]` | Notas de revisión y fallos que se repiten, convertidos en una regla. | `specgate learn --help` |
 | `specgate eval <skill>` / `--list` | Examina una skill con tareas fijas; `--list`: cada examen, sus textos, historial y ejecuciones. | `specgate eval --help` |
 | `specgate harness events --from claude` | Convierte el stream de Claude Code en eventos para la vista en directo. | [El harness](harness.md) |

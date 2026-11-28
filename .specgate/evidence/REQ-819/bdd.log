@@ -1,0 +1,11 @@
+▶ dist/tests/unit/evidence-attempts.test.js
+✔ REQ-819 SCN-819a: two failed deliveries kept as attempts, listed by the delivery and on the page (4881.4056ms)
+✔ REQ-819: a new before starts again, its old attempts gone (2530.4987ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7571.8873
