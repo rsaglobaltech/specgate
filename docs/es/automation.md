@@ -1,4 +1,4 @@
-<!-- translation-of: 43378fd762a4 -->
+<!-- translation-of: 3c6449594209 -->
 # Automatización
 
 Esta página conecta el ciclo de Specgate con las herramientas que tu equipo ya
@@ -105,7 +105,7 @@ restringido), usa la imagen de Docker o los plugins de Maven y Gradle.
 
 ```bash
 docker run --rm -v "$PWD:/workspace" \
-  ghcr.io/rsaglobaltech/specgate:1.6.0 validate . --strict
+  ghcr.io/rsaglobaltech/specgate:1.7.0 validate . --strict
 ```
 
 Fija la versión: `latest` vale en un portátil, pero un gate que cambia por
@@ -118,7 +118,7 @@ En GitLab CI, ese es todo el job:
 
 ```yaml
 spec-gate:
-  image: ghcr.io/rsaglobaltech/specgate:1.6.0
+  image: ghcr.io/rsaglobaltech/specgate:1.7.0
   stage: test
   script:
     - specgate validate . --strict
@@ -128,7 +128,7 @@ En Jenkins:
 
 ```groovy
 stage('Spec gate') {
-    agent { docker { image 'ghcr.io/rsaglobaltech/specgate:1.6.0' } }
+    agent { docker { image 'ghcr.io/rsaglobaltech/specgate:1.7.0' } }
     steps { sh 'specgate validate . --strict' }
 }
 ```

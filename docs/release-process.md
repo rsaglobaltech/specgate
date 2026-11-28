@@ -14,9 +14,9 @@ a `v*` tag. They were off for months to save a quota that public repositories do
 
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **1.6.0** is `latest`; `next` is 1.0.0-rc.12 |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **1.6.0** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **1.6.0**, `linux/amd64` and `linux/arm64` |
+| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **1.7.0** is `latest`; `next` is 1.0.0-rc.12 |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **1.7.0** |
+| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **1.7.0**, `linux/amd64` and `linux/arm64` |
 | MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |

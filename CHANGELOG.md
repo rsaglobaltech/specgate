@@ -9,6 +9,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-11-28
+
 ### Added
 
 - **Evidence before and after.** `specgate evidence before <REQ>`, run once the test is written and before the code, keeps the red run — its output, screenshots, video and trace — in `.specgate/evidence/<REQ>/before/`; `apply` keeps the green one beside it, and each run's artifacts stay out of git (REQ-803, REQ-804). `specgate doctor` says when Playwright keeps no screenshots, video or trace (REQ-805, REQ-816).

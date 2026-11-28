@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "1.6.0",
+    "version": "1.7.0",
     "node": "v24.x",
-    "platform": "darwin",
+    "platform": "linux",
     "packSource": "local"
   },
-  "recordedAt": "2026-11-26",
+  "recordedAt": "2026-11-28",
   "title": "invoices — an existing repository",
   "cols": 88,
   "streamsMerged": false,
@@ -40,7 +40,7 @@
       "typeMs": 26,
       "holdMs": 1960,
       "truncated": true,
-      "omitted": 34,
+      "omitted": 33,
       "lines": [
         {
           "t": "  ◆ specgate · init",

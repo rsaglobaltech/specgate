@@ -1,4 +1,4 @@
-<!-- translation-of: cec711579f3d -->
+<!-- translation-of: ac843f3d90d7 -->
 # Validar
 
 Al final de esta página el gate se ejecuta en tu máquina antes de cada pull
@@ -125,7 +125,7 @@ jobs:
         with: { node-version: '24' }
       # --strict is the whole specification gate, pinned so a release
       # cannot change it under you. It does not run your tests.
-      - run: npx --yes @rsaglobaltech/specgate@1.6.0 validate . --strict
+      - run: npx --yes @rsaglobaltech/specgate@1.7.0 validate . --strict
 ```
 
 `validate --strict` comprueba solo la especificación. Para que el job falle

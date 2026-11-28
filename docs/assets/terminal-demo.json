@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "1.6.0",
+    "version": "1.7.0",
     "node": "v24.x",
-    "platform": "darwin",
+    "platform": "linux",
     "packSource": "local"
   },
-  "recordedAt": "2026-11-26",
+  "recordedAt": "2026-11-28",
   "title": "smart-parking — the harness",
   "cols": 88,
   "streamsMerged": false,
@@ -103,7 +103,7 @@
           "s": "out"
         },
         {
-          "t": "  ℹ  🚦 CI: .github/workflows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks",
+          "t": "  ℹ  🚦 CI: .github.flows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks",
           "c": "info",
           "s": "out"
         },
