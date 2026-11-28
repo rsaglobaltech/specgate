@@ -59,7 +59,9 @@ test("REQ-809 SCN-809a: the before keeps the screenshot a workspace's runner wro
   const before = path.join(dir, ".specgate", "evidence", "REQ-001", "before");
   const run = JSON.parse(fs.readFileSync(path.join(before, "run.json"), "utf8"));
   assert.deepEqual(run.artifacts, ["artifacts/apps/web/flow/test-finished-1.png"]);
-  assert.ok(fs.existsSync(path.join(before, "artifacts", "apps", "web", "flow", "test-finished-1.png")));
+  assert.ok(
+    fs.existsSync(path.join(before, "artifacts", "apps", "web", "flow", "test-finished-1.png"))
+  );
 });
 
 test("REQ-810 SCN-810a: doctor sees playwright-bdd in a workspace, and its missing screenshots", (t: TestContext) => {

@@ -13,7 +13,10 @@ import { escapeRegExp } from "./escape";
 import { parseTraceComment } from "../../packages/core/src/domain/SpecParser";
 import { deriveRows } from "../../packages/core/src/domain/DerivedMatrix";
 import { readDerivationSources } from "../../packages/core/src/infrastructure/DerivedMatrixSources";
-import { sequenceDiagram, type ScenarioSteps } from "../../packages/core/src/domain/EvidenceDiagrams";
+import {
+  sequenceDiagram,
+  type ScenarioSteps,
+} from "../../packages/core/src/domain/EvidenceDiagrams";
 import { umlTypesOf, typeNames, type UmlType } from "../../packages/core/src/domain/UmlModel";
 import {
   codeSequence,
@@ -174,9 +177,11 @@ const LANGUAGES: Array<{ name: string; test: RegExp }> = [
 const languageOf = (file: string) => LANGUAGES.find((l) => l.test.test(file))?.name || "";
 
 /** Folders whose files are not the product's code. */
-const SKIP_DIR = /^(?:node_modules|\.git|dist|build|target|out|coverage|\.next|\.features-gen|\.specgate|test-results|vendor|__pycache__)$/;
+const SKIP_DIR =
+  /^(?:node_modules|\.git|dist|build|target|out|coverage|\.next|\.features-gen|\.specgate|test-results|vendor|__pycache__)$/;
 /** Test sources: not part of the slice a reviewer reads as the design. */
-const TEST_FILE = /(?:^|\/)(?:src\/test|tests?|__tests__|e2e|spec)\/|\.(?:test|spec)\.[^/]+$|Tests?\.(?:java|kt|cs)$/;
+const TEST_FILE =
+  /(?:^|\/)(?:src\/test|tests?|__tests__|e2e|spec)\/|\.(?:test|spec)\.[^/]+$|Tests?\.(?:java|kt|cs)$/;
 const MAX_INDEX = 2000;
 const MAX_SLICE = 16;
 
@@ -270,7 +275,8 @@ function sliceOf(index: UmlType[], seeds: UmlType[]): UmlType[] {
 function commonPackage(pkgs: string[]): string {
   const parts = pkgs.map((p) => p.split("."));
   const out: string[] = [];
-  for (let i = 0; parts.every((p) => i < p.length && p[i] === parts[0][i]); i += 1) out.push(parts[0][i]);
+  for (let i = 0; parts.every((p) => i < p.length && p[i] === parts[0][i]); i += 1)
+    out.push(parts[0][i]);
   return out.join(".");
 }
 
@@ -309,7 +315,9 @@ function sliceDiagrams(
       const rewritten = t.members
         .filter((m) => m.kind !== "field" && m.body)
         .filter((m) => {
-          const old = was.members.find((o) => o.kind === m.kind && o.name === m.name && o.params.length === m.params.length);
+          const old = was.members.find(
+            (o) => o.kind === m.kind && o.name === m.name && o.params.length === m.params.length
+          );
           return old !== undefined && flat(old.body) !== flat(m.body);
         })
         .map((m) => `${m.name}()`);
@@ -345,7 +353,12 @@ function sliceDiagrams(
  * and the one each client function they call (`api.requestDrawing(...)`)
  * names where it is declared in the project.
  */
-function webCallsFrom(dir: string, id: string, seedFiles: string[], sources: Map<string, string>): string[] {
+function webCallsFrom(
+  dir: string,
+  id: string,
+  seedFiles: string[],
+  sources: Map<string, string>
+): string[] {
   const web = seedFiles.filter((f) => /\.(ts|tsx|js|jsx|mjs)$/i.test(f));
   const read = (f: string) => {
     try {
@@ -356,13 +369,17 @@ function webCallsFrom(dir: string, id: string, seedFiles: string[], sources: Map
   };
   const calls = web.flatMap((f) => webCallsOf(read(f), id));
   if (calls.length) return [...new Set(calls)];
-  const called = new Set(web.flatMap((f) => [...read(f).matchAll(/\.\s*([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1])));
+  const called = new Set(
+    web.flatMap((f) => [...read(f).matchAll(/\.\s*([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1]))
+  );
   const out: string[] = [];
   for (const [file, text] of sources) {
     if (!/\.(ts|tsx|js|jsx|mjs)$/i.test(file)) continue;
     const lines = text.split(/\r?\n/);
     lines.forEach((l, i) => {
-      const decl = /^\s*(?:export\s+)?(?:async\s+)?(?:function\s+)?([A-Za-z_$][\w$]*)\s*[:=(]/.exec(l);
+      const decl = /^\s*(?:export\s+)?(?:async\s+)?(?:function\s+)?([A-Za-z_$][\w$]*)\s*[:=(]/.exec(
+        l
+      );
       if (!decl || !called.has(decl[1])) return;
       const near = lines.slice(i, i + 4).join("\n");
       const p = /["'`](\/api\/[^"'`$]*)/.exec(near);

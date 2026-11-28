@@ -232,8 +232,7 @@ export function parseArgs(argv: string[]): DraftOptions {
       const v = value();
       if (v !== "setup" && v !== "cards") throw new Error(`--guide takes setup or cards, not ${v}`);
       o.guide = v;
-    }
-    else if (a === "--form") {
+    } else if (a === "--form") {
       // `--form` alone reads; `--form <file>` or `--form -` writes, as `--check [<id>]`.
       const next = argv[i + 1];
       if (next === undefined || (next.startsWith("-") && next !== "-")) o.form = "";

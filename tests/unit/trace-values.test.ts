@@ -50,7 +50,8 @@ test("REQ-798: an unquoted value followed by a stray word is found, with its lin
 });
 
 test("REQ-798: a multi-line trace is read whole", () => {
-  const spec = "## REQ-011 — Access\n<!-- specgate:trace\n  actor=Adulto responsable\n  kind=functional\n-->\n";
+  const spec =
+    "## REQ-011 — Access\n<!-- specgate:trace\n  actor=Adulto responsable\n  kind=functional\n-->\n";
   assert.deepEqual(strayTraceWords(spec), [
     { line: 2, key: "actor", read: "Adulto", meant: "Adulto responsable" },
   ]);

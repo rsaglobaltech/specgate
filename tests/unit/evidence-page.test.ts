@@ -125,7 +125,10 @@ test("REQ-807 SCN-807a: one before, one missing", (t: TestContext) => {
     /\.specgate\/evidence\/REQ-031\/before\/artifacts\/paying-chromium\/video\.webm/
   );
   assert.match(page, /\.specgate\/evidence\/REQ-031\/artifacts\/paying-chromium\/trace\.zip/);
-  assert.match(page, /```mermaid\n%%\{init: \{"theme": "neutral"\}\}%%\nsequenceDiagram\n {2}title Paying/);
+  assert.match(
+    page,
+    /```mermaid\n%%\{init: \{"theme": "neutral"\}\}%%\nsequenceDiagram\n {2}title Paying/
+  );
   assert.doesNotMatch(page, /At the base<\/summary>[\s\S]*?note for \w+ "new"[\s\S]*?<\/details>/);
   // REQ-032: what is missing, and how to get it.
   assert.match(page, /## REQ-032 — An order is refunded/);

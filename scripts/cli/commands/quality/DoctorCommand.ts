@@ -679,7 +679,8 @@ export class DoctorCommand extends BaseCommand {
     if (config === null || config === undefined) return;
     if (!/playwright|bddgen/i.test(bddCmd) && !/playwright-bdd/.test(config)) return;
     // REQ-816: a trace kept only on failure keeps none of the after, which passes.
-    const ONLY_ON_FAILURE = "|retain-on-failure|on-first-retry|retain-on-first-failure|on-all-retries";
+    const ONLY_ON_FAILURE =
+      "|retain-on-failure|on-first-retry|retain-on-first-failure|on-all-retries";
     const missing = ["screenshot", "video", "trace"].filter(
       (key) =>
         !new RegExp(

@@ -99,6 +99,70 @@ function body(files: Map<string, Buffer>, ref: unknown, text: unknown): string {
   return shown.length > MAX_BODY ? `${shown.slice(0, MAX_BODY)}\n…` : shown;
 }
 
+/**
+ * When the test ran, in epoch ms, from the test runner's own trace: its start
+ * and its last step's end (REQ-824). Null when the trace does not say.
+ */
+export function traceWindow(traceZip: string): { from: number; to: number } | null {
+  const text = readZip(traceZip).get("test.trace")?.toString("utf8") || "";
+  let wall = 0;
+  let mono = 0;
+  let end = 0;
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    try {
+      const e = JSON.parse(line) as {
+        type?: string;
+        wallTime?: number;
+        monotonicTime?: number;
+        endTime?: number;
+      };
+      if (e.type === "context-options" && e.wallTime)
+        [wall, mono] = [e.wallTime, e.monotonicTime || 0];
+      if (typeof e.endTime === "number" && e.endTime > end) end = e.endTime;
+    } catch {
+      /* a line cut short: the others still say when */
+    }
+  }
+  return wall ? { from: wall, to: wall + Math.max(0, end - mono) } : null;
+}
+
+/** The calls the project's server recorded in SPECGATE_HTTP_LOG (REQ-824), with when each was made. */
+export function loggedCalls(file: string): Array<HttpCall & { at: number }> {
+  let text = "";
+  try {
+    text = fs.readFileSync(file, "utf8");
+  } catch {
+    return [];
+  }
+  return text.split(/\r?\n/).flatMap((line) => {
+    try {
+      const c = JSON.parse(line) as {
+        at?: number;
+        method?: string;
+        path?: string;
+        status?: number;
+        ms?: number;
+      };
+      if (!c.method || !c.path || typeof c.status !== "number") return [];
+      return [
+        {
+          at: c.at || 0,
+          method: c.method.toUpperCase(),
+          path: c.path,
+          status: c.status,
+          statusText: "",
+          ms: c.ms || 0,
+          request: "",
+          response: "",
+        },
+      ];
+    } catch {
+      return [];
+    }
+  });
+}
+
 /** The calls to the service in one trace, in the order they were made. */
 export function httpCalls(traceZip: string): HttpCall[] {
   const files = readZip(traceZip);

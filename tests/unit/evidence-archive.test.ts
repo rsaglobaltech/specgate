@@ -42,7 +42,10 @@ function project(t: TestContext, policy: string) {
   fs.writeFileSync(path.join(dir, ".specgate", "gate.yaml"), `preset: standard\n${policy}`);
   const change = path.join(dir, "docs", "specs", "changes", "draft-orders");
   fs.mkdirSync(path.join(change, "specs", "orders"), { recursive: true });
-  fs.writeFileSync(path.join(change, "change.yaml"), "specgate_change_version: 1\nschema: layered\n");
+  fs.writeFileSync(
+    path.join(change, "change.yaml"),
+    "specgate_change_version: 1\nschema: layered\n"
+  );
   fs.writeFileSync(
     path.join(change, "specs", "orders", "spec.md"),
     [
@@ -57,7 +60,10 @@ function project(t: TestContext, policy: string) {
   const keep = (rel: string, file: string, exitCode: number) => {
     const folder = path.join(dir, ".specgate", "evidence", rel);
     fs.mkdirSync(folder, { recursive: true });
-    fs.writeFileSync(path.join(folder, file), JSON.stringify({ command: "bdd", exitCode, artifacts: [] }));
+    fs.writeFileSync(
+      path.join(folder, file),
+      JSON.stringify({ command: "bdd", exitCode, artifacts: [] })
+    );
   };
   keep("REQ-031/before", "run.json", 1);
   keep("REQ-031", "evidence.json", 0);
@@ -120,7 +126,9 @@ test("REQ-813: a project whose scenarios do not run writes no page at archive", 
 test("REQ-814 SCN-814a: evidence --base draws the base the person names", (t: TestContext) => {
   const dir = project(t, "bdd: required\n");
   const git = (...args: string[]) =>
-    spawnSync("git", ["-C", dir, "-c", "user.email=t@t", "-c", "user.name=t", ...args], { encoding: "utf8" });
+    spawnSync("git", ["-C", dir, "-c", "user.email=t@t", "-c", "user.name=t", ...args], {
+      encoding: "utf8",
+    });
   fs.mkdirSync(path.join(dir, "src"), { recursive: true });
   const order = (members: string) => `// REQ-031\nexport class Orders {\n${members}}\n`;
   fs.writeFileSync(path.join(dir, "src", "orders.ts"), order("  pay(): void {}\n"));
@@ -128,7 +136,10 @@ test("REQ-814 SCN-814a: evidence --base draws the base the person names", (t: Te
   git("add", "-A");
   git("commit", "-q", "-m", "one");
   git("tag", "base-tag");
-  fs.writeFileSync(path.join(dir, "src", "orders.ts"), order("  pay(): void {}\n  refund(): void {}\n"));
+  fs.writeFileSync(
+    path.join(dir, "src", "orders.ts"),
+    order("  pay(): void {}\n  refund(): void {}\n")
+  );
   git("commit", "-qam", "two");
   const r = cli("evidence", "draft-orders", "--base", "base-tag", "--project-dir", dir, "--json");
   assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -140,7 +151,10 @@ test("REQ-814 SCN-814a: evidence --base draws the base the person names", (t: Te
   const head = cli("evidence", "draft-orders", "--base", "HEAD", "--project-dir", dir);
   assert.equal(head.status, 0);
   assert.doesNotMatch(
-    fs.readFileSync(path.join(dir, "docs", "specs", "changes", "draft-orders", "EVIDENCE.md"), "utf8"),
+    fs.readFileSync(
+      path.join(dir, "docs", "specs", "changes", "draft-orders", "EVIDENCE.md"),
+      "utf8"
+    ),
     /Changed: `Orders`/,
     "against HEAD nothing changed"
   );
@@ -151,7 +165,9 @@ test("REQ-814 SCN-814a: evidence --base draws the base the person names", (t: Te
 test("REQ-821 SCN-821a: on main, the page compares with the commit before the change was opened", (t: TestContext) => {
   const dir = project(t, "bdd: required\n");
   const git = (...args: string[]) =>
-    spawnSync("git", ["-C", dir, "-c", "user.email=t@t", "-c", "user.name=t", ...args], { encoding: "utf8" });
+    spawnSync("git", ["-C", dir, "-c", "user.email=t@t", "-c", "user.name=t", ...args], {
+      encoding: "utf8",
+    });
   const change = path.join(dir, "docs", "specs", "changes", "draft-orders");
   const aside = `${dir}-change`;
   fs.renameSync(change, aside);
@@ -164,13 +180,16 @@ test("REQ-821 SCN-821a: on main, the page compares with the commit before the ch
   fs.renameSync(aside, change);
   git("add", "-A");
   git("commit", "-q", "-m", "the change is opened");
-  fs.writeFileSync(path.join(dir, "src", "orders.ts"), order("  pay(): void {}\n  refund(): void {}\n"));
+  fs.writeFileSync(
+    path.join(dir, "src", "orders.ts"),
+    order("  pay(): void {}\n  refund(): void {}\n")
+  );
   git("commit", "-qam", "delivered on main");
   const r = cli("evidence", "draft-orders", "--project-dir", dir, "--json");
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(
     fs.readFileSync(path.join(change, "EVIDENCE.md"), "utf8"),
     /Changed: `Orders` — added `\+refund\(\)`/,
-    "not \"unchanged since the base\""
+    'not "unchanged since the base"'
   );
 });

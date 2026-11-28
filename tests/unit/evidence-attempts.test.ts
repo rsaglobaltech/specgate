@@ -10,12 +10,15 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
-const ROOT_DIR = path.resolve(__dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, ""));
+const ROOT_DIR = path.resolve(
+  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
+);
 const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 
 const madeDirs: string[] = [];
 test.after(() => {
-  for (const d of madeDirs) fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  for (const d of madeDirs)
+    fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 });
 
 const w = (dir: string, rel: string, text: string) => {
@@ -24,7 +27,11 @@ const w = (dir: string, rel: string, text: string) => {
 };
 const read = (dir: string, rel: string) => fs.readFileSync(path.join(dir, rel), "utf8");
 const sg = (dir: string, ...args: string[]) =>
-  spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+  spawnSync(process.execPath, [CLI, ...args], {
+    cwd: dir,
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "1" },
+  });
 
 /**
  * A runner stand-in: prints Playwright's list output and records the AI's
@@ -49,11 +56,15 @@ process.exit(1);
 
 /** The change that holds REQ-031, for its evidence page. */
 function openChange(dir: string) {
-  w(dir, "docs/specs/changes/draft-orders/change.yaml", "specgate_change_version: 1\nschema: layered\n");
+  w(
+    dir,
+    "docs/specs/changes/draft-orders/change.yaml",
+    "specgate_change_version: 1\nschema: layered\n"
+  );
   w(
     dir,
     "docs/specs/changes/draft-orders/specs/orders/spec.md",
-    "# Delta — orders\n\n## MODIFIED Requirements\n\n### Requirement: REQ-031 — Unclear idea\n\nThe system SHALL ask for another clue.\n\n#### Scenario: SCN-031 — Unclear by API\n\n- GIVEN a child session\n- WHEN the child sends POST /api/drawing-requests with \"Haz eso\"\n- THEN the answer is 422\n"
+    '# Delta — orders\n\n## MODIFIED Requirements\n\n### Requirement: REQ-031 — Unclear idea\n\nThe system SHALL ask for another clue.\n\n#### Scenario: SCN-031 — Unclear by API\n\n- GIVEN a child session\n- WHEN the child sends POST /api/drawing-requests with "Haz eso"\n- THEN the answer is 422\n'
   );
 }
 
@@ -72,7 +83,10 @@ function project() {
   );
   w(dir, ".specgate/gate.yaml", "preset: standard\nbdd: required\n");
   w(dir, "run-scenarios.js", RUNNER);
-  fs.appendFileSync(path.join(dir, "harness.config.yaml"), 'bdd_cmd: "node run-scenarios.js {tags}"\n');
+  fs.appendFileSync(
+    path.join(dir, "harness.config.yaml"),
+    'bdd_cmd: "node run-scenarios.js {tags}"\n'
+  );
   w(dir, "tests/unclear.test.ts", "// REQ-031\n");
   return dir;
 }
@@ -122,7 +136,10 @@ test("REQ-819 SCN-819a: two failed deliveries kept as attempts, listed by the de
     /\| 1 \| Unclear by API: ✘ 1\.5s — Then recibe 422: Error: expect\(received\)\.toBe\(expected\) · Expected: 422 · Received: 202 \| llama3\.2: Haz eso → \{"category":"A"\} \|/
   );
   assert.match(page, /\| 2 \| Unclear by API/);
-  assert.match(read(dir, "docs/specs/changes/draft-orders/EVIDENCE.html"), /<h3>Failed attempts<\/h3>/);
+  assert.match(
+    read(dir, "docs/specs/changes/draft-orders/EVIDENCE.html"),
+    /<h3>Failed attempts<\/h3>/
+  );
 });
 
 test("REQ-819: a new before starts again, its old attempts gone", () => {

@@ -142,6 +142,31 @@ there per model call, and the page shows them, before and after:
 Only when the variable is set: in production nothing is written. The server
 the tests start must inherit it — Playwright's `webServer` does.
 
+## Checked against the run
+
+The sequence diagrams are read from the code, and a reading can be wrong. So
+under each one the page says where it stands:
+
+- ✓ **Matches the run** — the run called the endpoint the diagram draws, and
+  it ended the same way, success or error.
+- ⚠ **The run differs** — and what the run called, or answered, instead.
+- · **Not checked** — the run left no call to compare; or **drawn from the
+  steps**, when no endpoint in the code answers them.
+
+The run's calls come from the browser's trace. A call your server makes — a
+Next.js server action calling your API — never reaches the browser, so record
+it: Specgate sets `SPECGATE_HTTP_LOG` beside `SPECGATE_AI_LOG`, and your
+server's API client writes one JSON line per call there:
+
+```json
+{"at": 1795853011482, "method": "POST", "path": "/api/incidents", "status": 422, "ms": 36}
+```
+
+`at` is when the call started, in epoch milliseconds: each call goes to the
+scenario whose trace spans that moment. The calls also join the calls table.
+Nothing is written when the variable is not set; a server you started
+yourself, outside Playwright, does not inherit it.
+
 ## At archive
 
 When the gate runs the scenarios (`bdd: required`), `specgate archive` writes

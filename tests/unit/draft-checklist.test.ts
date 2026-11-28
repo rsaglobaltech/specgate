@@ -994,7 +994,8 @@ test("REQ-668: the project's language wins over a title's; one language througho
 // ── REQ-799 ───────────────────────────────────────────────────────────────────
 
 const QUOTE_BRIEF =
-  BRIEF + "\nA member **recovers** access\nwith their email.\n<!-- e.g. Access is never recovered. -->\n";
+  BRIEF +
+  "\nA member **recovers** access\nwith their email.\n<!-- e.g. Access is never recovered. -->\n";
 const quoting = (quote: string) =>
   delta(
     req(

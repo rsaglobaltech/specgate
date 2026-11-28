@@ -58,7 +58,11 @@ function openInBrowser(file: string): boolean {
         ? ["open", [file]]
         : ["xdg-open", [file]];
   try {
-    spawn(cmd, args as string[], { detached: true, stdio: "ignore", windowsVerbatimArguments: true }).unref();
+    spawn(cmd, args as string[], {
+      detached: true,
+      stdio: "ignore",
+      windowsVerbatimArguments: true,
+    }).unref();
     return true;
   } catch {
     return false;
@@ -90,8 +94,7 @@ export class EvidenceCommand extends BaseCommand {
             }),
           ]);
         }
-      }
-      else if (a === "--json") continue;
+      } else if (a === "--json") continue;
       else if (a === "--html") html = true;
       else if (a === "--open") open = html = true;
       else if (!a.startsWith("-")) positional.push(a);

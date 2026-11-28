@@ -591,7 +591,11 @@ Examples
     "The technician confirms if the incident is resolved.",
   ])
     assert.deepEqual(b11(rule), [], rule);
-  assert.equal(b11("La incidencia se cierra si el técnico la resuelve.").length, 1, "a condition still is one");
+  assert.equal(
+    b11("La incidencia se cierra si el técnico la resuelve.").length,
+    1,
+    "a condition still is one"
+  );
 });
 
 test("REQ-245 SCN-245a: ten modules and a driver on mobile, in a web project", () => {

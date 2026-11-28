@@ -162,15 +162,33 @@ function splitTop(text: string): string[] {
   return out;
 }
 
-const tidy = (s: string) => s.replace(/\s+/g, " ").replace(/\s*([<>,])\s*/g, "$1").replace(/,/g, ", ").trim();
+const tidy = (s: string) =>
+  s
+    .replace(/\s+/g, " ")
+    .replace(/\s*([<>,])\s*/g, "$1")
+    .replace(/,/g, ", ")
+    .trim();
 
 // ── Java ─────────────────────────────────────────────────────────────────────
 
 const JAVA_MODIFIERS = new Set([
-  "public", "private", "protected", "static", "final", "abstract", "sealed", "non-sealed",
-  "default", "synchronized", "native", "transient", "volatile", "strictfp",
+  "public",
+  "private",
+  "protected",
+  "static",
+  "final",
+  "abstract",
+  "sealed",
+  "non-sealed",
+  "default",
+  "synchronized",
+  "native",
+  "transient",
+  "volatile",
+  "strictfp",
 ]);
-const JAVA_TYPE = /^((?:[\w-]+\s+)*)(class|interface|record|enum|@interface)\s+(\w+)\s*(<[^{]*?>)?\s*(\([^)]*\))?([^{]*)$/s;
+const JAVA_TYPE =
+  /^((?:[\w-]+\s+)*)(class|interface|record|enum|@interface)\s+(\w+)\s*(<[^{]*?>)?\s*(\([^)]*\))?([^{]*)$/s;
 
 function javaVisibility(mods: string[], inInterface: boolean): Visibility {
   if (mods.includes("public") || inInterface) return "+";
@@ -233,13 +251,7 @@ function javaParents(tail: string): UmlType["parents"] {
   return out;
 }
 
-function javaTypesIn(
-  file: string,
-  pkg: string,
-  raw: string,
-  outer: string,
-  out: UmlType[]
-): void {
+function javaTypesIn(file: string, pkg: string, raw: string, outer: string, out: UmlType[]): void {
   const clean = blankStrings(raw);
   for (const p of pieces(clean, raw)) {
     if (p.block === null) continue;
@@ -251,16 +263,21 @@ function javaTypesIn(
     if (keyword === "@interface") continue;
     const name = m[3];
     const kind: UmlType["kind"] =
-      keyword === "class" && mods.includes("abstract")
-        ? "abstract"
-        : (keyword as UmlType["kind"]);
+      keyword === "class" && mods.includes("abstract") ? "abstract" : (keyword as UmlType["kind"]);
     const members: UmlMember[] = [];
     const literals: string[] = [];
     if (keyword === "record" && m[5]) {
       for (const c of javaParams(m[5].slice(1, -1))) {
         members.push({
-          kind: "field", visibility: "-", name: c.name, type: c.type, params: [],
-          isStatic: false, isAbstract: false, annotations: "", body: "",
+          kind: "field",
+          visibility: "-",
+          name: c.name,
+          type: c.type,
+          params: [],
+          isStatic: false,
+          isAbstract: false,
+          annotations: "",
+          body: "",
         });
       }
     }
@@ -302,7 +319,9 @@ function javaTypesIn(
           type: isCtor ? "" : type,
           params: javaParams(head.slice(paren + 1, close - 1)),
           isStatic: mmods.includes("static"),
-          isAbstract: mmods.includes("abstract") || (inInterface && q.block === null && !mmods.includes("static")),
+          isAbstract:
+            mmods.includes("abstract") ||
+            (inInterface && q.block === null && !mmods.includes("static")),
           annotations: a.annotations,
           body: q.block || "",
         });
@@ -323,8 +342,15 @@ function javaTypesIn(
       }
     }
     out.push({
-      name, kind, pkg, file, parents: javaParents(m[6] || ""), members, literals,
-      annotations, outer,
+      name,
+      kind,
+      pkg,
+      file,
+      parents: javaParents(m[6] || ""),
+      members,
+      literals,
+      annotations,
+      outer,
     });
     javaTypesIn(file, pkg, body, name, out);
   }
@@ -346,7 +372,12 @@ const TS_TYPE =
 
 function tsParams(list: string): UmlParam[] {
   return splitTop(list)
-    .map((p) => splitAnnotations(p).rest.replace(/^(?:(?:public|private|protected|readonly|override)\s+)+/, ""))
+    .map((p) =>
+      splitAnnotations(p).rest.replace(
+        /^(?:(?:public|private|protected|readonly|override)\s+)+/,
+        ""
+      )
+    )
     .map((p) => {
       const m = /^(\.\.\.)?([A-Za-z_$][\w$]*)\??\s*(?::\s*([^=]+))?/s.exec(p.trim());
       return m ? { name: m[2], type: m[3] ? tidy(m[3]) : "" } : null;
@@ -378,10 +409,13 @@ function tsDeclarations(body: string): Piece[] {
     // An annotation or decorator on its own line belongs to the next declaration.
     const merged: string[] = [];
     for (const h of heads) {
-      if (merged.length && /^@[\w.]+(\(.*\))?$/s.test(merged[merged.length - 1])) merged[merged.length - 1] += " " + h;
+      if (merged.length && /^@[\w.]+(\(.*\))?$/s.test(merged[merged.length - 1]))
+        merged[merged.length - 1] += " " + h;
       else merged.push(h);
     }
-    merged.forEach((h, i) => out.push({ head: h, block: i === merged.length - 1 ? p.block : null }));
+    merged.forEach((h, i) =>
+      out.push({ head: h, block: i === merged.length - 1 ? p.block : null })
+    );
   }
   return out;
 }
@@ -391,7 +425,12 @@ function tsTypes(file: string, source: string): UmlType[] {
   const out: UmlType[] = [];
   for (const p of pieces(blankStrings(raw), raw)) {
     if (p.block === null) continue;
-    const { annotations, rest } = splitAnnotations(p.head.split("\n").filter((l) => !/^\s*import\b/.test(l)).join("\n"));
+    const { annotations, rest } = splitAnnotations(
+      p.head
+        .split("\n")
+        .filter((l) => !/^\s*import\b/.test(l))
+        .join("\n")
+    );
     const lastLine = rest.split(/;\s*/).pop() || "";
     const m = TS_TYPE.exec(lastLine.trim());
     if (!m) continue;
@@ -408,14 +447,24 @@ function tsTypes(file: string, source: string): UmlType[] {
       for (const q of tsDeclarations(p.block)) {
         const a = splitAnnotations(q.head);
         let head = a.rest.replace(/[,;]\s*$/, "");
-        const mods = (/^((?:(?:public|private|protected|static|readonly|abstract|async|override|declare|get|set)\s+)*)/.exec(head) || ["", ""])[1];
+        const mods =
+          (/^((?:(?:public|private|protected|static|readonly|abstract|async|override|declare|get|set)\s+)*)/.exec(
+            head
+          ) || ["", ""])[1];
         head = head.slice(mods.length);
         const words = mods.trim().split(/\s+/).filter(Boolean);
         const visibility: Visibility =
-          words.includes("private") || head.startsWith("#") ? "-" : words.includes("protected") ? "#" : "+";
+          words.includes("private") || head.startsWith("#")
+            ? "-"
+            : words.includes("protected")
+              ? "#"
+              : "+";
         const name = (/^#?([A-Za-z_$][\w$]*)/.exec(head) || [])[1];
         if (!name) continue;
-        const afterName = head.slice(head.indexOf(name) + name.length).replace(/^[?!]/, "").trimStart();
+        const afterName = head
+          .slice(head.indexOf(name) + name.length)
+          .replace(/^[?!]/, "")
+          .trimStart();
         if (afterName.startsWith("(") || afterName.startsWith("<")) {
           const paren = head.indexOf("(");
           const close = closingOf(blankStrings(head), paren);
@@ -423,28 +472,49 @@ function tsTypes(file: string, source: string): UmlType[] {
           const params = tsParams(head.slice(paren + 1, close - 1));
           const isCtor = name === "constructor";
           members.push({
-            kind: isCtor ? "constructor" : "method", visibility, name: isCtor ? m[3] : name,
-            type: tidy(ret), params, isStatic: words.includes("static"),
-            isAbstract: words.includes("abstract") || (keyword === "interface"),
-            annotations: a.annotations, body: q.block || "",
+            kind: isCtor ? "constructor" : "method",
+            visibility,
+            name: isCtor ? m[3] : name,
+            type: tidy(ret),
+            params,
+            isStatic: words.includes("static"),
+            isAbstract: words.includes("abstract") || keyword === "interface",
+            annotations: a.annotations,
+            body: q.block || "",
           });
           if (isCtor) {
             // Parameter properties are fields: `constructor(readonly status: number)`.
             for (const raw of splitTop(head.slice(paren + 1, close - 1))) {
-              const pm = /^((?:public|private|protected|readonly)\s+)+([A-Za-z_$][\w$]*)\??\s*(?::\s*([^=]+))?/.exec(raw.trim());
+              const pm =
+                /^((?:public|private|protected|readonly)\s+)+([A-Za-z_$][\w$]*)\??\s*(?::\s*([^=]+))?/.exec(
+                  raw.trim()
+                );
               if (!pm) continue;
               members.push({
-                kind: "field", visibility: /private/.test(pm[1]) ? "-" : /protected/.test(pm[1]) ? "#" : "+",
-                name: pm[2], type: tidy(pm[3] || ""), params: [], isStatic: false, isAbstract: false,
-                annotations: "", body: "",
+                kind: "field",
+                visibility: /private/.test(pm[1]) ? "-" : /protected/.test(pm[1]) ? "#" : "+",
+                name: pm[2],
+                type: tidy(pm[3] || ""),
+                params: [],
+                isStatic: false,
+                isAbstract: false,
+                annotations: "",
+                body: "",
               });
             }
           }
         } else {
           const type = (/^:\s*([^=]+)/.exec(afterName) || [])[1] || "";
           members.push({
-            kind: "field", visibility, name, type: tidy(type), params: [], isStatic: words.includes("static"),
-            isAbstract: false, annotations: a.annotations, body: "",
+            kind: "field",
+            visibility,
+            name,
+            type: tidy(type),
+            params: [],
+            isStatic: words.includes("static"),
+            isAbstract: false,
+            annotations: a.annotations,
+            body: "",
           });
         }
       }
@@ -453,10 +523,24 @@ function tsTypes(file: string, source: string): UmlType[] {
     const parents: Array<{ name: string; kind: "extends" | "implements" }> = [];
     const ext = /\bextends\s+(.+?)(?=\bimplements\b|$)/s.exec(tail);
     const imp = /\bimplements\s+(.+)$/s.exec(tail);
-    const names = (s: string) => splitTop(s).map((x) => x.replace(/<.*$/s, "").trim()).filter((x) => /^[\w$.]+$/.test(x));
-    for (const n of ext ? names(ext[1]) : []) parents.push({ name: n, kind: keyword === "interface" ? "extends" : "extends" });
+    const names = (s: string) =>
+      splitTop(s)
+        .map((x) => x.replace(/<.*$/s, "").trim())
+        .filter((x) => /^[\w$.]+$/.test(x));
+    for (const n of ext ? names(ext[1]) : [])
+      parents.push({ name: n, kind: keyword === "interface" ? "extends" : "extends" });
     for (const n of imp ? names(imp[1]) : []) parents.push({ name: n, kind: "implements" });
-    out.push({ name: m[3], kind, pkg: "", file, parents, members, literals, annotations, outer: "" });
+    out.push({
+      name: m[3],
+      kind,
+      pkg: "",
+      file,
+      parents,
+      members,
+      literals,
+      annotations,
+      outer: "",
+    });
   }
   return out;
 }

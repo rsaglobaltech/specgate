@@ -98,7 +98,11 @@ test("REQ-806 SCN-806b: a method added since the base is in a note", () => {
   assert.match(text, /note for Orders "added: refund\(\)"/);
   assert.doesNotMatch(classDiagram("src/orders.ts", before, before), /note for/);
   assert.match(classDiagram("src/orders.ts", null, after), /note for Orders "new"/);
-  assert.doesNotMatch(classDiagram("src/orders.ts", null, before, false), /note for/, "the base's own view");
+  assert.doesNotMatch(
+    classDiagram("src/orders.ts", null, before, false),
+    /note for/,
+    "the base's own view"
+  );
 });
 
 test("REQ-806: Java, Kotlin, C# and Python, public members only", () => {
@@ -200,7 +204,10 @@ test("REQ-806 SCN-806a: the requirement drawn at the base and now", () => {
       `// REQ-031\n${ORDERS_TS("  refund(): void {}\n")}`
     );
     const inFlight = requirementDiagrams(dir, "REQ-031", "main");
-    assert.deepEqual(inFlight.classes.map((c: { file: string }) => c.file), ["TypeScript"]);
+    assert.deepEqual(
+      inFlight.classes.map((c: { file: string }) => c.file),
+      ["TypeScript"]
+    );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

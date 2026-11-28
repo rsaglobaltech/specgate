@@ -15,7 +15,8 @@ import { spawnSync } from "node:child_process";
 import { EVIDENCE_DIR, readAttempts } from "./evidence";
 import { baseOf } from "./quality-run";
 import { requirementDiagrams, type RequirementDiagrams } from "./evidence-diagrams";
-import { hideSecrets, httpCalls, type HttpCall } from "./trace-zip";
+import { checkMark, checkSequence, type SequenceCheck } from "./sequence-check";
+import { hideSecrets, httpCalls, loggedCalls, traceWindow, type HttpCall } from "./trace-zip";
 import {
   scenarioOutcomes,
   type ScenarioOutcome,
@@ -120,7 +121,8 @@ function logOf(projectDir: string, side: Side): string {
   }
 }
 
-const filesOf = (side: Side, test: RegExp) => (side.doc?.artifacts || []).filter((a) => test.test(a)).sort();
+const filesOf = (side: Side, test: RegExp) =>
+  (side.doc?.artifacts || []).filter((a) => test.test(a)).sort();
 
 // ── The model ────────────────────────────────────────────────────────────────
 
@@ -161,6 +163,8 @@ export interface RequirementEvidence {
   /** Deliveries whose scenarios failed, oldest first: why, and what the AI decided (REQ-819). */
   readonly attempts: ReadonlyArray<AttemptEvidence>;
   readonly diagrams: RequirementDiagrams;
+  /** Each scenario's sequence against its run's trace, by scenario (REQ-824). */
+  readonly checks: ReadonlyArray<{ scenario: string; check: SequenceCheck }>;
 }
 
 export interface AttemptEvidence {
@@ -170,7 +174,11 @@ export interface AttemptEvidence {
 }
 
 /** The AI log lines of one run folder, secrets hidden. */
-function decisionsIn(projectDir: string, from: string, artifacts: string[]): Array<Record<string, unknown>> {
+function decisionsIn(
+  projectDir: string,
+  from: string,
+  artifacts: string[]
+): Array<Record<string, unknown>> {
   return artifacts
     .filter((a) => /ai-decisions\.jsonl$/.test(a))
     .sort()
@@ -219,7 +227,8 @@ const routeOf = (p: string) =>
   p
     .split("/")
     .map((seg) =>
-      seg && (/^\d+$/.test(seg) || seg.replace(UUID, "") === "" || seg.replace(BUSINESS_ID, "") === "")
+      seg &&
+      (/^\d+$/.test(seg) || seg.replace(UUID, "") === "" || seg.replace(BUSINESS_ID, "") === "")
         ? "{id}"
         : seg
     )
@@ -233,12 +242,7 @@ const steady = (s: string) =>
     .replace(/("(?:requestId|traceId|id)"\s*:\s*)"[^"]*"/g, '$1"<id>"');
 
 /** A requirement's evidence, gathered: what both pages show. */
-function gather(
-  projectDir: string,
-  id: string,
-  title: string,
-  base: string
-): RequirementEvidence {
+function gather(projectDir: string, id: string, title: string, base: string): RequirementEvidence {
   const root = path.join(projectDir, EVIDENCE_DIR, id);
   const before = readJson(path.join(root, "before", "run.json"));
   const after = readJson(path.join(root, "evidence.json"));
@@ -269,7 +273,11 @@ function gather(
       copied: tooBig ? "" : `evidence/${id}/${sides[i].name}/${a.replace(/^artifacts\//, "")}`,
     };
   };
-  const screens = tests.map((t) => ({ test: testLabel(t, titles), before: picture(0, t), after: picture(1, t) }));
+  const screens = tests.map((t) => ({
+    test: testLabel(t, titles),
+    before: picture(0, t),
+    after: picture(1, t),
+  }));
   const tooBig: string[] = [];
   for (const s of sides) {
     for (const a of filesOf(s, PICTURE)) {
@@ -285,20 +293,63 @@ function gather(
 
   // REQ-815: one row per scenario the runner reported.
   const outcomes = sides.map((s) => scenarioOutcomes(logOf(projectDir, s)));
-  const scenarios = [...new Set(outcomes.flatMap((o) => o.map((r) => r.scenario)))].map((scenario) => ({
-    scenario,
-    before: outcomes[0].find((x) => x.scenario === scenario),
-    after: outcomes[1].find((x) => x.scenario === scenario),
-  }));
-
-  // REQ-816: the calls to the service, from each trace, paired by method and path.
-  const traced = sides.map((s) =>
-    filesOf(s, /trace\.zip$/).flatMap((a) => httpCalls(path.join(projectDir, s.from, a)))
+  const scenarios = [...new Set(outcomes.flatMap((o) => o.map((r) => r.scenario)))].map(
+    (scenario) => ({
+      scenario,
+      before: outcomes[0].find((x) => x.scenario === scenario),
+      after: outcomes[1].find((x) => x.scenario === scenario),
+    })
   );
-  const keyOf = (x: HttpCall) => `${x.method} ${routeOf(x.path)}`;
-  const keys = [...new Set(traced.flatMap((c) => c.map(keyOf)))];
+
+  // REQ-816: the calls to the service, from each trace, paired by method and path — and,
+  // REQ-824, those the project's server recorded, which the browser's trace never sees.
+  const runs = sides.map((s) => {
+    const server = filesOf(s, /http-calls\.jsonl$/).flatMap((a) =>
+      loggedCalls(path.join(projectDir, s.from, a))
+    );
+    const tests = filesOf(s, /trace\.zip$/).map((a) => {
+      const zip = path.join(projectDir, s.from, a);
+      const window = traceWindow(zip);
+      const fromServer = window
+        ? server.filter((c) => c.at >= window.from && c.at <= window.to)
+        : [];
+      return { test: testOf(a), calls: [...httpCalls(zip), ...fromServer] };
+    });
+    // A recorded call no test's window holds still happened in this run.
+    const held = new Set(tests.flatMap((t) => t.calls));
+    return {
+      tests,
+      calls: [...tests.flatMap((t) => t.calls), ...server.filter((c) => !held.has(c))],
+    };
+  });
+  // REQ-824: each scenario's sequence, read from the code, against what its run called.
+  const runCalls = new Map<string, HttpCall[]>();
+  for (const t of runs[1].tests) {
+    const scenario = testLabel(t.test, titles);
+    runCalls.set(scenario, [...(runCalls.get(scenario) || []), ...t.calls]);
+  }
+  const checks = diagrams.sequences.flatMap((s) =>
+    s.after
+      ? [{ scenario: s.scenario, check: checkSequence(s.after, runCalls.get(s.scenario) || []) }]
+      : []
+  );
+
+  // Paired within each scenario: two scenarios on the same route are two rows, not one.
+  const sided = runs.map((r) => {
+    const held = new Set(r.tests.flatMap((t) => t.calls));
+    return [
+      ...r.tests.flatMap((t) =>
+        t.calls.map((call) => ({ scenario: testLabel(t.test, titles), call }))
+      ),
+      ...r.calls.filter((c) => !held.has(c)).map((call) => ({ scenario: "", call })),
+    ];
+  });
+  const several = new Set(sided.flat().map((x) => x.scenario)).size > 1;
+  const keyOf = (x: { scenario: string; call: HttpCall }) =>
+    `${x.call.method} ${routeOf(x.call.path)}${several && x.scenario ? ` · ${x.scenario}` : ""}`;
+  const keys = [...new Set(sided.flatMap((c) => c.map(keyOf)))];
   const calls = keys.map((key) => {
-    const [b, a] = traced.map((list) => list.find((x) => keyOf(x) === key));
+    const [b, a] = sided.map((list) => list.find((x) => keyOf(x) === key)?.call);
     const changed = !(b && a && b.status === a.status && steady(b.response) === steady(a.response));
     return { key, before: b, after: a, changed };
   });
@@ -311,7 +362,10 @@ function gather(
           .readFileSync(path.join(projectDir, s.from, a), "utf8")
           .split("\n")
           .filter((l) => l.trim())
-          .map((l) => ({ side: s.name, decision: hideSecrets(JSON.parse(l)) as Record<string, unknown> }));
+          .map((l) => ({
+            side: s.name,
+            decision: hideSecrets(JSON.parse(l)) as Record<string, unknown>,
+          }));
       } catch {
         return [];
       }
@@ -327,6 +381,7 @@ function gather(
     media,
     scenarios,
     calls,
+    checks,
     ai,
     attempts: attemptsOf(projectDir, id),
     diagrams,
@@ -339,7 +394,10 @@ function gather(
 export function outcomeText(r: ScenarioOutcome | undefined): string {
   if (!r) return "—";
   if (r.passed) return `✓ ${r.time}`.trim();
-  const why = [r.step && `${r.step.slice(0, 90)}${r.step.length > 90 ? "…" : ""}:`, r.reason.join(" · ")]
+  const why = [
+    r.step && `${r.step.slice(0, 90)}${r.step.length > 90 ? "…" : ""}:`,
+    r.reason.join(" · "),
+  ]
     .filter(Boolean)
     .join(" ");
   return `✘ ${r.time}${why ? ` — ${why}` : ""}`.trim();
@@ -347,22 +405,32 @@ export function outcomeText(r: ScenarioOutcome | undefined): string {
 
 /** Why an attempt failed: each failed scenario and its outcome. */
 export const attemptWhy = (a: AttemptEvidence) =>
-  a.failed.length ? a.failed.map((o) => `${o.scenario}: ${outcomeText(o)}`).join("; ") : "its scenarios failed";
+  a.failed.length
+    ? a.failed.map((o) => `${o.scenario}: ${outcomeText(o)}`).join("; ")
+    : "its scenarios failed";
 
 /** What the AI decided in an attempt: each input and its output. */
 export const attemptAi = (a: AttemptEvidence) =>
-  a.ai.map((d) => `${valueText(d.model)}: ${valueText(d.input)} → ${valueText(d.output)}`).join("; ") || "—";
+  a.ai
+    .map((d) => `${valueText(d.model)}: ${valueText(d.input)} → ${valueText(d.output)}`)
+    .join("; ") || "—";
 
-export const statusText = (x: HttpCall | undefined) => (x ? `${x.status} ${x.statusText}`.trim() : "—");
+export const statusText = (x: HttpCall | undefined) =>
+  x ? `${x.status} ${x.statusText}`.trim() : "—";
 export const valueText = (v: unknown) => (typeof v === "string" ? v : JSON.stringify(v ?? ""));
 
 function markdownOf(r: RequirementEvidence): string[] {
   const lines = [`## ${r.id} — ${r.title}`, ""];
   if (r.screens.length) {
     const shot = (p: Picture | null, side: string) =>
-      !p ? "—" : p.tooBig ? `${code(path.basename(p.source))} (over 300 KB)` : `![${side}](${p.copied})`;
+      !p
+        ? "—"
+        : p.tooBig
+          ? `${code(path.basename(p.source))} (over 300 KB)`
+          : `![${side}](${p.copied})`;
     lines.push("| Test | Before | After |", "| --- | --- | --- |");
-    for (const s of r.screens) lines.push(`| ${s.test} | ${shot(s.before, "before")} | ${shot(s.after, "after")} |`);
+    for (const s of r.screens)
+      lines.push(`| ${s.test} | ${shot(s.before, "before")} | ${shot(s.after, "after")} |`);
     lines.push("");
   }
 
@@ -378,17 +446,22 @@ function markdownOf(r: RequirementEvidence): string[] {
   if (r.scenarios.length) {
     lines.push("#### Scenarios", "", "| Scenario | Before | After |", "| --- | --- | --- |");
     for (const s of r.scenarios)
-      lines.push(`| ${cell(s.scenario)} | ${cell(outcomeText(s.before))} | ${cell(outcomeText(s.after))} |`);
+      lines.push(
+        `| ${cell(s.scenario)} | ${cell(outcomeText(s.before))} | ${cell(outcomeText(s.after))} |`
+      );
     lines.push("");
   }
 
   if (r.calls.length) {
     lines.push("#### Calls to the service", "", "| Call | Before | After |", "| --- | --- | --- |");
     for (const c of r.calls)
-      lines.push(`| ${code(c.key)} | ${cell(statusText(c.before))} | ${cell(statusText(c.after))} |`);
+      lines.push(
+        `| ${code(c.key)} | ${cell(statusText(c.before))} | ${cell(statusText(c.after))} |`
+      );
     lines.push("");
     for (const c of r.calls.filter((x) => x.changed)) {
-      const block = (label: string, text: string) => (text ? [`${label}:`, "", "```json", text, "```", ""] : []);
+      const block = (label: string, text: string) =>
+        text ? [`${label}:`, "", "```json", text, "```", ""] : [];
       lines.push(
         `<details><summary>${c.key} — bodies</summary>`,
         "",
@@ -402,7 +475,12 @@ function markdownOf(r: RequirementEvidence): string[] {
   }
 
   if (r.ai.length) {
-    lines.push("#### AI decisions", "", "| | Model | Input | Output | Time |", "| --- | --- | --- | --- | --- |");
+    lines.push(
+      "#### AI decisions",
+      "",
+      "| | Model | Input | Output | Time |",
+      "| --- | --- | --- | --- | --- |"
+    );
     for (const { side, decision: d } of r.ai) {
       lines.push(
         `| ${side === "before" ? "Before" : "After"} | ${cell(valueText(d.model))} | ${cell(valueText(d.input)).slice(0, 160)} | ${code(cell(valueText(d.output)).slice(0, 200))} | ${d.ms === undefined ? "" : `${cell(valueText(d.ms))} ms`} |`
@@ -412,8 +490,14 @@ function markdownOf(r: RequirementEvidence): string[] {
   }
 
   if (r.attempts.length) {
-    lines.push("#### Failed attempts", "", "| Attempt | Why it failed | AI decisions |", "| --- | --- | --- |");
-    for (const a of r.attempts) lines.push(`| ${a.n} | ${cell(attemptWhy(a))} | ${cell(attemptAi(a))} |`);
+    lines.push(
+      "#### Failed attempts",
+      "",
+      "| Attempt | Why it failed | AI decisions |",
+      "| --- | --- | --- |"
+    );
+    for (const a of r.attempts)
+      lines.push(`| ${a.n} | ${cell(attemptWhy(a))} | ${cell(attemptAi(a))} |`);
     lines.push("");
   }
 
@@ -429,6 +513,8 @@ function markdownOf(r: RequirementEvidence): string[] {
   for (const s of r.diagrams.sequences) {
     lines.push(`### ${s.scenario}`, "");
     if (s.after) lines.push(...fence(s.after), "");
+    const check = r.checks.find((c) => c.scenario === s.scenario)?.check;
+    if (check) lines.push(`${checkMark(check)} ${check.text}`, "");
     if (s.before === null) lines.push("New since the base.", "");
     else if (s.after === null) lines.push(...folded("Removed — at the base", s.before), "");
     else if (s.before === s.after) lines.push("Unchanged since the base.", "");
@@ -444,7 +530,11 @@ function markdownOf(r: RequirementEvidence): string[] {
 }
 
 /** The change's evidence, gathered: what `writeEvidencePage` and the HTML page draw. */
-export function changeEvidence(projectDir: string, changeId: string, base = ""): RequirementEvidence[] {
+export function changeEvidence(
+  projectDir: string,
+  changeId: string,
+  base = ""
+): RequirementEvidence[] {
   const changeDir = path.join(projectDir, "docs", "specs", "changes", changeId);
   const from = evidenceBase(projectDir, changeId, base);
   return requirementsOf(changeDir).map(({ id, title }) => gather(projectDir, id, title, from));
@@ -464,7 +554,13 @@ export function evidenceBase(projectDir: string, changeId: string, explicit = ""
   };
   const base = baseOf(projectDir);
   if (!base || base !== git("rev-parse", "HEAD")) return base;
-  const opened = git("log", "--reverse", "--format=%H", "--", `docs/specs/changes/${changeId}`).split("\n")[0];
+  const opened = git(
+    "log",
+    "--reverse",
+    "--format=%H",
+    "--",
+    `docs/specs/changes/${changeId}`
+  ).split("\n")[0];
   return (opened && git("rev-parse", "--verify", "--quiet", `${opened}^`)) || base;
 }
 

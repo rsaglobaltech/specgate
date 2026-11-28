@@ -13,6 +13,7 @@ const os = require("node:os");
 const path = require("node:path");
 import type { TestContext } from "node:test";
 import { cli } from "../helpers/cli";
+import { zip } from "../helpers/zip";
 const { scenarioOutcomes } = require("../../packages/core/src/domain/ScenarioOutcomes");
 const { httpCalls, readZip } = require("../../scripts/lib/trace-zip");
 
@@ -39,39 +40,6 @@ const AFTER_LOG = [
   "  ✓  2 [bdd] › .features-gen\\orders\\REQ-031.feature.spec.js:12:3 › Orders › Browsing @REQ-031 @SCN-031b (2.0s)",
 ].join("\n");
 
-/** A zip of stored entries, as Playwright's trace.zip is read: enough to test the reader. */
-function zip(entries: Record<string, string>): Buffer {
-  const locals: Buffer[] = [];
-  const centrals: Buffer[] = [];
-  let offset = 0;
-  for (const [name, text] of Object.entries(entries)) {
-    const data = Buffer.from(text, "utf8");
-    const n = Buffer.from(name, "utf8");
-    const local = Buffer.alloc(30);
-    local.writeUInt32LE(0x04034b50, 0);
-    local.writeUInt32LE(data.length, 18);
-    local.writeUInt32LE(data.length, 22);
-    local.writeUInt16LE(n.length, 26);
-    const central = Buffer.alloc(46);
-    central.writeUInt32LE(0x02014b50, 0);
-    central.writeUInt32LE(data.length, 20);
-    central.writeUInt32LE(data.length, 24);
-    central.writeUInt16LE(n.length, 28);
-    central.writeUInt32LE(offset, 42);
-    locals.push(local, n, data);
-    centrals.push(central, n);
-    offset += 30 + n.length + data.length;
-  }
-  const dir = Buffer.concat(centrals);
-  const end = Buffer.alloc(22);
-  end.writeUInt32LE(0x06054b50, 0);
-  end.writeUInt16LE(Object.keys(entries).length, 8);
-  end.writeUInt16LE(Object.keys(entries).length, 10);
-  end.writeUInt32LE(dir.length, 12);
-  end.writeUInt32LE(offset, 16);
-  return Buffer.concat([...locals, dir, end]);
-}
-
 const snapshot = (method: string, url: string, status: number, at: number, fromTest = true) =>
   JSON.stringify({
     type: "resource-snapshot",
@@ -80,7 +48,11 @@ const snapshot = (method: string, url: string, status: number, at: number, fromT
       _monotonicTime: at,
       ...(fromTest ? { _apiRequestRef: "request-context@1" } : {}),
       request: { method, url, headers: [{ name: "Authorization", value: "Bearer abc" }] },
-      response: { status, statusText: status === 422 ? "Unprocessable Entity" : "OK", content: { _file: `resources/${at}.json` } },
+      response: {
+        status,
+        statusText: status === 422 ? "Unprocessable Entity" : "OK",
+        content: { _file: `resources/${at}.json` },
+      },
     },
   });
 
@@ -92,7 +64,8 @@ function trace(calls: Array<[string, string, number, string]>): Buffer {
       return snapshot(m, u, s, i + 1);
     })
     .join("\n");
-  entries["0-trace.network"] += "\n" + snapshot("GET", "http://localhost:3000/_next/static/app.js", 200, 99, false);
+  entries["0-trace.network"] +=
+    "\n" + snapshot("GET", "http://localhost:3000/_next/static/app.js", 200, 99, false);
   return zip(entries);
 }
 
@@ -103,7 +76,10 @@ function project(t: TestContext) {
   fs.writeFileSync(path.join(dir, "spec.md"), "# Spec\n");
   const change = path.join(dir, "docs", "specs", "changes", "draft-orders");
   fs.mkdirSync(path.join(change, "specs", "orders"), { recursive: true });
-  fs.writeFileSync(path.join(change, "change.yaml"), "specgate_change_version: 1\nschema: layered\n");
+  fs.writeFileSync(
+    path.join(change, "change.yaml"),
+    "specgate_change_version: 1\nschema: layered\n"
+  );
   fs.writeFileSync(
     path.join(change, "specs", "orders", "spec.md"),
     "## ADDED Requirements\n\n### Requirement: REQ-031 — An order is paid\n\nThe system SHALL take it.\n"
@@ -114,7 +90,10 @@ function project(t: TestContext) {
       fs.mkdirSync(path.dirname(path.join(folder, f)), { recursive: true });
       fs.writeFileSync(path.join(folder, f), data);
     }
-    fs.writeFileSync(path.join(folder, json), JSON.stringify({ command: "bdd", exitCode: 0, artifacts: Object.keys(files) }));
+    fs.writeFileSync(
+      path.join(folder, json),
+      JSON.stringify({ command: "bdd", exitCode: 0, artifacts: Object.keys(files) })
+    );
     fs.writeFileSync(path.join(folder, json === "run.json" ? "run.log" : "bdd.log"), log);
   };
   const session = (at: string): [string, string, number, string] => [
@@ -124,11 +103,35 @@ function project(t: TestContext) {
     `{"token":"abc","expiresAt":"${at}"}`,
   ];
   side("REQ-031/before", "run.json", BEFORE_LOG, {
-    "artifacts/paying/trace.zip": trace([session("2026-11-27T20:00:48.462Z"), ["POST", "http://127.0.0.1:8080/api/orders", 500, '{"title":"Internal Server Error"}'], ["GET", "http://127.0.0.1:8080/api/orders/ORD-2026-000007", 200, '{"number":"ORD-2026-000007","state":"open"}']]),
-    "artifacts/specgate/ai-decisions.jsonl": '{"model":"llama3.2","input":"Haz eso","output":{"category":"C"},"ms":812}\n',
+    "artifacts/paying/trace.zip": trace([
+      session("2026-11-27T20:00:48.462Z"),
+      ["POST", "http://127.0.0.1:8080/api/orders", 500, '{"title":"Internal Server Error"}'],
+      [
+        "GET",
+        "http://127.0.0.1:8080/api/orders/ORD-2026-000007",
+        200,
+        '{"number":"ORD-2026-000007","state":"open"}',
+      ],
+    ]),
+    "artifacts/specgate/ai-decisions.jsonl":
+      '{"model":"llama3.2","input":"Haz eso","output":{"category":"C"},"ms":812}\n',
   });
   side("REQ-031", "evidence.json", AFTER_LOG, {
-    "artifacts/paying/trace.zip": trace([session("2026-11-27T20:08:58.871Z"), ["POST", "http://127.0.0.1:8080/api/orders", 422, '{"code":"order_unclear","detail":"Another clue?"}'], ["GET", "http://127.0.0.1:8080/api/orders/ORD-2026-000009", 200, '{"number":"ORD-2026-000009","state":"open"}']]),
+    "artifacts/paying/trace.zip": trace([
+      session("2026-11-27T20:08:58.871Z"),
+      [
+        "POST",
+        "http://127.0.0.1:8080/api/orders",
+        422,
+        '{"code":"order_unclear","detail":"Another clue?"}',
+      ],
+      [
+        "GET",
+        "http://127.0.0.1:8080/api/orders/ORD-2026-000009",
+        200,
+        '{"number":"ORD-2026-000009","state":"open"}',
+      ],
+    ]),
   });
   return { dir, page: () => fs.readFileSync(path.join(change, "EVIDENCE.md"), "utf8") };
 }
@@ -140,7 +143,11 @@ test("REQ-815: Playwright's list output read as one outcome per scenario", () =>
       passed: false,
       time: "18.7s",
       step: "Then the response is 422",
-      reason: ["Error: expect(received).toBe(expected) // Object.is equality", "Expected: 422", "Received: 500"],
+      reason: [
+        "Error: expect(received).toBe(expected) // Object.is equality",
+        "Expected: 422",
+        "Received: 500",
+      ],
     },
     { scenario: "Browsing", passed: true, time: "2.1s", step: "", reason: [] },
   ]);
@@ -161,7 +168,12 @@ test("REQ-816: the trace's calls to the service, bodies kept, secrets hidden, as
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-trace-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const file = path.join(dir, "trace.zip");
-  fs.writeFileSync(file, trace([["POST", "http://127.0.0.1:8080/api/session", 201, '{"token":"abc","user":{"password":"p"}}']]));
+  fs.writeFileSync(
+    file,
+    trace([
+      ["POST", "http://127.0.0.1:8080/api/session", 201, '{"token":"abc","user":{"password":"p"}}'],
+    ])
+  );
   assert.ok(readZip(file).has("0-trace.network"));
   const [call, ...rest] = httpCalls(file);
   assert.equal(rest.length, 0, "the page's script is not a call to the service");
@@ -180,8 +192,15 @@ test("REQ-816 SCN-816a: the page pairs each call before and after, with the bodi
   const text = page();
   assert.match(text, /\| `POST \/api\/orders` \| 500 OK \| 422 Unprocessable Entity \|/);
   assert.match(text, /\| `POST \/api\/session` \| 201 OK \| 201 OK \|/);
-  assert.match(text, /<summary>POST \/api\/orders — bodies<\/summary>[\s\S]*"code": "order_unclear"/);
-  assert.doesNotMatch(text, /<summary>POST \/api\/session/, "the same answer, its time aside, is not repeated");
+  assert.match(
+    text,
+    /<summary>POST \/api\/orders — bodies<\/summary>[\s\S]*"code": "order_unclear"/
+  );
+  assert.doesNotMatch(
+    text,
+    /<summary>POST \/api\/session/,
+    "the same answer, its time aside, is not repeated"
+  );
   assert.doesNotMatch(text, /abc/, "no secret reaches the page");
   // The same lookup on a new record: one row, and its answer unchanged, its number aside.
   assert.match(text, /\| `GET \/api\/orders\/\{id\}` \| 200 OK \| 200 OK \|/);
@@ -194,7 +213,11 @@ test("REQ-816: doctor asks for a trace that a passing test keeps", (t: TestConte
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   fs.writeFileSync(path.join(dir, "package.json"), '{"name":"d","version":"1.0.0"}');
   assert.equal(cli("adopt", "--project-dir", dir, "--no-capabilities").status, 0);
-  assert.equal(cli("config", "set", "bdd_cmd", "npx playwright test --grep {tags}", "--project-dir", dir).status, 0);
+  assert.equal(
+    cli("config", "set", "bdd_cmd", "npx playwright test --grep {tags}", "--project-dir", dir)
+      .status,
+    0
+  );
   const media = () =>
     JSON.parse(cli("doctor", "--project-dir", dir, "--json").stdout).status.find(
       (s: { code: string }) => s.code === "doctor_evidence_media"
@@ -225,19 +248,34 @@ test("REQ-817 SCN-817a: what the AI model decided, recorded by the run and shown
       "process.exit(1);",
     ].join("\n")
   );
-  assert.equal(cli("config", "set", "bdd_cmd", "node ai.js {tags}", "--project-dir", dir).status, 0);
+  assert.equal(
+    cli("config", "set", "bdd_cmd", "node ai.js {tags}", "--project-dir", dir).status,
+    0
+  );
   const stale = path.join(dir, "test-results", "specgate", "ai-decisions.jsonl");
   fs.mkdirSync(path.dirname(stale), { recursive: true });
   fs.writeFileSync(stale, '{"model":"from an older run"}\n');
   const r = cli("evidence", "before", "REQ-031", "--project-dir", dir, "--json");
   assert.equal(r.status, 0, r.stdout + r.stderr);
-  const kept = path.join(dir, ".specgate", "evidence", "REQ-031", "before", "artifacts", "specgate", "ai-decisions.jsonl");
+  const kept = path.join(
+    dir,
+    ".specgate",
+    "evidence",
+    "REQ-031",
+    "before",
+    "artifacts",
+    "specgate",
+    "ai-decisions.jsonl"
+  );
   const lines = fs.readFileSync(kept, "utf8").trim().split("\n");
   assert.equal(lines.length, 1, "emptied before the run");
 
   const change = path.join(dir, "docs", "specs", "changes", "draft-orders");
   fs.mkdirSync(path.join(change, "specs", "orders"), { recursive: true });
-  fs.writeFileSync(path.join(change, "change.yaml"), "specgate_change_version: 1\nschema: layered\n");
+  fs.writeFileSync(
+    path.join(change, "change.yaml"),
+    "specgate_change_version: 1\nschema: layered\n"
+  );
   fs.writeFileSync(
     path.join(change, "specs", "orders", "spec.md"),
     "## ADDED Requirements\n\n### Requirement: REQ-031 — An order is paid\n\nThe system SHALL take it.\n"

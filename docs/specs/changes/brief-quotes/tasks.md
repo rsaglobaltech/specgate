@@ -6,8 +6,8 @@
 ## 1. Specification
 
 - [x] 1.1 Write the delta spec for each affected capability
-- [ ] 1.2 Run `specgate change validate`
+- [x] 1.2 Run `specgate change validate`
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-799 — D17 reports a brief quote that is not in the brief
+- [x] 2.1 REQ-799 — D17 reports a brief quote that is not in the brief

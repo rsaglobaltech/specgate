@@ -155,10 +155,7 @@ test("REQ-811: Java types with typed members, visibility, stereotypes and litera
   const [decision] = umlTypesOf("Decision.java", FILES[`${JAVA}/domain/Decision.java`]);
   assert.equal(decision.kind, "enum");
   assert.deepEqual(decision.literals, ["ALLOW", "DENY"]);
-  const [ts] = umlTypesOf(
-    "a.ts",
-    "export interface Order {\n  id: string\n  lines?: Line[]\n}\n"
-  );
+  const [ts] = umlTypesOf("a.ts", "export interface Order {\n  id: string\n  lines?: Line[]\n}\n");
   assert.deepEqual(
     ts.members.map((m: { name: string; type: string }) => `${m.name}:${m.type}`),
     ["id:string", "lines:Line[]"]
@@ -166,7 +163,11 @@ test("REQ-811: Java types with typed members, visibility, stereotypes and litera
 });
 
 test("REQ-811 SCN-811a: the requirement's slice as one UML class diagram", (t: TestContext) => {
-  const dir = project(t, ["GIVEN a cart", "WHEN the Customer sends POST /api/orders", "THEN it is 201"]);
+  const dir = project(t, [
+    "GIVEN a cart",
+    "WHEN the Customer sends POST /api/orders",
+    "THEN it is 201",
+  ]);
   const d = requirementDiagrams(dir, "REQ-041");
   assert.deepEqual(
     d.classes.map((c: { file: string }) => c.file.split(" ")[0]),
@@ -191,7 +192,11 @@ test("REQ-811 SCN-811a: the requirement's slice as one UML class diagram", (t: T
 });
 
 test("REQ-812 SCN-812a: from the endpoint to the port, object by object", (t: TestContext) => {
-  const dir = project(t, ["GIVEN a cart", "WHEN the Customer sends POST /api/orders", "THEN it is 201"]);
+  const dir = project(t, [
+    "GIVEN a cart",
+    "WHEN the Customer sends POST /api/orders",
+    "THEN it is 201",
+  ]);
   const seq = requirementDiagrams(dir, "REQ-041").sequences[0].after;
   assert.match(seq, /autonumber/);
   assert.match(seq, /actor A as Customer/);
@@ -230,7 +235,7 @@ test("REQ-812: a screen's scenario starts at the web app, which calls what its c
 test("REQ-812: the call beside the requirement, its method from the helper it goes through", () => {
   const api = [
     "async function send<T>(path: string, form: FormData): Promise<T> {",
-    "  const res = await fetch(`${API_URL}${path}`, { method: \"POST\", body: form });",
+    '  const res = await fetch(`${API_URL}${path}`, { method: "POST", body: form });',
     "  return res.json();",
     "}",
     "export const api = {",
@@ -244,8 +249,16 @@ test("REQ-812: the call beside the requirement, its method from the helper it go
     "    }),",
     "};",
   ].join("\n");
-  assert.deepEqual(webCallsOf(api, "REQ-002"), ["POST /api/incidents"], "not the next call, and POST as send posts");
-  assert.deepEqual(webCallsOf(api, "REQ-999"), ["POST /api/incidents", "GET /api/tasks", "POST /api/tasks"]);
+  assert.deepEqual(
+    webCallsOf(api, "REQ-002"),
+    ["POST /api/incidents"],
+    "not the next call, and POST as send posts"
+  );
+  assert.deepEqual(webCallsOf(api, "REQ-999"), [
+    "POST /api/incidents",
+    "GET /api/tasks",
+    "POST /api/tasks",
+  ]);
   // A template's `${…}` is a path variable, and a helper's verb is read from its own body only.
   const tracked = [
     "async function call<T>(path: string, init: RequestInit = {}): Promise<T> {",
@@ -264,7 +277,11 @@ test("REQ-812: the call beside the requirement, its method from the helper it go
 });
 
 test("REQ-812 SCN-812b: a call no controller declares is drawn from the steps", (t: TestContext) => {
-  const dir = project(t, ["GIVEN a cart", "WHEN the Customer sends POST /api/unknown", "THEN it is 404"]);
+  const dir = project(t, [
+    "GIVEN a cart",
+    "WHEN the Customer sends POST /api/unknown",
+    "THEN it is 404",
+  ]);
   const seq = requirementDiagrams(dir, "REQ-041").sequences[0].after;
   assert.match(seq, /participant S as System/);
   assert.match(seq, /A->>S: POST \/api\/unknown/);
@@ -325,7 +342,11 @@ class IncidentController {
   const api = codeSequence({
     scenario: {
       title: "Six photos",
-      steps: ["GIVEN a report", "WHEN the Citizen sends POST /api/incidents", "THEN it is 422 with `too_many_photos`"],
+      steps: [
+        "GIVEN a report",
+        "WHEN the Citizen sends POST /api/incidents",
+        "THEN it is 422 with `too_many_photos`",
+      ],
     },
     actor: "Citizen",
     types,
@@ -339,13 +360,21 @@ class IncidentController {
   const web = codeSequence({
     scenario: {
       title: "Six photos on the web",
-      steps: ["GIVEN a report", 'WHEN the Citizen attaches 6 photos', 'THEN they read "Puedes adjuntar hasta 5 fotografías"'],
+      steps: [
+        "GIVEN a report",
+        "WHEN the Citizen attaches 6 photos",
+        'THEN they read "Puedes adjuntar hasta 5 fotografías"',
+      ],
     },
     actor: "Citizen",
     types,
     webCalls: ["POST /api/incidents"],
   });
-  assert.match(web, /--x.*«exception» DomainException\(too_many_photos\)/, "found by the message the person reads");
+  assert.match(
+    web,
+    /--x.*«exception» DomainException\(too_many_photos\)/,
+    "found by the message the person reads"
+  );
   assert.match(web, /P2-->>-P1: too_many_photos/);
 });
 
@@ -377,13 +406,20 @@ class IncidentController {
   };
   const types = Object.entries(sources).flatMap(([f, s]) => umlTypesOf(f, s));
   const seq = codeSequence({
-    scenario: { title: "Reported", steps: ["WHEN the Citizen sends POST /api/incidents", "THEN it is 201"] },
+    scenario: {
+      title: "Reported",
+      steps: ["WHEN the Citizen sends POST /api/incidents", "THEN it is 201"],
+    },
     actor: "Citizen",
     types,
     webCalls: [],
   });
   assert.doesNotMatch(seq, /:Clock|instant\(\)/, "a clock is how the code tells the time");
-  assert.doesNotMatch(seq, /:String|strip\(\)/, "the parameter, not the field of the same name — and a string either way");
+  assert.doesNotMatch(
+    seq,
+    /:String|strip\(\)/,
+    "the parameter, not the field of the same name — and a string either way"
+  );
   assert.doesNotMatch(seq, /blank\(/, "a private helper that talks to no one");
   assert.match(seq, /->>\+P\d: sql\(\)\.param\(\)\.update\(\)/, "a builder's repeats once");
 });
@@ -397,5 +433,9 @@ test("REQ-812: through a screen, the client function the web code calls names th
   const seq = requirementDiagrams(dir, "REQ-041").sequences[0].after;
   assert.match(seq, /participant P1 as «boundary» Web app/);
   assert.match(seq, /P1->>\+P2: POST \/api\/orders/);
-  assert.match(seq, /P2-->>-P1: order_unclear/, "the exception found by the message the person reads");
+  assert.match(
+    seq,
+    /P2-->>-P1: order_unclear/,
+    "the exception found by the message the person reads"
+  );
 });

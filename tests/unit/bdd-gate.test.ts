@@ -596,21 +596,38 @@ test("REQ-822 SCN-822a: the adoption baseline, tagged @skip by migrate bdd, the 
   const r = sg("migrate", "bdd", "--json");
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.equal(JSON.parse(r.stdout.slice(r.stdout.indexOf("{"))).migrate.baselineSkipped, true);
-  assert.match(read(dir, "features/adoption/baseline.feature"), /\n {2}@skip\n {2}Scenario: Existing test suite stays green/);
+  assert.match(
+    read(dir, "features/adoption/baseline.feature"),
+    /\n {2}@skip\n {2}Scenario: Existing test suite stays green/
+  );
   assert.doesNotMatch(sg("check", "--json").stdout, /bdd_baseline_runs/);
   const again = sg("migrate", "bdd", "--json");
-  assert.equal(JSON.parse(again.stdout.slice(again.stdout.indexOf("{"))).migrate.baselineSkipped, false, "once");
+  assert.equal(
+    JSON.parse(again.stdout.slice(again.stdout.indexOf("{"))).migrate.baselineSkipped,
+    false,
+    "once"
+  );
 });
 
 test("REQ-822: an adoption whose gate requires the scenarios writes the baseline already skipped", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-adopt-bdd-"));
   madeDirs.push(dir);
-  w(dir, "package.json", JSON.stringify({ name: "app", devDependencies: { "@playwright/test": "~1.63.0" } }));
+  w(
+    dir,
+    "package.json",
+    JSON.stringify({ name: "app", devDependencies: { "@playwright/test": "~1.63.0" } })
+  );
   git(dir, "init", "-q");
-  const r = spawnSync(process.execPath, [CLI, "adopt", "--no-capabilities", "--yes"], { cwd: dir, encoding: "utf8" });
+  const r = spawnSync(process.execPath, [CLI, "adopt", "--no-capabilities", "--yes"], {
+    cwd: dir,
+    encoding: "utf8",
+  });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(read(dir, ".specgate/gate.yaml"), /^bdd: required$/m);
-  assert.match(read(dir, "features/adoption/baseline.feature"), /@skip\n {2}Scenario: Existing test suite stays green/);
+  assert.match(
+    read(dir, "features/adoption/baseline.feature"),
+    /@skip\n {2}Scenario: Existing test suite stays green/
+  );
 });
 
 test("REQ-823 SCN-823a: apply shows the scenarios as a stage, as it shows the tests", () => {

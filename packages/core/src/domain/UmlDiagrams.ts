@@ -18,10 +18,14 @@ const text = (s: string) =>
   s
     .replace(/\s+/g, " ")
     .trim()
-    .replace(/[#;<>]/g, (ch) => ({ "#": "#35;", ";": "#59;", "<": "#lt;", ">": "#gt;" })[ch] as string);
+    .replace(
+      /[#;<>]/g,
+      (ch) => ({ "#": "#35;", ";": "#59;", "<": "#lt;", ">": "#gt;" })[ch] as string
+    );
 
 /** A type as a class member writes it: generics with `~`, no quotes. */
-const memberType = (t: string) => t.replace(/</g, "~").replace(/>/g, "~").replace(/"/g, "'").replace(/\s+/g, " ");
+const memberType = (t: string) =>
+  t.replace(/</g, "~").replace(/>/g, "~").replace(/"/g, "'").replace(/\s+/g, " ");
 
 const STEREOTYPE: Record<UmlType["kind"], string> = {
   class: "",
@@ -33,8 +37,11 @@ const STEREOTYPE: Record<UmlType["kind"], string> = {
 
 function memberLine(m: UmlMember): string {
   const suffix = m.isStatic ? "$" : m.isAbstract ? "*" : "";
-  if (m.kind === "field") return `${m.visibility}${m.name}${m.type ? " : " + memberType(m.type) : ""}${suffix}`;
-  const params = m.params.map((p) => (p.type ? `${p.name} : ${memberType(p.type)}` : p.name)).join(", ");
+  if (m.kind === "field")
+    return `${m.visibility}${m.name}${m.type ? " : " + memberType(m.type) : ""}${suffix}`;
+  const params = m.params
+    .map((p) => (p.type ? `${p.name} : ${memberType(p.type)}` : p.name))
+    .join(", ");
   const ret = m.kind === "method" && m.type && m.type !== "void" ? " " + memberType(m.type) : "";
   return `${m.visibility}${m.name}(${params})${suffix}${ret}`;
 }
@@ -76,7 +83,8 @@ export function umlClassDiagram(types: ReadonlyArray<UmlType>, changes?: SliceCh
   };
   for (const t of types) {
     for (const p of t.parents) {
-      if (names.has(p.name)) relate(`${p.name} ${p.kind === "extends" ? "<|--" : "<|.."} ${t.name}`);
+      if (names.has(p.name))
+        relate(`${p.name} ${p.kind === "extends" ? "<|--" : "<|.."} ${t.name}`);
     }
   }
   const associated = new Set<string>();
@@ -128,23 +136,29 @@ function annotationPath(annotations: string, name: string): string | null {
   const m = new RegExp(`@${name}\\b(?:\\s*\\(([^)]*)\\))?`).exec(annotations);
   if (!m) return null;
   const args = m[1] || "";
-  const quoted = /(?:^|\b(?:value|path)\s*=\s*\{?\s*)"([^"]*)"/.exec(args.trim()) || /"([^"]*)"/.exec(args);
+  const quoted =
+    /(?:^|\b(?:value|path)\s*=\s*\{?\s*)"([^"]*)"/.exec(args.trim()) || /"([^"]*)"/.exec(args);
   return quoted ? quoted[1] : "";
 }
 
-const joinPath = (a: string, b: string) => `/${[a, b].join("/").split("/").filter(Boolean).join("/")}`;
+const joinPath = (a: string, b: string) =>
+  `/${[a, b].join("/").split("/").filter(Boolean).join("/")}`;
 
 /** The HTTP endpoints the code declares: Spring's mappings and JAX-RS's paths. */
 export function endpointsOf(types: ReadonlyArray<UmlType>): Endpoint[] {
   const out: Endpoint[] = [];
   for (const t of types) {
     if (!/@(?:Rest)?Controller\b|@Path\b/.test(t.annotations)) continue;
-    const base = annotationPath(t.annotations, "RequestMapping") ?? annotationPath(t.annotations, "Path") ?? "";
+    const base =
+      annotationPath(t.annotations, "RequestMapping") ??
+      annotationPath(t.annotations, "Path") ??
+      "";
     for (const m of t.members.filter((x) => x.kind === "method")) {
       for (const verb of HTTP) {
         const springName = `${verb[0]}${verb.slice(1).toLowerCase()}Mapping`;
         let sub = annotationPath(m.annotations, springName);
-        if (sub === null && new RegExp(`@${verb}\\b`).test(m.annotations)) sub = annotationPath(m.annotations, "Path") ?? "";
+        if (sub === null && new RegExp(`@${verb}\\b`).test(m.annotations))
+          sub = annotationPath(m.annotations, "Path") ?? "";
         if (
           sub === null &&
           new RegExp(`@RequestMapping\\b[^)]*RequestMethod\\.${verb}\\b`).test(m.annotations)
@@ -152,12 +166,15 @@ export function endpointsOf(types: ReadonlyArray<UmlType>): Endpoint[] {
           sub = annotationPath(m.annotations, "RequestMapping") ?? "";
         }
         if (sub === null) continue;
-        const code = (/@ResponseStatus\s*\(\s*(?:code\s*=\s*|value\s*=\s*)?HttpStatus\.(\w+)/.exec(m.annotations) || [])[1];
+        const code = (/@ResponseStatus\s*\(\s*(?:code\s*=\s*|value\s*=\s*)?HttpStatus\.(\w+)/.exec(
+          m.annotations
+        ) || [])[1];
         out.push({
           type: t,
           method: m,
           route: `${verb} ${joinPath(base, sub)}`,
-          status: STATUS[code || (verb === "POST" && /Created/.test(m.type) ? "CREATED" : "OK")] || code,
+          status:
+            STATUS[code || (verb === "POST" && /Created/.test(m.type) ? "CREATED" : "OK")] || code,
         });
       }
     }
@@ -184,13 +201,26 @@ interface Found {
   chain: string;
 }
 
-const KEYWORDS = new Set(["if", "for", "while", "switch", "catch", "return", "new", "throw", "super", "this", "synchronized"]);
+const KEYWORDS = new Set([
+  "if",
+  "for",
+  "while",
+  "switch",
+  "catch",
+  "return",
+  "new",
+  "throw",
+  "super",
+  "this",
+  "synchronized",
+]);
 
 /** The calls a body makes, in the order written: `x.m(` on a name, and `m(` on itself. */
 function callsIn(body: string): Found[] {
   const src = body.replace(/\bthis\s*\.\s*/g, "");
   const out: Found[] = [];
-  const re = /(?<![\w$.])([A-Za-z_$][\w$]*)\s*\.\s*([A-Za-z_$][\w$]*)\s*\(|(?<![\w$.:])([a-z_$][\w$]*)\s*\(/g;
+  const re =
+    /(?<![\w$.])([A-Za-z_$][\w$]*)\s*\.\s*([A-Za-z_$][\w$]*)\s*\(|(?<![\w$.:])([a-z_$][\w$]*)\s*\(/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(src)) !== null) {
     if (m[3] && KEYWORDS.has(m[3])) continue;
@@ -245,15 +275,60 @@ const MAX_DEPTH = 4;
  * the sequence leaves them out.
  */
 const PLATFORM = new Set([
-  "String", "Integer", "Long", "Double", "Float", "Short", "Byte", "Boolean", "Character",
-  "BigDecimal", "BigInteger", "Number", "Object", "Optional", "List", "Set", "Map", "Collection",
-  "Stream", "Collectors", "Arrays", "Objects", "Math", "StringBuilder", "Pattern", "Matcher",
-  "Instant", "LocalDate", "LocalDateTime", "LocalTime", "OffsetDateTime", "ZonedDateTime",
-  "Duration", "Period", "Clock", "ZoneId", "ZoneOffset", "UUID", "Random",
-  "string", "number", "boolean", "Array", "Promise", "Date", "JSON", "RegExp",
+  "String",
+  "Integer",
+  "Long",
+  "Double",
+  "Float",
+  "Short",
+  "Byte",
+  "Boolean",
+  "Character",
+  "BigDecimal",
+  "BigInteger",
+  "Number",
+  "Object",
+  "Optional",
+  "List",
+  "Set",
+  "Map",
+  "Collection",
+  "Stream",
+  "Collectors",
+  "Arrays",
+  "Objects",
+  "Math",
+  "StringBuilder",
+  "Pattern",
+  "Matcher",
+  "Instant",
+  "LocalDate",
+  "LocalDateTime",
+  "LocalTime",
+  "OffsetDateTime",
+  "ZonedDateTime",
+  "Duration",
+  "Period",
+  "Clock",
+  "ZoneId",
+  "ZoneOffset",
+  "UUID",
+  "Random",
+  "string",
+  "number",
+  "boolean",
+  "Array",
+  "Promise",
+  "Date",
+  "JSON",
+  "RegExp",
 ]);
 /** `sql().param().param().update()` as `sql().param().update()`: a builder's repeats say nothing. */
-const chainOf = (chain: string) => chain.split(".").filter((s, i, all) => s !== all[i - 1]).join(".");
+const chainOf = (chain: string) =>
+  chain
+    .split(".")
+    .filter((s, i, all) => s !== all[i - 1])
+    .join(".");
 
 /**
  * The scenario followed through the code, or null when its call reaches no
@@ -277,7 +352,9 @@ export function codeSequence(input: CodeSequenceInput): string | null {
   const endpoints = endpointsOf(types);
   const direct = when.map((w) => CALL.exec(w)).find(Boolean);
   const viaWeb = !direct;
-  const call = direct ? `${direct[1]} ${direct[2]}` : input.webCalls.find((c) => endpointFor(endpoints, c));
+  const call = direct
+    ? `${direct[1]} ${direct[2]}`
+    : input.webCalls.find((c) => endpointFor(endpoints, c));
   const entry = call ? endpointFor(endpoints, call) : null;
   if (!entry || !call) return null;
 
@@ -299,13 +376,17 @@ export function codeSequence(input: CodeSequenceInput): string | null {
   const signature = (m: UmlMember) =>
     `${m.name}(${m.params.map((p) => (p.type ? `${p.name} : ${p.type}` : p.name)).join(", ")})`;
   const implementorOf = (iface: UmlType) => {
-    const impl = types.filter((t) => t.parents.some((p) => p.kind === "implements" && p.name === iface.name));
+    const impl = types.filter((t) =>
+      t.parents.some((p) => p.kind === "implements" && p.name === iface.name)
+    );
     return impl.length === 1 ? impl[0] : null;
   };
 
   // A reply carries what the operation returns; a void one only ends the activation.
   const back = (from: string, to: string, type: string) =>
-    lines.push(type && type !== "void" ? `  ${from}-->>-${to}: ${text(type)}` : `  deactivate ${from}`);
+    lines.push(
+      type && type !== "void" ? `  ${from}-->>-${to}: ${text(type)}` : `  deactivate ${from}`
+    );
 
   // A scenario that ends in an error its THEN names — `422` and `idea_unclear` — follows the
   // exception the code throws with that code, where it is thrown, back to the actor.
@@ -317,14 +398,22 @@ export function codeSequence(input: CodeSequenceInput): string | null {
   const read = (q: string) => q.trim().length > 8 && outcome.includes(q.trim());
   const ownType =
     failStatus && failCode
-      ? types.find((t) => t.members.some((m) => m.kind === "constructor" && m.body.includes(`"${failCode}"`)))
-      : types.find((t) => t.members.some((m) => m.kind === "constructor" && quoted(m.body).some(read)));
+      ? types.find((t) =>
+          t.members.some((m) => m.kind === "constructor" && m.body.includes(`"${failCode}"`))
+        )
+      : types.find((t) =>
+          t.members.some((m) => m.kind === "constructor" && quoted(m.body).some(read))
+        );
   // Else a generic exception, found where it is thrown with the code or the message:
   // `throw new DomainException("too_many_photos", …, "Puedes adjuntar hasta " + MAX + " fotografías")`.
   const thrown = (body: string) =>
     [...body.matchAll(/(?:\bthrow\s+new|->\s*new)\s+([A-Z][\w$]*)\s*\(/g)].map((m) => {
       const end = body.indexOf(";", m.index);
-      return { at: m.index as number, type: m[1], stmt: body.slice(m.index, end < 0 ? undefined : end) };
+      return {
+        at: m.index as number,
+        type: m[1],
+        stmt: body.slice(m.index, end < 0 ? undefined : end),
+      };
     });
   const matches = (stmt: string) =>
     failStatus && failCode ? stmt.includes(`"${failCode}"`) : quoted(stmt).some(read);
@@ -354,8 +443,16 @@ export function codeSequence(input: CodeSequenceInput): string | null {
   };
 
   /** Draws the calls a method makes; true when it ends in the scenario's exception. */
-  const visit = (owner: UmlType, method: UmlMember, from: string, depth: number, stack: string[]): boolean => {
-    const fields = new Map(owner.members.filter((m) => m.kind === "field").map((m) => [m.name, m.type]));
+  const visit = (
+    owner: UmlType,
+    method: UmlMember,
+    from: string,
+    depth: number,
+    stack: string[]
+  ): boolean => {
+    const fields = new Map(
+      owner.members.filter((m) => m.kind === "field").map((m) => [m.name, m.type])
+    );
     const params = new Map(method.params.map((p) => [p.name, p.type]));
     const locals = localTypes(method.body);
     const body = method.body.replace(/\bthis\s*\.\s*/g, "");
@@ -379,12 +476,17 @@ export function codeSequence(input: CodeSequenceInput): string | null {
         back(from, from, self.type);
         continue;
       }
-      const declaredType = params.get(c.receiver) ?? locals.get(c.receiver) ?? fields.get(c.receiver);
+      const declaredType =
+        params.get(c.receiver) ?? locals.get(c.receiver) ?? fields.get(c.receiver);
       if (declaredType && PLATFORM.has(typeNames(declaredType)[0] ?? "")) continue;
       // `Incident.checkPhotos(…)`: a class's static operation, on the class's own lifeline.
       const statics = declaredType ? undefined : byName.get(c.receiver);
       if (!declaredType && !statics) continue;
-      const target = statics || typeNames(declaredType as string).map((n) => byName.get(n)).find(Boolean);
+      const target =
+        statics ||
+        typeNames(declaredType as string)
+          .map((n) => byName.get(n))
+          .find(Boolean);
       if (target) {
         if (!statics && (target.kind === "record" || target.kind === "enum")) continue;
         const runtime = target.kind === "interface" ? implementorOf(target) || target : target;
@@ -395,7 +497,12 @@ export function codeSequence(input: CodeSequenceInput): string | null {
         const to = lifeline(statics ? runtime.name : `:${runtime.name}`);
         const key = `${runtime.name}.${callee.name}`;
         lines.push(`  ${from}->>+${to}: ${text(signature(callee))}`);
-        if (depth < MAX_DEPTH && !stack.includes(key) && callee.body && visit(runtime, callee, to, depth + 1, [...stack, key])) {
+        if (
+          depth < MAX_DEPTH &&
+          !stack.includes(key) &&
+          callee.body &&
+          visit(runtime, callee, to, depth + 1, [...stack, key])
+        ) {
           raise(to, from);
           return true;
         }
@@ -417,7 +524,9 @@ export function codeSequence(input: CodeSequenceInput): string | null {
   } else {
     lines.push(`  A->>+${api}: ${text(route)}`);
   }
-  const threw = visit(entry.type, entry.method, api, 1, [`${entry.type.name}.${entry.method.name}`]);
+  const threw = visit(entry.type, entry.method, api, 1, [
+    `${entry.type.name}.${entry.method.name}`,
+  ]);
   const status = threw ? failLabel : entry.status;
   if (viaWeb) {
     lines.push(`  ${api}-->>-${web}: ${text(status)}`);
@@ -426,9 +535,7 @@ export function codeSequence(input: CodeSequenceInput): string | null {
     lines.push(`  ${api}-->>-A: ${text(status)}`);
   }
   const first = viaWeb ? web : api;
-  const notes = [
-    ...(given.length ? [`  Note over A,${first}: ${text(given.join("; "))}`] : []),
-  ];
+  const notes = [...(given.length ? [`  Note over A,${first}: ${text(given.join("; "))}`] : [])];
   const result = !viaWeb && then.length ? [`  Note over A,${api}: ${text(then.join("; "))}`] : [];
   return (
     [
@@ -461,7 +568,9 @@ export function webCallsOf(source: string, id: string): string[] {
     const at = source.search(new RegExp(`function\\s+${name}\\b`));
     if (at < 0) return "";
     // Its own body only: up to the next declaration, not the helper written after it.
-    const next = source.slice(at + 1).search(/\n(?:export\s|async\s+function\s|function\s|const\s|let\s|class\s)/);
+    const next = source
+      .slice(at + 1)
+      .search(/\n(?:export\s|async\s+function\s|function\s|const\s|let\s|class\s)/);
     return (METHOD.exec(source.slice(at, next < 0 ? undefined : at + 1 + next)) || [])[1] || "";
   };
   const all: Array<{ line: number; call: string }> = [];
@@ -469,9 +578,11 @@ export function webCallsOf(source: string, id: string): string[] {
     const path = PATH.exec(l);
     if (!path) return;
     const own: string[] = [l];
-    for (let j = i + 1; j < Math.min(lines.length, i + 4) && !PATH.test(lines[j]); j += 1) own.push(lines[j]);
+    for (let j = i + 1; j < Math.min(lines.length, i + 4) && !PATH.test(lines[j]); j += 1)
+      own.push(lines[j]);
     const helper = (/([A-Za-z_$][\w$]*)\s*(?:<[^>()]*>)?\s*\(\s*["'`]\/api\//.exec(l) || [])[1];
-    const verb = (METHOD.exec(own.join(" ")) || [])[1] || (helper ? helperVerb(helper) : "") || "GET";
+    const verb =
+      (METHOD.exec(own.join(" ")) || [])[1] || (helper ? helperVerb(helper) : "") || "GET";
     all.push({ line: i, call: `${verb.toUpperCase()} ${pathOf(path)}` });
   });
   const named = lines.map((l, i) => (l.includes(id) ? i : -1)).filter((i) => i >= 0);

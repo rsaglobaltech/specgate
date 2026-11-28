@@ -37,3 +37,15 @@ The system SHALL, when `specgate apply` runs a requirement's scenarios on a term
 - GIVEN REQ-031 approved, with `bdd: required` and a `bdd_cmd` that passes for `@REQ-031`
 - WHEN the Developer runs `specgate apply REQ-031`
 - THEN the output shows `Scenarios` and the command after `Tests`, and REQ-031 is delivered
+
+### Requirement: REQ-824 — Each sequence says whether the run agrees
+
+<!-- specgate:trace actor=Developer kind=functional -->
+
+The system SHALL, under each scenario's sequence on the evidence page, say whether it matches the run — the run called the endpoint the diagram draws and ended the same way, success or error — or differs from it, naming what the run called and answered; SHALL read the run's calls from the scenario's Playwright trace and from what the project's server recorded in `SPECGATE_HTTP_LOG` (one JSON line per call: `at`, `method`, `path`, `status`, `ms`) during the scenario's time in its trace; SHALL set `SPECGATE_HTTP_LOG`, emptied first, for every run of the scenarios; SHALL say when a sequence could not be checked, and when it was drawn from the steps alone; and SHALL list the server's calls in the calls table, paired within each scenario.
+
+#### Scenario: SCN-824a — A refusal the code reading missed
+
+- GIVEN a screen's scenario whose sequence, read from the code, ends in `201 Created`, and the server's log recording `POST /api/orders` answered 422 during the scenario
+- WHEN the Developer runs `specgate evidence draft-orders`
+- THEN under the sequence the page says "Read from the code, and the run differs: it ends in `201 Created`; `POST /api/orders` answered 422."

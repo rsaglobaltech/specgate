@@ -11,7 +11,9 @@ import * as path from "node:path";
 export function workspaceDirs(projectDir: string): string[] {
   let declared: unknown;
   try {
-    declared = JSON.parse(fs.readFileSync(path.join(projectDir, "package.json"), "utf8")).workspaces;
+    declared = JSON.parse(
+      fs.readFileSync(path.join(projectDir, "package.json"), "utf8")
+    ).workspaces;
   } catch {
     return [];
   }

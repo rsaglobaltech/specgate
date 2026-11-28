@@ -272,11 +272,11 @@ export class ReproduceCommand extends BaseCommand {
     const command = scenarioCommand(bddCmd, req);
     const startedAt = Date.now();
     const r = spawnSync(forShell(command), {
-        cwd: dir,
-        encoding: "utf8",
-        shell: true,
-        env: scenarioEnv(dir),
-      });
+      cwd: dir,
+      encoding: "utf8",
+      shell: true,
+      env: scenarioEnv(dir),
+    });
     const run = {
       command,
       exitCode: r.status ?? 1,

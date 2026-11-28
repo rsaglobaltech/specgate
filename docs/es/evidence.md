@@ -1,4 +1,4 @@
-<!-- translation-of: 3abab2b40529 -->
+<!-- translation-of: e9ea311c5ee9 -->
 # Evidencia antes y después
 
 Al final de esta página cada requisito de un change tiene un antes y un
@@ -145,6 +145,33 @@ línea JSON por llamada al modelo y la página las muestra, antes y después:
 Solo cuando la variable está fijada: en producción no se escribe nada. El
 servidor que arrancan los tests debe heredarla —el `webServer` de Playwright
 lo hace.
+
+## Contrastado con la ejecución
+
+Los diagramas de secuencia se leen del código, y una lectura puede fallar. Por
+eso, debajo de cada uno la página dice en qué estado está:
+
+- ✓ **Coincide con la ejecución** — la ejecución llamó al endpoint que dibuja
+  el diagrama y terminó igual, con éxito o con error.
+- ⚠ **La ejecución difiere** — y qué llamó o respondió en su lugar.
+- · **Sin contrastar** — la ejecución no dejó llamadas con las que comparar; o
+  **dibujado a partir de los pasos**, cuando ningún endpoint del código los
+  responde.
+
+Las llamadas de la ejecución salen del trace del navegador. Una llamada que
+hace tu servidor —una server action de Next.js que llama a tu API— nunca llega
+al navegador, así que regístrala: Specgate fija `SPECGATE_HTTP_LOG` junto a
+`SPECGATE_AI_LOG`, y el cliente de API de tu servidor escribe ahí una línea
+JSON por llamada:
+
+```json
+{"at": 1795853011482, "method": "POST", "path": "/api/incidents", "status": 422, "ms": 36}
+```
+
+`at` es cuándo empezó la llamada, en milisegundos epoch: cada llamada va al
+escenario cuyo trace abarca ese momento. Las llamadas también entran en la
+tabla de llamadas. No se escribe nada si la variable no está fijada; un
+servidor que arrancaste tú, fuera de Playwright, no la hereda.
 
 ## Al archivar
 

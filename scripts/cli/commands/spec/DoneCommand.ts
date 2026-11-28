@@ -9,7 +9,13 @@ import {
 } from "../../../lib/step-seal";
 import { gitIdentity, missingApprovals } from "../../../lib/approvals";
 import { scenariosOf } from "./ScenariosCommand";
-import { keepAttempt, keepEvidence, mustReproduce, readRed, scenarioEnv } from "../../../lib/evidence";
+import {
+  keepAttempt,
+  keepEvidence,
+  mustReproduce,
+  readRed,
+  scenarioEnv,
+} from "../../../lib/evidence";
 import type { ScenarioRun } from "../../../lib/evidence";
 import { appendApplied } from "../../../lib/trust";
 import { resolveProjectDir } from "../../../lib/project-root";

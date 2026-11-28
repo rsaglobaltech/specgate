@@ -17,10 +17,14 @@ export interface ScenarioOutcome {
   readonly reason: ReadonlyArray<string>;
 }
 
+// The runner's colours: matching the escape character is the point.
+// eslint-disable-next-line no-control-regex
 const strip = (s: string) => s.replace(/\u001b\[[0-9;]*m/g, "");
-const RESULT = /^\s*(✓|✘|ok|x|×)\s+\d+\s+(?:\[[^\]]*\]\s+›\s+)?(.*?)\s*(?:\((\d+(?:\.\d+)?(?:ms|s|m))\))?\s*$/;
+const RESULT =
+  /^\s*(✓|✘|ok|x|×)\s+\d+\s+(?:\[[^\]]*\]\s+›\s+)?(.*?)\s*(?:\((\d+(?:\.\d+)?(?:ms|s|m))\))?\s*$/;
 const FAILURE = /^\s*\d+\)\s+(?:\[[^\]]*\]\s+›\s+)?(.*)$/;
-const REASON = /^\s*(Error:|Expected:|Received:|Expected pattern:|Received string:|Locator:|Test timeout)/;
+const REASON =
+  /^\s*(Error:|Expected:|Received:|Expected pattern:|Received string:|Locator:|Test timeout)/;
 
 /** `file.spec.js:6:3 › Feature › Scenario @tag @tag › Then step` → its parts. */
 function titleParts(text: string): { scenario: string; step: string } {
@@ -29,18 +33,33 @@ function titleParts(text: string): { scenario: string; step: string } {
   let at = parts.findIndex((p) => /\s@\S+/.test(p));
   if (at < 0) at = parts.length - 1;
   const scenario = parts[at].replace(/\s+@\S+/g, "").trim();
-  const step = parts.slice(at + 1).join(" › ").trim();
+  const step = parts
+    .slice(at + 1)
+    .join(" › ")
+    .trim();
   return { scenario, step };
 }
 
 export function scenarioOutcomes(log: string): ScenarioOutcome[] {
   const lines = strip(log).split(/\r?\n/);
-  const out: Array<{ scenario: string; passed: boolean; time: string; step: string; reason: string[] }> = [];
+  const out: Array<{
+    scenario: string;
+    passed: boolean;
+    time: string;
+    step: string;
+    reason: string[];
+  }> = [];
   for (const line of lines) {
     const m = RESULT.exec(line);
     if (!m || !m[2].includes(" › ")) continue;
     const { scenario } = titleParts(m[2]);
-    out.push({ scenario, passed: m[1] === "✓" || m[1] === "ok", time: m[3] || "", step: "", reason: [] });
+    out.push({
+      scenario,
+      passed: m[1] === "✓" || m[1] === "ok",
+      time: m[3] || "",
+      step: "",
+      reason: [],
+    });
   }
   for (let i = 0; i < lines.length; i += 1) {
     const f = FAILURE.exec(lines[i]);

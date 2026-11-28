@@ -102,7 +102,9 @@ export class MigrateCommand extends BaseCommand {
           );
           for (const f of features) out(`  + ${f}\n`);
           if (baselineSkipped)
-            out("  ~ features/adoption/baseline.feature — @skip: the test command the gate runs keeps it\n");
+            out(
+              "  ~ features/adoption/baseline.feature — @skip: the test command the gate runs keeps it\n"
+            );
         }
       );
       return;

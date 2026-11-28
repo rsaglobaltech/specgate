@@ -1553,8 +1553,11 @@ function cmdArchive(opts: ChangeOptions) {
   // `evidence: required`, unless forced — and the page is written below,
   // current, before the change moves.
   const policy = readGatePolicy(projectDir);
-  const evidenceOn = (policy.bdd === "required" || policy.evidence === "required") && owned.length > 0;
-  const noBefore = evidenceOn ? owned.filter((r) => !readBefore(projectDir, r.id)).map((r) => r.id) : [];
+  const evidenceOn =
+    (policy.bdd === "required" || policy.evidence === "required") && owned.length > 0;
+  const noBefore = evidenceOn
+    ? owned.filter((r) => !readBefore(projectDir, r.id)).map((r) => r.id)
+    : [];
   const evidenceNotes: Diagnostic[] = [];
   if (noBefore.length > 0) {
     const required = policy.evidence === "required";
@@ -1716,7 +1719,9 @@ function cmdArchive(opts: ChangeOptions) {
         )
     );
     if (summary.evidence?.page) {
-      process.stdout.write(`  ${ui.muted(`📸  EVIDENCE.md written with the change: each requirement before and after`)}\n`);
+      process.stdout.write(
+        `  ${ui.muted(`📸  EVIDENCE.md written with the change: each requirement before and after`)}\n`
+      );
     }
     if (summary.warnings.length > 0) printDiagnostics(summary.warnings, process.stdout);
   });

@@ -161,7 +161,12 @@ export function readAttempts(projectDir: string, id: string): Attempt[] {
  * `attempts/<n>/run.json`, `run.log` and `artifacts/` — what the runner and
  * the AI log wrote. Returns its folder, relative to the project.
  */
-export function keepAttempt(projectDir: string, id: string, run: ScenarioRun, at = new Date()): string {
+export function keepAttempt(
+  projectDir: string,
+  id: string,
+  run: ScenarioRun,
+  at = new Date()
+): string {
   const root = path.join(projectDir, EVIDENCE_DIR);
   const n = (readAttempts(projectDir, id).pop()?.n || 0) + 1;
   const dir = path.join(root, id, "attempts", String(n));
@@ -172,7 +177,15 @@ export function keepAttempt(projectDir: string, id: string, run: ScenarioRun, at
   fs.writeFileSync(
     path.join(dir, "run.json"),
     JSON.stringify(
-      { requirement: id, attempt: n, at: at.toISOString(), command: run.command, exitCode: run.exitCode, ms: run.ms, artifacts },
+      {
+        requirement: id,
+        attempt: n,
+        at: at.toISOString(),
+        command: run.command,
+        exitCode: run.exitCode,
+        ms: run.ms,
+        artifacts,
+      },
       null,
       2
     ) + "\n",
@@ -305,21 +318,30 @@ export function mustReproduce(projectDir: string, id: string): boolean {
 
 /** Where a project records what its AI models decided during a run (REQ-817), under the runner's results. */
 export const AI_LOG = "test-results/specgate/ai-decisions.jsonl";
+/**
+ * Where the project's server records the calls it makes to the service
+ * (REQ-824): a call made from the server — a Next.js server action — never
+ * reaches the browser's trace. One JSON line per call:
+ * `{"at": <epoch ms>, "method": "GET", "path": "/api/x", "status": 200, "ms": 12}`.
+ */
+export const HTTP_LOG = "test-results/specgate/http-calls.jsonl";
 
 /**
- * The environment of a run of a requirement's scenarios: SPECGATE_AI_LOG,
- * absolute, emptied first, so what the project writes there belongs to this
- * run and is kept with its artifacts (REQ-817).
+ * The environment of a run of a requirement's scenarios: SPECGATE_AI_LOG and
+ * SPECGATE_HTTP_LOG, absolute, emptied first, so what the project writes there
+ * belongs to this run and is kept with its artifacts (REQ-817, REQ-824).
  */
 export function scenarioEnv(projectDir: string): NodeJS.ProcessEnv {
-  const file = path.resolve(projectDir, AI_LOG);
-  try {
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.rmSync(file, { force: true });
-  } catch {
-    /* an unwritable results folder: the run goes on without the record */
+  const [ai, http] = [AI_LOG, HTTP_LOG].map((rel) => path.resolve(projectDir, rel));
+  for (const file of [ai, http]) {
+    try {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.rmSync(file, { force: true });
+    } catch {
+      /* an unwritable results folder: the run goes on without the record */
+    }
   }
-  return { ...process.env, SPECGATE_AI_LOG: file };
+  return { ...process.env, SPECGATE_AI_LOG: ai, SPECGATE_HTTP_LOG: http };
 }
 
 /** The command that runs a requirement's scenarios, `{tags}` as `@<REQ>`. */

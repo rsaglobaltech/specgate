@@ -9,6 +9,7 @@
  */
 
 import * as fs from "node:fs";
+import { checkMark } from "./sequence-check";
 import * as path from "node:path";
 import {
   attemptAi,
@@ -57,7 +58,8 @@ function image(projectDir: string, p: Picture | null, side: string, test: string
 
 const mermaid = (text: string) => `<pre class="mermaid">${esc(text.trimEnd())}</pre>`;
 
-const pill = (kind: "ok" | "bad" | "none", text: string) => `<span class="pill ${kind}">${esc(text)}</span>`;
+const pill = (kind: "ok" | "bad" | "none", text: string) =>
+  `<span class="pill ${kind}">${esc(text)}</span>`;
 
 function outcomeCell(r: Parameters<typeof outcomeText>[0]): string {
   const text = outcomeText(r);
@@ -81,8 +83,11 @@ function section(projectDir: string, r: RequirementEvidence): string {
   if (!r.hasBefore) missing.push(`No before: <code>specgate evidence before ${esc(r.id)}</code>`);
   if (!r.hasAfter) missing.push(`Not delivered yet: <code>specgate apply ${esc(r.id)}</code>`);
   if ((r.hasBefore || r.hasAfter) && r.screens.length === 0)
-    missing.push("No screenshots: <code>specgate doctor</code> says how to have the runner keep them");
-  if (missing.length) out.push(`<ul class="missing">${missing.map((m) => `<li>${m}</li>`).join("")}</ul>`);
+    missing.push(
+      "No screenshots: <code>specgate doctor</code> says how to have the runner keep them"
+    );
+  if (missing.length)
+    out.push(`<ul class="missing">${missing.map((m) => `<li>${m}</li>`).join("")}</ul>`);
 
   for (const s of r.screens) {
     out.push(
@@ -96,23 +101,31 @@ function section(projectDir: string, r: RequirementEvidence): string {
     out.push(
       "<h3>Scenarios</h3>",
       '<div class="scroll"><table><thead><tr><th>Scenario</th><th>Before</th><th>After</th></tr></thead><tbody>',
-      ...r.scenarios.map((s) => `<tr><td>${esc(s.scenario)}</td>${outcomeCell(s.before)}${outcomeCell(s.after)}</tr>`),
+      ...r.scenarios.map(
+        (s) => `<tr><td>${esc(s.scenario)}</td>${outcomeCell(s.before)}${outcomeCell(s.after)}</tr>`
+      ),
       "</tbody></table></div>"
     );
   }
 
   if (r.calls.length) {
     const status = (x: Parameters<typeof statusText>[0]) =>
-      !x ? `<td class="muted">—</td>` : `<td>${pill(x.status < 400 ? "ok" : "bad", statusText(x))}</td>`;
+      !x
+        ? `<td class="muted">—</td>`
+        : `<td>${pill(x.status < 400 ? "ok" : "bad", statusText(x))}</td>`;
     out.push(
       "<h3>Calls to the service</h3>",
       '<div class="scroll"><table><thead><tr><th>Call</th><th>Before</th><th>After</th></tr></thead><tbody>',
-      ...r.calls.map((c) => `<tr><td><code>${esc(c.key)}</code></td>${status(c.before)}${status(c.after)}</tr>`),
+      ...r.calls.map(
+        (c) => `<tr><td><code>${esc(c.key)}</code></td>${status(c.before)}${status(c.after)}</tr>`
+      ),
       "</tbody></table></div>"
     );
     for (const c of r.calls.filter((x) => x.changed)) {
       const body = (label: string, text: string) =>
-        text ? `<div><p class="label">${esc(label)}</p><pre class="json">${esc(text)}</pre></div>` : "";
+        text
+          ? `<div><p class="label">${esc(label)}</p><pre class="json">${esc(text)}</pre></div>`
+          : "";
       out.push(
         `<details open><summary><code>${esc(c.key)}</code> — what changed</summary><div class="bodies">`,
         body("Request", (c.after || c.before)!.request),
@@ -151,6 +164,9 @@ function section(projectDir: string, r: RequirementEvidence): string {
     const side = (label: string, kind: "ok" | "bad", text: string | null, empty: string) =>
       `<figure><figcaption>${pill(kind, label)}</figcaption>${text ? mermaid(text) : `<p class="muted">${empty}</p>`}</figure>`;
     out.push(`<h3>Sequence · ${esc(s.scenario)}</h3>`);
+    const check = r.checks.find((c) => c.scenario === s.scenario)?.check;
+    if (check)
+      out.push(`<p class="check-${check.state}">${checkMark(check)} ${inline(check.text)}</p>`);
     if (s.before !== null && s.before === s.after) {
       out.push(mermaid(s.after as string), `<p class="muted">Unchanged since the base.</p>`);
     } else {
@@ -162,8 +178,11 @@ function section(projectDir: string, r: RequirementEvidence): string {
 
   for (const c of r.diagrams.classes) {
     out.push(`<h3>Classes · ${esc(c.file)}</h3>`, mermaid(c.after));
-    out.push(`<p class="legend">${c.legend ? inline(c.legend) : ""}${c.before === null ? `${c.legend ? " " : ""}New since the base.` : ""}</p>`);
-    if (c.before !== null) out.push(`<details><summary>At the base</summary>${mermaid(c.before)}</details>`);
+    out.push(
+      `<p class="legend">${c.legend ? inline(c.legend) : ""}${c.before === null ? `${c.legend ? " " : ""}New since the base.` : ""}</p>`
+    );
+    if (c.before !== null)
+      out.push(`<details><summary>At the base</summary>${mermaid(c.before)}</details>`);
   }
 
   out.push("</section>");
@@ -189,6 +208,7 @@ p { margin: 0; }
 code { font-family: var(--mono); font-size: .86em; }
 .eyebrow { font: 600 .72rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
 .muted, .legend { color: var(--muted); font-size: .9rem; }
+.check-matches, .check-differs, .check-unchecked, .check-steps { font-size: .9rem; padding: .4rem .6rem; border-radius: 6px; } .check-matches { color: var(--ok); background: var(--ok-bg); } .check-differs { color: var(--bad); background: var(--bad-bg); } .check-unchecked, .check-steps { color: var(--none); background: var(--none-bg); }
 nav { display: flex; flex-wrap: wrap; gap: 8px; }
 nav a { color: var(--fg); text-decoration: none; border: 1px solid var(--line); background: var(--surface); padding: 6px 10px; border-radius: 6px; font-size: .88rem; }
 nav a:hover, nav a:focus-visible { border-color: var(--accent); outline: none; }
@@ -218,7 +238,11 @@ pre.mermaid { margin: 0; background: #ffffff; color: #1c2320; border: 1px solid 
 `;
 
 /** The whole page, as one HTML document. */
-export function evidenceHtml(projectDir: string, changeId: string, gathered: RequirementEvidence[]): string {
+export function evidenceHtml(
+  projectDir: string,
+  changeId: string,
+  gathered: RequirementEvidence[]
+): string {
   const nav = gathered
     .map((r) => `<a href="#${anchor(r.id)}">${esc(r.id)} · ${esc(r.title)}</a>`)
     .join("");
@@ -253,7 +277,11 @@ ${gathered.map((r) => section(projectDir, r)).join("\n")}
 }
 
 /** Writes `EVIDENCE.html` beside `EVIDENCE.md`; returns it, from the project. */
-export function writeEvidenceHtml(projectDir: string, changeId: string, gathered: RequirementEvidence[]): string {
+export function writeEvidenceHtml(
+  projectDir: string,
+  changeId: string,
+  gathered: RequirementEvidence[]
+): string {
   const file = path.join(projectDir, "docs", "specs", "changes", changeId, "EVIDENCE.html");
   fs.writeFileSync(file, evidenceHtml(projectDir, changeId, gathered), "utf8");
   return path.relative(projectDir, file).split(path.sep).join("/");
