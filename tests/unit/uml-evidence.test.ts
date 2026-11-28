@@ -246,6 +246,21 @@ test("REQ-812: the call beside the requirement, its method from the helper it go
   ].join("\n");
   assert.deepEqual(webCallsOf(api, "REQ-002"), ["POST /api/incidents"], "not the next call, and POST as send posts");
   assert.deepEqual(webCallsOf(api, "REQ-999"), ["POST /api/incidents", "GET /api/tasks", "POST /api/tasks"]);
+  // A template's `${…}` is a path variable, and a helper's verb is read from its own body only.
+  const tracked = [
+    "async function call<T>(path: string, init: RequestInit = {}): Promise<T> {",
+    "  return (await fetch(path, init)).json();",
+    "}",
+    "async function send<T>(path: string, form: FormData): Promise<T> {",
+    '  return (await fetch(path, { method: "POST", body: form })).json();',
+    "}",
+    "export const api = {",
+    "  /** UC-003: an incident by its tracking number (REQ-005). */",
+    "  trackIncident: (n: string) =>",
+    "    call<TrackedIncident>(`/api/incidents/${encodeURIComponent(n)}`),",
+    "};",
+  ].join("\n");
+  assert.deepEqual(webCallsOf(tracked, "REQ-005"), ["GET /api/incidents/{id}"]);
 });
 
 test("REQ-812 SCN-812b: a call no controller declares is drawn from the steps", (t: TestContext) => {

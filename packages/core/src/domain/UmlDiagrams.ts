@@ -444,7 +444,9 @@ export function codeSequence(input: CodeSequenceInput): string | null {
   );
 }
 
-const PATH = /["'`](\/api\/[^"'`$]*)/;
+/** A path the web code names; `${…}` in a template is a path variable: `/api/incidents/{id}`. */
+const PATH = /(["'`])(\/api\/(?:[^"'`$]|\$\{[^}]*\})*)\1/;
+const pathOf = (m: RegExpExecArray) => m[2].replace(/\$\{[^}]*\}/g, "{id}");
 const METHOD = /method\s*:\s*["'`](\w+)["'`]/;
 
 /**
@@ -457,7 +459,10 @@ export function webCallsOf(source: string, id: string): string[] {
   const lines = source.split(/\r?\n/);
   const helperVerb = (name: string) => {
     const at = source.search(new RegExp(`function\\s+${name}\\b`));
-    return at < 0 ? "" : (METHOD.exec(source.slice(at, at + 1500)) || [])[1] || "";
+    if (at < 0) return "";
+    // Its own body only: up to the next declaration, not the helper written after it.
+    const next = source.slice(at + 1).search(/\n(?:export\s|async\s+function\s|function\s|const\s|let\s|class\s)/);
+    return (METHOD.exec(source.slice(at, next < 0 ? undefined : at + 1 + next)) || [])[1] || "";
   };
   const all: Array<{ line: number; call: string }> = [];
   lines.forEach((l, i) => {
@@ -467,7 +472,7 @@ export function webCallsOf(source: string, id: string): string[] {
     for (let j = i + 1; j < Math.min(lines.length, i + 4) && !PATH.test(lines[j]); j += 1) own.push(lines[j]);
     const helper = (/([A-Za-z_$][\w$]*)\s*(?:<[^>()]*>)?\s*\(\s*["'`]\/api\//.exec(l) || [])[1];
     const verb = (METHOD.exec(own.join(" ")) || [])[1] || (helper ? helperVerb(helper) : "") || "GET";
-    all.push({ line: i, call: `${verb.toUpperCase()} ${path[1]}` });
+    all.push({ line: i, call: `${verb.toUpperCase()} ${pathOf(path)}` });
   });
   const named = lines.map((l, i) => (l.includes(id) ? i : -1)).filter((i) => i >= 0);
   const close = named

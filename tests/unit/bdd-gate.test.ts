@@ -612,3 +612,12 @@ test("REQ-822: an adoption whose gate requires the scenarios writes the baseline
   assert.match(read(dir, ".specgate/gate.yaml"), /^bdd: required$/m);
   assert.match(read(dir, "features/adoption/baseline.feature"), /@skip\n {2}Scenario: Existing test suite stays green/);
 });
+
+test("REQ-823 SCN-823a: apply shows the scenarios as a stage, as it shows the tests", () => {
+  const p = applyProject(0);
+  const r = p.cli("apply", "REQ-031");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const tests = r.stdout.indexOf("Tests ");
+  const scenarios = r.stdout.search(/Scenarios {7}node -e/);
+  assert.ok(tests >= 0 && scenarios > tests, r.stdout);
+});

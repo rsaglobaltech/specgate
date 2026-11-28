@@ -4,5 +4,5 @@ created: 2026-11-28
 rigor: lite
 skip_specs: false
 retire_capabilities: false
-req_range: [REQ-820, REQ-822]
+req_range: [REQ-820, REQ-823]
 kind: bug

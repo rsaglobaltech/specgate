@@ -1018,12 +1018,17 @@ function bddRefusal(
     ? bddCmd.split("{tags}").join(`@${id}`)
     : `${bddCmd} @${id}`;
   const startedAt = Date.now();
-  const run = spawnSync(forShell(cmd), {
-    cwd: projectDir,
-    encoding: "utf8",
-    shell: true,
-    env: scenarioEnv(projectDir),
-  });
+  const exec = () =>
+    spawnSync(forShell(cmd), {
+      cwd: projectDir,
+      encoding: "utf8",
+      shell: true,
+      env: scenarioEnv(projectDir),
+    });
+  // REQ-823: the scenarios are a stage like the others, on the screen too.
+  const run = json
+    ? exec()
+    : ui.task(`Scenarios       ${ui.muted(cmd)}`, exec, (r) => ({ ok: r.status === 0 }));
   // REQ-680: what ran, kept for the evidence once the requirement is delivered.
   const scenarioRun = {
     command: cmd,

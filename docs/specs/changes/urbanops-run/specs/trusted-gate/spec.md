@@ -25,3 +25,15 @@ The system SHALL, on `specgate migrate bdd` — and on `specgate adopt` or `spec
 - GIVEN a project with `features/adoption/baseline.feature` untagged and `bdd: required`
 - WHEN the Developer runs `specgate check`, then `specgate migrate bdd`, then `specgate check` again
 - THEN the first check warns `bdd_baseline_runs`, the migration tags the scenario `@skip` and says so, and the second check does not warn
+
+### Requirement: REQ-823 — apply shows the scenarios as a stage
+
+<!-- specgate:trace actor=Developer kind=functional -->
+
+The system SHALL, when `specgate apply` runs a requirement's scenarios on a terminal, show them as a stage after the tests — `Scenarios` and the command it ran, passed or failed — as it shows the specification, the architecture and the tests.
+
+#### Scenario: SCN-823a — Delivered with its scenarios
+
+- GIVEN REQ-031 approved, with `bdd: required` and a `bdd_cmd` that passes for `@REQ-031`
+- WHEN the Developer runs `specgate apply REQ-031`
+- THEN the output shows `Scenarios` and the command after `Tests`, and REQ-031 is delivered
