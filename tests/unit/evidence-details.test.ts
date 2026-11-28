@@ -124,11 +124,11 @@ function project(t: TestContext) {
     `{"token":"abc","expiresAt":"${at}"}`,
   ];
   side("REQ-031/before", "run.json", BEFORE_LOG, {
-    "artifacts/paying/trace.zip": trace([session("2026-11-27T20:00:48.462Z"), ["POST", "http://127.0.0.1:8080/api/orders", 500, '{"title":"Internal Server Error"}']]),
+    "artifacts/paying/trace.zip": trace([session("2026-11-27T20:00:48.462Z"), ["POST", "http://127.0.0.1:8080/api/orders", 500, '{"title":"Internal Server Error"}'], ["GET", "http://127.0.0.1:8080/api/orders/ORD-2026-000007", 200, '{"number":"ORD-2026-000007","state":"open"}']]),
     "artifacts/specgate/ai-decisions.jsonl": '{"model":"llama3.2","input":"Haz eso","output":{"category":"C"},"ms":812}\n',
   });
   side("REQ-031", "evidence.json", AFTER_LOG, {
-    "artifacts/paying/trace.zip": trace([session("2026-11-27T20:08:58.871Z"), ["POST", "http://127.0.0.1:8080/api/orders", 422, '{"code":"order_unclear","detail":"Another clue?"}']]),
+    "artifacts/paying/trace.zip": trace([session("2026-11-27T20:08:58.871Z"), ["POST", "http://127.0.0.1:8080/api/orders", 422, '{"code":"order_unclear","detail":"Another clue?"}'], ["GET", "http://127.0.0.1:8080/api/orders/ORD-2026-000009", 200, '{"number":"ORD-2026-000009","state":"open"}']]),
   });
   return { dir, page: () => fs.readFileSync(path.join(change, "EVIDENCE.md"), "utf8") };
 }
@@ -183,6 +183,10 @@ test("REQ-816 SCN-816a: the page pairs each call before and after, with the bodi
   assert.match(text, /<summary>POST \/api\/orders — bodies<\/summary>[\s\S]*"code": "order_unclear"/);
   assert.doesNotMatch(text, /<summary>POST \/api\/session/, "the same answer, its time aside, is not repeated");
   assert.doesNotMatch(text, /abc/, "no secret reaches the page");
+  // The same lookup on a new record: one row, and its answer unchanged, its number aside.
+  assert.match(text, /\| `GET \/api\/orders\/\{id\}` \| 200 OK \| 200 OK \|/);
+  assert.doesNotMatch(text, /ORD-2026-00000[79]` \|/);
+  assert.doesNotMatch(text, /<summary>GET \/api\/orders/);
 });
 
 test("REQ-816: doctor asks for a trace that a passing test keeps", (t: TestContext) => {

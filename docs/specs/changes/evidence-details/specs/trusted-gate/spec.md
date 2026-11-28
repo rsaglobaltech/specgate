@@ -18,7 +18,7 @@ The system SHALL show on the evidence page, per requirement, one row per scenari
 
 <!-- specgate:trace actor=Developer kind=functional -->
 
-The system SHALL read each Playwright `trace.zip` kept with a requirement's before and after and show on the page each call its tests made to the project's service — a path under `/api/` or a call made through the test's request context — with its method, path, status and its request and response bodies, paired before and after by method and path, every JSON value whose key names a token, password, secret, cookie or authorization replaced by `«hidden»`; and `specgate doctor` SHALL ask for `trace: 'on'` beside screenshots and video.
+The system SHALL read each Playwright `trace.zip` kept with a requirement's before and after and show on the page each call its tests made to the project's service — a path under `/api/` or a call made through the test's request context — with its method, path, status and its request and response bodies, paired before and after by method and path — a path segment that is a record's number (digits, a UUID, `INC-2026-000007`) read as `{id}`, and a body that differs only in such a number not shown as changed —, every JSON value whose key names a token, password, secret, cookie or authorization replaced by `«hidden»`; and `specgate doctor` SHALL ask for `trace: 'on'` beside screenshots and video.
 
 #### Scenario: SCN-816a — 500 then 422
 

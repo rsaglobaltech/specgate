@@ -207,10 +207,29 @@ function attemptsOf(projectDir: string, id: string): AttemptEvidence[] {
 }
 
 /** A timestamp or an id differs on every run: not a change in what the service answers. */
+/** A record's number in the business's own form: `INC-2026-000007`, `ORD-123`. */
+const BUSINESS_ID = /\b[A-Z]{2,}(?:-\d{2,}){1,3}\b/g;
+const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
+
+/**
+ * A call's path with the record it names as `{id}`: `GET /api/incidents/INC-2026-000007`
+ * before and `…/INC-2026-000009` after are the same call on a new record (REQ-816).
+ */
+const routeOf = (p: string) =>
+  p
+    .split("/")
+    .map((seg) =>
+      seg && (/^\d+$/.test(seg) || seg.replace(UUID, "") === "" || seg.replace(BUSINESS_ID, "") === "")
+        ? "{id}"
+        : seg
+    )
+    .join("/");
+
 const steady = (s: string) =>
   s
     .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?/g, "<time>")
-    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, "<id>")
+    .replace(UUID, "<id>")
+    .replace(BUSINESS_ID, "<id>")
     .replace(/("(?:requestId|traceId|id)"\s*:\s*)"[^"]*"/g, '$1"<id>"');
 
 /** A requirement's evidence, gathered: what both pages show. */
@@ -276,9 +295,10 @@ function gather(
   const traced = sides.map((s) =>
     filesOf(s, /trace\.zip$/).flatMap((a) => httpCalls(path.join(projectDir, s.from, a)))
   );
-  const keys = [...new Set(traced.flatMap((c) => c.map((x) => `${x.method} ${x.path}`)))];
+  const keyOf = (x: HttpCall) => `${x.method} ${routeOf(x.path)}`;
+  const keys = [...new Set(traced.flatMap((c) => c.map(keyOf)))];
   const calls = keys.map((key) => {
-    const [b, a] = traced.map((list) => list.find((x) => `${x.method} ${x.path}` === key));
+    const [b, a] = traced.map((list) => list.find((x) => keyOf(x) === key));
     const changed = !(b && a && b.status === a.status && steady(b.response) === steady(a.response));
     return { key, before: b, after: a, changed };
   });

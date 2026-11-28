@@ -147,3 +147,12 @@ test("REQ-805: a runner doctor does not read is not judged", (t: TestContext) =>
   const status = json(cli("doctor", "--project-dir", dir, "--json")).status;
   assert.ok(!status.some((s: { code: string }) => s.code === "doctor_evidence_media"));
 });
+
+test("REQ-803: a requirement already met is delivered as it is, and before says so", (t: TestContext) => {
+  const dir = project(t, 'node -e "process.exit(0)" {tags}');
+  const r = cli("evidence", "before", "REQ-031", "--project-dir", dir);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /its scenarios pass already/);
+  assert.match(r.stdout, /they pass already: deliver it as it is/);
+  assert.doesNotMatch(r.stdout, /once the code makes them pass/);
+});

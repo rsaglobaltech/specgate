@@ -204,7 +204,14 @@ export class EvidenceCommand extends BaseCommand {
           ) + `     ${ui.muted(`kept in ${k.file}`)}\n`
         );
       }
-      process.stdout.write(ui.next(`specgate apply ${ids[0]}`, "once the code makes them pass"));
+      // A requirement already met — a performance target the code reaches — is delivered as it is.
+      const met = kept.every((k) => k.exitCode === 0);
+      process.stdout.write(
+        ui.next(
+          `specgate apply ${ids[0]}`,
+          met ? "they pass already: deliver it as it is" : "once the code makes them pass"
+        )
+      );
     });
   }
 }
