@@ -1,0 +1,11 @@
+▶ dist/tests/unit/workspace-runner.test.js
+✔ REQ-809: the workspaces are the folders package.json declares that exist (883.0929ms)
+✔ REQ-809 SCN-809a: the before keeps the screenshot a workspace's runner wrote (1250.9152ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2243.8833

@@ -80,3 +80,47 @@ test("REQ-798: the domain view reads a trace spread over lines", () => {
   assert.equal(requirementsOf(spec, "access")[0].actor, "Tutor legal");
   assert.equal(requirementsOf("### Requirement: REQ-013 — None\n", "access")[0].actor, null);
 });
+
+test("REQ-825 SCN-825a: change validate warns about a delta's actor cut at a space, before archive writes it short", (t: TestContext) => {
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-trace-delta-"));
+  t.after(() => fs.rmSync(parent, { recursive: true, force: true }));
+  const dir = path.join(parent, "app");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "package.json"), '{"name":"d","version":"1.0.0"}');
+  assert.equal(cli("adopt", "--project-dir", dir, "--no-capabilities").status, 0);
+  const change = path.join(dir, "docs", "specs", "changes", "triage");
+  fs.mkdirSync(path.join(change, "specs", "triage"), { recursive: true });
+  fs.writeFileSync(
+    path.join(change, "change.yaml"),
+    "specgate_change_version: 1\nschema: layered\n"
+  );
+  const delta = (actor: string) =>
+    [
+      "# Delta — triage",
+      "",
+      "## ADDED Requirements",
+      "",
+      "### Requirement: REQ-002 — A report is triaged",
+      "",
+      `<!-- specgate:trace actor=${actor} kind=functional -->`,
+      "",
+      "The system SHALL triage it.",
+      "",
+      "#### Scenario: SCN-002 — Triaged",
+      "",
+      "- GIVEN a report",
+      "- WHEN the operator triages it",
+      "- THEN it has a priority",
+      "",
+    ].join("\n");
+  const file = path.join(change, "specs", "triage", "spec.md");
+  fs.writeFileSync(file, delta("Product owner"));
+  const cut = cli("change", "validate", "triage", "--project-dir", dir);
+  assert.match(cut.stdout, /actor=Product owner is read as actor=Product/, cut.stdout + cut.stderr);
+  assert.match(cut.stdout, /actor="Product owner"/);
+  fs.writeFileSync(file, delta('"Product owner"'));
+  assert.doesNotMatch(
+    cli("change", "validate", "triage", "--project-dir", dir).stdout,
+    /is read as/
+  );
+});

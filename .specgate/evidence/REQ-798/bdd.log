@@ -1,0 +1,14 @@
+▶ dist/tests/unit/trace-values.test.js
+✔ REQ-798: an unquoted value followed by a stray word is found, with its line (3.4692ms)
+✔ REQ-798: a multi-line trace is read whole (0.4362ms)
+✔ REQ-798 SCN-798a: validate warns about an actor cut at a space (1711.0383ms)
+✔ REQ-798 SCN-798b: a quoted actor keeps its spaces everywhere, and validate is quiet (2063.2995ms)
+✔ REQ-798: the domain view reads a trace spread over lines (0.3439ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3976.062

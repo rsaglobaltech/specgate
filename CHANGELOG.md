@@ -13,28 +13,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
-- **Evidence before and after.** `specgate evidence before <REQ>`, run once the test is written and before the code, keeps the red run — its output, screenshots, video and trace — in `.specgate/evidence/<REQ>/before/`; `apply` keeps the green one beside it, and each run's artifacts stay out of git (REQ-803, REQ-804). `specgate doctor` says when Playwright keeps no screenshots, video or trace (REQ-805, REQ-816).
-- `specgate evidence <change>` writes `EVIDENCE.md` for the pull request: each requirement's last screenshot before and after, side by side; why each scenario was red and how long it took, then and now; each call the tests made to the service, paired before and after, with the bodies that changed and secrets hidden; and what the AI model decided, when the project records it in `SPECGATE_AI_LOG` (REQ-807, REQ-815, REQ-816, REQ-817).
-- `--html` writes the same evidence as one self-contained web page, light and dark, and `--open` opens it in the browser (REQ-818).
-- The evidence draws the code as standard UML, read from the source the same way every time: the requirement's slice as a class diagram per language — stereotypes, typed members, visibility, associations with multiplicity, what is new or changed since the base in colour — and each scenario as a numbered sequence diagram, from the endpoint the code declares through the use case to the port's implementation, following the exception a refused scenario ends in (REQ-806, REQ-811, REQ-812).
-- Under each sequence, the page says whether it matches the run — the endpoint the run called and how it ended, from the browser's trace or from what the project's server records in `SPECGATE_HTTP_LOG` during the scenario — differs from it, could not be checked, or was drawn from the steps alone: a reading of the code is never presented as fact (REQ-824).
-- A delivery whose scenarios fail is kept as an attempt, `attempts/<n>/`, and the page lists each with why it failed and what the AI decided in it (REQ-819).
-- `specgate change archive` writes the change's evidence page before it moves, and names a requirement delivered with no before; with `evidence: required` in the gate policy it refuses one, unless `--force` (REQ-813). `evidence --base <ref>` names the commit the diagrams compare with (REQ-814).
-- `specgate propose --from-brief --guide setup|cards` prints the guide an agent follows to write the brief's front matter or its module cards, writing nothing; the draft skill sends the agent there instead of to a file that may not exist (REQ-796, REQ-797).
-- `D17_quote_not_in_brief`: a requirement's `> Brief: "…"` quote must be the brief's own words (REQ-799).
-- `link: strict` in the gate policy: a test links a requirement only where it names its id outside a comment (REQ-800, REQ-801).
-- After a delivery whose whole suite took two minutes or more, `apply` names the command that runs only the requirement's tests (REQ-802).
-- `apply` shows the scenarios as a stage, after the tests, as it shows the others (REQ-823).
+- **Evidence before and after**: `specgate evidence before <REQ>` keeps the red run, `apply` the green one; `specgate evidence <change> [--html] [--open]` writes the page — screenshots, why each scenario failed, the calls to the service, the AI's decisions, failed attempts (REQ-803–805, REQ-807, REQ-815–819).
+- The code drawn as standard UML: a class diagram per language and a sequence per scenario, each sequence checked against the run (`SPECGATE_HTTP_LOG` for server-side calls) (REQ-806, REQ-811, REQ-812, REQ-824).
+- `archive` writes the evidence page; `evidence: required` refuses a requirement with no before (REQ-813, REQ-814).
+- `propose --from-brief --guide setup|cards`; `D17_quote_not_in_brief`; `link: strict`; a hint after a slow delivery; `apply` shows its scenarios stage (REQ-796–802, REQ-823).
 
 ### Fixed
 
-- A trace value cut at a space (`actor=Operador municipal`) is reported with the quoted form to write, and every reader parses traces alike (REQ-798).
-- A traceability matrix checked out with CRLF line endings is current, not stale (REQ-808).
-- In a monorepo, `doctor` sees a workspace's feature runner and Playwright config, and the evidence keeps what the workspace's runner wrote (REQ-809, REQ-810).
-- B11 no longer reads "si" after "determina", "evalúa", "confirma", "valida" — or "if" after "determine", "confirm", "verify" — as a condition placed last (REQ-820).
-- Work committed straight on `main`: the evidence compares with the commit before the change was opened, not with HEAD itself (REQ-821).
-- With `bdd: required`, the adoption baseline scenario, which no step runs, is tagged `@skip` by `migrate bdd`, `adopt` and `init`, and the gate warns `bdd_baseline_runs` until it is (REQ-822).
-- `evidence before` says a requirement already met — a performance target the code reaches — is delivered as it is (REQ-803).
+- Trace values cut at a space, in specs and in a change's deltas; CRLF matrices; workspace runners in monorepos (REQ-798, REQ-825, REQ-808–810).
+- B11 on "determina si…"; evidence of work done on `main`; the adoption baseline under `bdd: required` is tagged `@skip` (REQ-820–822).
 
 ## [1.6.0] — 2026-11-26
 

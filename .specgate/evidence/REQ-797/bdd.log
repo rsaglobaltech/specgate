@@ -1,0 +1,13 @@
+▶ dist/tests/unit/brief-cards.test.js
+✔ REQ-797 SCN-797a: the draft step names --guide, not a file (4.3366ms)
+✔ REQ-797 SCN-797b: the overview names the cards guide while no section exists (1189.916ms)
+✔ REQ-797: the overview names the setup guide while the front matter needs fixes (873.5405ms)
+✔ REQ-797: a brief with its sections is not sent to the cards guide (1001.6932ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3282.4425

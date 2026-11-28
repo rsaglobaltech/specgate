@@ -178,6 +178,7 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `layer_discover_rewritten` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `modify_already_open` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `modify_requirement_not_found` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `trace_value_cut` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `value_drift_already_matches` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `value_drift_id_not_declared` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `value_drift_no_code_value` | `scripts/cli/commands/change/ChangeCommand.ts` |

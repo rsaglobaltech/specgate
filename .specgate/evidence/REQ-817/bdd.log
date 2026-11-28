@@ -1,0 +1,10 @@
+▶ dist/tests/unit/evidence-details.test.js
+✔ REQ-817 SCN-817a: what the AI model decided, recorded by the run and shown before and after (1751.8864ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1858.0064

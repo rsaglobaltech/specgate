@@ -1,0 +1,12 @@
+▶ dist/tests/unit/draft-checklist.test.js
+✔ REQ-799 SCN-799a: a quote the brief never wrote is D17, at its line (9.7733ms)
+✔ REQ-799 SCN-799b: the brief's sentence, wrapped, emphasised and quoted, is no finding (3.6949ms)
+✔ REQ-799: a template's comment is not the brief, and no brief skips the rule (0.4997ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 143.6603

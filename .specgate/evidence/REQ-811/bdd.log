@@ -1,0 +1,11 @@
+▶ dist/tests/unit/uml-evidence.test.js
+✔ REQ-811: Java types with typed members, visibility, stereotypes and literals (7.1257ms)
+✔ REQ-811 SCN-811a: the requirement's slice as one UML class diagram (403.4278ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 615.13

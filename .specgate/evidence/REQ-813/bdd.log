@@ -1,0 +1,13 @@
+▶ dist/tests/unit/evidence-archive.test.js
+✔ REQ-813: the gate policy reads evidence: required or optional (2.7518ms)
+✔ REQ-813 SCN-813a: archive writes the page into the archived change, and names a missing before (1717.5432ms)
+✔ REQ-813 SCN-813b: evidence: required refuses a requirement with no before, unless forced (2210.5493ms)
+✔ REQ-813: a project whose scenarios do not run writes no page at archive (1191.8286ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5246.8504

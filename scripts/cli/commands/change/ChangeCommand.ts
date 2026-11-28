@@ -42,7 +42,11 @@ import { agentIo } from "../../../lib/agent";
 import type { AgentDocument } from "../../../lib/agent";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { ARTIFACTS, artifactState } from "../../../change/artifacts";
-import { parseDelta, renderRequirement } from "../../../../packages/core/src/domain/SpecParser";
+import {
+  parseDelta,
+  renderRequirement,
+  strayTraceWords,
+} from "../../../../packages/core/src/domain/SpecParser";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { changeRequirements, DELIVERED } from "../../../lib/in-flight";
 import { readGatePolicy } from "../../../lib/gate-policy";
@@ -1370,6 +1374,22 @@ function notApprovable(projectDir: string, id: string): Diagnostic[] {
  * Archiving lays one feature file per requirement, so the second replaced the
  * first's scenarios and `check` failed far from the cause (truck-flote, MS-9).
  */
+/**
+ * A delta's trace value cut at a space (REQ-825): `actor=Product owner` reads
+ * `actor=Product` — and archive writes the short one into the spec.
+ */
+function cutTraceValues(projectDir: string, id: string): Diagnostic[] {
+  return listDeltas(projectDir, id).flatMap((d) =>
+    strayTraceWords(fs.readFileSync(d.file, "utf8")).map((s) =>
+      warning(
+        "trace_value_cut",
+        `${path.relative(projectDir, d.file).split(path.sep).join("/")}:${s.line}: ${s.key}=${s.meant} is read as ${s.key}=${s.read}.`,
+        { target: id, fix: `Quote it: ${s.key}="${s.meant}".` }
+      )
+    )
+  );
+}
+
 function sharedFeatureFiles(projectDir: string, id: string): Diagnostic[] {
   const byFile = new Map<string, string[]>();
   for (const d of listDeltas(projectDir, id)) {
@@ -1429,6 +1449,7 @@ function cmdValidate(opts: ChangeOptions) {
     if (rewritten) result.diagnostics.push(rewritten);
     result.diagnostics.push(
       ...sharedFeatureFiles(projectDir, id),
+      ...cutTraceValues(projectDir, id),
       ...notApprovable(projectDir, id),
       ...contractCitationWarnings(projectDir, id)
     );

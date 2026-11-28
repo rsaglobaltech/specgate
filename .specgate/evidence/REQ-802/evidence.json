@@ -1,0 +1,13 @@
+{
+  "requirement": "REQ-802",
+  "at": "2026-11-28T12:52:52.455Z",
+  "scenarios": {
+    "command": "node scripts/scenarios.mjs @REQ-802",
+    "exitCode": 0,
+    "ms": 7211,
+    "tags": [
+      "@REQ-802"
+    ]
+  },
+  "artifacts": []
+}

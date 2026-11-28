@@ -1,0 +1,11 @@
+▶ dist/tests/unit/evidence-before.test.js
+✔ REQ-805 SCN-805a: doctor says when Playwright keeps no screenshots or video (1511.5201ms)
+✔ REQ-805: a runner doctor does not read is not judged (1225.5075ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2875.3693

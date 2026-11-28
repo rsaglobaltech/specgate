@@ -1,0 +1,11 @@
+▶ dist/tests/unit/evidence-details.test.js
+✔ REQ-815: Playwright's list output read as one outcome per scenario (2.811ms)
+✔ REQ-815 SCN-815a: the page says why each scenario was red, and that it passed after (561.5319ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 673.3443

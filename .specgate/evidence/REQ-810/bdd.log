@@ -1,0 +1,10 @@
+▶ dist/tests/unit/workspace-runner.test.js
+✔ REQ-810 SCN-810a: doctor sees playwright-bdd in a workspace, and its missing screenshots (1358.6808ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1463.9142
