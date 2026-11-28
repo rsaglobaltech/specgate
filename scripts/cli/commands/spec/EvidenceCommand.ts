@@ -51,18 +51,15 @@ function usage(): void {
  */
 function openInBrowser(file: string): boolean {
   if (process.env.CI || process.env.SPECGATE_NO_OPEN) return false;
-  const [cmd, args] =
+  // No shell on any platform: the path is an argument, never a command line to parse.
+  const cmd =
     process.platform === "win32"
-      ? ["cmd", ["/c", "start", '""', `"${file}"`]]
+      ? "explorer.exe"
       : process.platform === "darwin"
-        ? ["open", [file]]
-        : ["xdg-open", [file]];
+        ? "open"
+        : "xdg-open";
   try {
-    spawn(cmd, args as string[], {
-      detached: true,
-      stdio: "ignore",
-      windowsVerbatimArguments: true,
-    }).unref();
+    spawn(cmd, [file], { detached: true, stdio: "ignore" }).unref();
     return true;
   } catch {
     return false;

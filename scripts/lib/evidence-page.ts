@@ -102,8 +102,9 @@ function lastPictures(artifacts: string[]): Map<string, string> {
 
 const code = (p: string) => `\`${p}\``;
 
-/** A table cell: no pipe, no line break. */
-const cell = (s: string) => s.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
+/** A table cell: no pipe, no line break — a backslash escaped first, so `\|` in the text stays text. */
+const cell = (s: string) =>
+  s.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
 
 interface Side {
   name: "before" | "after";
